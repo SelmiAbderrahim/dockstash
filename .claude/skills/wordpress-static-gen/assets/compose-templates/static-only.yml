@@ -1,0 +1,72 @@
+# WordPress Static Generation - Static Only Template
+# ==================================================
+# Minimal stack for serving pre-generated static content
+#
+# Use this template when:
+# - Migrating existing static content
+# - Serving pre-generated HTML
+# - Minimal resource footprint needed
+# - No WordPress editing required
+#
+# Environment Variables Required:
+# - APP_NAME: Unique stack identifier
+# - DOMAIN: Primary domain (e.g., example.com)
+
+services:
+  # ============================================================
+  # THE DELIVERY (Frontend - Always On)
+  # ============================================================
+
+  static-web:
+    image: nginx:alpine
+    restart: always
+    volumes:
+      - static_content:/usr/share/nginx/html:ro
+    networks:
+      - serverless-network
+    labels:
+      - "traefik.enable=true"
+      # Primary domain
+      - "traefik.http.routers.${APP_NAME}-static.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.${APP_NAME}-static.entrypoints=websecure"
+      - "traefik.http.routers.${APP_NAME}-static.tls.certresolver=letsencrypt"
+      - "traefik.http.services.${APP_NAME}-static.loadbalancer.server.port=80"
+      # WWW to non-WWW redirect
+      - "traefik.http.middlewares.${APP_NAME}-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.${APP_NAME}-www-redirect.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.${APP_NAME}-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.${APP_NAME}-static.middlewares=${APP_NAME}-www-redirect"
+      # Compression
+      - "traefik.http.middlewares.${APP_NAME}-compress.compress=true"
+      - "traefik.http.routers.${APP_NAME}-static.middlewares=${APP_NAME}-www-redirect,${APP_NAME}-compress"
+    deploy:
+      resources:
+        limits:
+          cpus: "${STATIC_CPU_LIMIT:-0.25}"
+          memory: "${STATIC_MEMORY_LIMIT:-128M}"
+      replicas: ${STATIC_REPLICAS:-1}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+# ============================================================
+# VOLUMES
+# ============================================================
+
+volumes:
+  static_content:
+    name: "${APP_NAME}_static_content"
+    # To use existing volume from full stack:
+    # external: true
+    # name: "${APP_NAME}_static_bridge"
+
+# ============================================================
+# NETWORKS
+# ============================================================
+
+networks:
+  serverless-network:
+    external: true

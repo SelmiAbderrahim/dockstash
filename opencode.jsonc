@@ -1,0 +1,115 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Default model for new sessions. Override per-invocation with `opencode run --model ...`.
+  "model": "anthropic/claude-sonnet-4-6",
+  "small_model": "anthropic/claude-sonnet-4-6",
+
+  // ─── Provider Configuration ───────────────────────────────────────────────
+  // API keys can be set via:
+  //   1. Environment variables (ANTHROPIC_API_KEY, etc.)
+  //   2. .opencode/local.json (git-ignored, never committed)
+  //
+  // To set up: export ANTHROPIC_API_KEY=sk-ant-...
+  // Or create .opencode/local.json: { "provider": { "anthropic": { "apiKey": "sk-ant-..." } } }
+  "provider": {
+    "anthropic": {
+      "name": "Anthropic",
+      "models": {
+        "claude-sonnet-4-6": {
+          "name": "Claude Sonnet 4.6",
+          "reasoning": true,
+          "attachment": true,
+          "temperature": true,
+          "tool_call": true,
+          "cost": { "input": 3, "output": 15, "cache_read": 0.3, "cache_write": 3.75 },
+          "limit": { "context": 200000, "output": 16384 }
+        },
+        "claude-opus-4-7": {
+          "name": "Claude Opus 4.7",
+          "reasoning": true,
+          "attachment": true,
+          "temperature": true,
+          "tool_call": true,
+          "cost": { "input": 15, "output": 75, "cache_read": 1.5, "cache_write": 18.75 },
+          "limit": { "context": 200000, "output": 32768 }
+        }
+      }
+    }
+
+    // Uncomment below if you use Z.AI GLM models:
+    // "zai-coding": {
+    //   "npm": "@ai-sdk/openai-compatible",
+    //   "name": "Z.AI (GLM Coding Plan)",
+    //   "options": {
+    //     "baseURL": "https://api.z.ai/api/coding/paas/v4",
+    //     "apiKey": "{env:ZAI_CODING_PLAN_API_KEY}"
+    //   },
+    //   "models": {
+    //     "glm-5.1": {
+    //       "name": "GLM-5.1",
+    //       "reasoning": true,
+    //       "attachment": false,
+    //       "temperature": true,
+    //       "tool_call": true,
+    //       "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+    //       "limit": { "context": 204800, "output": 131072 }
+    //     }
+    //   }
+    // }
+  },
+
+  // ─── Permission Defaults ──────────────────────────────────────────────────
+  "permission": {
+    "bash": {
+      "git stash": "ask",
+      "git stash *": "ask",
+      "git reset --hard*": "ask",
+      "git reset --merge*": "ask",
+      "git reset --keep*": "ask",
+      "git clean -f*": "ask",
+      "git clean -d*": "ask",
+      "git clean -x*": "ask",
+      "git checkout -- *": "ask",
+      "git checkout .": "ask",
+      "git restore *": "ask",
+      "git push --force*": "ask",
+      "git push -f*": "ask",
+      "git push --force-with-lease*": "ask",
+      "git push --delete*": "ask",
+      "git branch -D*": "ask",
+      "git rebase*": "ask",
+      "git commit --amend*": "ask",
+      "git commit --no-verify*": "ask",
+      "rm -rf /*": "ask",
+      "rm -rf ~*": "ask",
+      "*": "allow"
+    },
+    "edit": "allow",
+    "webfetch": "allow",
+    "websearch": "allow"
+  },
+
+  // ─── Instructions (always loaded) ─────────────────────────────────────────
+  // AGENTS.md is the primary agent guide; rules are loaded on demand.
+  "instructions": [
+    "AGENTS.md",
+    ".claude/rules/environment-variables.md",
+    ".claude/rules/git-destructive-commands.md",
+    ".claude/rules/site-url-env-pattern.md"
+  ],
+
+  // ─── MCP Servers ──────────────────────────────────────────────────────────
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "oauth": false,
+      "enabled": true,
+      "timeout": 10000
+    }
+  }
+}

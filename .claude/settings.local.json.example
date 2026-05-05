@@ -1,0 +1,5 @@
+{
+  "env": {
+    "EXAMPLE_VAR": "replace-with-your-value"
+  }
+}

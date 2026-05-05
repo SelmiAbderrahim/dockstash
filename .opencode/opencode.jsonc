@@ -1,0 +1,202 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Default model for new sessions. Override per-invocation with `opencode run --model ...`.
+  "model": "zai-coding/glm-5.1",
+  "small_model": "zai-coding/glm-4.7-flash",
+
+  // Custom provider registration for Z.AI GLM Coding Plan.
+  // Uses the @ai-sdk/openai-compatible npm package with OpenAI-compatible endpoint.
+  // The provider is named `zai-coding` (not just `zai`) because the URL
+  // points at the *coding plan* PaaS endpoint, and the credential is the
+  // ZAI_CODING_PLAN_API_KEY (distinct from the regular Z.AI ZAI_API_KEY).
+  // Keep the name and the env var paired so they can never drift again.
+  "provider": {
+    "zai-coding": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Z.AI (GLM Coding Plan)",
+      "options": {
+        "baseURL": "https://api.z.ai/api/coding/paas/v4",
+        "apiKey": "{env:ZAI_CODING_PLAN_API_KEY}"
+      },
+      "models": {
+        "glm-5.1": {
+          "name": "GLM-5.1",
+          "reasoning": true,
+          "attachment": false,
+          "temperature": true,
+          "tool_call": true,
+          "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+          "limit": { "context": 204800, "output": 131072 }
+        },
+        "glm-5": {
+          "name": "GLM-5",
+          "reasoning": true,
+          "tool_call": true,
+          "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+          "limit": { "context": 204800, "output": 131072 }
+        },
+        "glm-5-turbo": {
+          "name": "GLM-5 Turbo",
+          "reasoning": false,
+          "tool_call": true,
+          "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+          "limit": { "context": 204800, "output": 131072 }
+        },
+        "glm-4.7": {
+          "name": "GLM-4.7",
+          "reasoning": true,
+          "tool_call": true,
+          "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+          "limit": { "context": 204800, "output": 131072 }
+        },
+        "glm-4.7-flash": {
+          "name": "GLM-4.7 Flash",
+          "reasoning": false,
+          "tool_call": true,
+          "cost": { "input": 0, "output": 0, "cache_read": 0, "cache_write": 0 },
+          "limit": { "context": 131072, "output": 32768 }
+        }
+      }
+    }
+  },
+
+  // Permission defaults. Skill glob-based permissions are set in a later prompt (04).
+  // For now, allow everything as a baseline — prompt 04 will tighten specific globs.
+  "permission": {
+    "skill": {
+      "*": "allow",
+      "legal-*": "ask",
+      "security-*": "ask",
+      "payment-*": "ask",
+      "stripe-mcp": "ask",
+      "production-*": "ask",
+      "deploy-*": "ask",
+      "release-*": "ask",
+      "swarm-*": "deny",
+      "hive-mind-*": "deny",
+      "flow-nexus-*": "deny",
+      "neural-*": "deny",
+      "consensus-*": "deny"
+    },
+    // Bash permissions: destructive git commands require explicit confirmation every time.
+    // See .claude/rules/git-destructive-commands.md for the authoritative policy.
+    // Pattern matching is first-match; "*" at the end is the default.
+    "bash": {
+      "git stash": "ask",
+      "git stash *": "ask",
+      "git reset --hard*": "ask",
+      "git reset --merge*": "ask",
+      "git reset --keep*": "ask",
+      "git clean -f*": "ask",
+      "git clean -d*": "ask",
+      "git clean -x*": "ask",
+      "git checkout -- *": "ask",
+      "git checkout .": "ask",
+      "git restore *": "ask",
+      "git push --force*": "ask",
+      "git push -f*": "ask",
+      "git push --force-with-lease*": "ask",
+      "git push --delete*": "ask",
+      "git push origin --delete*": "ask",
+      "git branch -D*": "ask",
+      "git branch -d*": "ask",
+      "git branch --delete*": "ask",
+      "git rebase*": "ask",
+      "git commit --amend*": "ask",
+      "git commit --no-verify*": "ask",
+      "git push --no-verify*": "ask",
+      "git worktree remove*": "ask",
+      "git worktree prune*": "ask",
+      "git reflog delete*": "ask",
+      "git reflog expire*": "ask",
+      "git filter-branch*": "ask",
+      "git filter-repo*": "ask",
+      "git update-ref -d*": "ask",
+      "git update-ref --stdin*": "ask",
+      "git gc --prune*": "ask",
+      "git gc --aggressive*": "ask",
+      "rm -rf /*": "ask",
+      "rm -rf ~*": "ask",
+      "*": "allow"
+    },
+    "edit": "allow",
+    "webfetch": "allow",
+    "websearch": "allow"
+  },
+
+  // 13 always-load instructions: AGENTS.md (pointer doc) + 12 cross-cutting rules.
+  // Audit: docs/internal/rules-categorization.md documents why each rule is here.
+  // Feature-specific rules (stalwart, websmith, postal, etc.) are loaded on demand.
+  "instructions": [
+    "AGENTS.md",
+    ".claude/rules/docker-development-only.md",
+    ".claude/rules/environment-variables.md",
+    ".claude/rules/rtl-support-arabic.md",
+    ".claude/rules/uncodixify-ui.md",
+    ".claude/rules/url-tab-state.md",
+    ".claude/rules/trpc-api-patterns.md",
+    ".claude/rules/service-component-patterns.md",
+    ".claude/rules/site-url-env-pattern.md",
+    ".claude/rules/git-destructive-commands.md",
+    ".claude/rules/public-docs-governance.md",
+    ".claude/rules/feature-flag-docs-landing-parity.md",
+    ".claude/rules/multi-brand-source-of-truth.md"
+  ],
+
+  "mcp": {
+    // ─── Z.AI Web Search Prime ─────────────────────────────────────────────
+    // Search MCP included in GLM Coding Plan (Lite/Pro/Max).
+    // Quota: Lite 100, Pro 1000, Max 4000 searches/month shared with readers.
+    // Exposes tool: webSearchPrime
+    "z-web-search": {
+      "type": "remote",
+      "url": "https://api.z.ai/api/mcp/web_search_prime/mcp",
+      "headers": {
+        "Authorization": "Bearer {env:ZAI_CODING_PLAN_API_KEY}"
+      },
+      "oauth": false,
+      "enabled": true,
+      "timeout": 15000
+    },
+
+    // ─── Context7 ──────────────────────────────────────────────────────────
+    // Up-to-date library documentation search.
+    // Free tier available; API key optional for higher rate limits.
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "{env:CONTEXT7_API_KEY}"
+      },
+      "oauth": false,
+      "enabled": true,
+      "timeout": 10000
+    },
+
+    // ─── Stripe MCP ────────────────────────────────────────────────────────
+    // Official Stripe MCP server for product/customer/subscription management.
+    // 22 tools: create_product, list_customers, create_subscription, etc.
+    // Uses Stripe test/live key via STRIPE_SECRET_KEY env var.
+    "stripe": {
+      "type": "local",
+      "command": ["npx", "-y", "@stripe/mcp", "--tools=all"],
+      "environment": {
+        "STRIPE_SECRET_KEY": "{env:STRIPE_SECRET_KEY}"
+      },
+      "enabled": false,
+      "timeout": 20000
+    },
+
+    // ─── Sentry MCP ────────────────────────────────────────────────────────
+    // Production error investigation with session replays.
+    // Uses OAuth flow: `opencode mcp auth sentry` on first use.
+    "sentry": {
+      "type": "remote",
+      "url": "https://mcp.sentry.dev/mcp",
+      "oauth": {},
+      "enabled": false,
+      "timeout": 15000
+    }
+  }
+}
