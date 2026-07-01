@@ -12,6 +12,13 @@
 > Feedback**, **Loading/Error states**, and **responsive/layout** sections below, plus
 > "no emoji as icons" (use lucide-react) and light/dark contrast parity. Prefer existing
 > shadcn components over custom markup (Alert, Empty, Skeleton, Badge, Separator, Sonner).
+>
+> **UPDATE 2 (monochrome design system).** The concrete visual language (monochrome
+> tokens, serif-accent headlines, flat cards, section anatomy, inverted CTA bands,
+> validation greps) is now specified by `.claude/rules/dockstash-design-system.md` —
+> that file is the visual source of truth and takes precedence over both the anti-Codex
+> table below and plain shadcn defaults. The `dockstash-design` skill packages it with
+> canonical snippets.
 
 ## MANDATORY REQUIREMENT
 

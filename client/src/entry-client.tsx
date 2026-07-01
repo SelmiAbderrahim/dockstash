@@ -11,6 +11,8 @@ import { MARKETING_LOCALE_PREFIXES } from '@features/marketing/useMarketingRoute
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
+// Instrument Serif italic — display accent word inside marketing headlines only.
+import '@fontsource/instrument-serif/400-italic.css';
 import './styles/tailwind.css';
 
 declare global {

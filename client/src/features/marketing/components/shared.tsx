@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { CheckIcon, ChevronDownIcon } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import {
   Table,
@@ -14,32 +15,43 @@ import type { FaqItem, ComparisonRow } from '../types';
 import { localeHref } from '../useMarketingRoute';
 
 // ── Shared layout primitives (marketing feature only) ───────────────────────
-// Reusable Tailwind class strings and small wrappers so the 13 marketing pages
+// Reusable Tailwind class strings and small wrappers so the marketing pages
 // stay visually consistent without duplicating utility strings everywhere.
+// Visual language: monochrome, flat 1px borders, generous whitespace, serif
+// italic accent words in display headlines. See
+// .claude/rules/dockstash-design-system.md before changing anything here.
 // All logical (RTL-safe) utilities: no pl-/pr-/text-left.
 
-/** Section band: vertical rhythm + a hairline divider between sections. */
-export const sectionClass = 'border-b border-border py-14 sm:py-20';
+/** Section band: generous vertical rhythm; separation by whitespace, not rules. */
+export const sectionClass = 'py-16 sm:py-24';
 
 /** Page hero title. */
 export const h1Class =
-  'mb-4 max-w-[20ch] text-4xl font-bold leading-tight tracking-tight sm:text-5xl';
+  'mb-5 text-balance text-4xl font-semibold leading-[1.08] tracking-tighter sm:text-5xl lg:text-6xl';
 
 /** Section heading. */
 export const h2Class =
-  'mb-4 text-2xl font-bold leading-tight tracking-tight sm:text-3xl';
+  'mb-4 text-balance text-3xl font-semibold leading-tight tracking-tighter sm:text-4xl';
 
 /** Answer-first extract block (AEO target). */
 export const answerClass =
-  'max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed';
+  'max-w-[720px] rounded-lg border bg-muted/50 p-5 text-lg leading-relaxed';
 
 /** Flat card surface, matching the shadcn Card visual language. */
 export const cardClass =
-  'rounded-xl border bg-card p-6 text-card-foreground shadow-sm';
+  'rounded-xl border bg-card p-6 text-card-foreground shadow-xs';
 
 /** Monospace code block. */
 export const codeClass =
-  'block overflow-x-auto whitespace-pre rounded-lg border bg-muted p-4 font-mono text-[13.5px] leading-relaxed [tab-size:2]';
+  'block overflow-x-auto whitespace-pre rounded-lg border bg-muted/50 p-4 font-mono text-[13.5px] leading-relaxed [tab-size:2]';
+
+/**
+ * Serif italic accent inside a display headline — the single decorative
+ * flourish the design system allows. One accent phrase per headline, max.
+ */
+export const Serif = ({ children }: { children: ReactNode }) => (
+  <em className="font-serif font-normal italic tracking-normal">{children}</em>
+);
 
 /** Centred, max-width content column. `wide` widens it for the hero. */
 export const Container = ({
@@ -64,9 +76,57 @@ export const Container = ({
 
 /** Small uppercase label above a heading — hierarchy, not decoration. */
 export const Eyebrow = ({ children }: { children: ReactNode }) => (
-  <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-wide text-primary">
+  <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-muted-foreground">
     {children}
   </span>
+);
+
+/** Circled-check inline trust item (hero micro-proof row). */
+export const CheckItem = ({ children }: { children: ReactNode }) => (
+  <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+    <span className="inline-flex size-4 items-center justify-center rounded-full border">
+      <CheckIcon className="size-2.5" aria-hidden="true" />
+    </span>
+    {children}
+  </span>
+);
+
+/** Flat feature card with a small bordered icon tile. */
+export const FeatureCard = ({
+  icon,
+  title,
+  children,
+}: {
+  icon: ReactNode;
+  title: ReactNode;
+  children: ReactNode;
+}) => (
+  <div className={cn(cardClass, 'space-y-3')}>
+    <span
+      aria-hidden="true"
+      className="inline-flex size-9 items-center justify-center rounded-md border bg-background [&_svg]:size-4"
+    >
+      {icon}
+    </span>
+    <h3 className="text-base font-semibold tracking-tight">{title}</h3>
+    <p className="text-sm leading-relaxed text-muted-foreground">{children}</p>
+  </div>
+);
+
+/**
+ * Full-bleed inverted CTA band (the dark closing section). Implemented by
+ * forcing the `dark` token scope, so it stays token-driven in both modes.
+ */
+export const InvertedBand = ({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) => (
+  <section className={cn('dark bg-background py-16 text-foreground sm:py-24', className)}>
+    {children}
+  </section>
 );
 
 /** Clickable navigational card (whole card is a link). */
@@ -83,7 +143,7 @@ export const LinkCard = ({
     to={to}
     className={cn(
       cardClass,
-      'block transition-colors hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+      'block transition-colors hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
     )}
   >
     <h3 className="mb-1 text-lg font-semibold tracking-tight">{title}</h3>
@@ -138,20 +198,31 @@ export const Breadcrumbs = ({
   </nav>
 );
 
+/**
+ * FAQ accordion. Native <details>/<summary> (not Radix) on purpose: the
+ * marketing surface is server-rendered and answers must exist in the HTML
+ * for crawlers and answer engines even while visually collapsed.
+ */
 export const FaqSection = ({ faqs }: { faqs: FaqItem[] }) => {
   if (faqs.length === 0) return null;
   return (
     <section className={sectionClass}>
-      <Container>
-        <h2 className={h2Class}>Frequently asked questions</h2>
-        <div className="mt-6 divide-y divide-border border-t border-border">
+      <Container className="max-w-3xl">
+        <h2 className={cn(h2Class, 'text-center')}>
+          Frequently asked <Serif>questions</Serif>
+        </h2>
+        <div className="mt-8 divide-y rounded-xl border bg-card px-5 shadow-xs">
           {faqs.map((faq) => (
-            <div key={faq.question} className="py-4">
-              <h3 className="mb-1.5 text-lg font-semibold tracking-tight">
+            <details key={faq.question} className="group py-1">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3.5 text-start font-medium marker:content-none [&::-webkit-details-marker]:hidden">
                 {faq.question}
-              </h3>
-              <p className="max-w-prose text-muted-foreground">{faq.answer}</p>
-            </div>
+                <ChevronDownIcon
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <p className="max-w-prose pb-4 text-muted-foreground">{faq.answer}</p>
+            </details>
           ))}
         </div>
       </Container>

@@ -1,4 +1,13 @@
 import { Link } from 'react-router-dom';
+import {
+  ArrowRightIcon,
+  BellRingIcon,
+  DatabaseIcon,
+  HardDriveIcon,
+  LockIcon,
+  ScanSearchIcon,
+  ShieldCheckIcon,
+} from 'lucide-react';
 import { Seo, schema } from '@shared/seo';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
@@ -6,9 +15,13 @@ import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { SERVICE_GUIDES } from '../content';
 import { Reveal } from '../useReveal';
 import {
+  CheckItem,
   Container,
   Eyebrow,
   FaqSection,
+  FeatureCard,
+  InvertedBand,
+  Serif,
   cardClass,
   codeClass,
   h1Class,
@@ -63,8 +76,56 @@ $ pg_dumpall -U "$POSTGRES_USER" \\
 // supports, sourced from the guide dataset.
 const SUPPORTED = Object.values(SERVICE_GUIDES).map((g) => g.serviceName);
 
-const stepBadgeClass =
-  'inline-flex size-7 items-center justify-center rounded-md border bg-muted text-sm font-bold text-primary';
+const FEATURES = [
+  {
+    icon: <ScanSearchIcon />,
+    title: 'Compose-aware detection',
+    body: 'Reads your Docker Compose stack and detects databases, volumes, and reverse-proxy config — no backup config to write.',
+  },
+  {
+    icon: <DatabaseIcon />,
+    title: 'Consistent database dumps',
+    body: 'Runs each engine’s native dump inside the running container. Never a torn live-file copy that fails on restore day.',
+  },
+  {
+    icon: <ShieldCheckIcon />,
+    title: 'Verified restore drills',
+    body: 'Restores the latest snapshot to a scratch location and diffs it against the source. Proof, not hope.',
+  },
+  {
+    icon: <HardDriveIcon />,
+    title: 'Your storage, no lock-in',
+    body: 'Standard encrypted Restic repositories on your own VPS over SSH. You can restore without Dockstash.',
+  },
+  {
+    icon: <LockIcon />,
+    title: 'Encrypted end to end',
+    body: 'AES-256-GCM secrets at rest, SSH host-key pinning on the backup channel, Restic encryption in the repo.',
+  },
+  {
+    icon: <BellRingIcon />,
+    title: 'Heartbeats & alerts',
+    body: 'Silent cron death is the classic backup failure. Dockstash alerts you when a backup stops happening.',
+  },
+];
+
+const STEPS = [
+  {
+    n: '01',
+    title: 'Scan',
+    body: 'Point Dockstash at a Compose project. It detects databases, volumes, and reverse-proxy config and proposes a plan you confirm.',
+  },
+  {
+    n: '02',
+    title: 'Back up',
+    body: 'Each database is dumped consistently from its container, then Restic snapshots the dump and files off-site, encrypted.',
+  },
+  {
+    n: '03',
+    title: 'Verify',
+    body: 'Automated restore drills restore to a scratch location and diff against the source, so you know it works before you need it.',
+  },
+];
 
 export const Home = () => {
   const { locale } = useMarketingRoute();
@@ -87,67 +148,73 @@ export const Home = () => {
         jsonLd={jsonLd}
       />
 
-      {/* Hero — problem + answer-first block (AEO), product visual alongside */}
-      <section className="border-b border-border py-16 sm:py-24">
-        <Container wide>
-          <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
-            <div>
-              <Eyebrow>Docker-aware backup &amp; restore</Eyebrow>
-              <h1 className={h1Class}>
-                Your Docker projects deserve backups that actually restore
-              </h1>
-              <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
-                {ANSWER}
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Button asChild size="lg">
-                  <Link to="/register">Start free</Link>
-                </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link to={href('/guides/backup-postgres-docker')}>
-                    See how it works
-                  </Link>
-                </Button>
-              </div>
-              <div
-                className="mt-7 flex flex-wrap items-center gap-2"
-                aria-label="Supported databases"
-              >
-                <span className="text-sm font-medium text-muted-foreground">
-                  Backs up:
-                </span>
-                {SUPPORTED.map((name) => (
-                  <Badge key={name} variant="outline" className="font-medium">
-                    {name}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            <div className="hidden min-w-0 lg:block" aria-hidden="true">
-              <code className={codeClass}>{SHOWCASE}</code>
-            </div>
+      {/* Hero — centered, dot-grid backdrop, answer-first block (AEO) below */}
+      <section className="pattern-dot-grid [background-position:center_top]">
+        <Container wide className="flex flex-col items-center pb-16 pt-20 text-center sm:pt-28">
+          <Eyebrow>Docker-aware backup &amp; restore</Eyebrow>
+          <h1 className={cn(h1Class, 'max-w-[18ch]')}>
+            Back Up Your <Serif>Entire</Serif>
+            <br />
+            Docker Project
+          </h1>
+          <p className="max-w-[560px] text-balance text-lg text-muted-foreground">
+            One click detects your volumes, databases, and config — and proves
+            the backup restores. No backup config required.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg">
+              <Link to="/register">
+                Start free
+                <ArrowRightIcon aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <Link to={href('/guides/backup-postgres-docker')}>
+                See how it works
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            <CheckItem>Consistent database dumps</CheckItem>
+            <CheckItem>Encrypted Restic snapshots</CheckItem>
+            <CheckItem>Verified restore drills</CheckItem>
+          </div>
+          <div
+            className="mt-10 flex flex-wrap items-center justify-center gap-2"
+            aria-label="Supported databases"
+          >
+            <span className="text-sm font-medium text-muted-foreground">
+              Backs up:
+            </span>
+            {SUPPORTED.map((name) => (
+              <Badge key={name} variant="outline" className="font-medium">
+                {name}
+              </Badge>
+            ))}
           </div>
         </Container>
       </section>
 
-      {/* Explain the detection — text only (the snippet lives in the hero) */}
-      <Reveal as="section" className={sectionClass}>
-        <Container wide>
-          <Eyebrow>From compose file to verified snapshot</Eyebrow>
-          <h2 className={h2Class}>Point it at a project. It figures out the rest.</h2>
-          <p className="max-w-[680px] text-lg text-muted-foreground">
-            No backup config to write. Dockstash reads your Compose stack,
-            detects each engine, runs the correct consistent dump for it, and
-            stores an encrypted off-site Restic snapshot — then proves it
-            restores with an automated drill.
+      {/* Answer-first extract (AEO target) */}
+      <section className="pb-4">
+        <Container className="max-w-3xl">
+          <p className="rounded-xl border bg-muted/50 p-6 text-center text-lg leading-relaxed">
+            {ANSWER}
           </p>
         </Container>
-      </Reveal>
+      </section>
 
       {/* Amplify — pain */}
       <Reveal as="section" className={sectionClass}>
         <Container>
-          <h2 className={h2Class}>Most homemade Docker backups are broken</h2>
+          <div className="mb-10 text-center">
+            <h2 className={h2Class}>
+              Most homemade Docker backups are <Serif>broken</Serif>
+            </h2>
+            <p className="mx-auto max-w-[560px] text-muted-foreground">
+              The failure is invisible until the day you need the restore.
+            </p>
+          </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
@@ -164,112 +231,128 @@ export const Home = () => {
               },
             ].map((card, i) => (
               <Reveal key={card.h} className={cn(cardClass, 'space-y-2')} index={i}>
-                <h3 className="text-lg font-semibold tracking-tight">{card.h}</h3>
-                <p className="text-muted-foreground">{card.p}</p>
+                <h3 className="text-base font-semibold tracking-tight">{card.h}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{card.p}</p>
               </Reveal>
             ))}
           </div>
         </Container>
       </Reveal>
 
-      {/* Solution — how it works */}
+      {/* Features — sticky heading beside a flat icon-tile grid */}
       <Reveal as="section" className={sectionClass}>
         <Container wide>
-          <Eyebrow>How it works</Eyebrow>
-          <h2 className={h2Class}>Scan, back up, verify</h2>
-          <ol className="grid list-none gap-4 p-0 sm:grid-cols-3">
-            <li className={cn(cardClass, 'space-y-2.5')}>
-              <span className={stepBadgeClass}>1</span>
-              <p>
-                <strong className="font-semibold text-foreground">Scan.</strong>{' '}
-                Dockstash reads your Compose project and detects databases,
-                volumes, and reverse-proxy config.
+          <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <h2 className={h2Class}>
+                Powerful Tools
+                <br />
+                For <Serif>Total Confidence</Serif>
+              </h2>
+              <p className="max-w-[420px] text-muted-foreground">
+                Everything you need to back up a Docker project correctly, keep
+                the data on storage you control, and know the restore works.
               </p>
-            </li>
-            <li className={cn(cardClass, 'space-y-2.5')}>
-              <span className={stepBadgeClass}>2</span>
-              <p>
-                <strong className="font-semibold text-foreground">
-                  Back up.
-                </strong>{' '}
-                Each database is dumped consistently from its container, then
-                Restic snapshots the dump + files off-site, encrypted.
-              </p>
-            </li>
-            <li className={cn(cardClass, 'space-y-2.5')}>
-              <span className={stepBadgeClass}>3</span>
-              <p>
-                <strong className="font-semibold text-foreground">
-                  Verify.
-                </strong>{' '}
-                Automated restore drills restore to a scratch location and diff
-                against source, so you know it works.
-              </p>
-            </li>
-          </ol>
-          <p className="mt-5">
-            <Link
-              to={href('/alternatives/backrest')}
-              className="text-primary underline-offset-4 hover:underline"
-            >
-              Compared to Backrest and DIY scripts →
-            </Link>
-          </p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {FEATURES.map((f, i) => (
+                <Reveal key={f.title} index={i}>
+                  <FeatureCard icon={f.icon} title={f.title}>
+                    {f.body}
+                  </FeatureCard>
+                </Reveal>
+              ))}
+            </div>
+          </div>
         </Container>
       </Reveal>
 
-      {/* Trust — differentiators */}
+      {/* Showcase — what a run actually does */}
       <Reveal as="section" className={sectionClass}>
-        <Container>
-          <Eyebrow>Why teams trust Dockstash</Eyebrow>
-          <h2 className={h2Class}>Verified restores, your storage, no lock-in</h2>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                h: 'Docker-aware',
-                p: 'Knows a Postgres container needs a pg_dumpall, not a file copy.',
-              },
-              {
-                h: 'Verified restores',
-                p: 'Automated restore-drill diffs prove your backups are real.',
-              },
-              {
-                h: 'Your storage, no lock-in',
-                p: 'Standard Restic repos on your own VPS. Restore without us.',
-              },
-              {
-                h: 'Encrypted secrets',
-                p: 'AES-256-GCM at rest; SSH host-key pinning on the backup channel.',
-              },
-            ].map((card, i) => (
-              <Reveal key={card.h} className={cn(cardClass, 'space-y-2')} index={i}>
-                <h3 className="text-lg font-semibold tracking-tight">{card.h}</h3>
-                <p className="text-muted-foreground">{card.p}</p>
-              </Reveal>
-            ))}
+        <Container wide>
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <h2 className={h2Class}>
+                Verified Snapshots in <Serif>Seconds</Serif>
+              </h2>
+              <p className="max-w-[460px] text-muted-foreground">
+                Dockstash reads your Compose stack, runs the correct consistent
+                dump for each engine, stores an encrypted off-site Restic
+                snapshot — then proves it restores with an automated drill.
+              </p>
+              <p className="mt-5">
+                <Link
+                  to={href('/alternatives/backrest')}
+                  className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
+                >
+                  Compared to Backrest and DIY scripts
+                  <ArrowRightIcon aria-hidden="true" className="size-4" />
+                </Link>
+              </p>
+            </div>
+            <code className={cn(codeClass, 'shadow-xs')}>{SHOWCASE}</code>
           </div>
+        </Container>
+      </Reveal>
+
+      {/* Three steps */}
+      <Reveal as="section" className={sectionClass}>
+        <Container wide>
+          <div className="mb-12 text-center">
+            <h2 className={h2Class}>
+              Three Steps to <Serif>Confidence</Serif>
+            </h2>
+            <p className="mx-auto max-w-[520px] text-muted-foreground">
+              We’ve simplified backups so you can focus on shipping your app.
+            </p>
+          </div>
+          <ol className="grid list-none gap-10 p-0 sm:grid-cols-3">
+            {STEPS.map((step) => (
+              <li key={step.n}>
+                <span
+                  aria-hidden="true"
+                  className="font-serif text-5xl italic text-muted-foreground/40"
+                >
+                  {step.n}
+                </span>
+                <span className="mb-3 mt-2 block h-px w-10 bg-border" aria-hidden="true" />
+                <h3 className="mb-2 text-lg font-semibold tracking-tight">
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {step.body}
+                </p>
+              </li>
+            ))}
+          </ol>
         </Container>
       </Reveal>
 
       <FaqSection faqs={HOME_FAQ} />
 
-      {/* Closing CTA */}
-      <section className="py-14 text-center sm:py-20">
-        <Container className="max-w-xl">
-          <h2 className={h2Class}>Back up your first Docker project in minutes</h2>
+      {/* Closing CTA — inverted band */}
+      <InvertedBand className="pattern-dot-grid text-center">
+        <Container className="max-w-2xl">
+          <h2 className={h2Class}>
+            Ready to Trust Your <Serif>Backups?</Serif>
+          </h2>
           <p className="mx-auto max-w-prose text-lg text-muted-foreground">
-            Free and fully self-hosted to start — no card, your storage, your keys.
+            Back up your first Docker project in minutes. Free and fully
+            self-hosted to start — no card, your storage, your keys.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">
-              <Link to="/register">Start free</Link>
+              <Link to="/register">
+                Start free
+                <ArrowRightIcon aria-hidden="true" />
+              </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link to={href('/pricing')}>See pricing</Link>
             </Button>
           </div>
         </Container>
-      </section>
+      </InvertedBand>
     </>
   );
 };

@@ -31,7 +31,7 @@ const competitorSlugs = Object.values(COMPETITORS).map((c) => c.slug);
 
 describe('marketing static pages', () => {
   it.each([
-    ['/', 'Docker projects deserve backups'],
+    ['/', 'Back Up Your'],
     ['/pricing', 'Simple pricing'],
     ['/alternatives', 'Dockstash alternatives'],
     ['/security', 'Security you can verify'],

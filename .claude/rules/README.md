@@ -2,16 +2,17 @@
 
 Governance rules for the MERN starter project. Each rule is a focused `.md` file in this directory.
 
-## Kept Rules (9)
+## Kept Rules (10)
 
 | Rule | Source | Summary |
 |------|--------|---------|
 | `git-destructive-commands.md` | ported as-is | Never run destructive git commands without explicit per-turn user confirmation |
+| `dockstash-design-system.md` | authored | Visual source of truth: monochrome shadcn tokens, serif-accent headlines, flat cards, inverted CTA bands (packaged as the `dockstash-design` skill) |
 | `environment-variables.md` | ported + adapted | Root `.env` only; MERN-typical vars (`MONGODB_URI`, `JWT_SECRET`, `PORT`, etc.) |
 | `site-url-env-pattern.md` | ported + adapted | Never hardcode URLs; derive from `CLIENT_URL` / `SERVER_URL` env vars |
 | `url-tab-state.md` | ported + adapted | Tab state MUST persist in `?tab=` query parameter |
 | `spec-driven-development.md` | ported + adapted | Spec-first workflow for features of meaningful complexity |
-| `ui-ux-patterns.md` | new (replaces `ui-ux-pro-max-patterns.md` + `uncodixify-ui.md`) | Anti-Codex design principles, accessibility, loading/error states |
+| `ui-ux-patterns.md` | new (replaces `ui-ux-pro-max-patterns.md` + `uncodixify-ui.md`) | Anti-Codex design principles, accessibility, loading/error states (visuals superseded by `dockstash-design-system.md`) |
 | `mern-feature-modules.md` | authored | `features/<name>` on client, `modules/<name>` on server; no cross-feature internal imports |
 | `mern-no-default-exports.md` | authored | Named exports only; no `export default` on components, actions, reducers, utilities |
 | `mern-mongoose-typed-schemas.md` | authored | Every Mongoose schema gets a type (JSDoc now, `InferSchemaType` on TS migration) |

@@ -87,7 +87,7 @@ export const MarketingLayout = () => {
         <Outlet />
       </main>
 
-      <footer className="py-12 text-muted-foreground">
+      <footer className="border-t py-12 text-muted-foreground">
         <Container className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
           <div>
             <BrandLogo className="inline-flex items-center gap-2 font-bold text-foreground" />
