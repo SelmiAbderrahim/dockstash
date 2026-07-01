@@ -89,6 +89,14 @@ export interface AssertProjectCapDeps {
 }
 
 /**
+ * Render a numeric cap for the client: a finite ceiling is returned as-is;
+ * the infinite (business) ceiling is surfaced as `null` ("unlimited").
+ */
+export function capForClient(projects: number): number | null {
+  return Number.isFinite(projects) ? projects : null;
+}
+
+/**
  * Enforce project cap before Backup-Now on a NEW active project (i.e. count
  * strictly greater than cap after this project would be counted). Throws 403
  * `billing.entitlements.projectLimitReached` when over cap.
@@ -103,9 +111,7 @@ export async function assertProjectCap(
   if (activeCount > resolved.entitlements.projects) {
     throw HttpError.forbidden(t('billing.entitlements.projectLimitReached'), {
       reason: 'projectLimitReached',
-      cap: Number.isFinite(resolved.entitlements.projects)
-        ? resolved.entitlements.projects
-        : null,
+      cap: capForClient(resolved.entitlements.projects),
       used: activeCount,
     });
   }
@@ -211,7 +217,9 @@ export async function clampRetentionDays(
 export function classifyCron(expr: string): ScheduleFrequency {
   const parts = expr.trim().split(/\s+/);
   if (parts.length !== 5) return 'any-cron';
+  /* c8 ignore next -- a 5-field split always yields a defined [0]; `?? ''` is defensive */
   const minute = parts[0] ?? '';
+  /* c8 ignore next -- a 5-field split always yields a defined [1]; `?? ''` is defensive */
   const hour = parts[1] ?? '';
   if (minute === '*' || minute.includes('*/') || minute.includes('-') || minute.includes(',')) {
     return 'any-cron';

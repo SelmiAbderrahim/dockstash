@@ -22,6 +22,7 @@ export const zh: DictionaryShape = {
     invalidCredentials: '邮箱或密码不正确。',
     emailAlreadyRegistered: '该邮箱已被注册。',
     passwordTooShort: '密码至少需要 8 个字符。',
+    emailNotVerified: '请先验证您的电子邮件地址以继续。',
   },
   auth: {
     login: {
@@ -40,6 +41,11 @@ export const zh: DictionaryShape = {
       title: '重置密码',
       submit: '重置',
       sent: '重置链接已发送到您的邮箱。',
+    },
+    verify: {
+      success: '您的电子邮件地址已验证。您现在可以使用 Dockstash。',
+      resent: '如果该账户需要验证，新的链接正在发送中。',
+      tokenInvalid: '该验证链接无效或已过期。',
     },
   },
   billing: {
@@ -73,6 +79,13 @@ export const zh: DictionaryShape = {
   email: {
     contact: {
       confirmation: '您的邮件已发送。我们会尽快与您联系。',
+    },
+    verifyEmail: {
+      subject: '验证您的电子邮件地址',
+      body:
+        '欢迎使用 Dockstash。请确认您的电子邮件地址以激活账户。\n\n' +
+        '请点击以下链接，或将其粘贴到浏览器中：\n\n{{verifyUrl}}\n\n' +
+        '此链接将在 24 小时后失效。如果您没有创建账户，请忽略此邮件。\n',
     },
     passwordReset: {
       subject: '重置您的密码',

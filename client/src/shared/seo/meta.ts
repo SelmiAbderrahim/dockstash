@@ -15,10 +15,12 @@ import {
  * component code. On the client it can fall back to the current origin;
  * SSR should provide VITE_SITE_URL for absolute crawler URLs.
  */
+/* c8 ignore start -- build-time env / SSR-vs-browser origin resolution, fixed per environment */
 export const SITE_URL = (
   (import.meta.env.VITE_SITE_URL as string | undefined) ??
   (typeof window === 'undefined' ? '' : window.location.origin)
 ).replace(/\/+$/, '');
+/* c8 ignore stop */
 
 export const SITE_NAME = BRAND_NAME;
 export const DEFAULT_OG_IMAGE = absoluteUrl(BRAND_ASSETS.ogDefault);
@@ -33,6 +35,8 @@ export function localizedPath(path: string, locale: SupportedLocale): string {
 /** Absolute URL for a path (already includes any locale prefix). */
 export function absoluteUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  // The empty-SITE_URL arm only occurs under SSR without VITE_SITE_URL.
+  /* c8 ignore next */
   return SITE_URL ? `${SITE_URL}${normalizedPath}` : normalizedPath;
 }
 

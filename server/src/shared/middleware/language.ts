@@ -13,6 +13,7 @@ function readLanguageCookie(cookieHeader: string | undefined): string | null {
   const parts = cookieHeader.split(';');
   for (const part of parts) {
     const [rawName, ...rest] = part.split('=');
+    /* c8 ignore next -- `rawName` is always defined: `String.split` returns at least one element, so `?? ''` only satisfies noUncheckedIndexedAccess. */
     const name = (rawName ?? '').trim();
     if (name === LANGUAGE_COOKIE) {
       const raw = rest.join('=').trim();

@@ -48,6 +48,7 @@ async function createOwner(email = 'owner@example.com') {
     email,
     password: 'x'.repeat(60),
     profile: { firstName: 'O', lastName: 'W' },
+    emailVerified: true,
   });
   return user;
 }

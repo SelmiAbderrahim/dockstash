@@ -60,11 +60,13 @@ export function ensureConfigured(fallback: Partial<ControllerDeps> = {}): void {
           'scheduler queue not configured — starting scheduler runtime failed',
         );
       },
+      /* c8 ignore start -- unreachable stubs: no handler queries the fallback queue */
       async activeCountForProject() {
         return 0;
       },
       async waitIdle() {},
       async close() {},
+      /* c8 ignore stop */
     } satisfies SchedulerQueue);
   deps = { queue, entitlements };
 }

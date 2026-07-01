@@ -6,7 +6,11 @@ import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { registerUser } from '../store/thunks';
 import { clearError } from '../store/slice';
-import { selectAuthError, selectAuthenticated } from '../store/selectors';
+import {
+  selectAuthError,
+  selectAuthenticated,
+  selectEmailVerified,
+} from '../store/selectors';
 
 const registerSchema = z.object({
   firstName: z.string().min(1, 'Please enter a first name'),
@@ -22,6 +26,7 @@ export const Register = () => {
   const navigate = useNavigate();
   const errorMessage = useAppSelector(selectAuthError);
   const authenticated = useAppSelector(selectAuthenticated);
+  const emailVerified = useAppSelector(selectEmailVerified);
 
   const {
     register,
@@ -40,9 +45,10 @@ export const Register = () => {
 
   useEffect(() => {
     if (authenticated) {
-      navigate('/dashboard');
+      // Unverified accounts must confirm their email before the product shell.
+      navigate(emailVerified ? '/dashboard' : '/verify-email');
     }
-  }, [authenticated, navigate]);
+  }, [authenticated, emailVerified, navigate]);
 
   const onSubmit = handleSubmit(async (values) => {
     await dispatch(registerUser(values));

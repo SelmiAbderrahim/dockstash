@@ -4,17 +4,20 @@ export interface AuthUserProfile {
 }
 
 export interface AuthUser {
-  _id: string;
+  _id?: string;
+  id?: string;
   email: string;
   role?: string;
+  emailVerified?: boolean;
   profile?: AuthUserProfile;
 }
 
 export interface AuthState {
   authenticated: boolean;
+  emailVerified: boolean;
+  pendingVerificationEmail: string;
   error: string;
   message: string;
-  content: string;
 }
 
 export interface LoginRequest {
@@ -36,8 +39,4 @@ export interface AuthResponse {
 
 export interface MessageResponse {
   message: string;
-}
-
-export interface ProtectedResponse {
-  content: string;
 }

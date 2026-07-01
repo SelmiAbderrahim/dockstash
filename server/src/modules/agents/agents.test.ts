@@ -30,6 +30,7 @@ async function seedUser(email: string): Promise<{ id: string; token: string }> {
     email,
     password: 'x'.repeat(60),
     profile: { firstName: 'A', lastName: 'G' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }

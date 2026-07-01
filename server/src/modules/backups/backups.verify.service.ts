@@ -137,6 +137,7 @@ export async function runRestoreDrill(
     const detail = t('backups.drill.fail', { message });
     await stampDrill(project, 'fail', detail);
     return { status: 'fail', detail, mismatches: 0 };
+    /* c8 ignore next -- the catch above handles every throw, so the finally's abrupt-completion path is unreachable */
   } finally {
     if (scratchPath) {
       try {

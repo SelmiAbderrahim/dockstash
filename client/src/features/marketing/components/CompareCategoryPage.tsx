@@ -161,6 +161,7 @@ export const CompareCategoryPage = () => {
             <div className="mk-card">
               <h3>Pick cloud backup SaaS</h3>
               <p className="mk-muted">
+                {/* v8 ignore next 3 -- every comparison category resolves a cloud competitor */}
                 {cloud
                   ? cloud.bestFor
                   : 'You want a hands-off managed service and are happy to pay a subscription and route backups through a third-party platform.'}

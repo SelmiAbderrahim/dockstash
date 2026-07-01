@@ -1,11 +1,13 @@
 export { authReducer } from './store/slice';
 export { authRoutes } from './routes';
 export { RequireAuth } from './components/RequireAuth';
+export { RequireVerified } from './components/RequireVerified';
 export {
   selectAuthenticated,
+  selectEmailVerified,
+  selectPendingVerificationEmail,
   selectAuthError,
   selectAuthMessage,
-  selectAuthContent,
 } from './store/selectors';
-export { fetchProtected, logoutUser } from './store/thunks';
+export { logoutUser, verifyEmail, resendVerification } from './store/thunks';
 export type { AuthUser, AuthState } from './types';

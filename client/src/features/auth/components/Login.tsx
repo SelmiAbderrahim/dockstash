@@ -7,7 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { loginUser } from '../store/thunks';
 import { clearError } from '../store/slice';
-import { selectAuthError, selectAuthenticated } from '../store/selectors';
+import {
+  selectAuthError,
+  selectAuthenticated,
+  selectEmailVerified,
+} from '../store/selectors';
 
 const buildLoginSchema = (
   requiredEmail: string,
@@ -25,6 +29,7 @@ export const Login = () => {
   const navigate = useNavigate();
   const errorMessage = useAppSelector(selectAuthError);
   const authenticated = useAppSelector(selectAuthenticated);
+  const emailVerified = useAppSelector(selectEmailVerified);
   const { t } = useTranslation(['auth', 'errors']);
 
   const loginSchema = buildLoginSchema(
@@ -49,9 +54,9 @@ export const Login = () => {
 
   useEffect(() => {
     if (authenticated) {
-      navigate('/dashboard');
+      navigate(emailVerified ? '/dashboard' : '/verify-email');
     }
-  }, [authenticated, navigate]);
+  }, [authenticated, emailVerified, navigate]);
 
   const onSubmit = handleSubmit(async (values) => {
     await dispatch(loginUser(values));

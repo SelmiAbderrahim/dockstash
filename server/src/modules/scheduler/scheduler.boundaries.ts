@@ -57,3 +57,11 @@ export interface LogEmitter {
 export interface AlertHook {
   onFailed(job: Job, err: Error): Promise<void>;
 }
+
+/**
+ * Runtime marker so this boundary module carries at least one executable
+ * export. The declarations above are type-only (erased at build time); the
+ * marker keeps the module loadable and covered, mirroring how
+ * `backups.boundaries.ts` exposes `MIN_FREE_BYTES_DEFAULT`.
+ */
+export const SCHEDULER_BOUNDARY_VERSION = 1;

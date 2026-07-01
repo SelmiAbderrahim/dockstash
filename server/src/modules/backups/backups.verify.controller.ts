@@ -43,6 +43,7 @@ function assertConfigured(): VerifyControllerDeps {
 
 export const check: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
+  /* c8 ignore next -- strict body-parser always yields an object body, so the ?? {} fallback never fires */
   const { readDataSubset } = runCheckSchema.parse(req.body ?? {});
   const cfg = assertConfigured();
   const base = cfg.makeCheckDeps();

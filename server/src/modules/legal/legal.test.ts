@@ -1,9 +1,30 @@
 import { describe, expect, it, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+import request from 'supertest';
+import jwt from 'jsonwebtoken';
+import { createApp } from '../../app.js';
+import { env } from '../../config/env.js';
 import { startMemoryMongo, stopMemoryMongo, clearCollections } from '../../shared/testing/mongo.js';
 import { User } from '../users/index.js';
 import { Project } from '../backups/index.js';
+import type { NextFunction, Request, Response } from 'express';
 import { exportUserData, scheduleAccountDeletion, purgeAccount } from './legal.service.js';
+import {
+  configureLegalController,
+  resetLegalController,
+  exportMyData,
+  deleteMyAccount,
+} from './legal.controller.js';
 import { encryptSecret } from '../../shared/crypto/index.js';
+
+/** Drives an asyncHandler-wrapped controller and resolves with the value passed to next(). */
+function invokeHandler(
+  handler: (req: Request, res: Response, next: NextFunction) => void,
+  req: Partial<Request>,
+): Promise<unknown> {
+  return new Promise((resolve) => {
+    handler(req as Request, {} as unknown as Response, ((err?: unknown) => resolve(err)) as NextFunction);
+  });
+}
 
 beforeAll(() => startMemoryMongo());
 afterAll(() => stopMemoryMongo());
@@ -52,6 +73,39 @@ describe('legal / GDPR', () => {
     });
   });
 
+  describe('exportUserData branch coverage', () => {
+    it('handles a user with no profile / language and a project with status fields set', async () => {
+      const user = await User.create({ email: 'bare@example.com', password: 'hash' });
+      await Project.create({
+        owner: user._id,
+        name: 'withstatus',
+        path: '/var/www/withstatus',
+        plan: { paths: ['/var/www/withstatus'], databases: [], configs: [] },
+        repoPasswordEnc: encryptSecret('pw'),
+        lastStatus: 'success',
+        lastRunAt: new Date('2026-05-05T00:00:00Z'),
+      });
+      const data = await exportUserData(user._id.toString());
+      expect(data.account.firstName).toBe('');
+      expect(data.account.lastName).toBe('');
+      expect(data.account.language).toBeNull();
+      expect(data.projects[0]?.lastStatus).toBe('success');
+      expect(data.projects[0]?.lastRunAt).toBe('2026-05-05T00:00:00.000Z');
+    });
+
+    it('serializes a user language and account timestamps when present', async () => {
+      const user = await User.create({
+        email: 'lang@example.com',
+        password: 'hash',
+        profile: { firstName: 'Li', lastName: 'L' },
+        language: 'fr',
+      });
+      const data = await exportUserData(user._id.toString());
+      expect(data.account.language).toBe('fr');
+      expect(data.account.createdAt).toBeTypeOf('string');
+    });
+  });
+
   describe('scheduleAccountDeletion', () => {
     it('marks the user, enqueues a purge, and sends the warning email', async () => {
       const { userId } = await seedUserAndProjects();
@@ -89,6 +143,74 @@ describe('legal / GDPR', () => {
       await expect(
         scheduleAccountDeletion(userId, { graceHours: 24, queue }),
       ).rejects.toMatchObject({ status: 409 });
+    });
+
+    it('404s a missing user', async () => {
+      const queue = { enqueuePurge: vi.fn(async () => undefined) };
+      await expect(
+        scheduleAccountDeletion('507f1f77bcf86cd799439011', { graceHours: 24, queue }),
+      ).rejects.toMatchObject({ status: 404 });
+    });
+
+    it('keeps the schedule intact when the warning email fails (non-fatal)', async () => {
+      // User with no profile → also exercises the `firstName ?? ''` fallback.
+      const user = await User.create({ email: 'nomail@example.com', password: 'hash' });
+      const queue = { enqueuePurge: vi.fn(async () => undefined) };
+      const mailer = {
+        sendDeletionWarning: vi.fn(async () => {
+          throw new Error('smtp down');
+        }),
+      };
+      const result = await scheduleAccountDeletion(user._id.toString(), {
+        graceHours: 24,
+        queue,
+        mailer,
+      });
+      expect(result.warningEmailQueued).toBe(false);
+      expect(queue.enqueuePurge).toHaveBeenCalledOnce();
+      const reloaded = await User.findById(user._id);
+      expect(reloaded?.deletionScheduledAt).toBeInstanceOf(Date);
+      // Warning stamp not written because the send failed.
+      expect(reloaded?.deletionWarningSentAt ?? null).toBeNull();
+    });
+
+    it('prefers an explicit locale over the user language for the warning', async () => {
+      const user = await User.create({
+        email: 'loc@example.com',
+        password: 'hash',
+        profile: { firstName: 'Lo', lastName: 'C' },
+        language: 'de',
+      });
+      const queue = { enqueuePurge: vi.fn(async () => undefined) };
+      const mailer = { sendDeletionWarning: vi.fn(async () => undefined) };
+      await scheduleAccountDeletion(user._id.toString(), {
+        graceHours: 24,
+        queue,
+        mailer,
+        locale: 'es',
+      });
+      expect(mailer.sendDeletionWarning).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: 'es', firstName: 'Lo' }),
+      );
+    });
+
+    it('falls back to the user language for the warning locale when none is passed', async () => {
+      const user = await User.create({
+        email: 'loc2@example.com',
+        password: 'hash',
+        profile: { firstName: 'Lo', lastName: 'C' },
+        language: 'ru',
+      });
+      const queue = { enqueuePurge: vi.fn(async () => undefined) };
+      const mailer = { sendDeletionWarning: vi.fn(async () => undefined) };
+      await scheduleAccountDeletion(user._id.toString(), {
+        graceHours: 24,
+        queue,
+        mailer,
+      });
+      expect(mailer.sendDeletionWarning).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: 'ru' }),
+      );
     });
   });
 
@@ -149,5 +271,137 @@ describe('legal / GDPR', () => {
       const res = await purgeAccount('507f1f77bcf86cd799439011');
       expect(res.reason).toBe('notFound');
     });
+
+    it('surfaces a 500 when the restic repo purge fails', async () => {
+      const { userId } = await seedUserAndProjects();
+      await User.updateOne(
+        { _id: userId },
+        { deletionScheduledAt: new Date(Date.now() - 1000) },
+      );
+      const purger = {
+        purgeRepo: vi.fn(async () => {
+          throw new Error('restic forget failed');
+        }),
+      };
+      await expect(
+        purgeAccount(userId, {
+          resticRepoPurger: purger,
+          now: () => new Date(),
+        }),
+      ).rejects.toMatchObject({ status: 500 });
+    });
+
+    it('surfaces a 500 when the restic repo purge throws a non-Error', async () => {
+      const { userId } = await seedUserAndProjects();
+      await User.updateOne(
+        { _id: userId },
+        { deletionScheduledAt: new Date(Date.now() - 1000) },
+      );
+      const purger = {
+        purgeRepo: vi.fn(async () => {
+          throw 'restic forget string failure';
+        }),
+      };
+      await expect(
+        purgeAccount(userId, { resticRepoPurger: purger }),
+      ).rejects.toMatchObject({ status: 500 });
+    });
+
+    it('purges without a restic purger configured', async () => {
+      const { userId, projectId } = await seedUserAndProjects();
+      await User.updateOne(
+        { _id: userId },
+        { deletionScheduledAt: new Date(Date.now() - 1000) },
+      );
+      // No resticRepoPurger → exercises the `if (deps.resticRepoPurger)` false path.
+      const res = await purgeAccount(userId);
+      expect(res.ok).toBe(true);
+      expect(res.projectsPurged).toBe(1);
+      expect(await Project.findById(projectId)).toBeNull();
+    });
+  });
+
+  describe('HTTP controller (/api/legal)', () => {
+    const app = createApp();
+    afterEachController();
+
+    function token(userId: string): string {
+      return `JWT ${jwt.sign({ _id: userId, id: userId }, env.JWT_SECRET, { expiresIn: '1h' })}`;
+    }
+
+    it('POST /export returns the user data envelope', async () => {
+      const { userId } = await seedUserAndProjects();
+      const res = await request(app)
+        .post('/api/legal/export')
+        .set('Authorization', token(userId));
+      expect(res.status).toBe(200);
+      expect(res.body.account.email).toBe('gdpr@example.com');
+      expect(res.body.projects).toHaveLength(1);
+    });
+
+    it('POST /delete-account returns 500 when the purge queue is not configured', async () => {
+      const { userId } = await seedUserAndProjects();
+      resetLegalController();
+      const res = await request(app)
+        .post('/api/legal/delete-account')
+        .set('Authorization', token(userId));
+      expect(res.status).toBe(500);
+    });
+
+    it('POST /delete-account schedules deletion (202) once configured', async () => {
+      const { userId } = await seedUserAndProjects();
+      const enqueued: unknown[] = [];
+      configureLegalController({
+        queue: { enqueuePurge: async (payload) => void enqueued.push(payload) },
+      });
+      const res = await request(app)
+        .post('/api/legal/delete-account')
+        .set('Authorization', token(userId));
+      expect(res.status).toBe(202);
+      expect(enqueued).toHaveLength(1);
+    });
+  });
+
+  describe('controller guard branches (no req.user / no translator)', () => {
+    beforeEach(() => resetLegalController());
+
+    const translator = ((k: string) => `T:${k}`) as unknown as Request['t'];
+
+    it('exportMyData throws 401 when unauthenticated and no translator is present', async () => {
+      const err = await invokeHandler(exportMyData, {});
+      expect(err).toMatchObject({ status: 401 });
+    });
+
+    it('exportMyData translates the 401 message when unauthenticated and a translator is present', async () => {
+      const err = await invokeHandler(exportMyData, { t: translator });
+      expect(err).toMatchObject({ status: 401, message: 'T:errors.unauthorized' });
+    });
+
+    it('deleteMyAccount throws 401 when unauthenticated and no translator is present', async () => {
+      const err = await invokeHandler(deleteMyAccount, {});
+      expect(err).toMatchObject({ status: 401 });
+    });
+
+    it('deleteMyAccount translates the 401 message when unauthenticated and a translator is present', async () => {
+      const err = await invokeHandler(deleteMyAccount, { t: translator });
+      expect(err).toMatchObject({ status: 401, message: 'T:errors.unauthorized' });
+    });
+
+    it('deleteMyAccount falls back to the literal message when the queue is unconfigured and no translator is present', async () => {
+      resetLegalController();
+      const err = await invokeHandler(deleteMyAccount, {
+        user: { id: '507f1f77bcf86cd799439011' } as Express.User,
+      });
+      expect(err).toMatchObject({
+        status: 500,
+        message: 'Deletion queue is not configured.',
+      });
+    });
   });
 });
+
+function afterEachController(): void {
+  // Reset injected deps after each controller test so leakage can't mask a
+  // missing-configuration path in another test.
+  beforeEach(() => resetLegalController());
+}

@@ -277,6 +277,7 @@ async function markStatus(
     project.lastSuccessAt = now;
     project.lastHeartbeatAlertAt = null;
     // Each successful run adds a snapshot — feeds per-project metering.
+    /* c8 ignore next -- schema defaults snapshotCount to 0 so the nullish fallback never fires */
     project.snapshotCount = (project.snapshotCount ?? 0) + 1;
   }
   await project.save();

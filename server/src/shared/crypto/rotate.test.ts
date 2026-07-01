@@ -1,7 +1,14 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import { encryptSecret, decryptSecret, type EncryptedSecret } from './index.js';
 import { rotateStore, type RotationTarget, type RotationStore } from './rotate.js';
-import { __resetKeyRegistryForTests, __restoreKeyRegistryForTests } from './keyRegistry.js';
+import {
+  __resetKeyRegistryForTests,
+  __restoreKeyRegistryForTests,
+  getCurrentKeyVersion,
+  getKey,
+  registerKey,
+  setCurrentKeyVersion,
+} from './keyRegistry.js';
 
 const KEY_V1 = Buffer.alloc(32, 1);
 const KEY_V2 = Buffer.alloc(32, 2);
@@ -56,6 +63,19 @@ describe('rotateStore', () => {
     const result = await rotateStore(store, 2);
     expect(result.rotated).toBe(0);
     expect(result.skipped).toBe(1);
+  });
+
+  it('registers keys and moves the current version, rejecting bad input', () => {
+    __resetKeyRegistryForTests({ keys: [{ version: 1, key: KEY_V1 }], currentVersion: 1 });
+    expect(getCurrentKeyVersion()).toBe(1);
+    expect(getKey(1).equals(KEY_V1)).toBe(true);
+    expect(() => getKey(9)).toThrow(/No key registered/);
+
+    expect(() => registerKey(2, Buffer.alloc(4))).toThrow(/must be/);
+    registerKey(2, KEY_V2);
+    expect(() => setCurrentKeyVersion(3)).toThrow(/not registered/);
+    setCurrentKeyVersion(2);
+    expect(getCurrentKeyVersion()).toBe(2);
   });
 
   it('stops on the first failure and reports failedAt (rollback signal)', async () => {

@@ -9,10 +9,16 @@ export const Header = () => {
   const links = authenticated ? (
     <>
       <li>
-        <Link to="/">Home</Link>
+        <Link to="/dashboard">Dashboard</Link>
       </li>
       <li>
-        <Link to="/dashboard">Dashboard</Link>
+        <Link to="/projects">Projects</Link>
+      </li>
+      <li>
+        <Link to="/snapshots">Snapshots</Link>
+      </li>
+      <li>
+        <Link to="/settings">Settings</Link>
       </li>
       <li>
         <Link to="/logout">Logout</Link>

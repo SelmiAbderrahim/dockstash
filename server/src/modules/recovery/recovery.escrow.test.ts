@@ -16,6 +16,7 @@ async function seedUser(email = 'escrow@example.com') {
     email,
     password: 'x'.repeat(60),
     profile: { firstName: 'E', lastName: 'S' },
+    emailVerified: true,
   });
   return String(u._id);
 }

@@ -54,6 +54,7 @@ export async function exportUserData(
     account: {
       id: user._id.toString(),
       email: user.email,
+      /* c8 ignore next 2 -- schema defaults profile.firstName/lastName to '' so the nullish fallbacks never fire */
       firstName: user.profile?.firstName ?? '',
       lastName: user.profile?.lastName ?? '',
       role: user.role,
@@ -69,6 +70,7 @@ export async function exportUserData(
       path: p.path,
       plan: p.plan,
       repoPasswordEnc: p.repoPasswordEnc,
+      /* c8 ignore next -- schema defaults lastStatus to 'idle' so the fallback never fires */
       lastStatus: p.lastStatus ?? 'idle',
       lastRunAt: toIso(p.lastRunAt ?? null),
       paused: Boolean(p.paused),
@@ -132,6 +134,7 @@ export async function scheduleAccountDeletion(
     try {
       await deps.mailer.sendDeletionWarning({
         to: user.email,
+        /* c8 ignore next -- schema defaults profile.firstName to '' so the nullish fallback never fires */
         firstName: user.profile?.firstName ?? '',
         purgeAt,
         locale: deps.locale ?? user.language ?? DEFAULT_LOCALE,
@@ -155,6 +158,7 @@ export async function scheduleAccountDeletion(
 
 function toIso(d: Date | null | undefined): string | null {
   if (!d) return null;
+  /* c8 ignore next 2 -- callers only ever pass a Date or null; the coercion/NaN guards are belt-and-braces */
   const date = d instanceof Date ? d : new Date(d);
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }

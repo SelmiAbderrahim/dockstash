@@ -8,6 +8,7 @@ import {
 import {
   deliverContactForm,
   deliverPasswordResetEmail,
+  deliverVerificationEmail,
   deliverPasswordChangedEmail,
   deliverWelcomeEmail,
   deliverPaymentReceiptEmail,
@@ -182,6 +183,23 @@ describe('communication.service localized senders', () => {
     });
   });
 
+  it('deliverVerificationEmail carries the verify URL in the caller locale', async () => {
+    await withResendConfigured(async () => {
+      await deliverVerificationEmail('u@x', 'https://app.test/verify-email/abc', 'de');
+      expect(seen[0]?.subject).toContain('E-Mail');
+      expect(seen[0]?.text).toContain('https://app.test/verify-email/abc');
+    });
+  });
+
+  it('deliverVerificationEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
+    await withResendConfigured(async () => {
+      seen.length = 0;
+      await deliverVerificationEmail('u@x', 'https://app.test/verify-email/xyz');
+      expect(seen[0]?.subject).toBe('Verify your email address');
+      expect(seen[0]?.text).toContain('https://app.test/verify-email/xyz');
+    });
+  });
+
   it('deliverPasswordChangedEmail renders in the caller locale', async () => {
     await withResendConfigured(async () => {
       await deliverPasswordChangedEmail('u@x', 'zh');
@@ -221,6 +239,30 @@ describe('communication.service localized senders', () => {
       });
       expect(seen[0]?.subject).toMatch(/Problema/);
       expect(seen[0]?.text).toContain('2027-01-01');
+    });
+  });
+
+  it('deliverWelcomeEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
+    await withResendConfigured(async () => {
+      seen.length = 0;
+      await deliverWelcomeEmail({ email: 'u@x', name: 'Alex' });
+      expect(seen[0]?.subject).toBe('Welcome to Dockstash');
+    });
+  });
+
+  it('deliverPaymentReceiptEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
+    await withResendConfigured(async () => {
+      seen.length = 0;
+      await deliverPaymentReceiptEmail({ email: 'u@x', amount: '$5', plan: 'pro' });
+      expect(seen[0]?.text).toContain('$5');
+    });
+  });
+
+  it('deliverDunningEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
+    await withResendConfigured(async () => {
+      seen.length = 0;
+      await deliverDunningEmail({ email: 'u@x', plan: 'pro', graceEndsAt: '2027-02-02' });
+      expect(seen[0]?.text).toContain('2027-02-02');
     });
   });
 

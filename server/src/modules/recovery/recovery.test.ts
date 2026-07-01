@@ -44,6 +44,7 @@ async function seedUser(email: string): Promise<{ id: string; token: string }> {
     email,
     password: 'irrelevant',
     profile: { firstName: 'R', lastName: 'U' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }

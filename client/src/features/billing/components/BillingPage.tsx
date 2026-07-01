@@ -50,6 +50,9 @@ export const BillingPage = () => {
   };
 
   const submitSelection = () => {
+    // The submit button is `disabled` whenever `keepIds` is empty, so this
+    // early-return is a defensive guard that cannot be reached through the UI.
+    /* v8 ignore next */
     if (keepIds.length === 0) return;
     void dispatch(selectProjectsThunk({ keepIds })).then(() => {
       void dispatch(loadUsage());

@@ -22,6 +22,7 @@ export const es: DictionaryShape = {
     invalidCredentials: 'Correo o contraseña no válidos.',
     emailAlreadyRegistered: 'Ese correo ya está registrado.',
     passwordTooShort: 'La contraseña debe tener al menos 8 caracteres.',
+    emailNotVerified: 'Verifica tu dirección de correo electrónico para continuar.',
   },
   auth: {
     login: {
@@ -40,6 +41,11 @@ export const es: DictionaryShape = {
       title: 'Restablecer contraseña',
       submit: 'Restablecer',
       sent: 'Se envió un enlace de restablecimiento a tu correo.',
+    },
+    verify: {
+      success: 'Tu dirección de correo ha sido verificada. Ya puedes usar Dockstash.',
+      resent: 'Si esa cuenta necesita verificación, un nuevo enlace está en camino.',
+      tokenInvalid: 'Ese enlace de verificación no es válido o ha expirado.',
     },
   },
   billing: {
@@ -73,6 +79,13 @@ export const es: DictionaryShape = {
   email: {
     contact: {
       confirmation: 'Tu mensaje ha sido enviado. Te contactaremos pronto.',
+    },
+    verifyEmail: {
+      subject: 'Verifica tu dirección de correo electrónico',
+      body:
+        'Bienvenido a Dockstash. Confirma tu dirección de correo para activar tu cuenta.\n\n' +
+        'Haz clic en el siguiente enlace o pégalo en tu navegador:\n\n{{verifyUrl}}\n\n' +
+        'Este enlace caduca en 24 horas. Si no creaste una cuenta, ignora este correo.\n',
     },
     passwordReset: {
       subject: 'Restablece tu contraseña',

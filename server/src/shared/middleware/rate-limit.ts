@@ -2,7 +2,7 @@ import type { Request, RequestHandler, Response } from 'express';
 import rateLimit, { type Options } from 'express-rate-limit';
 import { env } from '../../config/env.js';
 
-function handler(_req: Request, res: Response): void {
+export function rateLimitHandler(_req: Request, res: Response): void {
   const t = (res.req as Request & { t?: (k: string) => string }).t;
   const message = t ? t('security.error.rateLimited') : 'Too many requests. Try again later.';
   res.status(429).json({ error: message });
@@ -11,7 +11,7 @@ function handler(_req: Request, res: Response): void {
 const commonOptions: Partial<Options> = {
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  handler,
+  handler: rateLimitHandler,
 };
 
 export interface RateLimitOverrides {

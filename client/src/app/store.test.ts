@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { store } from './store';
+import { store, makeStore } from './store';
 
 describe('store after demo strip', () => {
   const state = store.getState();
@@ -15,5 +15,10 @@ describe('store after demo strip', () => {
     expect(state).not.toHaveProperty('pages');
     expect(state).not.toHaveProperty('sales');
     expect(state).not.toHaveProperty('template');
+  });
+
+  it('makeStore hydrates from preloaded state when provided', () => {
+    const hydrated = makeStore({ auth: { ...state.auth, error: 'preloaded' } });
+    expect(hydrated.getState().auth.error).toBe('preloaded');
   });
 });

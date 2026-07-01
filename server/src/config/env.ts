@@ -79,10 +79,12 @@ export const envSchema = z.object({
 
 const parsed = envSchema.safeParse(process.env);
 
+/* c8 ignore start -- startup misconfig guard: exits the process, not unit-testable */
 if (!parsed.success) {
   console.error('Invalid environment variables:', parsed.error.flatten().fieldErrors);
   process.exit(1);
 }
+/* c8 ignore stop */
 
 export const env = parsed.data;
 export type Env = typeof env;

@@ -44,6 +44,7 @@ import {
 } from './backups.service.js';
 import { serializeProject } from './backups.serialize.js';
 import { Project } from './backups.model.js';
+import type { ProjectHydrated } from './backups.model.js';
 import type { DockerClient, ResticRunner } from './backups.boundaries.js';
 import { verifyKeyParity } from '../../shared/i18n/index.js';
 
@@ -58,6 +59,7 @@ async function seedUser(email = 'owner@test.com'): Promise<{ id: string; token: 
     email,
     password: 'irrelevant-hashed',
     profile: { firstName: 'O', lastName: 'W' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }
@@ -317,6 +319,52 @@ describe('backups: adapters', () => {
   });
 });
 
+describe('backups: serialize optional fields', () => {
+  const base = {
+    _id: { toString: () => 'pid' },
+    owner: { toString: () => 'oid' },
+    name: 'n',
+    path: '/var/www/n',
+    plan: { paths: ['/var/www/n'], databases: [], configs: [] },
+    lastStatus: 'success',
+    lastError: '',
+    createdAt: new Date('2027-01-01T00:00:00Z'),
+    updatedAt: new Date('2027-01-01T00:00:00Z'),
+  };
+
+  it('renders the truthy/defined branch of every optional date, status, and detail field', () => {
+    const at = new Date('2027-03-03T00:00:00Z');
+    const full = serializeProject({
+      ...base,
+      lastRunAt: at,
+      lastCheckAt: at,
+      lastCheckStatus: 'pass',
+      lastCheckDetail: 'checked ok',
+      lastDrillAt: at,
+      lastDrillStatus: 'fail',
+      lastDrillDetail: 'drill detail',
+    } as unknown as ProjectHydrated);
+    expect(full.lastRunAt).toBe('2027-03-03T00:00:00.000Z');
+    expect(full.lastCheckAt).toBe('2027-03-03T00:00:00.000Z');
+    expect(full.lastCheckStatus).toBe('pass');
+    expect(full.lastCheckDetail).toBe('checked ok');
+    expect(full.lastDrillAt).toBe('2027-03-03T00:00:00.000Z');
+    expect(full.lastDrillStatus).toBe('fail');
+    expect(full.lastDrillDetail).toBe('drill detail');
+  });
+
+  it('renders the null/empty branch when every optional field is absent', () => {
+    const empty = serializeProject(base as unknown as ProjectHydrated);
+    expect(empty.lastRunAt).toBeNull();
+    expect(empty.lastCheckAt).toBeNull();
+    expect(empty.lastCheckStatus).toBeNull();
+    expect(empty.lastCheckDetail).toBe('');
+    expect(empty.lastDrillAt).toBeNull();
+    expect(empty.lastDrillStatus).toBeNull();
+    expect(empty.lastDrillDetail).toBe('');
+  });
+});
+
 describe('backups: injection guard', () => {
   it('shell metacharacters in env become literal argv tokens', () => {
     const evil = '$(rm -rf /);`whoami`';
@@ -459,6 +507,19 @@ describe('backups: service + persistence', () => {
   });
   beforeEach(async () => {
     await clearCollections();
+  });
+
+  it('applies the plan default factory when plan is omitted', async () => {
+    const { id } = await seedUser('factory@test.com');
+    const project = await Project.create({
+      owner: id,
+      name: 'no-plan',
+      path: '/var/www/np',
+      repoPasswordEnc: { ciphertext: 'x', iv: 'y', authTag: 'z', keyVersion: 1 },
+    });
+    expect(project.plan.paths).toEqual([]);
+    expect(project.plan.databases).toEqual([]);
+    expect(project.plan.configs).toEqual([]);
   });
 
   it('createProject rejects a bad path defensively', async () => {

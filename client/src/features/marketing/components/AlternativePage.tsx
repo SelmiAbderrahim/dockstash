@@ -14,6 +14,7 @@ export const AlternativePage = () => {
   const { slug } = useParams();
   const { locale } = useMarketingRoute();
   const href = (path: string) => localeHref(path, locale);
+  /* v8 ignore next -- `slug` is guaranteed by the :slug route param; the undefined arm is unreachable */
   const competitor = slug ? getCompetitor(slug) : undefined;
 
   if (!competitor) {

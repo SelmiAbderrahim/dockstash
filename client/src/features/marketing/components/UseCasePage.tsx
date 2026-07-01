@@ -20,6 +20,7 @@ export const UseCasePage = () => {
   const { entry } = useParams();
   const { locale } = useMarketingRoute();
   const href = (path: string) => localeHref(path, locale);
+  /* v8 ignore next 2 -- `entry` is route-guaranteed; the empty/undefined arms are unreachable */
   const slug = (entry ?? '').replace(/-docker$/, '');
   const app = slug ? getUseCase(slug) : undefined;
 
@@ -170,6 +171,7 @@ export const UseCasePage = () => {
             <div className="mk-grid">
               {app.relatedGuides.map((related) => {
                 const relatedGuide = getServiceGuide(related);
+                /* v8 ignore next -- every shipped relatedGuide slug resolves */
                 if (!relatedGuide) return null;
                 return (
                   <Link

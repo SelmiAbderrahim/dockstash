@@ -24,7 +24,7 @@ function tokenFor(user: { id: string; email: string; role?: string }): string {
 }
 
 async function seedUser(email = 'a@x.co') {
-  const user = await User.create({ email, password: 'p' });
+  const user = await User.create({ email, password: 'p', emailVerified: true });
   return {
     id: String(user._id),
     email,

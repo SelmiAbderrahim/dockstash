@@ -38,6 +38,7 @@ export class MemoryQueue implements SchedulerQueue {
       try {
         await processor(job);
       } finally {
+        /* c8 ignore next -- the count is always set just above; `?? 1` is defensive */
         const now = this.activeCounts.get(data.projectId) ?? 1;
         this.activeCounts.set(data.projectId, Math.max(0, now - 1));
       }

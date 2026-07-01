@@ -1,7 +1,4 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
-import { fetchProtected, selectAuthContent } from '@features/auth';
 import { loadCookie } from '@shared/utils/cookies';
 
 interface CookieUser {
@@ -13,27 +10,25 @@ const useUserRole = (): string | undefined => {
   return user?.role;
 };
 
+/**
+ * Authenticated landing. Surfaces the four product screens (Projects,
+ * Snapshots, Settings, Billing) plus the admin entry for admins. No demo
+ * "protected test route" — that placeholder was removed with the demo strip.
+ */
 export const Dashboard = () => {
-  const dispatch = useAppDispatch();
-  const content = useAppSelector(selectAuthContent);
   const role = useUserRole();
 
-  useEffect(() => {
-    void dispatch(fetchProtected());
-  }, [dispatch]);
-
   return (
-    <div>
-      <Link to="/dashboard/inbox">Inbox</Link> | <Link to="/profile">View Profile</Link> |{' '}
-      <Link to="/billing/settings">Billing</Link>
-      {role === 'Admin' ? (
-        <div className="admin-menu">
-          <Link to="/admin">Admin</Link>
-        </div>
-      ) : null}
-      {role === 'Owner' ? <div className="trainer-menu">Owner menu coming soon.</div> : null}
-      {role === 'Client' ? <div className="client-menu">Client menu coming soon.</div> : null}
-      <p>{content}</p>
+    <div className="dashboard">
+      <h1>Dashboard</h1>
+      <nav className="dashboard-nav">
+        <Link to="/projects">Projects</Link>
+        <Link to="/snapshots">Snapshots</Link>
+        <Link to="/settings">Settings</Link>
+        <Link to="/billing">Billing</Link>
+        <Link to="/profile">Profile</Link>
+        {role === 'Admin' ? <Link to="/admin">Admin</Link> : null}
+      </nav>
     </div>
   );
 };

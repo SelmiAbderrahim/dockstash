@@ -189,6 +189,9 @@ const ScheduleEditor = ({ project }: ScheduleEditorProps) => {
 
   const applyPreset = (next: 'daily' | 'weekly' | 'cron') => {
     setPreset(next);
+    // PRESETS always contains the `daily`/`weekly` keys; the `?? ''` is only a
+    // TypeScript `noUncheckedIndexedAccess` fallback and is unreachable at runtime.
+    /* v8 ignore next */
     if (next !== 'cron') setValue('cron', PRESETS[next] ?? '');
   };
 
@@ -236,6 +239,8 @@ const ScheduleEditor = ({ project }: ScheduleEditorProps) => {
         />
         {errors.cron && (
           <span id="cron-error" role="alert" className="ds-field__error">
+            {/* zodResolver always sets a message here; the fallback is unreachable. */}
+            {/* v8 ignore next */}
             {t((errors.cron?.message as string | undefined) ?? 'schedule.errors.cronFormat')}
           </span>
         )}

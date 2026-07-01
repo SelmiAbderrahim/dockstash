@@ -22,6 +22,7 @@ export const de: DictionaryShape = {
     invalidCredentials: 'Ungültige E-Mail oder Passwort.',
     emailAlreadyRegistered: 'Diese E-Mail ist bereits registriert.',
     passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+    emailNotVerified: 'Bitte bestätigen Sie Ihre E-Mail-Adresse, um fortzufahren.',
   },
   auth: {
     login: {
@@ -40,6 +41,11 @@ export const de: DictionaryShape = {
       title: 'Passwort zurücksetzen',
       submit: 'Zurücksetzen',
       sent: 'Ein Zurücksetzungs-Link wurde an Ihre E-Mail gesendet.',
+    },
+    verify: {
+      success: 'Ihre E-Mail-Adresse wurde bestätigt. Sie können Dockstash jetzt verwenden.',
+      resent: 'Falls dieses Konto eine Bestätigung benötigt, ist ein neuer Link unterwegs.',
+      tokenInvalid: 'Dieser Bestätigungslink ist ungültig oder abgelaufen.',
     },
   },
   billing: {
@@ -73,6 +79,13 @@ export const de: DictionaryShape = {
   email: {
     contact: {
       confirmation: 'Ihre Nachricht wurde gesendet. Wir melden uns bald bei Ihnen.',
+    },
+    verifyEmail: {
+      subject: 'Bestätigen Sie Ihre E-Mail-Adresse',
+      body:
+        'Willkommen bei Dockstash. Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.\n\n' +
+        'Klicken Sie auf den folgenden Link oder fügen Sie ihn in Ihren Browser ein:\n\n{{verifyUrl}}\n\n' +
+        'Dieser Link läuft in 24 Stunden ab. Falls Sie kein Konto erstellt haben, ignorieren Sie diese E-Mail.\n',
     },
     passwordReset: {
       subject: 'Passwort zurücksetzen',

@@ -28,6 +28,7 @@ async function seedUser(email = 'fail@test.com'): Promise<{ id: string; token: s
     email,
     password: 'irrelevant-hashed',
     profile: { firstName: 'F', lastName: 'F' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }

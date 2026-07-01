@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
-import { RequireAuth } from '@features/auth';
+import { RequireVerified } from '@features/auth';
 import { BillingSettings } from './components/BillingSettings';
 import { InitialCheckout } from './components/InitialCheckout';
 import { BillingPage } from './components/BillingPage';
@@ -11,25 +11,25 @@ export const billingRoutes: RouteObject[] = [
   {
     path: 'checkout/:plan',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <InitialCheckout />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
   {
     path: 'billing/settings',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <BillingSettings />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
   {
     path: 'billing',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <BillingPage />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
 ];

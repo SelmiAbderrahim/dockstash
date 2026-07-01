@@ -34,6 +34,18 @@ export async function deliverPasswordResetEmail(
   });
 }
 
+export async function deliverVerificationEmail(
+  email: string,
+  verifyUrl: string,
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<void> {
+  await sendEmail({
+    to: email,
+    subject: translate(locale, 'email.verifyEmail.subject'),
+    text: translate(locale, 'email.verifyEmail.body', { verifyUrl }),
+  });
+}
+
 export async function deliverPasswordChangedEmail(
   email: string,
   locale: SupportedLocale = DEFAULT_LOCALE,

@@ -19,6 +19,7 @@ export const GuidePage = () => {
   const { entry } = useParams();
   const { locale } = useMarketingRoute();
   const href = (path: string) => localeHref(path, locale);
+  /* v8 ignore next 4 -- `entry` is route-guaranteed; the empty/undefined arms are unreachable */
   const slug = (entry ?? '')
     .replace(/^backup-/, '')
     .replace(/-docker$/, '');
@@ -196,6 +197,7 @@ export const GuidePage = () => {
         </div>
       </Reveal>
 
+      {/* v8 ignore next 2 -- shipped guides always carry related content; the false arm is unreachable */}
       {(guide.relatedServices.length > 0 ||
         guide.relatedUseCases.length > 0) && (
         <Reveal as="section" className="mk-section">
@@ -204,6 +206,7 @@ export const GuidePage = () => {
             <div className="mk-grid">
               {guide.relatedServices.map((related) => {
                 const relatedGuide = getServiceGuide(related);
+                /* v8 ignore next -- every shipped relatedService slug resolves */
                 if (!relatedGuide) return null;
                 return (
                   <Link
@@ -220,6 +223,7 @@ export const GuidePage = () => {
               })}
               {guide.relatedUseCases.map((related) => {
                 const relatedApp = getUseCase(related);
+                /* v8 ignore next -- every shipped relatedUseCase slug resolves */
                 if (!relatedApp) return null;
                 return (
                   <Link

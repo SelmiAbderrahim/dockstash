@@ -35,6 +35,7 @@ async function seedUser(email = 'restic@test.com'): Promise<string> {
     email,
     password: 'irrelevant-hashed',
     profile: { firstName: 'R', lastName: 'R' },
+    emailVerified: true,
   });
   return u._id.toString();
 }

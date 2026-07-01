@@ -33,3 +33,15 @@ export const resetPasswordParamsSchema = z.object({
 });
 
 export type ResetPasswordParams = z.infer<typeof resetPasswordParamsSchema>;
+
+export const verifyEmailParamsSchema = z.object({
+  token: z.string().min(1),
+});
+
+export type VerifyEmailParams = z.infer<typeof verifyEmailParamsSchema>;
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email().toLowerCase(),
+});
+
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;

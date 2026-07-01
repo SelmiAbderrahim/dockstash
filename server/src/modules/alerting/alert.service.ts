@@ -31,6 +31,7 @@ export interface AlertWebhookPayload {
 }
 
 async function defaultWebhookPoster(payload: AlertWebhookPayload): Promise<void> {
+  /* c8 ignore next -- caller only invokes this when ALERT_WEBHOOK_URL is set (see sendFailureAlert) */
   if (!env.ALERT_WEBHOOK_URL) return;
   const response = await fetch(env.ALERT_WEBHOOK_URL, {
     method: 'POST',

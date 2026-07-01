@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
-import { RequireAuth } from '@features/auth';
+import { RequireVerified } from '@features/auth';
 import { ProjectsScreen } from './components/ProjectsScreen';
 import { ProjectDetailScreen } from './components/ProjectDetailScreen';
 
@@ -7,17 +7,17 @@ export const projectsRoutes: RouteObject[] = [
   {
     path: 'projects',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <ProjectsScreen />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
   {
     path: 'projects/:projectId',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <ProjectDetailScreen />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
 ];

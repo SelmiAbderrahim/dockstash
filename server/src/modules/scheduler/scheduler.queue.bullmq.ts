@@ -48,6 +48,7 @@ export class BullmqQueueBackend implements SchedulerQueue {
           };
           await this.processor(job);
         } finally {
+          /* c8 ignore next -- the count is always set just above; `?? 1` is defensive */
           const now = this.active.get(projectId) ?? 1;
           this.active.set(projectId, Math.max(0, now - 1));
         }

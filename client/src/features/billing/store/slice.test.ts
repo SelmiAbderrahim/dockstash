@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { billingReducer, clearBillingMessages } from './slice';
 import {
+  cancelSubscription,
   changePlan,
+  createCustomer,
+  fetchCustomer,
   loadOverview,
   loadPricingTiers,
   loadUsage,
   selectProjectsToKeep,
   startCheckout,
+  updateBilling,
+  updateSubscription,
 } from './thunks';
 import type {
   BillingOverview,
@@ -127,5 +132,76 @@ describe('billing slice — prompt 07 transitions', () => {
     );
     expect(s.message).toBe('');
     expect(s.error).toBe('');
+  });
+});
+
+describe('billing slice — legacy fulfilled messages', () => {
+  it('createCustomer.fulfilled sets message', () => {
+    const s = billingReducer(initial(), {
+      type: createCustomer.fulfilled.type,
+      payload: 'started',
+    });
+    expect(s.message).toBe('started');
+  });
+
+  it('fetchCustomer.fulfilled stores the customer', () => {
+    const s = billingReducer(initial(), {
+      type: fetchCustomer.fulfilled.type,
+      payload: { sources: { total_count: 0, data: [] } },
+    });
+    expect(s.customer).toEqual({ sources: { total_count: 0, data: [] } });
+  });
+
+  it('cancelSubscription.fulfilled sets message', () => {
+    const s = billingReducer(initial(), {
+      type: cancelSubscription.fulfilled.type,
+      payload: 'canceled',
+    });
+    expect(s.message).toBe('canceled');
+  });
+
+  it('updateSubscription.fulfilled sets message', () => {
+    const s = billingReducer(initial(), {
+      type: updateSubscription.fulfilled.type,
+      payload: 'changed',
+    });
+    expect(s.message).toBe('changed');
+  });
+
+  it('updateBilling.fulfilled sets message', () => {
+    const s = billingReducer(initial(), {
+      type: updateBilling.fulfilled.type,
+      payload: 'updated',
+    });
+    expect(s.message).toBe('updated');
+  });
+
+  it('selectProjectsToKeep.fulfilled sets the saved message', () => {
+    const s = billingReducer(initial(), {
+      type: selectProjectsToKeep.fulfilled.type,
+      payload: { active: 1, paused: 0 },
+    });
+    expect(s.message).toBe('Selection saved.');
+  });
+});
+
+describe('billing slice — rejected fallbacks (undefined payload)', () => {
+  const cases: Array<[string, string]> = [
+    [createCustomer.rejected.type, 'Billing error.'],
+    [fetchCustomer.rejected.type, 'Billing error.'],
+    [cancelSubscription.rejected.type, 'Billing error.'],
+    [updateSubscription.rejected.type, 'Billing error.'],
+    [updateBilling.rejected.type, 'Billing error.'],
+    [loadPricingTiers.rejected.type, 'Could not load pricing tiers.'],
+    [loadOverview.rejected.type, 'Could not load overview.'],
+    [loadUsage.rejected.type, 'Could not load usage.'],
+    [startCheckout.rejected.type, 'Could not start checkout.'],
+    [changePlan.rejected.type, 'Could not change plan.'],
+    [selectProjectsToKeep.rejected.type, 'Could not update selection.'],
+  ];
+
+  it.each(cases)('%s falls back to its default error message', (type, fallback) => {
+    const s = billingReducer(initial(), { type, payload: undefined });
+    expect(s.error).toBe(fallback);
   });
 });

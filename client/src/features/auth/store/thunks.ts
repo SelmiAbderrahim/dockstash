@@ -1,37 +1,69 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
-import { removeCookie, saveCookie } from '@shared/utils/cookies';
+import { loadCookie, removeCookie, saveCookie } from '@shared/utils/cookies';
 import {
   forgotPasswordRequest,
   loginRequest,
-  protectedRequest,
   registerRequest,
+  resendVerificationRequest,
   resetPasswordRequest,
+  verifyEmailRequest,
 } from '../api';
-import type { LoginRequest, RegisterRequest } from '../types';
+import type { AuthUser, LoginRequest, RegisterRequest } from '../types';
 
-export const loginUser = createAsyncThunk<void, LoginRequest, { rejectValue: string }>(
+export const loginUser = createAsyncThunk<boolean, LoginRequest, { rejectValue: string }>(
   'auth/login',
   async (body, { rejectWithValue }) => {
     try {
       const data = await loginRequest(body);
       saveCookie('token', data.token, { path: '/' });
       saveCookie('user', data.user, { path: '/' });
+      return data.user.emailVerified ?? false;
     } catch (err) {
       return rejectWithValue(messageFromError(err, 'Login failed.'));
     }
   },
 );
 
-export const registerUser = createAsyncThunk<void, RegisterRequest, { rejectValue: string }>(
-  'auth/register',
-  async (body, { rejectWithValue }) => {
+export const registerUser = createAsyncThunk<
+  { email: string; emailVerified: boolean },
+  RegisterRequest,
+  { rejectValue: string }
+>('auth/register', async (body, { rejectWithValue }) => {
+  try {
+    const data = await registerRequest(body);
+    saveCookie('token', data.token, { path: '/' });
+    saveCookie('user', data.user, { path: '/' });
+    return { email: data.user.email, emailVerified: data.user.emailVerified ?? false };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Registration failed.'));
+  }
+});
+
+export const verifyEmail = createAsyncThunk<string, string, { rejectValue: string }>(
+  'auth/verifyEmail',
+  async (token, { rejectWithValue }) => {
     try {
-      const data = await registerRequest(body);
-      saveCookie('token', data.token, { path: '/' });
-      saveCookie('user', data.user, { path: '/' });
+      const data = await verifyEmailRequest(token);
+      // Reflect the confirmed state into the stored user so guards stop
+      // redirecting after a refresh.
+      const user = loadCookie<AuthUser>('user');
+      if (user) saveCookie('user', { ...user, emailVerified: true }, { path: '/' });
+      return data.message;
     } catch (err) {
-      return rejectWithValue(messageFromError(err, 'Registration failed.'));
+      return rejectWithValue(messageFromError(err, 'Verification failed.'));
+    }
+  },
+);
+
+export const resendVerification = createAsyncThunk<string, string, { rejectValue: string }>(
+  'auth/resendVerification',
+  async (email, { rejectWithValue }) => {
+    try {
+      const data = await resendVerificationRequest(email);
+      return data.message;
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not resend verification email.'));
     }
   },
 );
@@ -70,15 +102,3 @@ export const performPasswordReset = createAsyncThunk<
     return rejectWithValue(messageFromError(err, 'Could not reset password.'));
   }
 });
-
-export const fetchProtected = createAsyncThunk<string, void, { rejectValue: string }>(
-  'auth/protected',
-  async (_, { rejectWithValue }) => {
-    try {
-      const data = await protectedRequest();
-      return data.content;
-    } catch (err) {
-      return rejectWithValue(messageFromError(err, 'Could not fetch protected content.'));
-    }
-  },
-);

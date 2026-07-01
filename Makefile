@@ -11,7 +11,7 @@ HEALTH_TIMEOUT ?= 300
 
 .DEFAULT_GOAL := help
 .PHONY: help build up build-up deploy down stop restart ps logs health \
-        wait-healthy config sh-api sh-web pull
+        wait-healthy config sh-api sh-web pull test test-server test-client
 
 help: ## Show this help
 	@echo "Dockstash — make targets:"
@@ -93,3 +93,13 @@ sh-api: ## Open a shell in the running api container
 
 sh-web: ## Open a shell in the running web container
 	$(COMPOSE) exec web sh
+
+# Run the full test suite (server + client) on the host via vitest in
+# single-run mode. Fails the whole target if either suite has a failing test.
+test: test-server test-client ## Run all tests (server + client)
+
+test-server: ## Run server tests (vitest, single run)
+	cd server && npx vitest run
+
+test-client: ## Run client tests (vitest, single run)
+	cd client && npx vitest run

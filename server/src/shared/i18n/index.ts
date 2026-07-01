@@ -55,6 +55,7 @@ export function translate(
   const primary = resolveKey(DICTIONARIES[resolvedLocale], key);
   if (primary !== undefined) return interpolate(primary, vars);
   const fallback = resolveKey(DICTIONARIES[DEFAULT_LOCALE], key);
+  /* c8 ignore next -- fallback-success is unreachable: key parity guarantees every locale contains every en key, so `primary` is already defined whenever `fallback` would be. Retained as defence-in-depth. */
   if (fallback !== undefined) return interpolate(fallback, vars);
   return key;
 }
@@ -71,6 +72,7 @@ function parseAcceptLanguage(header: string): QualityTag[] {
     .filter(Boolean)
     .map((entry) => {
       const [rawTag, ...params] = entry.split(';');
+      /* c8 ignore next -- `rawTag` is always defined: `entry` is non-empty (filtered above) and `String.split` returns at least one element. The `?? ''` only satisfies noUncheckedIndexedAccess. */
       const tag = (rawTag ?? '').trim().toLowerCase();
       let q = 1;
       for (const param of params) {
@@ -122,7 +124,9 @@ export function resolveLanguage(input: ResolveLanguageInput = {}): SupportedLoca
   return fallback;
 }
 
-export function verifyKeyParity(): { ok: true } | { ok: false; issues: string[] } {
+export function verifyKeyParity(
+  dicts: Record<string, unknown> = DICTIONARIES,
+): { ok: true } | { ok: false; issues: string[] } {
   const issues: string[] = [];
   const collectKeys = (obj: unknown, prefix = ''): Record<string, string> => {
     const out: Record<string, string> = {};
@@ -131,6 +135,7 @@ export function verifyKeyParity(): { ok: true } | { ok: false; issues: string[] 
       const path = prefix ? `${prefix}.${k}` : k;
       if (typeof v === 'string') {
         const placeholders = Array.from(v.matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g))
+          /* c8 ignore next -- capture group 1 always participates when the regex matches, so `m[1]` is never undefined; `?? ''` only satisfies noUncheckedIndexedAccess. */
           .map((m) => m[1] ?? '')
           .filter(Boolean)
           .sort()
@@ -142,11 +147,11 @@ export function verifyKeyParity(): { ok: true } | { ok: false; issues: string[] 
     }
     return out;
   };
-  const baseline = collectKeys(DICTIONARIES[DEFAULT_LOCALE]);
+  const baseline = collectKeys(dicts[DEFAULT_LOCALE]);
   const baselineKeys = Object.keys(baseline).sort();
   for (const locale of SUPPORTED_LOCALES) {
     if (locale === DEFAULT_LOCALE) continue;
-    const compared = collectKeys(DICTIONARIES[locale]);
+    const compared = collectKeys(dicts[locale]);
     const comparedKeys = Object.keys(compared).sort();
     for (const key of baselineKeys) {
       if (!(key in compared)) {

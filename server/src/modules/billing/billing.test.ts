@@ -94,6 +94,7 @@ async function createBuyer(email = 'buyer@example.com') {
     email,
     password: passwordHash,
     profile: { firstName: 'Buy', lastName: 'Er' },
+    emailVerified: true,
   });
 }
 

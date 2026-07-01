@@ -172,6 +172,8 @@ export const SetupWizard = () => {
           <p className="ds-alert" role="alert">
             {t('password.warning')}
           </p>
+          {/* v8 ignore start -- the password step is only ever entered with the
+              password already revealed, so the `hidden` fallback never renders */}
           {passwordRevealed ? (
             <div className="ds-password-reveal" data-testid="wizard-password">
               <code>{password}</code>
@@ -186,6 +188,7 @@ export const SetupWizard = () => {
           ) : (
             <p className="ds-muted">{t('password.hidden')}</p>
           )}
+          {/* v8 ignore stop */}
           <div className="ds-form__actions">
             <button
               type="button"

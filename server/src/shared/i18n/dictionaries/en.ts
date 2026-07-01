@@ -20,6 +20,7 @@ export const en = {
     invalidCredentials: 'Invalid email or password.',
     emailAlreadyRegistered: 'That email is already registered.',
     passwordTooShort: 'Password must be at least 8 characters.',
+    emailNotVerified: 'Please verify your email address to continue.',
   },
   auth: {
     login: {
@@ -38,6 +39,11 @@ export const en = {
       title: 'Reset your password',
       submit: 'Reset password',
       sent: 'A reset link has been sent to your email.',
+    },
+    verify: {
+      success: 'Your email address has been verified. You can now use Dockstash.',
+      resent: 'If that account needs verification, a new link is on its way.',
+      tokenInvalid: 'That verification link is invalid or has expired.',
     },
   },
   billing: {
@@ -71,6 +77,13 @@ export const en = {
   email: {
     contact: {
       confirmation: 'Your email has been sent. We will be in touch with you soon.',
+    },
+    verifyEmail: {
+      subject: 'Verify your email address',
+      body:
+        'Welcome to Dockstash. Please confirm your email address to activate your account.\n\n' +
+        'Click the following link, or paste it into your browser:\n\n{{verifyUrl}}\n\n' +
+        'This link expires in 24 hours. If you did not create an account, ignore this email.\n',
     },
     passwordReset: {
       subject: 'Reset your password',

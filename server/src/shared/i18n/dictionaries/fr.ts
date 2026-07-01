@@ -22,6 +22,7 @@ export const fr: DictionaryShape = {
     invalidCredentials: 'E-mail ou mot de passe invalide.',
     emailAlreadyRegistered: 'Cet e-mail est déjà enregistré.',
     passwordTooShort: 'Le mot de passe doit contenir au moins 8 caractères.',
+    emailNotVerified: 'Veuillez vérifier votre adresse e-mail pour continuer.',
   },
   auth: {
     login: {
@@ -40,6 +41,11 @@ export const fr: DictionaryShape = {
       title: 'Réinitialiser votre mot de passe',
       submit: 'Réinitialiser',
       sent: 'Un lien de réinitialisation a été envoyé à votre e-mail.',
+    },
+    verify: {
+      success: 'Votre adresse e-mail a été vérifiée. Vous pouvez maintenant utiliser Dockstash.',
+      resent: 'Si ce compte doit être vérifié, un nouveau lien est en route.',
+      tokenInvalid: 'Ce lien de vérification est invalide ou a expiré.',
     },
   },
   billing: {
@@ -73,6 +79,13 @@ export const fr: DictionaryShape = {
   email: {
     contact: {
       confirmation: 'Votre e-mail a été envoyé. Nous vous répondrons rapidement.',
+    },
+    verifyEmail: {
+      subject: 'Vérifiez votre adresse e-mail',
+      body:
+        'Bienvenue sur Dockstash. Veuillez confirmer votre adresse e-mail pour activer votre compte.\n\n' +
+        'Cliquez sur le lien suivant ou collez-le dans votre navigateur :\n\n{{verifyUrl}}\n\n' +
+        "Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez cet e-mail.\n",
     },
     passwordReset: {
       subject: 'Réinitialisez votre mot de passe',

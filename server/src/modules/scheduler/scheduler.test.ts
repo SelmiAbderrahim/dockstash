@@ -23,7 +23,6 @@ import { reconcileCron } from './scheduler.cron.js';
 import { allowAllEntitlements } from './scheduler.entitlements.js';
 import {
   createSchedule,
-  enqueueNow,
   loadOwnedSchedule,
   updateSchedule,
   deleteSchedule,
@@ -36,7 +35,6 @@ import {
 import { serializeSchedule } from './scheduler.serialize.js';
 import type {
   AlertHook,
-  Job,
   LogEmitter,
   ResticRunnerExt,
   SchedulerQueue,
@@ -55,6 +53,7 @@ async function seedUser(email: string): Promise<{ id: string; token: string }> {
     email,
     password: 'irrelevant',
     profile: { firstName: 'S', lastName: 'U' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }

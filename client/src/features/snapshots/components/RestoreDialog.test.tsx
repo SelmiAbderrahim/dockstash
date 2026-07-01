@@ -18,7 +18,7 @@ beforeEach(() => {
 
 const renderDialog = (props: Partial<React.ComponentProps<typeof RestoreDialog>> = {}) => {
   const store = configureStore({ reducer: { snapshots: snapshotsReducer } });
-  return render(
+  const utils = render(
     <Provider store={store}>
       <I18nextProvider i18n={i18n}>
         <RestoreDialog
@@ -32,6 +32,23 @@ const renderDialog = (props: Partial<React.ComponentProps<typeof RestoreDialog>>
       </I18nextProvider>
     </Provider>,
   );
+  const rerender = (next: Partial<React.ComponentProps<typeof RestoreDialog>>) =>
+    utils.rerender(
+      <Provider store={store}>
+        <I18nextProvider i18n={i18n}>
+          <RestoreDialog
+            snapshot={{ id: 's1', projectId: 'p1', time: '', sizeBytes: 0 }}
+            projectId="p1"
+            projectName="my-project"
+            open
+            onClose={() => {}}
+            {...props}
+            {...next}
+          />
+        </I18nextProvider>
+      </Provider>,
+    );
+  return { ...utils, store, rerender };
 };
 
 describe('RestoreDialog typed-confirm', () => {
@@ -66,5 +83,81 @@ describe('RestoreDialog typed-confirm', () => {
     expect(overwrite.checked).toBe(false);
     fireEvent.click(overwrite);
     expect(overwrite.checked).toBe(true);
+    // Toggling back to "new location" runs its onChange (setOverwrite(false)).
+    fireEvent.click(newLoc);
+    expect(newLoc.checked).toBe(true);
+    fireEvent.click(overwrite);
+    // Overwrite mode hides the target-path field and enables via typed match only.
+    const confirm = screen.getByTestId('restore-confirm') as HTMLButtonElement;
+    const typeInput = screen.getByRole('textbox', { name: /Type "my-project" to confirm/i });
+    fireEvent.change(typeInput, { target: { value: 'my-project' } });
+    expect(confirm.disabled).toBe(false);
+  });
+
+  it('renders nothing when closed', () => {
+    const { container } = renderDialog({ open: false });
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('confirming dispatches restore, calls onConfirmed and onClose (overwrite)', () => {
+    const onClose = vi.fn();
+    const onConfirmed = vi.fn();
+    const { store } = renderDialog({ onClose, onConfirmed });
+    fireEvent.click(screen.getAllByRole('radio')[1]!);
+    fireEvent.change(
+      screen.getByRole('textbox', { name: /Type "my-project" to confirm/i }),
+      { target: { value: 'my-project' } },
+    );
+    fireEvent.click(screen.getByTestId('restore-confirm'));
+    expect(onConfirmed).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(store.getState().snapshots).toBeTruthy();
+  });
+
+  it('confirming works without an onConfirmed callback (new location)', () => {
+    const onClose = vi.fn();
+    renderDialog({ onClose });
+    fireEvent.change(
+      screen.getByRole('textbox', { name: /Type "my-project" to confirm/i }),
+      { target: { value: 'my-project' } },
+    );
+    fireEvent.change(screen.getByRole('textbox', { name: /Target path/i }), {
+      target: { value: '/var/restores/x' },
+    });
+    fireEvent.click(screen.getByTestId('restore-confirm'));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('Escape key triggers onClose', () => {
+    const onClose = vi.fn();
+    renderDialog({ onClose });
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('ignores non-Escape keys', () => {
+    const onClose = vi.fn();
+    renderDialog({ onClose });
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('clicking the backdrop closes; clicking the dialog does not', () => {
+    const onClose = vi.fn();
+    renderDialog({ onClose });
+    fireEvent.click(screen.getByRole('alertdialog'));
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(document.querySelector('.ds-dialog__backdrop') as Element);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores focus to the previously focused element when it closes', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const { rerender } = renderDialog();
+    rerender({ open: false });
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
   });
 });

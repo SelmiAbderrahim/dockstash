@@ -1,5 +1,5 @@
-import { describe, expect, it, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import {
   DEFAULT_LOCALE,
@@ -97,6 +97,15 @@ describe('locale utilities', () => {
     expect(document.documentElement.lang).toBe('fr');
     expect(document.documentElement.dir).toBe('ltr');
   });
+
+  it('applyLocaleToDocument is a no-op when document is undefined (SSR guard)', () => {
+    vi.stubGlobal('document', undefined);
+    try {
+      expect(() => applyLocaleToDocument('en')).not.toThrow();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('cookie persistence', () => {
@@ -166,6 +175,36 @@ describe('i18n initialization + switching', () => {
   it('ignores unsupported locale on changeLanguage', async () => {
     await act(async () => {
       await changeLanguage('xx' as never);
+    });
+    expect(i18n.resolvedLanguage).toBe('en');
+  });
+
+  it('selecting a supported locale in the switcher changes the language', async () => {
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LanguageSwitcher />
+      </I18nextProvider>,
+    );
+    const select = screen.getByLabelText('Language') as HTMLSelectElement;
+    await act(async () => {
+      fireEvent.change(select, { target: { value: 'de' } });
+    });
+    expect(i18n.resolvedLanguage).toBe('de');
+  });
+
+  it('ignores an unsupported value from the switcher', async () => {
+    await act(async () => {
+      await changeLanguage('en');
+    });
+    render(
+      <I18nextProvider i18n={i18n}>
+        <LanguageSwitcher />
+      </I18nextProvider>,
+    );
+    const select = screen.getByLabelText('Language') as HTMLSelectElement;
+    // A value with no matching <option> collapses to '' — an unsupported locale.
+    await act(async () => {
+      fireEvent.change(select, { target: { value: 'not-a-locale' } });
     });
     expect(i18n.resolvedLanguage).toBe('en');
   });

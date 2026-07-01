@@ -3,7 +3,6 @@ import type {
   AuthResponse,
   LoginRequest,
   MessageResponse,
-  ProtectedResponse,
   RegisterRequest,
 } from './types';
 
@@ -11,7 +10,7 @@ export const loginRequest = (body: LoginRequest): Promise<AuthResponse> =>
   apiClient<AuthResponse>('/auth/login', { method: 'POST', body });
 
 export const registerRequest = (body: RegisterRequest): Promise<AuthResponse> =>
-  apiClient<AuthResponse>('/auth/register', { method: 'POST', body });
+  apiClient<AuthResponse>('/auth/signup', { method: 'POST', body });
 
 export const forgotPasswordRequest = (email: string): Promise<MessageResponse> =>
   apiClient<MessageResponse>('/auth/forgot-password', { method: 'POST', body: { email } });
@@ -22,5 +21,8 @@ export const resetPasswordRequest = (token: string, password: string): Promise<M
     body: { password },
   });
 
-export const protectedRequest = (): Promise<ProtectedResponse> =>
-  apiClient<ProtectedResponse>('/protected', { auth: true });
+export const verifyEmailRequest = (token: string): Promise<MessageResponse> =>
+  apiClient<MessageResponse>(`/auth/verify-email/${token}`, { method: 'POST', body: {} });
+
+export const resendVerificationRequest = (email: string): Promise<MessageResponse> =>
+  apiClient<MessageResponse>('/auth/resend-verification', { method: 'POST', body: { email } });

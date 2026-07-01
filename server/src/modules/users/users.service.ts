@@ -7,6 +7,7 @@ export type PublicUser = {
   firstName: string;
   lastName: string;
   role: string;
+  emailVerified: boolean;
 };
 
 export function toPublicUser(user: UserHydrated): PublicUser {
@@ -16,6 +17,7 @@ export function toPublicUser(user: UserHydrated): PublicUser {
     firstName: user.profile?.firstName ?? '',
     lastName: user.profile?.lastName ?? '',
     role: user.role,
+    emailVerified: user.emailVerified ?? false,
   };
 }
 

@@ -71,6 +71,35 @@ describe('i18n key parity', () => {
   });
 });
 
+describe('i18n resolver branch completeness', () => {
+  it('returns the raw key when the path resolves to a parent object, not a string leaf', () => {
+    // `email` is a parent namespace (email.passwordReset.*), so resolveKey hits
+    // its `typeof cursor === "string" ? … : undefined` false arm.
+    expect(translate('en', 'email')).toBe('email');
+  });
+
+  it('ignores an Accept-Language param that has no "=" (e.g. "en;q")', () => {
+    // The `;q` param yields value === undefined, exercising the `value !== undefined` false branch.
+    expect(resolveLanguage({ acceptLanguage: 'en;q' })).toBe('en');
+  });
+
+  it('verifyKeyParity treats a null locale dictionary as empty (obj == null arm)', () => {
+    const dicts: Record<string, unknown> = {};
+    for (const locale of SUPPORTED_LOCALES) dicts[locale] = { a: 'x' };
+    const broken = SUPPORTED_LOCALES.find((l) => l !== DEFAULT_LOCALE) as SupportedLocale;
+    dicts[broken] = null;
+    expect(verifyKeyParity(dicts).ok).toBe(false);
+  });
+
+  it('verifyKeyParity treats a non-object locale dictionary as empty (typeof !== object arm)', () => {
+    const dicts: Record<string, unknown> = {};
+    for (const locale of SUPPORTED_LOCALES) dicts[locale] = { a: 'x' };
+    const broken = SUPPORTED_LOCALES.filter((l) => l !== DEFAULT_LOCALE)[1] as SupportedLocale;
+    dicts[broken] = 'not-an-object';
+    expect(verifyKeyParity(dicts).ok).toBe(false);
+  });
+});
+
 describe('isSupportedLocale', () => {
   it('accepts every supported locale', () => {
     for (const locale of SUPPORTED_LOCALES) {
@@ -284,5 +313,23 @@ describe('communication localized emails', () => {
   it('defaults to English when no locale is passed', async () => {
     await deliverPasswordResetEmail('u@example.com', 'https://r');
     expect(translate(DEFAULT_LOCALE, 'email.passwordReset.subject')).toBe('Reset your password');
+  });
+});
+
+describe('verifyKeyParity mismatch detection', () => {
+  it('reports missing, mismatched, and extra keys against a broken locale set', () => {
+    const good = { greet: 'hi {{name}}', bye: 'bye' };
+    const dicts: Record<string, unknown> = {};
+    for (const locale of SUPPORTED_LOCALES) dicts[locale] = { ...good };
+    // Break exactly one non-default locale to exercise every issue branch.
+    const broken = SUPPORTED_LOCALES.find((l) => l !== DEFAULT_LOCALE) as SupportedLocale;
+    dicts[broken] = { greet: 'hola {{other}}', extra: 'x' }; // mismatch + missing 'bye' + extra
+
+    const result = verifyKeyParity(dicts);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error('expected parity failure');
+    expect(result.issues.some((i) => i.includes('missing key'))).toBe(true);
+    expect(result.issues.some((i) => i.includes('interpolation mismatch'))).toBe(true);
+    expect(result.issues.some((i) => i.includes('extra key'))).toBe(true);
   });
 });

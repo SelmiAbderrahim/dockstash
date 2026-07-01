@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { createApp } from '../../app.js';
@@ -14,6 +14,9 @@ import {
   configureHealthController,
   resetHealthController,
   runHealthCheck,
+  pingRedis,
+  redisProbe,
+  type RedisPingClient,
 } from './index.js';
 
 const app = createApp();
@@ -55,10 +58,77 @@ describe('runHealthCheck', () => {
     expect(res.db).toBe(false);
   });
 
+  it('reports degraded when db is up but redis is down', async () => {
+    const res = await runHealthCheck({
+      probeDb: () => true,
+      probeRedis: async () => false,
+    });
+    expect(res.status).toBe('degraded');
+    expect(res.db).toBe(true);
+    expect(res.redis).toBe(false);
+  });
+
   it('uses default probes when none provided', async () => {
     const res = await runHealthCheck();
     // in tests mongoose is connected via memory server → ok
     expect(res.status).toBe('ok');
+  });
+
+  it('probes the configured Redis via the default probe', async () => {
+    const original = env.REDIS_URL;
+    (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
+    const spy = vi.spyOn(redisProbe, 'pingRedis').mockResolvedValue(true);
+    try {
+      const res = await runHealthCheck({ probeDb: () => true });
+      expect(res.redis).toBe(true);
+      expect(res.redisConfigured).toBe(true);
+      expect(spy).toHaveBeenCalledWith('redis://localhost:6379');
+    } finally {
+      spy.mockRestore();
+      (env as { REDIS_URL?: string }).REDIS_URL = original;
+    }
+  });
+});
+
+describe('pingRedis', () => {
+  function fakeClient(overrides: Partial<RedisPingClient>): RedisPingClient {
+    return {
+      ping: overrides.ping ?? (async () => 'PONG'),
+      quit: overrides.quit ?? (async () => undefined),
+    };
+  }
+
+  it('returns true when the client answers PONG', async () => {
+    const ok = await pingRedis('redis://x', () => fakeClient({ ping: async () => 'PONG' }));
+    expect(ok).toBe(true);
+  });
+
+  it('returns false when the reply is not PONG', async () => {
+    const ok = await pingRedis('redis://x', () => fakeClient({ ping: async () => 'nope' }));
+    expect(ok).toBe(false);
+  });
+
+  it('returns false when the ping throws', async () => {
+    const ok = await pingRedis('redis://x', () =>
+      fakeClient({
+        ping: async () => {
+          throw new Error('unreachable');
+        },
+      }),
+    );
+    expect(ok).toBe(false);
+  });
+
+  it('swallows a quit() failure in the finally cleanup', async () => {
+    const ok = await pingRedis('redis://x', () =>
+      fakeClient({
+        ping: async () => 'PONG',
+        quit: async () => {
+          throw new Error('quit failed');
+        },
+      }),
+    );
+    expect(ok).toBe(true);
   });
 });
 
@@ -152,5 +222,31 @@ describe('/api/health/projects', () => {
     expect(res.body.projects[0].name).toBe('ap');
     expect(res.body.projects[0].lastSuccessAt).toBe('2027-01-01T00:00:00.000Z');
     expect(res.body.projects[0].lastDrillStatus).toBe('pass');
+  });
+
+  it('serializes the complementary date fields (lastRunAt/lastCheckAt present, others null)', async () => {
+    const carol = await User.create({ email: 'carol@x.co', password: 'p' });
+    const at = new Date('2027-02-02T00:00:00Z');
+    await Project.create({
+      owner: carol._id,
+      name: 'cp',
+      path: '/var/www/c',
+      plan: { paths: ['/var/www/c'], databases: [], configs: [] },
+      repoPasswordEnc: { ciphertext: 'x', iv: 'y', authTag: 'z', keyVersion: 1 },
+      lastRunAt: at,
+      lastCheckAt: at,
+      lastCheckStatus: 'pass',
+    });
+    const token = tokenFor({ id: String(carol._id), email: carol.email });
+    const res = await request(app)
+      .get('/api/health/projects')
+      .set('Authorization', token);
+    expect(res.status).toBe(200);
+    const project = res.body.projects[0];
+    expect(project.lastRunAt).toBe('2027-02-02T00:00:00.000Z');
+    expect(project.lastCheckAt).toBe('2027-02-02T00:00:00.000Z');
+    // Absent fields serialize to null.
+    expect(project.lastSuccessAt).toBeNull();
+    expect(project.lastDrillAt).toBeNull();
   });
 });

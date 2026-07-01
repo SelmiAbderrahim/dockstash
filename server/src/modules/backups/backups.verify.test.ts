@@ -40,6 +40,7 @@ async function seedUser(email = 'v@test.com'): Promise<{ id: string; token: stri
     email,
     password: 'irrelevant-hashed',
     profile: { firstName: 'V', lastName: 'V' },
+    emailVerified: true,
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }

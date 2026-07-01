@@ -45,9 +45,11 @@ export async function recordAudit(input: RecordAuditInput): Promise<void> {
 export function extractIp(req: Request): string {
   const forwarded = req.headers['x-forwarded-for'];
   if (typeof forwarded === 'string' && forwarded.length > 0) {
+    /* c8 ignore next -- split of a non-empty string always yields a defined [0] */
     return forwarded.split(',')[0]?.trim() ?? '';
   }
   if (Array.isArray(forwarded) && forwarded.length > 0) {
+    /* c8 ignore next -- split of a stringified head always yields a defined [0] */
     return String(forwarded[0]).split(',')[0]?.trim() ?? '';
   }
   return req.ip ?? '';

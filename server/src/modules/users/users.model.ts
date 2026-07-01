@@ -66,6 +66,12 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    // Email verification lifecycle. New accounts start unverified; the token +
+    // expiry mirror the password-reset pattern above. Product routes are gated
+    // behind `emailVerified` via the requireVerified middleware.
+    emailVerified: { type: Boolean, required: true, default: false },
+    emailVerificationToken: { type: String },
+    emailVerificationExpires: { type: Date },
     // Per-user preferred locale — used by the communication module to render
     // transactional + alert emails in the recipient's language (prompt 08).
     // Falls back to DEFAULT_LOCALE when unset.

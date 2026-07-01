@@ -15,6 +15,7 @@ async function seed(legalHold: boolean): Promise<{ userId: string; projectId: st
     password: 'h',
     profile: { firstName: 'x', lastName: 'y' },
     role: 'Member',
+    emailVerified: true,
   });
   const project = await Project.create({
     owner: user._id,

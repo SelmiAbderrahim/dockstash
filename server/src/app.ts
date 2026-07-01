@@ -11,7 +11,8 @@ import { language } from './shared/middleware/language.js';
 import { securityHeaders } from './shared/middleware/security-headers.js';
 import { createAuthRateLimiter, createWebhookRateLimiter } from './shared/middleware/rate-limit.js';
 import { issueCsrfToken } from './shared/middleware/csrf.js';
-import { authRouter, protectedRouter } from './modules/auth/index.js';
+import { authRouter, requireVerified } from './modules/auth/index.js';
+import { requireAuth } from './shared/middleware/require-auth.js';
 import { billingRouter, webhookHandler } from './modules/billing/index.js';
 import { communicationRouter } from './modules/communication/index.js';
 import { usersRouter } from './modules/users/index.js';
@@ -72,20 +73,26 @@ export function createApp(): Express {
 
   app.use('/api', healthRouter);
   app.use('/api/health/projects', projectHealthRouter);
-  app.use('/api/audit', auditRouter);
   // Auth routes are rate-limited: sustained cracking attempts hit 429 well
   // before they can enumerate accounts. The limiter is idempotent across
   // hot-reload restarts.
   app.use('/api/auth', createAuthRateLimiter(), authRouter);
+  // GDPR export/deletion stays reachable even for unverified accounts (data
+  // rights must not be gated); health/seo/security are public above.
   app.use('/api/legal', legalRouter);
-  app.use('/api/users', usersRouter);
   app.use('/api/communication', communicationRouter);
-  app.use('/api/billing', billingRouter);
-  app.use('/api/backups', backupsRouter);
-  app.use('/api/scheduler', schedulerRouter);
-  app.use('/api/recovery', recoveryRouter);
-  app.use('/api/agents', agentsRouter);
-  app.use('/api', protectedRouter);
+
+  // Product surfaces are hard-gated: an authenticated but unverified user is
+  // blocked (403 EMAIL_NOT_VERIFIED) until they confirm their email. `requireAuth`
+  // populates req.user so `requireVerified` can do its DB check.
+  const verified = [requireAuth, requireVerified];
+  app.use('/api/audit', verified, auditRouter);
+  app.use('/api/users', verified, usersRouter);
+  app.use('/api/billing', verified, billingRouter);
+  app.use('/api/backups', verified, backupsRouter);
+  app.use('/api/scheduler', verified, schedulerRouter);
+  app.use('/api/recovery', verified, recoveryRouter);
+  app.use('/api/agents', verified, agentsRouter);
 
   app.use(notFound);
   app.use(errorHandler);

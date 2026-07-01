@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../app.js';
+import * as mailgunShim from './mailers/mailgun.js';
 
 const app = createApp();
+
+describe('legacy mailgun shim', () => {
+  it('re-exports the Resend transport for back-compat imports', () => {
+    expect(typeof mailgunShim.sendEmail).toBe('function');
+    expect(typeof mailgunShim.setResendTransport).toBe('function');
+    expect(typeof mailgunShim.getResendTransport).toBe('function');
+  });
+});
 
 describe('communication module', () => {
   it('rejects empty contact form payloads', async () => {

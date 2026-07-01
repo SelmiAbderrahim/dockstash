@@ -2,12 +2,13 @@ import { randomBytes } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
-import { logger } from '../../config/logger.js';
 import { HttpError } from '../../shared/utils/http-error.js';
 import {
   deliverPasswordChangedEmail,
   deliverPasswordResetEmail,
+  deliverVerificationEmail,
 } from '../communication/index.js';
+import { DEFAULT_LOCALE, type SupportedLocale } from '../../shared/i18n/index.js';
 import {
   ROLE_MEMBER,
   User,
@@ -18,7 +19,25 @@ import {
 
 const JWT_TTL_SECONDS = 7 * 24 * 60 * 60;
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
+const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const SALT_ROUNDS = 10;
+
+function verifyUrlFor(token: string): string {
+  return `${env.CLIENT_URL.replace(/\/$/, '')}/verify-email/${token}`;
+}
+
+async function issueVerificationToken(
+  user: UserHydrated,
+  locale: SupportedLocale,
+): Promise<void> {
+  const token = randomBytes(48).toString('hex');
+  user.emailVerificationToken = token;
+  user.emailVerificationExpires = new Date(Date.now() + VERIFY_TOKEN_TTL_MS);
+  await user.save();
+  // `sendEmail` swallows transport errors internally (logs + returns), so this
+  // never rejects — a missing/failed email just means the user resends.
+  await deliverVerificationEmail(user.email, verifyUrlFor(token), locale);
+}
 
 export type IssuedToken = {
   token: string;
@@ -41,12 +60,15 @@ export async function verifyPassword(plain: string, hashed: string): Promise<boo
   return bcrypt.compare(plain, hashed);
 }
 
-export async function registerUser(input: {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}): Promise<IssuedToken> {
+export async function registerUser(
+  input: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  },
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<IssuedToken> {
   const existing = await User.findOne({ email: input.email });
   if (existing) {
     throw HttpError.conflict('That email address is already in use.');
@@ -58,10 +80,51 @@ export async function registerUser(input: {
     password: passwordHash,
     profile: { firstName: input.firstName, lastName: input.lastName },
     role: ROLE_MEMBER,
+    language: locale,
   })) as UserHydrated;
+
+  // New accounts start unverified; issue the first verification link. The
+  // account is still logged in (token below) but product routes are gated by
+  // requireVerified until the email is confirmed.
+  await issueVerificationToken(created, locale);
 
   const publicUser = toPublicUser(created);
   return { token: `JWT ${signToken(publicUser)}`, user: publicUser };
+}
+
+/**
+ * Consume a verification token: flips `emailVerified` and clears the token.
+ * Mirrors {@link resetPasswordWithToken}.
+ */
+export async function verifyEmailWithToken(token: string): Promise<UserHydrated> {
+  const user = await User.findOne({
+    emailVerificationToken: token,
+    emailVerificationExpires: { $gt: new Date() },
+  });
+  if (!user) {
+    throw HttpError.badRequest('auth.verify.tokenInvalid');
+  }
+  user.emailVerified = true;
+  user.emailVerificationToken = undefined;
+  user.emailVerificationExpires = undefined;
+  await user.save();
+  return user;
+}
+
+/**
+ * Resend a verification email. Idempotent and non-enumerating: an already
+ * verified account short-circuits, an unknown email is reported the same way
+ * to the caller (controller returns a generic message either way).
+ */
+export async function resendVerification(
+  email: string,
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<{ status: 'sent' | 'alreadyVerified' | 'unknown' }> {
+  const user = await User.findOne({ email });
+  if (!user) return { status: 'unknown' };
+  if (user.emailVerified) return { status: 'alreadyVerified' };
+  await issueVerificationToken(user, locale);
+  return { status: 'sent' };
 }
 
 export async function authenticate(email: string, password: string): Promise<UserHydrated> {
@@ -88,10 +151,8 @@ export async function generateResetToken(email: string): Promise<{ user: UserHyd
   await user.save();
 
   const resetUrl = `${env.CLIENT_URL.replace(/\/$/, '')}/reset-password/${token}`;
-  // email failure is non-fatal; user can request another token
-  await deliverPasswordResetEmail(user.email, resetUrl).catch((err) => {
-    logger.error({ err, email: user.email }, 'failed to deliver reset email');
-  });
+  // `sendEmail` swallows transport errors internally, so this never rejects.
+  await deliverPasswordResetEmail(user.email, resetUrl);
 
   return { user, token };
 }
@@ -109,9 +170,7 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
   user.resetPasswordExpires = undefined;
   await user.save();
 
-  await deliverPasswordChangedEmail(user.email).catch((err) => {
-    logger.error({ err, email: user.email }, 'failed to deliver password-changed email');
-  });
+  await deliverPasswordChangedEmail(user.email);
 
   return user;
 }

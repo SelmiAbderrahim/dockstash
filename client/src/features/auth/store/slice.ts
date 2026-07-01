@@ -1,20 +1,22 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { loadCookie } from '@shared/utils/cookies';
-import type { AuthState } from '../types';
+import type { AuthState, AuthUser } from '../types';
 import {
-  fetchProtected,
   loginUser,
   logoutUser,
   performPasswordReset,
   registerUser,
   requestPasswordReset,
+  resendVerification,
+  verifyEmail,
 } from './thunks';
 
 const initialState: AuthState = {
   authenticated: loadCookie<string>('token') !== null,
+  emailVerified: loadCookie<AuthUser>('user')?.emailVerified ?? false,
+  pendingVerificationEmail: '',
   error: '',
   message: '',
-  content: '',
 };
 
 const authSlice = createSlice({
@@ -30,8 +32,9 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loginUser.fulfilled, (state) => {
+      .addCase(loginUser.fulfilled, (state, action) => {
         state.authenticated = true;
+        state.emailVerified = action.payload;
         state.error = '';
         state.message = '';
       })
@@ -39,8 +42,10 @@ const authSlice = createSlice({
         state.authenticated = false;
         state.error = action.payload ?? 'Login failed.';
       })
-      .addCase(registerUser.fulfilled, (state) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.authenticated = true;
+        state.emailVerified = action.payload.emailVerified;
+        state.pendingVerificationEmail = action.payload.email;
         state.error = '';
         state.message = '';
       })
@@ -49,9 +54,25 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state, action) => {
         state.authenticated = false;
+        state.emailVerified = false;
+        state.pendingVerificationEmail = '';
         state.error = action.payload;
         state.message = '';
-        state.content = '';
+      })
+      .addCase(verifyEmail.fulfilled, (state, action) => {
+        state.emailVerified = true;
+        state.message = action.payload;
+        state.error = '';
+      })
+      .addCase(verifyEmail.rejected, (state, action) => {
+        state.error = action.payload ?? 'Verification failed.';
+      })
+      .addCase(resendVerification.fulfilled, (state, action) => {
+        state.message = action.payload;
+        state.error = '';
+      })
+      .addCase(resendVerification.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not resend verification email.';
       })
       .addCase(requestPasswordReset.fulfilled, (state, action) => {
         state.message = action.payload;
@@ -64,12 +85,6 @@ const authSlice = createSlice({
       })
       .addCase(performPasswordReset.rejected, (state, action) => {
         state.error = action.payload ?? 'Could not reset password.';
-      })
-      .addCase(fetchProtected.fulfilled, (state, action) => {
-        state.content = action.payload;
-      })
-      .addCase(fetchProtected.rejected, (state, action) => {
-        state.error = action.payload ?? 'Could not fetch protected content.';
       });
   },
 });

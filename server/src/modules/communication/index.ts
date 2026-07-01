@@ -2,6 +2,7 @@ export { communicationRouter } from './communication.routes.js';
 export {
   deliverContactForm,
   deliverPasswordResetEmail,
+  deliverVerificationEmail,
   deliverPasswordChangedEmail,
   deliverWelcomeEmail,
   deliverPaymentReceiptEmail,

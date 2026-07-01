@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
-import { RequireAuth } from '@features/auth';
+import { RequireVerified } from '@features/auth';
 import { SettingsScreen } from './components/SettingsScreen';
 import { SetupWizard } from './components/SetupWizard';
 
@@ -7,17 +7,17 @@ export const settingsRoutes: RouteObject[] = [
   {
     path: 'settings',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <SettingsScreen />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
   {
     path: 'setup',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <SetupWizard />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
 ];

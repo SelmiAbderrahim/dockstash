@@ -12,6 +12,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
+      // Measure application source only — never vendored bundles, tooling
+      // config, the SSR entry server, or build scripts.
+      include: ['src/**/*.{ts,tsx}'],
+      all: true,
       exclude: [
         'src/**/*.d.ts',
         'src/**/*.test.{ts,tsx}',
@@ -19,7 +23,27 @@ export default defineConfig({
         'src/main.tsx',
         'src/entry-client.tsx',
         'src/entry-server.tsx',
+        // App-shell composition roots (mirror the entry-point exclusions above):
+        // they only wire providers/router together — no unit-testable logic.
+        'src/App.tsx',
+        'src/app/providers.tsx',
+        'src/app/router.tsx',
+        // SSR i18n bootstrap — the server-side counterpart of entry-server.
+        'src/shared/i18n/server.ts',
         'src/test/**',
+        // Non-application source: tooling config, the SSR entry server, and
+        // build scripts are not unit-tested app code.
+        'vite.config.ts',
+        'vitest.config.ts',
+        'eslint.config.js',
+        'server.js',
+        'scripts/**',
+        '**/node_modules/**',
+        // Minified vendor bundles (e.g. React's prod CJS) are not app source.
+        '**/*.min.js',
+        '**/coverage/**',
+        // Type-only modules compile to nothing; no runtime to cover.
+        '**/types.ts',
       ],
       // Prompt 11: CI enforces 100% coverage across all four dimensions.
       // Runs are gated by .github/workflows/ci.yml — see docs/ci-gates.en.md.

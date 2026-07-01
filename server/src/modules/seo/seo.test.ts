@@ -1,8 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../app.js';
+import { localizedUrl, DEFAULT_LOCALE } from './seo.data.js';
 
 const app = createApp();
+
+describe('seo.data.localizedUrl', () => {
+  it('serves the root path un-prefixed for the default locale', () => {
+    expect(localizedUrl('https://x.io/', DEFAULT_LOCALE, '/')).toBe('https://x.io/');
+  });
+
+  it('appends a non-root path for the default locale', () => {
+    expect(localizedUrl('https://x.io', DEFAULT_LOCALE, '/pricing')).toBe(
+      'https://x.io/pricing',
+    );
+  });
+
+  it('prefixes non-default locales with the locale segment', () => {
+    expect(localizedUrl('https://x.io', 'ar', '/pricing')).toBe('https://x.io/ar/pricing');
+  });
+});
 
 describe('seo module', () => {
   it('serves robots.txt as text/plain with crawler allows and disallows', async () => {

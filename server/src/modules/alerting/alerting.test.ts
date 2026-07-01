@@ -237,6 +237,39 @@ describe('sendFailureAlert', () => {
     ).resolves.toBeUndefined();
     (env as { ALERT_WEBHOOK_URL?: string }).ALERT_WEBHOOK_URL = originalWebhook;
   });
+
+  it('logs and continues when the email renderer itself throws', async () => {
+    // Force deliverAlertEmail to throw (CLIENT_URL feeds the localized body).
+    const originalClientUrl = env.CLIENT_URL;
+    (env as { CLIENT_URL?: string }).CLIENT_URL = undefined as unknown as string;
+    const { project } = await seedProject();
+    try {
+      await expect(
+        sendFailureAlert(
+          { projectId: String(project._id), kind: 'backup', error: 'e' },
+          { emailAllowedFor: async () => true },
+        ),
+      ).resolves.toBeUndefined();
+      expect(sent).toHaveLength(0);
+    } finally {
+      (env as { CLIENT_URL?: string }).CLIENT_URL = originalClientUrl;
+    }
+  });
+
+  it('swallows an unexpected failure (the plan gate throwing) at the top level', async () => {
+    const { project } = await seedProject();
+    await expect(
+      sendFailureAlert(
+        { projectId: String(project._id), kind: 'backup', error: 'e' },
+        {
+          emailAllowedFor: async () => {
+            throw new Error('entitlement lookup exploded');
+          },
+        },
+      ),
+    ).resolves.toBeUndefined();
+    expect(sent).toHaveLength(0);
+  });
 });
 
 describe('runHeartbeatSweep', () => {
@@ -332,6 +365,11 @@ describe('runHeartbeatSweep', () => {
     expect(res).toEqual({ projectsScanned: 0, alertsSent: 0, suppressed: 0 });
   });
 
+  it('defaults now to the wall clock when not provided', async () => {
+    const res = await runHeartbeatSweep({ thresholdHours: 24 });
+    expect(res.projectsScanned).toBe(0);
+  });
+
   it('swallows email transport failure — sweep does not throw', async () => {
     const now = new Date('2027-02-01T00:00:00Z');
     const stale = new Date(now.getTime() - 48 * HOUR);
@@ -346,6 +384,35 @@ describe('runHeartbeatSweep', () => {
       sent.push(msg);
       return { delivered: true };
     });
+  });
+
+  it('does not count an alert when the email renderer itself throws', async () => {
+    const now = new Date('2027-02-01T00:00:00Z');
+    const stale = new Date(now.getTime() - 48 * HOUR);
+    await seedProject({ lastSuccessAt: stale });
+    const originalClientUrl = env.CLIENT_URL;
+    (env as { CLIENT_URL?: string }).CLIENT_URL = undefined as unknown as string;
+    try {
+      const res = await runHeartbeatSweep({ now, thresholdHours: 24 });
+      expect(res.alertsSent).toBe(0);
+      expect(sent).toHaveLength(0);
+    } finally {
+      (env as { CLIENT_URL?: string }).CLIENT_URL = originalClientUrl;
+    }
+  });
+
+  it('does not count an alert when the plan gate throws (outer guard)', async () => {
+    const now = new Date('2027-02-01T00:00:00Z');
+    const stale = new Date(now.getTime() - 48 * HOUR);
+    await seedProject({ lastSuccessAt: stale });
+    const res = await runHeartbeatSweep({
+      now,
+      thresholdHours: 24,
+      emailAllowedFor: async () => {
+        throw new Error('entitlement lookup exploded');
+      },
+    });
+    expect(res.alertsSent).toBe(0);
   });
 });
 

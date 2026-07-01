@@ -1,5 +1,5 @@
 import type { RouteObject } from 'react-router-dom';
-import { RequireAuth } from '@features/auth';
+import { RequireVerified } from '@features/auth';
 import { Dashboard } from './components/Dashboard';
 import { ViewProfile } from './components/ViewProfile';
 
@@ -7,17 +7,17 @@ export const dashboardRoutes: RouteObject[] = [
   {
     path: 'dashboard',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <Dashboard />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
   {
     path: 'profile',
     element: (
-      <RequireAuth>
+      <RequireVerified>
         <ViewProfile />
-      </RequireAuth>
+      </RequireVerified>
     ),
   },
 ];
