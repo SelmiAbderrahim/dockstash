@@ -89,6 +89,7 @@ export const Faq = () => {
 
       <section className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">FAQ</span>
           <h1 className="mk-h1">Frequently asked questions</h1>
           <p className="mk-answer">{ANSWER}</p>
         </div>

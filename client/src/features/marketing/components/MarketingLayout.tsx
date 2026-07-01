@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { loadCookie } from '@shared/utils/cookies';
+import { BrandLogo } from '@shared/brand';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import '../marketing.scss';
 
@@ -34,7 +35,7 @@ export const MarketingLayout = () => {
       <header className="mk-header">
         <div className="mk-container mk-header__inner">
           <Link to={href('/')} className="mk-logo">
-            Dockstash
+            <BrandLogo />
           </Link>
           <nav className="mk-nav" aria-label="Primary">
             {NAV.map((item) => (
@@ -51,6 +52,17 @@ export const MarketingLayout = () => {
               Get started
             </Link>
           </div>
+          <details className="mk-nav-mobile">
+            <summary aria-label="Open menu">Menu</summary>
+            <div className="mk-nav-mobile__panel">
+              {NAV.map((item) => (
+                <Link key={item.basePath} to={href(item.basePath)}>
+                  {item.label}
+                </Link>
+              ))}
+              <Link to="/login">Log in</Link>
+            </div>
+          </details>
         </div>
       </header>
 
@@ -61,7 +73,7 @@ export const MarketingLayout = () => {
       <footer className="mk-footer">
         <div className="mk-container mk-footer__grid">
           <div>
-            <div className="mk-logo">Dockstash</div>
+            <BrandLogo className="mk-logo" />
             <p className="mk-muted">
               One-click, verified backups for any Docker project.
             </p>

@@ -19,6 +19,15 @@ import {
 const TABS = ['overview', 'usage'] as const;
 type Tab = (typeof TABS)[number];
 
+/** Human-readable byte size (metering). 0 → "0 B". */
+export function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exp;
+  return `${value.toFixed(exp === 0 ? 0 : 1)} ${units[exp]}`;
+}
+
 export const BillingPage = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation('billing');
@@ -141,6 +150,38 @@ export const BillingPage = () => {
               </p>
               <p>{t('usage.retention', { days: usage.retentionDays })}</p>
               <p>{t(`grid.frequency.${usage.frequency}`)}</p>
+
+              <div className="usage-metering">
+                <h2>{t('usage.metering.title')}</h2>
+                {usage.metering.length === 0 ? (
+                  <p>{t('usage.metering.empty')}</p>
+                ) : (
+                  <table className="usage-metering__table">
+                    <thead>
+                      <tr>
+                        <th scope="col">{t('usage.metering.colProject')}</th>
+                        <th scope="col">{t('usage.metering.colSnapshots')}</th>
+                        <th scope="col">{t('usage.metering.colSize')}</th>
+                        <th scope="col">{t('usage.metering.colLastRun')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usage.metering.map((m) => (
+                        <tr key={m.id}>
+                          <th scope="row">{m.name}</th>
+                          <td>{m.snapshotCount}</td>
+                          <td>{formatBytes(m.sizeBytes)}</td>
+                          <td>
+                            {m.lastRunAt
+                              ? new Date(m.lastRunAt).toLocaleString()
+                              : t('usage.metering.never')}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
 
               {usage.projects.cap !== null && usage.projects.used > usage.projects.cap ? (
                 <p role="alert" className="usage-over-cap">

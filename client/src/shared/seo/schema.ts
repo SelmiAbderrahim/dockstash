@@ -1,5 +1,6 @@
 import { SITE_URL, SITE_NAME, absoluteUrl } from './meta';
 import type { FaqItem } from '@features/marketing/types';
+import { BRAND_ASSETS } from '@shared/brand';
 
 /**
  * JSON-LD (schema.org) builders. Each returns a plain object embedded as
@@ -8,6 +9,19 @@ import type { FaqItem } from '@features/marketing/types';
  */
 
 type JsonLd = Record<string, unknown>;
+
+/**
+ * Site-wide "content last reviewed" date (ISO). Single source of truth for
+ * freshness signals — kept in step with the server sitemap `lastmod`. Guide
+ * datasets carry a finer-grained `lastReviewed` (YYYY-MM) that overrides this
+ * per page via `monthToIso`.
+ */
+export const SITE_LAST_UPDATED = '2026-07-01';
+
+/** Expand a "YYYY-MM" review month to an ISO date at the first of the month. */
+export function monthToIso(month: string): string {
+  return /^\d{4}-\d{2}$/.test(month) ? `${month}-01` : SITE_LAST_UPDATED;
+}
 
 /** Combine multiple node objects into one `@graph` document. */
 export function graph(...nodes: JsonLd[]): JsonLd {
@@ -20,7 +34,7 @@ export function organization(): JsonLd {
     '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/og/logo.png`,
+    logo: absoluteUrl(BRAND_ASSETS.ogLogo),
     description:
       'Dockstash makes backing up any Docker project one click — automatic detection, encrypted off-site Restic snapshots, and one-click restore.',
     sameAs: [
@@ -107,6 +121,45 @@ export function itemList(entries: ItemListEntry[]): JsonLd {
       name: entry.name,
       url: absoluteUrl(entry.path),
     })),
+  };
+}
+
+export interface ArticleInput {
+  headline: string;
+  description: string;
+  /** Un-prefixed or locale-prefixed page path — becomes the article URL. */
+  path: string;
+  /** ISO date first published. Defaults to the site last-updated date. */
+  datePublished?: string;
+  /** ISO date last modified (freshness signal). Defaults to datePublished. */
+  dateModified?: string;
+}
+
+/**
+ * TechArticle node for long-form guide / use-case pages. Publisher and author
+ * point at the Organization so E-E-A-T signals resolve. Dates drive freshness;
+ * they must match the visible "Last updated" recency line on the page.
+ */
+export function article({
+  headline,
+  description,
+  path,
+  datePublished = SITE_LAST_UPDATED,
+  dateModified,
+}: ArticleInput): JsonLd {
+  const url = absoluteUrl(path);
+  return {
+    '@type': 'TechArticle',
+    headline,
+    description,
+    url,
+    mainEntityOfPage: url,
+    datePublished,
+    dateModified: dateModified ?? datePublished,
+    inLanguage: 'en',
+    author: { '@id': `${SITE_URL}/#organization` },
+    publisher: { '@id': `${SITE_URL}/#organization` },
+    image: absoluteUrl(BRAND_ASSETS.ogDefault),
   };
 }
 

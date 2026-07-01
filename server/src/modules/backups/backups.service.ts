@@ -213,10 +213,20 @@ export async function runBackup(
         throw new Error(`dump failed for ${db.service}: ${message}`);
       }
       try {
-        await deps.resticRunner.backup(
-          ['backup', '--stdin', '--stdin-filename', `${db.service}.dump`],
-          { stdin: stream },
-        );
+        if (adapter.mode === 'file') {
+          // File-artifact engines (RDB, snapshot-API, mirror/export tools):
+          // the dump produces an artifact inside the container. Wait for the
+          // command to finish (drain its output), then restic-back-up the path.
+          // `mode: 'file'` narrows the adapter union so dumpArtifactPath exists.
+          await drainStream(stream);
+          await deps.resticRunner.backup(['backup', adapter.dumpArtifactPath(svc)]);
+        } else {
+          // stdin engines stream their dump straight into restic (no disk hop).
+          await deps.resticRunner.backup(
+            ['backup', '--stdin', '--stdin-filename', `${db.service}.dump`],
+            { stdin: stream },
+          );
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`restic dump failed: ${message}`);
@@ -266,8 +276,23 @@ async function markStatus(
   if (status === 'success') {
     project.lastSuccessAt = now;
     project.lastHeartbeatAlertAt = null;
+    // Each successful run adds a snapshot — feeds per-project metering.
+    project.snapshotCount = (project.snapshotCount ?? 0) + 1;
   }
   await project.save();
+}
+
+/**
+ * Consume a container-exec stream to completion. For file-artifact adapters we
+ * don't pipe the output anywhere — we only need the dump command to finish
+ * (and surface any error) before restic backs up the produced path.
+ */
+function drainStream(stream: NodeJS.ReadableStream): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    stream.on('error', reject);
+    stream.on('end', resolve);
+    stream.resume();
+  });
 }
 
 /**

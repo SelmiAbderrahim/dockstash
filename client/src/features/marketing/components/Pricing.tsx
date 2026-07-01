@@ -2,15 +2,17 @@ import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Breadcrumbs, FaqSection } from './shared';
+import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
 const ANSWER =
-  'Dockstash has three plans. Free ($0) self-hosts one project with 7-day retention and daily backups. Pro adds 10 projects, 30-day retention, hourly schedules, and email alerts. Business is unlimited projects, 90-day retention, any cron, priority support, and multi-VPS. Yearly billing gives you two months free.';
+  'Dockstash has three plans. Free ($0) self-hosts one project with 7-day retention and daily backups. Pro ($9/mo) adds 10 projects, 30-day retention, hourly schedules, and email alerts. Business ($29/mo) is unlimited projects, 90-day retention, any cron, priority support, and multi-VPS. Yearly billing gives you two months free — $90/yr for Pro and $290/yr for Business.';
 
 interface Tier {
   name: string;
   price: string;
   cadence: string;
+  yearly?: string;
   tagline: string;
   features: string[];
   cta: { label: string; to: string; primary?: boolean };
@@ -34,8 +36,9 @@ const TIERS: Tier[] = [
   },
   {
     name: 'Pro',
-    price: '$X',
+    price: '$9',
     cadence: 'per month',
+    yearly: 'or $90/yr — two months free',
     tagline: 'For teams running Docker Compose in production.',
     features: [
       '10 projects',
@@ -49,8 +52,9 @@ const TIERS: Tier[] = [
   },
   {
     name: 'Business',
-    price: '$Y',
+    price: '$29',
     cadence: 'per month',
+    yearly: 'or $290/yr — two months free',
     tagline: 'For agencies managing many client servers.',
     features: [
       'Unlimited projects',
@@ -92,7 +96,11 @@ export const Pricing = () => {
   const href = (path: string) => localeHref(path, locale);
 
   const jsonLd = schema.graph(
-    schema.softwareApplication([{ name: 'Free', price: '0' }]),
+    schema.softwareApplication([
+      { name: 'Free', price: '0' },
+      { name: 'Pro', price: '9' },
+      { name: 'Business', price: '29' },
+    ]),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Pricing', path: localeHref('/pricing', locale) },
@@ -119,21 +127,35 @@ export const Pricing = () => {
 
       <section className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Pricing</span>
           <h1 className="mk-h1">Simple pricing for verified Docker backups</h1>
           <p className="mk-answer">{ANSWER}</p>
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <div className="mk-grid">
-            {TIERS.map((tier) => (
-              <div key={tier.name} className="mk-card">
+            {TIERS.map((tier, i) => (
+              <Reveal
+                key={tier.name}
+                className={
+                  tier.cta.primary ? 'mk-card mk-card--surface' : 'mk-card'
+                }
+                index={i}
+              >
                 <h3>{tier.name}</h3>
                 <p style={{ margin: '0 0 4px' }}>
-                  <strong style={{ fontSize: 28 }}>{tier.price}</strong>{' '}
+                  <strong style={{ fontSize: 30, letterSpacing: '-0.02em' }}>
+                    {tier.price}
+                  </strong>{' '}
                   <span className="mk-muted">{tier.cadence}</span>
                 </p>
+                {tier.yearly ? (
+                  <p className="mk-muted" style={{ margin: '0 0 4px', fontSize: 13 }}>
+                    {tier.yearly}
+                  </p>
+                ) : null}
                 <p className="mk-muted">{tier.tagline}</p>
                 <ul>
                   {tier.features.map((feature) => (
@@ -156,14 +178,14 @@ export const Pricing = () => {
                     {tier.cta.label}
                   </Link>
                 </p>
-              </div>
+              </Reveal>
             ))}
           </div>
           <p className="mk-muted" style={{ marginTop: 20 }}>
             Yearly billing on Pro and Business gives you two months free.
           </p>
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={PRICING_FAQ} />
     </>

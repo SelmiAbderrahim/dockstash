@@ -62,6 +62,8 @@ export const fr: DictionaryShape = {
       projectLimitReached: 'Votre offre ne permet pas plus de projets. Passez à une offre supérieure pour en ajouter.',
       schedulesLocked: 'Les sauvegardes planifiées ne sont pas disponibles sur votre offre actuelle.',
       frequencyNotAllowed: 'Votre offre ne permet pas cette fréquence de planification.',
+      restoreDrillsLocked: 'Les tests de restauration automatiques sont disponibles avec les offres Pro et Business.',
+      multiVpsLocked: 'La vue de flotte multi-VPS est disponible avec l\'offre Business.',
       projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
       selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
       notOwner: 'Vous n’êtes pas propriétaire d’un ou plusieurs de ces projets.',
@@ -197,13 +199,21 @@ export const fr: DictionaryShape = {
       keyVersionMismatch: 'L’enveloppe d’import référence la version de clé {{version}} que cet agent ne peut pas déchiffrer.',
       plaintextForbidden: 'L’enveloppe d’import contient un champ de secret en clair ({{field}}) — import refusé.',
       selfBackupFailed: 'Échec de la sauvegarde interne : {{message}}',
+      userNotFound: 'Compte introuvable.',
       notOwner: 'Vous n’êtes pas propriétaire d’un ou plusieurs projets référencés.',
       storageUnreachable: 'Le dépôt de stockage est inaccessible : {{message}}',
     },
     success: {
       exportReady: 'L’export de configuration est prêt.',
       imported: 'Import de configuration terminé avec succès.',
+      escrowEnabled: 'Codes de récupération générés. Enregistrez-les maintenant — ils ne seront plus affichés.',
       selfBackupComplete: 'Sauvegarde interne terminée avec succès.',
+    },
+  },
+  agents: {
+    error: {
+      notFound: 'Agent introuvable.',
+      notOwner: 'Vous ne possédez pas cet agent.',
     },
   },
   language: {

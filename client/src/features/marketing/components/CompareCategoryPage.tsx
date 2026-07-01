@@ -3,6 +3,7 @@ import { Seo, schema } from '@shared/seo';
 import { getCompetitor } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Breadcrumbs, FaqSection } from './shared';
+import { Reveal } from '../useReveal';
 import type { ComparisonRow, FaqItem } from '../types';
 
 const BASE_PATH = '/compare/self-hosted-backup-vs-cloud-backup';
@@ -118,31 +119,34 @@ export const CompareCategoryPage = () => {
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Head to head</span>
           <h2 className="mk-h2">Side by side</h2>
-          <table className="mk-table">
-            <thead>
-              <tr>
-                <th scope="col">Dimension</th>
-                <th scope="col">Self-hosted (Dockstash)</th>
-                <th scope="col">Cloud backup SaaS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ROWS.map((row) => (
-                <tr key={row.feature}>
-                  <th scope="row">{row.feature}</th>
-                  <td>{row.dockstash}</td>
-                  <td>{row.competitor}</td>
+          <div className="mk-table-wrap">
+            <table className="mk-table">
+              <thead>
+                <tr>
+                  <th scope="col">Dimension</th>
+                  <th scope="col">Self-hosted (Dockstash)</th>
+                  <th scope="col">Cloud backup SaaS</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {ROWS.map((row) => (
+                  <tr key={row.feature}>
+                    <th scope="row">{row.feature}</th>
+                    <td>{row.dockstash}</td>
+                    <td>{row.competitor}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">When to pick each</h2>
           <div className="mk-grid">
@@ -172,7 +176,7 @@ export const CompareCategoryPage = () => {
             </Link>
           </p>
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={FAQ} />
     </>

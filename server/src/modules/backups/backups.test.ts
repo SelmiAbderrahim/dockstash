@@ -17,6 +17,15 @@ import {
   mongoAdapter,
   mysqlAdapter,
   postgresAdapter,
+  redisAdapter,
+  valkeyAdapter,
+  sqliteAdapter,
+  clickhouseAdapter,
+  elasticsearchAdapter,
+  rabbitmqAdapter,
+  minioAdapter,
+  influxdbAdapter,
+  neo4jAdapter,
   readServiceEnv,
 } from './backups.adapters.js';
 import { isAllowedProjectPath } from './backups.paths.js';
@@ -113,7 +122,17 @@ describe('backups: adapters', () => {
     expect(matchAdapter('mysql:8')?.type).toBe('mysql');
     expect(matchAdapter('mariadb:11')?.type).toBe('mariadb');
     expect(matchAdapter('mongo:7')?.type).toBe('mongo');
-    expect(matchAdapter('redis:7')).toBeUndefined();
+    expect(matchAdapter('redis:7')?.type).toBe('redis');
+    expect(matchAdapter('valkey/valkey:8')?.type).toBe('valkey');
+    expect(matchAdapter('nouchka/sqlite3')?.type).toBe('sqlite');
+    expect(matchAdapter('clickhouse/clickhouse-server:24')?.type).toBe('clickhouse');
+    expect(matchAdapter('elasticsearch:8.13.0')?.type).toBe('elasticsearch');
+    expect(matchAdapter('opensearchproject/opensearch:2')?.type).toBe('elasticsearch');
+    expect(matchAdapter('rabbitmq:3.13-management')?.type).toBe('rabbitmq');
+    expect(matchAdapter('minio/minio:latest')?.type).toBe('minio');
+    expect(matchAdapter('influxdb:2.7')?.type).toBe('influxdb');
+    expect(matchAdapter('neo4j:5')?.type).toBe('neo4j');
+    expect(matchAdapter('node:20')).toBeUndefined();
     expect(matchAdapter('')).toBeUndefined();
     expect(matchAdapter(undefined)).toBeUndefined();
     expect(matchAdapter(null)).toBeUndefined();
@@ -126,11 +145,16 @@ describe('backups: adapters', () => {
     expect(pg).toEqual(['pg_dumpall', '-U', 'app']);
     expect(postgresAdapter.restoreCmd(svc)).toEqual(['psql', '-U', 'app']);
     expect(postgresAdapter.dumpCmd({})).toEqual(['pg_dumpall', '-U', 'postgres']);
+    expect(postgresAdapter.restoreCmd({})).toEqual(['psql', '-U', 'postgres']);
+    expect(mysqlAdapter.restoreCmd({})).toEqual(['mysql', '-uroot', '-p']);
+    expect(mariadbAdapter.restoreCmd({})).toEqual(['mariadb', '-uroot', '-p']);
 
     const mysqlArgs = mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] });
     expect(mysqlArgs).toEqual([
       'mysqldump',
       '--single-transaction',
+      '--routines',
+      '--triggers',
       '--all-databases',
       '-uroot',
       '-ps3cret',
@@ -143,23 +167,42 @@ describe('backups: adapters', () => {
     expect(mysqlAdapter.dumpCmd({})).toEqual([
       'mysqldump',
       '--single-transaction',
+      '--routines',
+      '--triggers',
       '--all-databases',
       '-uroot',
       '-p',
     ]);
 
-    const mariaSvc = { environment: { MYSQL_ROOT_PASSWORD: 'm' } };
-    expect(mariadbAdapter.dumpCmd(mariaSvc)).toEqual([
-      'mysqldump',
+    // MariaDB uses mariadb-dump and prefers MARIADB_ROOT_PASSWORD, falling back
+    // to the legacy MYSQL_ROOT_PASSWORD key.
+    expect(
+      mariadbAdapter.dumpCmd({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } }),
+    ).toEqual([
+      'mariadb-dump',
       '--single-transaction',
+      '--routines',
+      '--triggers',
+      '--all-databases',
+      '-uroot',
+      '-pmm',
+    ]);
+    const mariaLegacy = { environment: { MYSQL_ROOT_PASSWORD: 'm' } };
+    expect(mariadbAdapter.dumpCmd(mariaLegacy)).toEqual([
+      'mariadb-dump',
+      '--single-transaction',
+      '--routines',
+      '--triggers',
       '--all-databases',
       '-uroot',
       '-pm',
     ]);
-    expect(mariadbAdapter.restoreCmd(mariaSvc)).toEqual(['mysql', '-uroot', '-pm']);
+    expect(mariadbAdapter.restoreCmd(mariaLegacy)).toEqual(['mariadb', '-uroot', '-pm']);
     expect(mariadbAdapter.dumpCmd({})).toEqual([
-      'mysqldump',
+      'mariadb-dump',
       '--single-transaction',
+      '--routines',
+      '--triggers',
       '--all-databases',
       '-uroot',
       '-p',
@@ -169,9 +212,72 @@ describe('backups: adapters', () => {
     expect(mongoAdapter.restoreCmd({})).toEqual([
       'mongorestore',
       '--archive',
-      '--oplog',
+      '--oplogReplay',
       '--drop',
     ]);
+  });
+
+  it('file-artifact adapters expose mode + artifact path + argv commands', () => {
+    const fileAdapters = [
+      { a: redisAdapter, dump: ['redis-cli', 'SAVE'], artifact: '/data/dump.rdb' },
+      { a: valkeyAdapter, dump: ['valkey-cli', 'SAVE'], artifact: '/data/dump.rdb' },
+      {
+        a: sqliteAdapter,
+        dump: ['sqlite3', '/data/app.db', '.backup /backup/app-backup.db'],
+        artifact: '/backup/app-backup.db',
+      },
+      {
+        a: clickhouseAdapter,
+        dump: [
+          'clickhouse-client',
+          '--query',
+          "BACKUP DATABASE default TO Disk('backups', 'snapshot')",
+        ],
+        artifact: '/var/lib/clickhouse/backups/snapshot',
+      },
+      {
+        a: elasticsearchAdapter,
+        dump: [
+          'curl',
+          '-fsS',
+          '-X',
+          'PUT',
+          'http://localhost:9200/_snapshot/dockstash/snapshot?wait_for_completion=true',
+        ],
+        artifact: '/usr/share/elasticsearch/snapshots',
+      },
+      {
+        a: rabbitmqAdapter,
+        dump: ['rabbitmqctl', 'export_definitions', '/tmp/definitions.json'],
+        artifact: '/tmp/definitions.json',
+      },
+      {
+        a: minioAdapter,
+        dump: ['mc', 'mirror', '--overwrite', 'local', '/backup/minio'],
+        artifact: '/backup/minio',
+      },
+      {
+        a: influxdbAdapter,
+        dump: ['influx', 'backup', '/backup/influx'],
+        artifact: '/backup/influx',
+      },
+      {
+        a: neo4jAdapter,
+        dump: ['neo4j-admin', 'database', 'dump', 'neo4j', '--to-path=/backup'],
+        artifact: '/backup/neo4j.dump',
+      },
+    ];
+    for (const { a, dump, artifact } of fileAdapters) {
+      expect(a.mode).toBe('file');
+      expect(a.dumpCmd({})).toEqual(dump);
+      expect(a.dumpArtifactPath({})).toBe(artifact);
+      // restoreCmd is always an argv array (never a shell string)
+      const restore = a.restoreCmd({});
+      expect(Array.isArray(restore)).toBe(true);
+      expect(restore.every((tok) => typeof tok === 'string' && !tok.includes('\0'))).toBe(true);
+    }
+    // stdin adapters have no artifact path (discriminated union enforces this)
+    expect(postgresAdapter.mode).toBe('stdin');
   });
 
   it('match matrix covers positive/negative per adapter', () => {
@@ -180,12 +286,23 @@ describe('backups: adapters', () => {
       ['mariadb:11', ['mariadb']],
       ['mysql:8', ['mysql']],
       ['mongo:7', ['mongo']],
-      ['redis:7', []],
+      ['redis:7', ['redis']],
+      ['valkey/valkey:8', ['valkey']],
+      ['nouchka/sqlite3', ['sqlite']],
+      ['clickhouse/clickhouse-server:24', ['clickhouse']],
+      ['elasticsearch:8.13.0', ['elasticsearch']],
+      ['rabbitmq:3.13-management', ['rabbitmq']],
+      ['minio/minio:latest', ['minio']],
+      ['influxdb:2.7', ['influxdb']],
+      ['neo4j:5', ['neo4j']],
+      ['node:20', []],
     ];
     for (const [img, expected] of cases) {
       const matched = ADAPTER_REGISTRY.filter((a) => a.match(img)).map((a) => a.type);
       expect(matched).toEqual(expected);
     }
+    // exactly 13 adapters, one per DatabaseType
+    expect(ADAPTER_REGISTRY).toHaveLength(13);
   });
 
   it('readServiceEnv handles array, object, and missing forms', () => {
@@ -510,6 +627,70 @@ describe('backups: runBackup orchestration', () => {
     expect(restic.calls[1]?.hasStdin).toBe(false);
     const persisted = await Project.findById(projectId);
     expect(persisted?.lastStatus).toBe('success');
+  });
+
+  it('file-mode adapter: runs the dump then restic-backs-up the artifact path', async () => {
+    const { userId, projectId } = await seedProject();
+    const p = await Project.findById(projectId);
+    if (p) {
+      p.plan.databases = [
+        { service: 'cache', type: 'redis', container: 'p_cache_1', enabled: true },
+      ] as typeof p.plan.databases;
+      await p.save();
+    }
+    const { restic, docker } = makeMocks();
+    const result = await runBackup(projectId, userId, {
+      resticRunner: restic,
+      dockerClient: docker,
+      composeServices: { cache: { image: 'redis:7' } },
+    });
+    expect(result.status).toBe('success');
+    // dump command runs in the container (no stdin pipe for file mode)
+    expect(docker.calls[0]).toMatchObject({
+      container: 'p_cache_1',
+      argv: ['redis-cli', 'SAVE'],
+    });
+    // restic backs up the produced artifact path, not a --stdin stream
+    expect(restic.calls[0]?.args).toEqual(['backup', '/data/dump.rdb']);
+    expect(restic.calls[0]?.hasStdin).toBe(false);
+    // then the paths+configs layer
+    expect(restic.calls[1]?.args).toEqual(['backup', '/var/www/p', '/etc/traefik']);
+  });
+
+  it('file-mode adapter: a dump stream error fails the run before restic', async () => {
+    const { userId, projectId } = await seedProject();
+    const p = await Project.findById(projectId);
+    if (p) {
+      p.plan.databases = [
+        { service: 'cache', type: 'redis', container: 'p_cache_1', enabled: true },
+      ] as typeof p.plan.databases;
+      await p.save();
+    }
+    const { restic } = makeMocks();
+    const docker: DockerClient = {
+      async exec() {
+        return new Readable({
+          read() {
+            this.destroy(new Error('stream boom'));
+          },
+        });
+      },
+      async inspect() {
+        return { id: '', running: true };
+      },
+    };
+    await expect(
+      runBackup(projectId, userId, {
+        resticRunner: restic,
+        dockerClient: docker,
+        composeServices: { cache: { image: 'redis:7' } },
+      }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastStatus).toBe('failed');
+    expect(persisted?.lastError).toMatch(/stream boom/);
+    // restic never ran because the dump stream errored first
+    expect(restic.calls).toHaveLength(0);
   });
 
   it('marks failed when the DB dump layer errors and stops before paths', async () => {

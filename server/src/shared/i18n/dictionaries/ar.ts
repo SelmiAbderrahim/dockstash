@@ -62,6 +62,8 @@ export const ar: DictionaryShape = {
       projectLimitReached: 'خطتك لا تسمح بمزيد من المشاريع. قم بالترقية لإضافة المزيد.',
       schedulesLocked: 'النسخ الاحتياطية المجدولة غير متاحة في خطتك الحالية.',
       frequencyNotAllowed: 'خطتك لا تسمح بهذا التكرار للجدولة.',
+      restoreDrillsLocked: 'اختبارات الاستعادة التلقائية متاحة في خطط Pro وBusiness.',
+      multiVpsLocked: 'عرض أسطول متعدد الخوادم متاح في خطة Business.',
       projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
       selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
       notOwner: 'أنت لا تملك واحداً أو أكثر من تلك المشاريع.',
@@ -197,13 +199,21 @@ export const ar: DictionaryShape = {
       keyVersionMismatch: 'يشير مغلف الاستيراد إلى إصدار المفتاح {{version}} الذي لا يمكن لهذا الوكيل فك تشفيره.',
       plaintextForbidden: 'يحتوي مغلف الاستيراد على حقل سر بنص عادي ({{field}}) — رفض الاستيراد.',
       selfBackupFailed: 'فشل النسخ الاحتياطي الذاتي: {{message}}',
+      userNotFound: 'لم يتم العثور على الحساب.',
       notOwner: 'أنت لا تملك واحدًا أو أكثر من المشاريع المشار إليها.',
       storageUnreachable: 'مستودع التخزين غير قابل للوصول: {{message}}',
     },
     success: {
       exportReady: 'تصدير الإعدادات جاهز.',
       imported: 'اكتمل استيراد الإعدادات بنجاح.',
+      escrowEnabled: 'تم إنشاء رموز الاسترداد. احفظها الآن — لن تُعرض مرة أخرى.',
       selfBackupComplete: 'اكتمل النسخ الاحتياطي الذاتي بنجاح.',
+    },
+  },
+  agents: {
+    error: {
+      notFound: 'لم يتم العثور على الوكيل.',
+      notOwner: 'أنت لا تملك هذا الوكيل.',
     },
   },
   language: {

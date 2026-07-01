@@ -3,7 +3,10 @@ import { Seo, schema } from '@shared/seo';
 import {
   getUseCase,
   getServiceGuide,
-  useCaseIntro,
+  // Aliased to a non-`use*` name: it's a plain string builder, not a React
+  // hook, and the `use` prefix trips react-hooks/rules-of-hooks after the
+  // early return below.
+  useCaseIntro as buildUseCaseIntro,
 } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import {
@@ -11,6 +14,7 @@ import {
   FaqSection,
   LastUpdated,
 } from './shared';
+import { Reveal } from '../useReveal';
 
 export const UseCasePage = () => {
   const { entry } = useParams();
@@ -44,7 +48,15 @@ export const UseCasePage = () => {
 
   const basePath = `/backup/${app.slug}-docker`;
 
+  const lastModified = schema.monthToIso(app.lastReviewed);
+
   const jsonLd = schema.graph(
+    schema.article({
+      headline: `How to back up ${app.appName} in Docker`,
+      description: `Back up ${app.appName} in Docker completely — its database, data volumes, and config — stored encrypted off-site with a verified restore.`,
+      path: localeHref(basePath, locale),
+      dateModified: lastModified,
+    }),
     schema.howTo(
       `How to back up ${app.appName} in Docker`,
       app.backupPlan.map((step) => ({
@@ -67,6 +79,8 @@ export const UseCasePage = () => {
         description={`Back up ${app.appName} in Docker completely: a consistent dump of its database, the data volumes that hold files, and the compose/.env config — stored encrypted off-site with a verified restore.`}
         basePath={basePath}
         locale={locale}
+        type="article"
+        dateModified={lastModified}
         jsonLd={jsonLd}
       />
 
@@ -86,38 +100,42 @@ export const UseCasePage = () => {
           <h1 className="mk-h1">
             How to back up {app.appName} in Docker (2026)
           </h1>
-          <p className="mk-answer">{useCaseIntro(app)}</p>
+          <p className="mk-answer">{buildUseCaseIntro(app)}</p>
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">What it stores</span>
           <h2 className="mk-h2">What {app.appName} stores</h2>
-          <table className="mk-table">
-            <tbody>
-              <tr>
-                <th scope="row">Compose services</th>
-                <td>{app.composeServices.join(', ')}</td>
-              </tr>
-              <tr>
-                <th scope="row">Databases detected</th>
-                <td>{app.detectedDbs.join(', ')}</td>
-              </tr>
-              <tr>
-                <th scope="row">Data volumes</th>
-                <td>{app.detectedVolumes.join(', ')}</td>
-              </tr>
-              <tr>
-                <th scope="row">Config paths</th>
-                <td>{app.configPaths.join(', ')}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="mk-table-wrap">
+            <table className="mk-table">
+              <tbody>
+                <tr>
+                  <th scope="row">Compose services</th>
+                  <td>{app.composeServices.join(', ')}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Databases detected</th>
+                  <td>{app.detectedDbs.join(', ')}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Data volumes</th>
+                  <td>{app.detectedVolumes.join(', ')}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Config paths</th>
+                  <td>{app.configPaths.join(', ')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Step by step</span>
           <h2 className="mk-h2">The backup plan</h2>
           <ol>
             {app.backupPlan.map((step) => (
@@ -127,9 +145,9 @@ export const UseCasePage = () => {
             ))}
           </ol>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Restoring {app.appName}</h2>
           <p>{app.restoreNotes}</p>
@@ -143,10 +161,10 @@ export const UseCasePage = () => {
           </p>
           <LastUpdated iso={app.lastReviewed} />
         </div>
-      </section>
+      </Reveal>
 
       {app.relatedGuides.length > 0 && (
-        <section className="mk-section">
+        <Reveal as="section" className="mk-section">
           <div className="mk-container">
             <h2 className="mk-h2">Related database guides</h2>
             <div className="mk-grid">
@@ -168,7 +186,7 @@ export const UseCasePage = () => {
               })}
             </div>
           </div>
-        </section>
+        </Reveal>
       )}
 
       <FaqSection faqs={app.faq} />

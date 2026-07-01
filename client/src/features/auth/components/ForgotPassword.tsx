@@ -48,25 +48,30 @@ export const ForgotPassword = () => {
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <div>
-        {errorMessage ? (
-          <div role="alert">
-            <strong>Error!</strong> {errorMessage}
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-card__title">Reset your password</h1>
+        <form className="auth-form" onSubmit={onSubmit}>
+          {errorMessage ? (
+            <div className="auth-alert" role="alert">
+              <strong>Error!</strong> {errorMessage}
+            </div>
+          ) : null}
+          {message ? (
+            <div className="auth-alert auth-alert--success">
+              <strong>Success!</strong> {message}
+            </div>
+          ) : null}
+          <div className="auth-field">
+            <label htmlFor="forgot-email">Email</label>
+            <input id="forgot-email" type="text" {...register('email')} />
+            {errors.email ? <div className="error">{errors.email.message}</div> : null}
           </div>
-        ) : null}
-        {message ? (
-          <div>
-            <strong>Success!</strong> {message}
-          </div>
-        ) : null}
-        <label htmlFor="forgot-email">Email</label>
-        <input id="forgot-email" type="text" {...register('email')} />
-        {errors.email ? <div className="error">{errors.email.message}</div> : null}
+          <button className="auth-button" type="submit" disabled={isSubmitting}>
+            Reset Password
+          </button>
+        </form>
       </div>
-      <button type="submit" disabled={isSubmitting}>
-        Reset Password
-      </button>
-    </form>
+    </div>
   );
 };

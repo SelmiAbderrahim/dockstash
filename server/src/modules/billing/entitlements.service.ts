@@ -144,6 +144,52 @@ export async function assertScheduleAllowed(
 }
 
 /**
+ * Enforce the restore-drill feature flag (Pro+). Throws 403
+ * `billing.entitlements.restoreDrillsLocked` on the free tier so the client can
+ * render an upgrade prompt.
+ */
+export async function assertRestoreDrillAllowed(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<ResolvedEntitlements> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  if (!resolved.entitlements.restoreDrills) {
+    throw HttpError.forbidden(t('billing.entitlements.restoreDrillsLocked'), {
+      reason: 'restoreDrillsLocked',
+    });
+  }
+  return resolved;
+}
+
+/**
+ * Whether the user's plan includes email alerts (Pro+). Used by the alert and
+ * heartbeat senders to skip delivery for tiers without the feature.
+ */
+export async function isEmailAlertsAllowed(userId: string): Promise<boolean> {
+  const resolved = await resolveEntitlements(userId);
+  return resolved.entitlements.emailAlerts;
+}
+
+/**
+ * Enforce the multi-VPS fleet feature (Business). Throws 403
+ * `billing.entitlements.multiVpsLocked` for tiers without it.
+ */
+export async function assertMultiVpsAllowed(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<ResolvedEntitlements> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  if (!resolved.entitlements.multiVps) {
+    throw HttpError.forbidden(t('billing.entitlements.multiVpsLocked'), {
+      reason: 'multiVpsLocked',
+    });
+  }
+  return resolved;
+}
+
+/**
  * Clamp a retention window (in days) to the tier ceiling. Never widens; only
  * narrows. Callers pass the requested `keep --days` and receive the effective
  * value to hand to `restic forget`.

@@ -1,12 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '@shared/hooks/redux';
 import { selectAuthenticated } from '@features/auth';
+import { BrandLogo } from '@shared/brand';
 
-interface HeaderProps {
-  logo: string;
-}
-
-export const Header = ({ logo }: HeaderProps) => {
+export const Header = () => {
   const authenticated = useAppSelector(selectAuthenticated);
 
   const links = authenticated ? (
@@ -40,7 +37,7 @@ export const Header = ({ logo }: HeaderProps) => {
       <div className="container">
         <div className="navbar-header">
           <Link className="navbar-brand" to="/">
-            {logo}
+            <BrandLogo />
           </Link>
         </div>
         <div className="collapse navbar-collapse">

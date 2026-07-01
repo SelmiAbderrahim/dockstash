@@ -21,6 +21,7 @@ import { auditRouter } from './modules/audit/index.js';
 import { healthRouter, projectHealthRouter } from './modules/health/index.js';
 import { seoRouter } from './modules/seo/index.js';
 import { recoveryRouter } from './modules/recovery/index.js';
+import { agentsRouter } from './modules/agents/index.js';
 import { legalRouter } from './modules/legal/index.js';
 
 export function createApp(): Express {
@@ -83,6 +84,7 @@ export function createApp(): Express {
   app.use('/api/backups', backupsRouter);
   app.use('/api/scheduler', schedulerRouter);
   app.use('/api/recovery', recoveryRouter);
+  app.use('/api/agents', agentsRouter);
   app.use('/api', protectedRouter);
 
   app.use(notFound);

@@ -4,7 +4,7 @@ import { Header } from './Header';
 
 export const AppLayout = () => (
   <div>
-    <Header logo="Dockstash" />
+    <Header />
     <div className="container">
       <Outlet />
     </div>

@@ -11,6 +11,7 @@ import {
 } from './backups.verify.service.js';
 import { loadOwnedProject } from './backups.service.js';
 import { serializeProject } from './backups.serialize.js';
+import { assertRestoreDrillAllowed } from '../billing/entitlements.service.js';
 
 /**
  * Boundary implementations for check/drill are supplied by the scheduler layer
@@ -58,6 +59,9 @@ export const check: RequestHandler = asyncHandler(async (req, res) => {
 
 export const drill: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
+  const userId = requireUserId(req.user);
+  // Automated restore-drill verification is a Pro+ feature.
+  await assertRestoreDrillAllowed(userId, { t: req.t });
   const cfg = assertConfigured();
   const base = cfg.makeDrillDeps();
   const result = await runRestoreDrill(projectId, requireUserId(req.user), {

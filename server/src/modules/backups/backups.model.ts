@@ -1,6 +1,20 @@
 import mongoose, { type InferSchemaType, type HydratedDocument } from 'mongoose';
 
-export const DATABASE_TYPES = ['postgres', 'mysql', 'mariadb', 'mongo'] as const;
+export const DATABASE_TYPES = [
+  'postgres',
+  'mysql',
+  'mariadb',
+  'mongo',
+  'redis',
+  'valkey',
+  'sqlite',
+  'clickhouse',
+  'elasticsearch',
+  'rabbitmq',
+  'minio',
+  'influxdb',
+  'neo4j',
+] as const;
 export type DatabaseType = (typeof DATABASE_TYPES)[number];
 
 export const BACKUP_STATUSES = ['idle', 'running', 'success', 'failed'] as const;
@@ -48,11 +62,23 @@ const projectSchema = new mongoose.Schema(
     },
     name: { type: String, required: true, trim: true },
     path: { type: String, required: true, trim: true },
+    // Optional backup agent (multi-VPS fleet). Null = the local/default agent.
+    agent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Agent',
+      default: null,
+      index: true,
+    },
     plan: { type: planSchema, required: true, default: () => ({}) },
     repoPasswordEnc: { type: encryptedSecretSchema, required: true },
     lastStatus: { type: String, enum: BACKUP_STATUSES, default: 'idle' },
     lastError: { type: String, default: '' },
     lastRunAt: { type: Date },
+    // Per-project metering (Business "per-project metering"). Populated from
+    // restic `stats` once the concrete runner is wired; 0 until then.
+    snapshotCount: { type: Number, default: 0 },
+    lastBackupBytes: { type: Number, default: 0 },
+    totalRepoBytes: { type: Number, default: 0 },
     // Last successful backup completion — read by the dead-man's-switch
     // heartbeat sweep (prompt 08) to detect silent stalls.
     lastSuccessAt: { type: Date, default: null },

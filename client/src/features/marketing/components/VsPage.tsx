@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import { getCompetitor } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { Reveal } from '../useReveal';
 import {
   Breadcrumbs,
   ComparisonTable,
@@ -87,17 +88,20 @@ export const VsPage = () => {
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Head to head</span>
           <h2 className="mk-h2">At a glance</h2>
-          <ComparisonTable
-            rows={competitor.comparison}
-            competitorName={competitor.name}
-          />
+          <div className="mk-table-wrap">
+            <ComparisonTable
+              rows={competitor.comparison}
+              competitorName={competitor.name}
+            />
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Who each is for</h2>
           <div className="mk-grid">
@@ -111,9 +115,9 @@ export const VsPage = () => {
             </div>
           </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Migrating to Dockstash</h2>
           <p>{competitor.migrationNotes}</p>
@@ -130,7 +134,7 @@ export const VsPage = () => {
           </p>
           <LastUpdated iso={competitor.lastReviewed} />
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={competitor.faq} />
     </>

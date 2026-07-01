@@ -11,10 +11,14 @@ import { __setPaymentProviderForTests } from './active-provider.js';
 import {
   assertProjectCap,
   assertScheduleAllowed,
+  assertRestoreDrillAllowed,
+  assertMultiVpsAllowed,
+  isEmailAlertsAllowed,
   classifyCron,
   clampRetentionDays,
   resolveEntitlements,
 } from './entitlements.service.js';
+import { getUsageForUser } from './billing.service.js';
 import { PricingTier } from './pricing-tier.model.js';
 import { Subscription } from './subscription.model.js';
 import { seedPricingTiers } from './pricing-tier.seed.js';
@@ -227,10 +231,80 @@ describe('enforcement guards', () => {
     ).resolves.toMatchObject({ slug: 'pro' });
   });
 
+  it('assertRestoreDrillAllowed blocks free, allows pro', async () => {
+    const free = await createOwner('free-drill@example.com');
+    await expect(
+      assertRestoreDrillAllowed(String(free._id)),
+    ).rejects.toMatchObject({
+      status: 403,
+      details: { reason: 'restoreDrillsLocked' },
+    });
+    const pro = await createOwner('pro-drill@example.com');
+    await seedActiveSub(String(pro._id), 'pro');
+    await expect(
+      assertRestoreDrillAllowed(String(pro._id)),
+    ).resolves.toMatchObject({ slug: 'pro' });
+  });
+
+  it('assertMultiVpsAllowed blocks free/pro, allows business', async () => {
+    const free = await createOwner('free-vps@example.com');
+    await expect(
+      assertMultiVpsAllowed(String(free._id)),
+    ).rejects.toMatchObject({ status: 403, details: { reason: 'multiVpsLocked' } });
+    const pro = await createOwner('pro-vps@example.com');
+    await seedActiveSub(String(pro._id), 'pro');
+    await expect(
+      assertMultiVpsAllowed(String(pro._id)),
+    ).rejects.toMatchObject({ status: 403, details: { reason: 'multiVpsLocked' } });
+    const biz = await createOwner('biz-vps@example.com');
+    await seedActiveSub(String(biz._id), 'business');
+    await expect(
+      assertMultiVpsAllowed(String(biz._id)),
+    ).resolves.toMatchObject({ slug: 'business' });
+  });
+
+  it('isEmailAlertsAllowed is false for free, true for pro', async () => {
+    const free = await createOwner('free-mail@example.com');
+    expect(await isEmailAlertsAllowed(String(free._id))).toBe(false);
+    const pro = await createOwner('pro-mail@example.com');
+    await seedActiveSub(String(pro._id), 'pro');
+    expect(await isEmailAlertsAllowed(String(pro._id))).toBe(true);
+  });
+
   it('classifyCron labels daily/hourly/any-cron', () => {
     expect(classifyCron('0 3 * * *')).toBe('daily');
     expect(classifyCron('30 * * * *')).toBe('hourly');
     expect(classifyCron('*/5 * * * *')).toBe('any-cron');
+  });
+
+  it('getUsageForUser returns per-project metering for active projects', async () => {
+    const user = await createOwner('meter@example.com');
+    const withRun = await createProject(String(user._id), 'has-run');
+    await Project.updateOne(
+      { _id: withRun._id },
+      {
+        $set: {
+          snapshotCount: 4,
+          totalRepoBytes: 4096,
+          lastRunAt: new Date('2026-07-01T00:00:00Z'),
+          lastStatus: 'success',
+        },
+      },
+    );
+    // a second project that has never run (lastRunAt null → mapped to null)
+    await createProject(String(user._id), 'never-run');
+    const usage = await getUsageForUser(String(user._id));
+    expect(usage.metering).toHaveLength(2);
+    const ran = usage.metering.find((m) => m.name === 'has-run');
+    expect(ran).toMatchObject({
+      snapshotCount: 4,
+      sizeBytes: 4096,
+      lastStatus: 'success',
+    });
+    expect(ran?.lastRunAt).toBe('2026-07-01T00:00:00.000Z');
+    const fresh = usage.metering.find((m) => m.name === 'never-run');
+    expect(fresh).toMatchObject({ snapshotCount: 0, sizeBytes: 0 });
+    expect(fresh?.lastRunAt).toBeNull();
   });
 
   it('clampRetentionDays never widens', async () => {

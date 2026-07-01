@@ -22,6 +22,10 @@ export interface SeoProps {
   type?: 'website' | 'article';
   /** When true, emit robots noindex (thin/low-data programmatic pages). */
   noindex?: boolean;
+  /** ISO date the content was first published (article pages). */
+  datePublished?: string;
+  /** ISO date the content was last updated (article pages, freshness signal). */
+  dateModified?: string;
   /** JSON-LD document(s) — usually a single `graph(...)` object. */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
@@ -40,10 +44,17 @@ export const Seo = ({
   image = DEFAULT_OG_IMAGE,
   type = 'website',
   noindex = false,
+  datePublished,
+  dateModified,
   jsonLd,
 }: SeoProps) => {
   const canonical = canonicalFor(basePath, locale);
   const alternates = hreflangAlternates(basePath);
+  // og:locale:alternate — real hreflang locales other than the active one and
+  // x-default, so social crawlers surface the localized variants.
+  const ogAlternateLocales = alternates
+    .filter((alt) => alt.hrefLang !== 'x-default' && alt.hrefLang !== locale)
+    .map((alt) => alt.hrefLang);
   const jsonLdDocs = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
@@ -79,6 +90,15 @@ export const Seo = ({
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={image} />
       <meta property="og:locale" content={locale} />
+      {ogAlternateLocales.map((alt) => (
+        <meta key={alt} property="og:locale:alternate" content={alt} />
+      ))}
+      {type === 'article' && datePublished && (
+        <meta property="article:published_time" content={datePublished} />
+      )}
+      {type === 'article' && dateModified && (
+        <meta property="article:modified_time" content={dateModified} />
+      )}
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

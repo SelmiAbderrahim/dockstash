@@ -83,6 +83,22 @@ const userSchema = new mongoose.Schema(
     // Legal hold overrides the deletion purge — held accounts are retained
     // until legal explicitly releases the hold, per IDEA.md §8.
     legalHold: { type: Boolean, required: true, default: false },
+    // Opt-in recovery-code escrow. When enabled, `wrappedKey` holds the master
+    // key wrapped under a Shamir escrow key; the recovery codes (the shares)
+    // are shown to the user once and NEVER stored. Absent = zero-knowledge
+    // default (lose the master key = unrecoverable). See recovery-codes.ts.
+    recoveryEscrow: {
+      enabled: { type: Boolean, default: false },
+      wrappedKey: {
+        ciphertext: { type: String, default: '' },
+        iv: { type: String, default: '' },
+        authTag: { type: String, default: '' },
+        keyVersion: { type: Number, default: 0 },
+        threshold: { type: Number, default: 0 },
+        shareCount: { type: Number, default: 0 },
+      },
+      createdAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

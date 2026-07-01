@@ -9,6 +9,8 @@ export interface Entitlements {
   frequency: ScheduleFrequency;
   schedules: boolean;
   emailAlerts: boolean;
+  /** Automated restore-drill verification (Pro+). */
+  restoreDrills: boolean;
   multiVps: boolean;
 }
 
@@ -25,6 +27,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     frequency: 'daily',
     schedules: false,
     emailAlerts: false,
+    restoreDrills: false,
     multiVps: false,
   },
   pro: {
@@ -34,6 +37,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     frequency: 'hourly',
     schedules: true,
     emailAlerts: true,
+    restoreDrills: true,
     multiVps: false,
   },
   business: {
@@ -43,6 +47,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     frequency: 'any-cron',
     schedules: true,
     emailAlerts: true,
+    restoreDrills: true,
     multiVps: true,
   },
 };

@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import { getCompetitor, altIntro } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { Reveal } from '../useReveal';
 import {
   Breadcrumbs,
   ComparisonTable,
@@ -91,17 +92,20 @@ export const AlternativePage = () => {
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Comparison</span>
           <h2 className="mk-h2">How Dockstash compares to {competitor.name}</h2>
-          <ComparisonTable
-            rows={competitor.comparison}
-            competitorName={competitor.name}
-          />
+          <div className="mk-table-wrap">
+            <ComparisonTable
+              rows={competitor.comparison}
+              competitorName={competitor.name}
+            />
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Where {competitor.name} is strong</h2>
           <ul>
@@ -118,9 +122,9 @@ export const AlternativePage = () => {
             ))}
           </ul>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Who should switch to Dockstash</h2>
           <p className="mk-answer">{competitor.switchIf}</p>
@@ -129,9 +133,9 @@ export const AlternativePage = () => {
             {competitor.bestFor}
           </p>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Migrating from {competitor.name}</h2>
           <p>{competitor.migrationNotes}</p>
@@ -150,7 +154,7 @@ export const AlternativePage = () => {
           </p>
           <LastUpdated iso={competitor.lastReviewed} />
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={competitor.faq} />
     </>

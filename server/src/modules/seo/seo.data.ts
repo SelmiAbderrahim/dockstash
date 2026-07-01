@@ -30,6 +30,7 @@ export const ALTERNATIVE_PATHS: readonly string[] = [
   '/alternatives/simplebackups',
   '/alternatives/duplicati',
   '/alternatives/restic-cron-scripts',
+  '/alternatives/provider-snapshots',
 ];
 
 /** Database backup guide slugs → `/guides/backup-<slug>-docker`. */

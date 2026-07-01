@@ -1,6 +1,8 @@
 // Marketing surface styles. Adheres to .claude/rules/ui-ux-patterns.md:
-// flat borders, 6px buttons / 8px cards, transitions on color/opacity only
-// (<=150ms), no gradients, no card-lift, no pulse.
+// flat borders, 6px buttons / 8px cards, transitions on color/opacity/transform
+// only (<=~240ms), no gradients, no card-lift on hover, no pulse.
+// Entrance reveal (opacity+translate, one-shot, reduced-motion-gated) is not a
+// banned hover effect — see .mk-reveal.
 
 .mk {
   --mk-bg: #ffffff;
@@ -8,16 +10,38 @@
   --mk-muted: #5b616e;
   --mk-border: #e4e6eb;
   --mk-surface: #f7f8fa;
+  --mk-surface-2: #eef1f5;
   --mk-primary: #1f6feb;
   --mk-primary-fg: #ffffff;
   --mk-ok: #1a7f5a;
+
+  // Layout
   --mk-max: 1080px;
+  --mk-max-wide: 1200px;
+
+  // One subtle, static elevation token — used flatly, never escalated on hover.
+  --mk-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+
+  // Typography
+  --mk-font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  --mk-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  // Fluid type scale — scales smoothly between mobile and desktop.
+  --mk-h1: clamp(32px, 1.4rem + 3.4vw, 52px);
+  --mk-h2: clamp(24px, 1.2rem + 1.6vw, 34px);
+  --mk-h3: clamp(17px, 1rem + 0.3vw, 19px);
+  --mk-lede: clamp(17px, 1rem + 0.5vw, 20px);
+
+  // Fluid vertical rhythm for sections.
+  --mk-section-y: clamp(48px, 6vw, 88px);
 
   color: var(--mk-fg);
   background: var(--mk-bg);
-  font-family:
-    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--mk-font-sans);
   line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -27,7 +51,9 @@
     --mk-muted: #9aa2af;
     --mk-border: #262a30;
     --mk-surface: #16191d;
+    --mk-surface-2: #1c2025;
     --mk-primary: #4b8bf5;
+    --mk-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -35,6 +61,10 @@
   max-width: var(--mk-max);
   margin: 0 auto;
   padding: 0 20px;
+
+  &--wide {
+    max-width: var(--mk-max-wide);
+  }
 }
 
 .mk-header {
@@ -60,10 +90,19 @@
 }
 
 .mk-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   font-size: 18px;
+  letter-spacing: 0;
   color: var(--mk-fg);
   text-decoration: none;
+}
+
+.mk-logo .brand-logo__mark {
+  width: 32px;
+  height: 32px;
 }
 
 .mk-nav {
@@ -100,17 +139,28 @@
   color: var(--mk-fg);
   text-decoration: none;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
-  transition: opacity 150ms;
+  transition: opacity 150ms, border-color 150ms;
 
   &:hover {
     opacity: 0.85;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mk-primary);
+    outline-offset: 2px;
   }
 
   &--primary {
     background: var(--mk-primary);
     color: var(--mk-primary-fg);
     border-color: var(--mk-primary);
+  }
+
+  &--lg {
+    padding: 11px 22px;
+    font-size: 16px;
   }
 }
 
@@ -119,46 +169,134 @@
 }
 
 .mk-section {
-  padding: 56px 0;
+  padding: var(--mk-section-y) 0;
   border-bottom: 1px solid var(--mk-border);
+
+  &--flush {
+    border-bottom: 0;
+  }
 }
 
 .mk-muted {
   color: var(--mk-muted);
 }
 
+// Small uppercase label above a heading — adds hierarchy, not decoration.
+.mk-eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mk-primary);
+  margin: 0 0 12px;
+}
+
+// Hero band — a touch more breathing room than a standard section.
+.mk-hero {
+  padding: clamp(56px, 7vw, 104px) 0 var(--mk-section-y);
+  border-bottom: 1px solid var(--mk-border);
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  // Two-column hero (copy left, product visual right) on wide screens.
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(24px, 4vw, 56px);
+    align-items: center;
+  }
+
+  &__visual {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .mk-hero__grid {
+    grid-template-columns: 1fr;
+  }
+  // On narrow screens the code card is secondary — show it after the copy.
+  .mk-hero__visual {
+    display: none;
+  }
+}
+
 .mk-answer {
-  font-size: 18px;
+  font-size: var(--mk-lede);
+  line-height: 1.5;
   max-width: 720px;
-  padding: 16px 20px;
+  padding: 18px 20px;
   border: 1px solid var(--mk-border);
   border-radius: 8px;
   background: var(--mk-surface);
 }
 
 .mk-h1 {
-  font-size: 40px;
-  line-height: 1.15;
+  font-size: var(--mk-h1);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   margin: 0 0 16px;
   font-weight: 700;
+  max-width: 16ch;
 }
 
 .mk-h2 {
-  font-size: 28px;
+  font-size: var(--mk-h2);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
   margin: 0 0 16px;
   font-weight: 700;
 }
 
 .mk-lede {
-  font-size: 20px;
+  font-size: var(--mk-lede);
   color: var(--mk-muted);
-  max-width: 720px;
+  max-width: 680px;
+}
+
+// Supported-tech / real-signal badges. Text only — no fabricated logos.
+.mk-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 28px;
+  align-items: center;
+}
+
+.mk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--mk-muted);
+  padding: 4px 10px;
+  border: 1px solid var(--mk-border);
+  border-radius: 6px;
+  background: var(--mk-surface);
+  white-space: nowrap;
+
+  &__label {
+    font-size: 13px;
+    color: var(--mk-muted);
+    font-weight: 500;
+  }
 }
 
 .mk-grid {
   display: grid;
   gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
+  &--2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .mk-card {
@@ -172,7 +310,12 @@
 
   h3 {
     margin: 0 0 8px;
-    font-size: 17px;
+    font-size: var(--mk-h3);
+    letter-spacing: -0.01em;
+  }
+
+  &--surface {
+    background: var(--mk-surface);
   }
 }
 
@@ -181,6 +324,46 @@ a.mk-card {
 
   &:hover {
     border-color: var(--mk-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mk-primary);
+    outline-offset: 2px;
+  }
+}
+
+// Numbered step list (how-it-works). No decoration, just clearer rhythm.
+.mk-steps {
+  list-style: none;
+  counter-reset: mk-step;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
+  li {
+    counter-increment: mk-step;
+    border: 1px solid var(--mk-border);
+    border-radius: 8px;
+    padding: 20px;
+    background: var(--mk-bg);
+
+    &::before {
+      content: counter(mk-step);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: var(--mk-surface);
+      border: 1px solid var(--mk-border);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--mk-primary);
+      margin-bottom: 10px;
+    }
   }
 }
 
@@ -199,19 +382,29 @@ a.mk-card {
 
   th {
     background: var(--mk-surface);
+    font-weight: 600;
   }
+}
+
+// Responsive table wrapper — prevents horizontal page scroll on mobile.
+.mk-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .mk-code {
   display: block;
   overflow-x: auto;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 1px solid var(--mk-border);
   border-radius: 8px;
   background: var(--mk-surface);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 14px;
+  box-shadow: var(--mk-shadow);
+  font-family: var(--mk-font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
   white-space: pre;
+  tab-size: 2;
 }
 
 .mk-breadcrumbs {
@@ -241,12 +434,29 @@ a.mk-card {
 
   h3 {
     margin: 0 0 6px;
-    font-size: 17px;
+    font-size: var(--mk-h3);
+    letter-spacing: -0.01em;
+  }
+}
+
+// Closing call-to-action band.
+.mk-cta-band {
+  padding: var(--mk-section-y) 0;
+  text-align: center;
+
+  &__inner {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .mk-hero__actions {
+    justify-content: center;
+    margin-top: 24px;
   }
 }
 
 .mk-footer {
-  padding: 40px 0;
+  padding: 48px 0;
   color: var(--mk-muted);
 
   &__grid {
@@ -256,9 +466,9 @@ a.mk-card {
   }
 
   h3 {
-    font-size: 14px;
+    font-size: 13px;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.05em;
     color: var(--mk-fg);
     margin: 0 0 10px;
   }
@@ -280,14 +490,102 @@ a.mk-card {
   }
 }
 
+// Mobile disclosure nav (details/summary — no JS). Hidden on desktop.
+.mk-nav-mobile {
+  display: none;
+  margin-left: auto;
+
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border: 1px solid var(--mk-border);
+    border-radius: 6px;
+    color: var(--mk-fg);
+    font-size: 14px;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &__panel {
+    position: absolute;
+    right: 20px;
+    left: 20px;
+    margin-top: 8px;
+    background: var(--mk-bg);
+    border: 1px solid var(--mk-border);
+    border-radius: 8px;
+    box-shadow: var(--mk-shadow);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 20;
+
+    a {
+      color: var(--mk-fg);
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+
+      &:hover {
+        background: var(--mk-surface);
+      }
+    }
+  }
+}
+
+// ── Entrance reveal ────────────────────────────────────────────────────────
+// Content is fully visible by default (SSR / no-JS / crawlers see everything).
+// The .mk-reveal opacity/transform is applied ONLY when JS has hydrated
+// (html.mk-js is set by the reveal hook) AND the user has not requested
+// reduced motion. One-shot: .is-visible restores the natural state.
+@media (prefers-reduced-motion: no-preference) {
+  html.mk-js .mk-reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition:
+      opacity 240ms ease-out,
+      transform 240ms ease-out;
+    transition-delay: var(--mk-reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  html.mk-js .mk-reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .mk-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 760px) {
-  .mk-nav {
+  .mk-nav,
+  .mk-header__cta .mk-link-muted {
     display: none;
+  }
+  .mk-nav-mobile {
+    display: block;
+  }
+  .mk-header__cta {
+    gap: 8px;
   }
   .mk-footer__grid {
     grid-template-columns: 1fr 1fr;
   }
   .mk-h1 {
-    font-size: 32px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 460px) {
+  .mk-footer__grid {
+    grid-template-columns: 1fr;
   }
 }

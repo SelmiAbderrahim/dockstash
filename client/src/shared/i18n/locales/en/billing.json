@@ -72,7 +72,16 @@
   "usage": {
     "projects": "{{used}} of {{cap}} projects in use",
     "retention": "Retention: {{days}} days",
-    "overCap": "You are over your project cap. Upgrade or pick which projects stay active."
+    "overCap": "You are over your project cap. Upgrade or pick which projects stay active.",
+    "metering": {
+      "title": "Per-project usage",
+      "empty": "No active projects yet.",
+      "colProject": "Project",
+      "colSnapshots": "Snapshots",
+      "colSize": "Size",
+      "colLastRun": "Last run",
+      "never": "Never"
+    }
   },
   "selection": {
     "title": "Pick which projects stay active",

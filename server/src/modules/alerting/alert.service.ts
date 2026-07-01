@@ -3,6 +3,7 @@ import { logger } from '../../config/logger.js';
 import { DEFAULT_LOCALE, type SupportedLocale } from '../../shared/i18n/index.js';
 import { Project } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
+import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
 import { deliverAlertEmail, type AlertKind } from '../communication/index.js';
 
 export type FailureKind = Exclude<AlertKind, 'heartbeat'>;
@@ -16,6 +17,8 @@ export interface FailureAlertInput {
 
 export interface FailureAlertDeps {
   webhookPoster?: (payload: AlertWebhookPayload) => Promise<void>;
+  /** Plan gate for the email channel — defaults to the billing entitlement. */
+  emailAllowedFor?: (ownerId: string) => Promise<boolean>;
 }
 
 export interface AlertWebhookPayload {
@@ -72,6 +75,11 @@ export async function sendFailureAlert(
       return;
     }
     const { email, locale } = await loadOwnerLocale(String(project.owner));
+    // Email alerts are a paid-plan feature; the webhook channel (operator
+    // infra) is always delivered. Gate only the email send.
+    const emailAllowed =
+      email !== null &&
+      (await (deps.emailAllowedFor ?? isEmailAlertsAllowed)(String(project.owner)));
     const lastGoodAt = project.lastSuccessAt ?? null;
     const webhookPayload: AlertWebhookPayload = {
       kind: input.kind,
@@ -82,7 +90,7 @@ export async function sendFailureAlert(
       failedAt: failedAt.toISOString(),
     };
 
-    if (email) {
+    if (email && emailAllowed) {
       try {
         await deliverAlertEmail({
           email,

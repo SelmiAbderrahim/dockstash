@@ -58,28 +58,33 @@ export const Login = () => {
   });
 
   return (
-    <div>
-      <form onSubmit={onSubmit}>
-        {errorMessage ? (
-          <div role="alert">
-            <strong>{t('login.errorPrefix')}</strong> {errorMessage}
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-card__title">{t('login.submit')}</h1>
+        <form className="auth-form" onSubmit={onSubmit}>
+          {errorMessage ? (
+            <div className="auth-alert" role="alert">
+              <strong>{t('login.errorPrefix')}</strong> {errorMessage}
+            </div>
+          ) : null}
+          <div className="auth-field">
+            <label htmlFor="login-email">{t('login.email')}</label>
+            <input id="login-email" type="text" {...register('email')} />
+            {errors.email ? <div className="error">{errors.email.message}</div> : null}
           </div>
-        ) : null}
-        <div>
-          <label htmlFor="login-email">{t('login.email')}</label>
-          <input id="login-email" type="text" {...register('email')} />
-          {errors.email ? <div className="error">{errors.email.message}</div> : null}
-        </div>
-        <div>
-          <label htmlFor="login-password">{t('login.password')}</label>
-          <input id="login-password" type="password" {...register('password')} />
-          {errors.password ? <div className="error">{errors.password.message}</div> : null}
-        </div>
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? t('login.submitting') : t('login.submit')}
-        </button>
-      </form>
-      <Link to="/forgot-password">{t('login.forgot')}</Link>
+          <div className="auth-field">
+            <label htmlFor="login-password">{t('login.password')}</label>
+            <input id="login-password" type="password" {...register('password')} />
+            {errors.password ? <div className="error">{errors.password.message}</div> : null}
+          </div>
+          <button className="auth-button" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? t('login.submitting') : t('login.submit')}
+          </button>
+        </form>
+        <Link className="auth-link" to="/forgot-password">
+          {t('login.forgot')}
+        </Link>
+      </div>
     </div>
   );
 };

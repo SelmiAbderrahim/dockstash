@@ -13,6 +13,7 @@ import {
   FaqSection,
   LastUpdated,
 } from './shared';
+import { Reveal } from '../useReveal';
 
 export const GuidePage = () => {
   const { entry } = useParams();
@@ -67,7 +68,15 @@ export const GuidePage = () => {
     },
   ];
 
+  const lastModified = schema.monthToIso(guide.lastReviewed);
+
   const jsonLd = schema.graph(
+    schema.article({
+      headline: `How to back up a ${guide.serviceName} Docker container`,
+      description: `The correct, consistent way to back up ${guide.serviceName} in Docker — dump from the running container, encrypted off-site Restic snapshots, and a verified restore.`,
+      path: localeHref(basePath, locale),
+      dateModified: lastModified,
+    }),
     schema.howTo(
       `How to back up a ${guide.serviceName} Docker container`,
       howToSteps,
@@ -87,6 +96,8 @@ export const GuidePage = () => {
         description={`How to back up ${guide.serviceName} in Docker the correct way: a consistent dump with ${guide.dumpCmd.split(' ')[0]} from the running container, encrypted off-site Restic snapshots, and a verified restore.`}
         basePath={basePath}
         locale={locale}
+        type="article"
+        dateModified={lastModified}
         jsonLd={jsonLd}
       />
 
@@ -110,34 +121,38 @@ export const GuidePage = () => {
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Detection</span>
           <h2 className="mk-h2">What Dockstash detects</h2>
-          <table className="mk-table">
-            <tbody>
-              <tr>
-                <th scope="row">Env keys detected</th>
-                <td>{guide.envKeysDetected.join(', ')}</td>
-              </tr>
-              <tr>
-                <th scope="row">Default port</th>
-                <td>{guide.defaultPort || '—'}</td>
-              </tr>
-              <tr>
-                <th scope="row">Live data paths (never copied live)</th>
-                <td>{guide.liveDataPaths.join(', ')}</td>
-              </tr>
-              <tr>
-                <th scope="row">Example images</th>
-                <td>{guide.dockerImages.join(', ')}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="mk-table-wrap">
+            <table className="mk-table">
+              <tbody>
+                <tr>
+                  <th scope="row">Env keys detected</th>
+                  <td>{guide.envKeysDetected.join(', ')}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Default port</th>
+                  <td>{guide.defaultPort || '—'}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Live data paths (never copied live)</th>
+                  <td>{guide.liveDataPaths.join(', ')}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Example images</th>
+                  <td>{guide.dockerImages.join(', ')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Commands</span>
           <h2 className="mk-h2">The dump command</h2>
           <CodeBlock>{guide.dumpCmd}</CodeBlock>
           <h2 className="mk-h2" style={{ marginTop: 32 }}>
@@ -148,10 +163,11 @@ export const GuidePage = () => {
             {consistencyNote(guide)}
           </p>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">The gotchas</span>
           <h2 className="mk-h2">Gotchas to avoid</h2>
           <ul>
             {guide.gotchas.map((gotcha) => (
@@ -159,9 +175,9 @@ export const GuidePage = () => {
             ))}
           </ul>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Do it in one click with Dockstash</h2>
           <p className="mk-muted">
@@ -178,11 +194,11 @@ export const GuidePage = () => {
           </p>
           <LastUpdated iso={guide.lastReviewed} />
         </div>
-      </section>
+      </Reveal>
 
       {(guide.relatedServices.length > 0 ||
         guide.relatedUseCases.length > 0) && (
-        <section className="mk-section">
+        <Reveal as="section" className="mk-section">
           <div className="mk-container">
             <h2 className="mk-h2">Related</h2>
             <div className="mk-grid">
@@ -218,7 +234,7 @@ export const GuidePage = () => {
               })}
             </div>
           </div>
-        </section>
+        </Reveal>
       )}
 
       <FaqSection faqs={guide.faq} />

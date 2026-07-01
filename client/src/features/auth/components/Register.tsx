@@ -49,35 +49,40 @@ export const Register = () => {
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      {errorMessage ? (
-        <div role="alert">
-          <strong>Error!</strong> {errorMessage}
-        </div>
-      ) : null}
-      <div>
-        <label htmlFor="register-first-name">First Name</label>
-        <input id="register-first-name" type="text" {...register('firstName')} />
-        {errors.firstName ? <div className="error">{errors.firstName.message}</div> : null}
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-card__title">Create your account</h1>
+        <form className="auth-form" onSubmit={onSubmit}>
+          {errorMessage ? (
+            <div className="auth-alert" role="alert">
+              <strong>Error!</strong> {errorMessage}
+            </div>
+          ) : null}
+          <div className="auth-field">
+            <label htmlFor="register-first-name">First Name</label>
+            <input id="register-first-name" type="text" {...register('firstName')} />
+            {errors.firstName ? <div className="error">{errors.firstName.message}</div> : null}
+          </div>
+          <div className="auth-field">
+            <label htmlFor="register-last-name">Last Name</label>
+            <input id="register-last-name" type="text" {...register('lastName')} />
+            {errors.lastName ? <div className="error">{errors.lastName.message}</div> : null}
+          </div>
+          <div className="auth-field">
+            <label htmlFor="register-email">Email</label>
+            <input id="register-email" type="text" {...register('email')} />
+            {errors.email ? <div className="error">{errors.email.message}</div> : null}
+          </div>
+          <div className="auth-field">
+            <label htmlFor="register-password">Password</label>
+            <input id="register-password" type="password" {...register('password')} />
+            {errors.password ? <div className="error">{errors.password.message}</div> : null}
+          </div>
+          <button className="auth-button" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Registering...' : 'Register'}
+          </button>
+        </form>
       </div>
-      <div>
-        <label htmlFor="register-last-name">Last Name</label>
-        <input id="register-last-name" type="text" {...register('lastName')} />
-        {errors.lastName ? <div className="error">{errors.lastName.message}</div> : null}
-      </div>
-      <div>
-        <label htmlFor="register-email">Email</label>
-        <input id="register-email" type="text" {...register('email')} />
-        {errors.email ? <div className="error">{errors.email.message}</div> : null}
-      </div>
-      <div>
-        <label htmlFor="register-password">Password</label>
-        <input id="register-password" type="password" {...register('password')} />
-        {errors.password ? <div className="error">{errors.password.message}</div> : null}
-      </div>
-      <button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Registering...' : 'Register'}
-      </button>
-    </form>
+    </div>
   );
 };

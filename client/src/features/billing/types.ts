@@ -70,6 +70,15 @@ export interface ProjectRef {
   name: string;
 }
 
+export interface ProjectMetrics {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  snapshotCount: number;
+  lastRunAt: string | null;
+  lastStatus: string;
+}
+
 export interface UsageResponse {
   projects: {
     used: number;
@@ -77,6 +86,7 @@ export interface UsageResponse {
     active: ProjectRef[];
     paused: ProjectRef[];
   };
+  metering: ProjectMetrics[];
   retentionDays: number;
   frequency: ScheduleFrequency;
   flags: { schedules: boolean; emailAlerts: boolean; multiVps: boolean };

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '@shared/hooks/redux';
 import { selectAuthenticated } from '@features/auth';
+import { BRAND_NAME } from '@shared/brand';
 
 export const Footer = () => {
   const authenticated = useAppSelector(selectAuthenticated);
@@ -40,7 +41,7 @@ export const Footer = () => {
             <nav>
               <ul className="footer-nav">{links}</ul>
             </nav>
-            <p className="copyright">© {year}, Dockstash. All Rights Reserved.</p>
+            <p className="copyright">© {year}, {BRAND_NAME}. All Rights Reserved.</p>
           </div>
         </div>
       </div>

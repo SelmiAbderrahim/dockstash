@@ -405,10 +405,25 @@ describe('recovery: HTTP routes', () => {
     expect(exportRes.status).toBe(401);
     const importRes = await request(app).post('/api/recovery/import').send({});
     expect(importRes.status).toBe(401);
+    const codesRes = await request(app).post('/api/recovery/recovery-codes');
+    expect(codesRes.status).toBe(401);
     const sbRes = await request(app).post('/api/recovery/self-backup');
     expect(sbRes.status).toBe(401);
     const listRes = await request(app).get('/api/recovery/self-backup');
     expect(listRes.status).toBe(401);
+  });
+
+  it('POST /recovery-codes enables escrow and returns codes once', async () => {
+    const owner = await seedUser('h-codes@t.com');
+    const res = await request(app)
+      .post('/api/recovery/recovery-codes')
+      .set('Authorization', `JWT ${owner.token}`)
+      .send();
+    expect(res.status).toBe(201);
+    expect(res.body.enabled).toBe(true);
+    expect(Array.isArray(res.body.codes)).toBe(true);
+    expect(res.body.codes.length).toBe(res.body.shareCount);
+    expect(res.body.message).toBeTruthy();
   });
 
   it('POST /export returns a JSON attachment envelope for the caller only', async () => {

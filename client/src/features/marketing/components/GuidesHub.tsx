@@ -8,6 +8,7 @@ import {
 } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Breadcrumbs, FaqSection } from './shared';
+import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
 const ANSWER =
@@ -72,13 +73,15 @@ export const GuidesHub = () => {
 
       <section className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Guides</span>
           <h1 className="mk-h1">Docker backup guides</h1>
           <p className="mk-answer">{ANSWER}</p>
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">By database</span>
           <h2 className="mk-h2">Back up a database in Docker</h2>
           <div className="mk-grid">
             {SERVICE_GUIDE_SLUGS.map((slug) => {
@@ -96,10 +99,11 @@ export const GuidesHub = () => {
             })}
           </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">By app stack</span>
           <h2 className="mk-h2">Back up an app stack in Docker</h2>
           <div className="mk-grid">
             {USE_CASE_SLUGS.map((slug) => {
@@ -117,7 +121,7 @@ export const GuidesHub = () => {
             })}
           </div>
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={HUB_FAQ} />
     </>

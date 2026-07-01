@@ -7,6 +7,7 @@ import type { SchedulerQueue } from '../scheduler/scheduler.boundaries.js';
 import type { ProjectHydrated } from '../backups/backups.model.js';
 import { buildExportEnvelope, type StorageEnvelopeInput } from './recovery.export.js';
 import { importEnvelope } from './recovery.import.js';
+import { enableRecoveryEscrow } from './recovery.escrow.js';
 import {
   enqueueSelfBackup,
   runSelfBackup,
@@ -62,6 +63,22 @@ export const importConfig: RequestHandler = asyncHandler(async (req, res) => {
     message: req.t
       ? req.t('recovery.success.imported')
       : 'recovery.success.imported',
+    ...result,
+  });
+});
+
+/**
+ * Enable opt-in recovery-code escrow. Returns the recovery codes ONCE — they
+ * are never stored and cannot be retrieved again. Re-enabling replaces any
+ * existing escrow.
+ */
+export const enableRecoveryCodes: RequestHandler = asyncHandler(async (req, res) => {
+  const userId = requireUserId(req.user);
+  const result = await enableRecoveryEscrow(userId, { t: req.t });
+  res.status(201).json({
+    message: req.t
+      ? req.t('recovery.success.escrowEnabled')
+      : 'recovery.success.escrowEnabled',
     ...result,
   });
 });

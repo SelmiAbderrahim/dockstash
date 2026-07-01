@@ -3,29 +3,37 @@ import {
   DEFAULT_LOCALE,
   type SupportedLocale,
 } from '@shared/i18n';
+import {
+  BRAND_ASSETS,
+  BRAND_NAME,
+  BRAND_SOCIAL_HANDLE,
+} from '@shared/brand';
 
 /**
  * Canonical public origin used to build absolute URLs (canonical, OG,
  * hreflang). Derived from build-time env; never hardcode a domain in
- * component code. Falls back to the production domain.
+ * component code. On the client it can fall back to the current origin;
+ * SSR should provide VITE_SITE_URL for absolute crawler URLs.
  */
 export const SITE_URL = (
-  (import.meta.env.VITE_SITE_URL as string | undefined) ?? 'https://dockstash.com'
+  (import.meta.env.VITE_SITE_URL as string | undefined) ??
+  (typeof window === 'undefined' ? '' : window.location.origin)
 ).replace(/\/+$/, '');
 
-export const SITE_NAME = 'Dockstash';
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/og/default.png`;
-export const TWITTER_HANDLE = '@dockstash';
+export const SITE_NAME = BRAND_NAME;
+export const DEFAULT_OG_IMAGE = absoluteUrl(BRAND_ASSETS.ogDefault);
+export const TWITTER_HANDLE = BRAND_SOCIAL_HANDLE;
 
 /** Prefix a path with its locale segment (English is un-prefixed / x-default). */
 export function localizedPath(path: string, locale: SupportedLocale): string {
   const clean = path === '/' ? '' : path;
-  return locale === DEFAULT_LOCALE ? path : `/${locale}${clean}` || '/';
+  return locale === DEFAULT_LOCALE ? path : `/${locale}${clean}`;
 }
 
 /** Absolute URL for a path (already includes any locale prefix). */
 export function absoluteUrl(path: string): string {
-  return `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return SITE_URL ? `${SITE_URL}${normalizedPath}` : normalizedPath;
 }
 
 export interface HreflangAlternate {

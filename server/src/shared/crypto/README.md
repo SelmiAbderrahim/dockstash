@@ -93,13 +93,32 @@ already migrated the row will be a no-op instead of double-migrating.
 Once no records remain at the old version (verified by a count query),
 retire the old key from the registry and remove the env var.
 
-## Losing the Key = Unrecoverable
+## Losing the Key = Unrecoverable (by default)
 
-There is no escrow, no KMS backdoor, no recovery service. If
+By default there is no escrow, no KMS backdoor, no recovery service. If
 `MASTER_ENCRYPTION_KEY` is lost, every encrypted record in Mongo becomes
 permanently unrecoverable. Back the key up out-of-band before deploying to
 production — a password manager, an offline HSM, or split shares across the
 operator team.
+
+### Opt-in recovery-code escrow
+
+A user may **explicitly opt in** to recovery-code escrow
+(`modules/recovery/recovery-codes.ts`). When enabled:
+
+1. A random 32-byte escrow key wraps the current master key (AES-256-GCM); the
+   wrapped key is stored on the user document (`recoveryEscrow.wrappedKey`).
+2. The escrow key is split into N recovery codes via **Shamir secret sharing**
+   (GF(256)) with threshold M. The codes are shown to the user **once** and are
+   **never stored**.
+3. Recovery (`recoverMasterKeyBytes`) reconstructs the escrow key from any ≥ M
+   codes and unwraps the master key, which then feeds the rotation runbook.
+
+The default posture is unchanged for anyone who does not opt in — no wrapped key
+is stored. **Threat-model delta:** for a user who opts in, an attacker who
+obtains the database **and** ≥ M of that user's recovery codes can recover the
+master key. Recovery codes must therefore be guarded as carefully as the master
+key itself.
 
 ## What This Module Does NOT Do
 

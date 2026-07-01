@@ -151,6 +151,16 @@ export async function getBillingOverviewForUser(
   };
 }
 
+/** Per-project usage metrics (Business "per-project metering"). */
+export interface ProjectMetrics {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  snapshotCount: number;
+  lastRunAt: string | null;
+  lastStatus: string;
+}
+
 export interface UsageResponse {
   projects: {
     used: number;
@@ -158,6 +168,8 @@ export interface UsageResponse {
     paused: Array<{ id: string; name: string }>;
     active: Array<{ id: string; name: string }>;
   };
+  /** Per-project metrics for active projects (metering surface). */
+  metering: ProjectMetrics[];
   retentionDays: number;
   frequency: string;
   flags: { schedules: boolean; emailAlerts: boolean; multiVps: boolean };
@@ -168,7 +180,7 @@ export async function getUsageForUser(userId: string): Promise<UsageResponse> {
   const resolved = await resolveEntitlements(userId);
   const projects = await Project.find({ owner: userId })
     .sort({ createdAt: 1 })
-    .select('_id name paused')
+    .select('_id name paused totalRepoBytes snapshotCount lastRunAt lastStatus')
     .lean();
   const active = projects
     .filter((p) => !p.paused)
@@ -176,11 +188,22 @@ export async function getUsageForUser(userId: string): Promise<UsageResponse> {
   const paused = projects
     .filter((p) => p.paused)
     .map((p) => ({ id: String(p._id), name: p.name }));
+  const metering: ProjectMetrics[] = projects
+    .filter((p) => !p.paused)
+    .map((p) => ({
+      id: String(p._id),
+      name: p.name,
+      sizeBytes: p.totalRepoBytes,
+      snapshotCount: p.snapshotCount,
+      lastRunAt: p.lastRunAt ? new Date(p.lastRunAt).toISOString() : null,
+      lastStatus: p.lastStatus,
+    }));
   const cap = Number.isFinite(resolved.entitlements.projects)
     ? resolved.entitlements.projects
     : null;
   return {
     projects: { used: active.length, cap, paused, active },
+    metering,
     retentionDays: resolved.entitlements.retentionDays,
     frequency: resolved.entitlements.frequency,
     flags: {

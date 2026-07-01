@@ -72,7 +72,16 @@
   "usage": {
     "projects": "已使用 {{used}} / {{cap}} 个项目",
     "retention": "保留：{{days}} 天",
-    "overCap": "已超过项目上限。请升级或选择保留哪些项目。"
+    "overCap": "已超过项目上限。请升级或选择保留哪些项目。",
+    "metering": {
+      "title": "按项目用量",
+      "empty": "暂无活跃项目。",
+      "colProject": "项目",
+      "colSnapshots": "快照",
+      "colSize": "大小",
+      "colLastRun": "上次运行",
+      "never": "从未"
+    }
   },
   "selection": {
     "title": "选择保留的项目",

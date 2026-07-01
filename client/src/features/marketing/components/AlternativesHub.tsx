@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import { COMPETITORS } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { Reveal } from '../useReveal';
 import { Breadcrumbs, FaqSection } from './shared';
 import type { FaqItem } from '../types';
 
@@ -83,37 +84,40 @@ export const AlternativesHub = () => {
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Comparison</span>
           <h2 className="mk-h2">At a glance</h2>
-          <table className="mk-table">
-            <thead>
-              <tr>
-                <th scope="col">Tool</th>
-                <th scope="col">Category</th>
-                <th scope="col">Pricing</th>
-                <th scope="col">Docker-aware</th>
-              </tr>
-            </thead>
-            <tbody>
-              {COMPETITOR_LIST.map((competitor) => (
-                <tr key={competitor.slug}>
-                  <th scope="row">
-                    <Link to={href(`/alternatives/${competitor.slug}`)}>
-                      {competitor.name}
-                    </Link>
-                  </th>
-                  <td>{competitor.category}</td>
-                  <td>{competitor.pricing}</td>
-                  <td>No — Dockstash is</td>
+          <div className="mk-table-wrap">
+            <table className="mk-table">
+              <thead>
+                <tr>
+                  <th scope="col">Tool</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Pricing</th>
+                  <th scope="col">Docker-aware</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {COMPETITOR_LIST.map((competitor) => (
+                  <tr key={competitor.slug}>
+                    <th scope="row">
+                      <Link to={href(`/alternatives/${competitor.slug}`)}>
+                        {competitor.name}
+                      </Link>
+                    </th>
+                    <td>{competitor.category}</td>
+                    <td>{competitor.pricing}</td>
+                    <td>No — Dockstash is</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      </Reveal>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">Compare each alternative</h2>
           <div className="mk-grid">
@@ -140,7 +144,7 @@ export const AlternativesHub = () => {
             </Link>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={HUB_FAQ} />
     </>

@@ -62,6 +62,8 @@ export const es: DictionaryShape = {
       projectLimitReached: 'Tu plan no permite más proyectos. Actualiza para añadir otro.',
       schedulesLocked: 'Las copias de seguridad programadas no están disponibles en tu plan actual.',
       frequencyNotAllowed: 'Tu plan no permite esa frecuencia de programación.',
+      restoreDrillsLocked: 'Las pruebas de restauración automáticas están disponibles en los planes Pro y Business.',
+      multiVpsLocked: 'La vista de flota multi-VPS está disponible en el plan Business.',
       projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
       selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
       notOwner: 'No eres propietario de uno o más de esos proyectos.',
@@ -197,13 +199,21 @@ export const es: DictionaryShape = {
       keyVersionMismatch: 'El sobre de importación referencia la versión de clave {{version}} que este agente no puede descifrar.',
       plaintextForbidden: 'El sobre de importación contiene un campo de secreto en texto plano ({{field}}) — importación rechazada.',
       selfBackupFailed: 'Fallo en la copia interna: {{message}}',
+      userNotFound: 'Cuenta no encontrada.',
       notOwner: 'No es propietario de uno o más de los proyectos referenciados.',
       storageUnreachable: 'El repositorio de almacenamiento no es accesible: {{message}}',
     },
     success: {
       exportReady: 'La exportación de configuración está lista.',
       imported: 'Importación de configuración completada correctamente.',
+      escrowEnabled: 'Códigos de recuperación generados. Guárdalos ahora — no se volverán a mostrar.',
       selfBackupComplete: 'Copia interna completada correctamente.',
+    },
+  },
+  agents: {
+    error: {
+      notFound: 'Agente no encontrado.',
+      notOwner: 'No eres el propietario de este agente.',
     },
   },
   language: {

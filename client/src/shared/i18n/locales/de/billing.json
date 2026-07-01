@@ -72,7 +72,16 @@
   "usage": {
     "projects": "{{used}} von {{cap}} Projekten in Nutzung",
     "retention": "Aufbewahrung: {{days}} Tage",
-    "overCap": "Sie überschreiten Ihr Projektlimit. Upgraden oder Projekte auswählen, die aktiv bleiben."
+    "overCap": "Sie überschreiten Ihr Projektlimit. Upgraden oder Projekte auswählen, die aktiv bleiben.",
+    "metering": {
+      "title": "Nutzung pro Projekt",
+      "empty": "Noch keine aktiven Projekte.",
+      "colProject": "Projekt",
+      "colSnapshots": "Snapshots",
+      "colSize": "Größe",
+      "colLastRun": "Letzter Lauf",
+      "never": "Nie"
+    }
   },
   "selection": {
     "title": "Wählen Sie die aktiv bleibenden Projekte",

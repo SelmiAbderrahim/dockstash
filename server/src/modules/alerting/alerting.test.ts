@@ -104,6 +104,16 @@ describe('sendFailureAlert', () => {
     expect(sent[0]?.text).toContain('boom-drill');
   });
 
+  it('skips the email channel when the plan does not include email alerts', async () => {
+    const { project } = await seedProject({ name: 'gated' });
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'e' },
+      { emailAllowedFor: async () => false },
+    );
+    // Email is a paid feature — no email delivered for a plan without it.
+    expect(sent).toHaveLength(0);
+  });
+
   it('renders in the owner language', async () => {
     const { project } = await seedProject({ ownerLang: 'fr' });
     await sendFailureAlert({
@@ -242,6 +252,20 @@ describe('runHeartbeatSweep', () => {
     expect(sent[0]?.subject).toMatch(/Silent stall|no backup/);
     const reloaded = await Project.findById(project._id);
     expect(reloaded?.lastHeartbeatAlertAt).toBeTruthy();
+  });
+
+  it('skips the heartbeat email for a plan without email alerts', async () => {
+    const now = new Date('2027-02-01T00:00:00Z');
+    const stale = new Date(now.getTime() - 48 * HOUR);
+    await seedProject({ lastSuccessAt: stale });
+    const res = await runHeartbeatSweep({
+      now,
+      thresholdHours: 24,
+      emailAllowedFor: async () => false,
+    });
+    // No email delivered — but the stall is still recorded (handled/deduped).
+    expect(sent).toHaveLength(0);
+    expect(res.projectsScanned).toBe(1);
   });
 
   it('does NOT alert when the last success is fresh', async () => {

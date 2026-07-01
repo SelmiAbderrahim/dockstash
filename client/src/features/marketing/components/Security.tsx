@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Breadcrumbs, FaqSection } from './shared';
+import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
 const ANSWER =
@@ -88,20 +89,21 @@ export const Security = () => {
 
       <section className="mk-section">
         <div className="mk-container">
+          <span className="mk-eyebrow">Security</span>
           <h1 className="mk-h1">Security you can verify</h1>
           <p className="mk-answer">{ANSWER}</p>
         </div>
       </section>
 
-      <section className="mk-section">
+      <Reveal as="section" className="mk-section">
         <div className="mk-container">
           <h2 className="mk-h2">How your data stays safe</h2>
           <div className="mk-grid">
-            {CARDS.map((card) => (
-              <div key={card.title} className="mk-card">
+            {CARDS.map((card, i) => (
+              <Reveal key={card.title} className="mk-card" index={i}>
                 <h3>{card.title}</h3>
                 <p className="mk-muted">{card.body}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
           <p style={{ marginTop: 24 }}>
@@ -113,7 +115,7 @@ export const Security = () => {
             </Link>
           </p>
         </div>
-      </section>
+      </Reveal>
 
       <FaqSection faqs={SECURITY_FAQ} />
     </>

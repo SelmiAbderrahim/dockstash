@@ -60,6 +60,8 @@ export const en = {
       projectLimitReached: 'Your plan does not allow more projects. Upgrade to add another.',
       schedulesLocked: 'Scheduled backups are not available on your current plan.',
       frequencyNotAllowed: 'Your plan does not allow that schedule frequency.',
+      restoreDrillsLocked: 'Automated restore drills are available on Pro and Business plans.',
+      multiVpsLocked: 'Multi-VPS fleet view is available on the Business plan.',
       projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
       selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
       notOwner: 'You do not own one or more of those projects.',
@@ -195,13 +197,21 @@ export const en = {
       keyVersionMismatch: 'Import envelope references key version {{version}} which this agent cannot decrypt.',
       plaintextForbidden: 'Import envelope contains a plaintext secret field ({{field}}) — refusing to import.',
       selfBackupFailed: 'Self-backup failed: {{message}}',
+      userNotFound: 'Account not found.',
       notOwner: 'You do not own one or more of the referenced projects.',
       storageUnreachable: 'Storage repository is not reachable: {{message}}',
     },
     success: {
       exportReady: 'Configuration export is ready.',
       imported: 'Configuration import completed successfully.',
+      escrowEnabled: 'Recovery codes generated. Save them now — they will not be shown again.',
       selfBackupComplete: 'Self-backup completed successfully.',
+    },
+  },
+  agents: {
+    error: {
+      notFound: 'Agent not found.',
+      notOwner: 'You do not own this agent.',
     },
   },
   language: {

@@ -216,7 +216,7 @@ export const COMPETITORS: Record<string, Competitor> = {
       'Client-side encryption and deduplication',
     ],
     weaknesses: [
-      'Well-documented history of restore and database-consistency edge cases',
+      'Documented restore and database-consistency edge cases in its issue tracker and forums',
       'Not Docker-aware: no adapters, so live database files get copied instead of dumped',
       'No Compose/volume/reverse-proxy auto-detection of a running stack',
       'No automated restore-drill to prove a backup actually recovers',
@@ -241,7 +241,7 @@ export const COMPETITORS: Record<string, Competitor> = {
       {
         feature: 'Restore reliability track record',
         dockstash: 'Restic engine plus automated restore-drill diff each schedule',
-        competitor: 'Historically prone to restore/consistency edge cases',
+        competitor: 'Documented restore/consistency edge cases',
         dockstashWins: true,
       },
       {
@@ -277,7 +277,7 @@ export const COMPETITORS: Record<string, Competitor> = {
       {
         question: 'Why does Duplicati’s restore reputation matter?',
         answer:
-          'A backup is only as good as its restore. Duplicati has a documented history of restore and consistency edge cases. Dockstash uses restic and drills the restore automatically, so recovery is verified in advance.',
+          'A backup is only as good as its restore. Duplicati has documented restore and consistency edge cases in its issue tracker. Dockstash uses restic and drills the restore automatically, so recovery is verified in advance.',
       },
       {
         question: 'Does Duplicati handle my Postgres container?',

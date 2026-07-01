@@ -59,34 +59,39 @@ export const ResetPassword = () => {
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <fieldset>
-        <label htmlFor="reset-password">New Password:</label>
-        <input id="reset-password" type="password" {...register('password')} />
-        {errors.password ? <div className="error">{errors.password.message}</div> : null}
-      </fieldset>
+    <div className="auth-page">
+      <div className="auth-card">
+        <h1 className="auth-card__title">Choose a new password</h1>
+        <form className="auth-form" onSubmit={onSubmit}>
+          <div className="auth-field">
+            <label htmlFor="reset-password">New Password</label>
+            <input id="reset-password" type="password" {...register('password')} />
+            {errors.password ? <div className="error">{errors.password.message}</div> : null}
+          </div>
 
-      <fieldset>
-        <label htmlFor="reset-password-confirm">Confirm New Password:</label>
-        <input id="reset-password-confirm" type="password" {...register('passwordConfirm')} />
-        {errors.passwordConfirm ? (
-          <div className="error">{errors.passwordConfirm.message}</div>
-        ) : null}
-      </fieldset>
+          <div className="auth-field">
+            <label htmlFor="reset-password-confirm">Confirm New Password</label>
+            <input id="reset-password-confirm" type="password" {...register('passwordConfirm')} />
+            {errors.passwordConfirm ? (
+              <div className="error">{errors.passwordConfirm.message}</div>
+            ) : null}
+          </div>
 
-      {errorMessage ? (
-        <div role="alert">
-          <strong>Oops!</strong> {errorMessage}
-        </div>
-      ) : null}
-      {message ? (
-        <div>
-          <strong>Success!</strong> {message}
-        </div>
-      ) : null}
-      <button type="submit" disabled={isSubmitting}>
-        Change Password
-      </button>
-    </form>
+          {errorMessage ? (
+            <div className="auth-alert" role="alert">
+              <strong>Oops!</strong> {errorMessage}
+            </div>
+          ) : null}
+          {message ? (
+            <div className="auth-alert auth-alert--success">
+              <strong>Success!</strong> {message}
+            </div>
+          ) : null}
+          <button className="auth-button" type="submit" disabled={isSubmitting}>
+            Change Password
+          </button>
+        </form>
+      </div>
+    </div>
   );
 };

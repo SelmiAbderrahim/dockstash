@@ -6,6 +6,11 @@ import { store } from './app/store';
 import { createAppRouter } from './app/router';
 import { initI18n } from '@shared/i18n';
 import { MARKETING_LOCALE_PREFIXES } from '@features/marketing/useMarketingRoute';
+// Self-hosted fonts (bundled locally by Vite — no external CDN request).
+// Variable-weight Inter (latin) for UI; JetBrains Mono for code blocks.
+import '@fontsource-variable/inter/wght.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/700.css';
 import './styles/index.scss';
 
 declare global {

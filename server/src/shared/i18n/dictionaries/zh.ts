@@ -62,6 +62,8 @@ export const zh: DictionaryShape = {
       projectLimitReached: '您的套餐不允许添加更多项目。请升级以添加更多。',
       schedulesLocked: '当前套餐不支持定时备份。',
       frequencyNotAllowed: '您的套餐不支持该定时频率。',
+      restoreDrillsLocked: '自动恢复演练在 Pro 和 Business 套餐中可用。',
+      multiVpsLocked: '多 VPS 集群视图在 Business 套餐中可用。',
       projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
       selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
       notOwner: '您不是其中一个或多个项目的所有者。',
@@ -197,13 +199,21 @@ export const zh: DictionaryShape = {
       keyVersionMismatch: '导入信封引用了此代理无法解密的密钥版本 {{version}}。',
       plaintextForbidden: '导入信封中包含明文密钥字段（{{field}}）——拒绝导入。',
       selfBackupFailed: '自备份失败：{{message}}',
+      userNotFound: '未找到账户。',
       notOwner: '您不是所引用的一个或多个项目的所有者。',
       storageUnreachable: '存储仓库不可达：{{message}}',
     },
     success: {
       exportReady: '配置导出已就绪。',
       imported: '配置导入成功完成。',
+      escrowEnabled: '已生成恢复代码。请立即保存——它们不会再次显示。',
       selfBackupComplete: '自备份成功完成。',
+    },
+  },
+  agents: {
+    error: {
+      notFound: '未找到代理。',
+      notOwner: '您不拥有此代理。',
     },
   },
   language: {

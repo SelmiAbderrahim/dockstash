@@ -74,6 +74,16 @@ describe('billing slice — prompt 07 transitions', () => {
   it('loadUsage.fulfilled stores usage', () => {
     const usage: UsageResponse = {
       projects: { used: 2, cap: 10, active: [], paused: [] },
+      metering: [
+        {
+          id: 'p1',
+          name: 'proj-1',
+          sizeBytes: 2048,
+          snapshotCount: 3,
+          lastRunAt: '2026-07-01T00:00:00.000Z',
+          lastStatus: 'success',
+        },
+      ],
       retentionDays: 30,
       frequency: 'hourly',
       flags: { schedules: true, emailAlerts: true, multiVps: false },

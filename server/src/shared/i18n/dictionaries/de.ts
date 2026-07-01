@@ -62,6 +62,8 @@ export const de: DictionaryShape = {
       projectLimitReached: 'Ihr Tarif erlaubt keine weiteren Projekte. Upgraden Sie, um weitere hinzuzufügen.',
       schedulesLocked: 'Geplante Backups sind in Ihrem aktuellen Tarif nicht verfügbar.',
       frequencyNotAllowed: 'Ihr Tarif erlaubt diese Zeitplan-Häufigkeit nicht.',
+      restoreDrillsLocked: 'Automatische Wiederherstellungstests sind in den Tarifen Pro und Business verfügbar.',
+      multiVpsLocked: 'Die Multi-VPS-Flottenansicht ist im Business-Tarif verfügbar.',
       projectPaused: 'Dieses Projekt ist pausiert. Reaktivieren Sie es oder upgraden Sie, um Backups auszuführen.',
       selectionInvalid: 'Wählen Sie zwischen einem und {{cap}} Projekten aus, die aktiv bleiben sollen.',
       notOwner: 'Sie sind nicht der Eigentümer eines oder mehrerer dieser Projekte.',
@@ -197,13 +199,21 @@ export const de: DictionaryShape = {
       keyVersionMismatch: 'Import-Umschlag verweist auf Schlüsselversion {{version}}, die dieser Agent nicht entschlüsseln kann.',
       plaintextForbidden: 'Import-Umschlag enthält ein Geheimnisfeld im Klartext ({{field}}) — Import verweigert.',
       selfBackupFailed: 'Selbst-Backup fehlgeschlagen: {{message}}',
+      userNotFound: 'Konto nicht gefunden.',
       notOwner: 'Sie sind nicht Eigentümer eines oder mehrerer der referenzierten Projekte.',
       storageUnreachable: 'Speicher-Repository ist nicht erreichbar: {{message}}',
     },
     success: {
       exportReady: 'Konfigurations-Export ist bereit.',
       imported: 'Konfigurations-Import erfolgreich abgeschlossen.',
+      escrowEnabled: 'Wiederherstellungscodes erstellt. Speichern Sie sie jetzt — sie werden nicht erneut angezeigt.',
       selfBackupComplete: 'Selbst-Backup erfolgreich abgeschlossen.',
+    },
+  },
+  agents: {
+    error: {
+      notFound: 'Agent nicht gefunden.',
+      notOwner: 'Dieser Agent gehört Ihnen nicht.',
     },
   },
   language: {

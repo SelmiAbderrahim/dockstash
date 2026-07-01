@@ -72,7 +72,16 @@
   "usage": {
     "projects": "{{used}} sur {{cap}} projets utilisés",
     "retention": "Rétention : {{days}} jours",
-    "overCap": "Vous dépassez votre quota de projets. Passez à l’offre supérieure ou choisissez les projets à garder actifs."
+    "overCap": "Vous dépassez votre quota de projets. Passez à l’offre supérieure ou choisissez les projets à garder actifs.",
+    "metering": {
+      "title": "Utilisation par projet",
+      "empty": "Aucun projet actif pour l'instant.",
+      "colProject": "Projet",
+      "colSnapshots": "Instantanés",
+      "colSize": "Taille",
+      "colLastRun": "Dernière exécution",
+      "never": "Jamais"
+    }
   },
   "selection": {
     "title": "Choisissez les projets à garder actifs",
