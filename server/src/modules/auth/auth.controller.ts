@@ -43,10 +43,10 @@ export const resendVerification: RequestHandler = asyncHandler(async (req, res) 
 
 export const refresh: RequestHandler = asyncHandler(async (req, res) => {
   /* c8 ignore next -- requireAuth guarantees req.user before this handler runs */
-  if (!req.user) throw HttpError.unauthorized('Authentication required.');
+  if (!req.user) throw HttpError.unauthorized('errors.unauthorized');
   const user = await findUserById(req.user.id);
   /* c8 ignore next -- the JWT strategy already rejects deleted users upstream */
-  if (!user) throw HttpError.unauthorized('User no longer exists.');
+  if (!user) throw HttpError.unauthorized('errors.userNotFound');
   const publicUser = toPublicUser(user);
   res.status(200).json({ token: `JWT ${signToken(publicUser)}`, user: publicUser });
 });
@@ -65,14 +65,14 @@ export const login: RequestHandler = (req, res, next) => {
       }
       /* c8 ignore stop */
       if (!user) {
-        next(HttpError.unauthorized('Invalid email or password.'));
+        next(HttpError.unauthorized('errors.invalidCredentials'));
         return;
       }
       findUserById(user.id)
         .then((hydrated) => {
           /* c8 ignore start -- the user was just authenticated; it cannot vanish mid-request */
           if (!hydrated) {
-            next(HttpError.unauthorized('User no longer exists.'));
+            next(HttpError.unauthorized('errors.userNotFound'));
             return;
           }
           /* c8 ignore stop */
@@ -106,9 +106,9 @@ export const resetPassword: RequestHandler = asyncHandler(async (req, res) => {
  * client branch on the machine-readable reason rather than translated text.
  */
 export const requireVerified: RequestHandler = asyncHandler(async (req, _res, next) => {
-  if (!req.user) throw HttpError.unauthorized('Authentication required.');
+  if (!req.user) throw HttpError.unauthorized('errors.unauthorized');
   const user = await findUserById(req.user.id);
-  if (!user) throw HttpError.unauthorized('No user was found.');
+  if (!user) throw HttpError.unauthorized('errors.userNotFound');
   if (!user.emailVerified) {
     throw HttpError.forbidden('errors.emailNotVerified', { code: 'EMAIL_NOT_VERIFIED' });
   }

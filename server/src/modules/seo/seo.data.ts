@@ -20,6 +20,8 @@ export const CORE_PATHS: readonly string[] = [
   '/guides',
   '/security',
   '/faq',
+  '/privacy',
+  '/terms',
   '/compare/self-hosted-backup-vs-cloud-backup',
 ];
 

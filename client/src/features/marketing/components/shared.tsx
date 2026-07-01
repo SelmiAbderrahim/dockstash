@@ -205,6 +205,50 @@ export const CodeBlock = ({ children }: { children: string }) => (
   <code className={codeClass}>{children}</code>
 );
 
+export interface LegalSectionDef {
+  id: string;
+  title: string;
+  body: ReactNode;
+}
+
+/**
+ * Numbered anchor list + section stack for the legal pages (/privacy, /terms).
+ * Each section gets an `id` so ?tab-free deep links like /terms#billing work.
+ */
+export const LegalSections = ({ sections }: { sections: LegalSectionDef[] }) => (
+  <>
+    <nav aria-label="Table of contents" className="mb-12">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-foreground">
+        Contents
+      </h2>
+      <ol className="list-decimal space-y-1 ps-5 text-sm">
+        {sections.map((section) => (
+          <li key={section.id}>
+            <a
+              href={`#${section.id}`}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {section.title}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+    <div className="space-y-12">
+      {sections.map((section, index) => (
+        <section key={section.id} id={section.id} className="scroll-mt-24">
+          <h2 className={h2Class}>
+            {index + 1}. {section.title}
+          </h2>
+          <div className="max-w-prose space-y-4 text-muted-foreground [&_li]:mt-1 [&_strong]:font-semibold [&_strong]:text-foreground [&_ul]:list-disc [&_ul]:ps-5">
+            {section.body}
+          </div>
+        </section>
+      ))}
+    </div>
+  </>
+);
+
 /** Visible "Last updated" recency signal (AEO). `iso` = "2026-07". */
 export const LastUpdated = ({ iso }: { iso: string }) => {
   const [year, month] = iso.split('-');

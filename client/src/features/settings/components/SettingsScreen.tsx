@@ -42,6 +42,12 @@ const SavedNotice = ({ children }: { children: React.ReactNode }) => (
   </span>
 );
 
+const SaveError = ({ children }: { children: React.ReactNode }) => (
+  <span role="alert" className="text-sm font-medium text-destructive">
+    {children}
+  </span>
+);
+
 const StorageTab = () => {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
@@ -145,6 +151,7 @@ const StorageTab = () => {
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.connect')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('storage.saved')}</SavedNotice>}
+            {saveStatus === 'failed' && <SaveError>{error ?? t('errors.save')}</SaveError>}
           </div>
         </form>
       </CardContent>
@@ -216,6 +223,7 @@ const RetentionTab = () => {
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('retention.saved')}</SavedNotice>}
+            {saveStatus === 'failed' && <SaveError>{t('errors.save')}</SaveError>}
           </div>
         </form>
       </CardContent>
@@ -290,6 +298,7 @@ const PasswordTab = () => {
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('password.saved')}</SavedNotice>}
+            {saveStatus === 'failed' && <SaveError>{t('errors.save')}</SaveError>}
           </div>
         </form>
       </CardContent>

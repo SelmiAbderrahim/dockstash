@@ -52,7 +52,10 @@ export async function render(url: string): Promise<RenderResult> {
 
   const appHtml = renderToString(
     <App store={store} i18n={i18n} helmetContext={helmetContext}>
-      <StaticRouterProvider router={router} context={context} />
+      {/* hydrate={false}: no routes define loaders, and the inline
+          hydration-data <script> otherwise lands inside #root where it
+          breaks React 18 hydration (sibling mismatch with <Toaster>). */}
+      <StaticRouterProvider router={router} context={context} hydrate={false} />
     </App>,
   );
 

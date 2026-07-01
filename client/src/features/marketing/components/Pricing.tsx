@@ -58,7 +58,7 @@ const TIERS: Tier[] = [
       'Email alerts + dead-man’s-switch heartbeat',
       'Automated restore-drill verification',
     ],
-    cta: { label: 'Choose Pro', to: '/checkout/pro' },
+    cta: { label: 'Choose Pro', to: '/billing' },
   },
   {
     name: 'Business',
@@ -74,7 +74,7 @@ const TIERS: Tier[] = [
       'Multi-VPS fleet view',
       'Per-project metering',
     ],
-    cta: { label: 'Choose Business', to: '/checkout/business' },
+    cta: { label: 'Choose Business', to: '/billing' },
   },
 ];
 

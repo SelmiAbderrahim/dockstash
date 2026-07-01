@@ -7,7 +7,7 @@ import { getUserProfile } from './users.service.js';
 export const viewProfile: RequestHandler = asyncHandler(async (req, res) => {
   const { userId } = userIdParamsSchema.parse(req.params);
   if (!req.user || req.user.id !== userId) {
-    throw HttpError.unauthorized('You are not authorized to view this user profile.');
+    throw HttpError.unauthorized('errors.forbidden');
   }
   const user = await getUserProfile(userId);
   res.status(200).json({ user });

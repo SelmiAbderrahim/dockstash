@@ -13,7 +13,8 @@
     "connect": "Connect storage"
   },
   "errors": {
-    "load": "Could not load settings."
+    "load": "Could not load settings.",
+    "save": "Could not save settings."
   },
   "storage": {
     "host": "Host",

@@ -13,7 +13,8 @@
     "connect": "Speicher verbinden"
   },
   "errors": {
-    "load": "Einstellungen konnten nicht geladen werden."
+    "load": "Einstellungen konnten nicht geladen werden.",
+    "save": "Einstellungen konnten nicht gespeichert werden."
   },
   "storage": {
     "host": "Host",

@@ -121,6 +121,11 @@ services:
       MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
+      # env.ts reads process.env directly (no /run/secrets reader yet), so
+      # these must be plain env vars — the `resend_api_key` secret below is
+      # mounted but never actually consumed by the app.
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: ${RESEND_FROM}
       DOCKER_HOST: tcp://docker-socket-proxy:2375
     secrets:
       - master_encryption_key

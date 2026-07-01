@@ -41,6 +41,7 @@ export const fr: DictionaryShape = {
       title: 'Réinitialiser votre mot de passe',
       submit: 'Réinitialiser',
       sent: 'Un lien de réinitialisation a été envoyé à votre e-mail.',
+      tokenInvalid: 'Ce lien de réinitialisation est invalide ou a expiré. Veuillez en demander un nouveau.',
     },
     verify: {
       success: 'Votre adresse e-mail a été vérifiée. Vous pouvez maintenant utiliser Dockstash.',

@@ -11,6 +11,8 @@ import { GuidePage } from './components/GuidePage';
 import { UseCasePage } from './components/UseCasePage';
 import { Security } from './components/Security';
 import { Faq } from './components/Faq';
+import { Privacy } from './components/Privacy';
+import { Terms } from './components/Terms';
 import { MARKETING_LOCALE_PREFIXES } from './useMarketingRoute';
 
 /**
@@ -34,6 +36,8 @@ const pages: RouteObject[] = [
   { path: 'backup/:entry', element: <UseCasePage /> },
   { path: 'security', element: <Security /> },
   { path: 'faq', element: <Faq /> },
+  { path: 'privacy', element: <Privacy /> },
+  { path: 'terms', element: <Terms /> },
 ];
 
 export const marketingRoutes: RouteObject[] = [

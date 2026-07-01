@@ -13,7 +13,7 @@ beforeEach(() => {
 describe('dashboard api', () => {
   it('fetchUserRequest GETs the authenticated user path', async () => {
     const result = await fetchUserRequest('u-9');
-    expect(apiClient).toHaveBeenCalledWith('/user/u-9', { auth: true });
+    expect(apiClient).toHaveBeenCalledWith('/users/u-9', { auth: true });
     expect(result).toEqual({ user: { email: 'a@b.co' } });
   });
 });

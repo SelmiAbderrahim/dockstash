@@ -39,6 +39,7 @@ export const en = {
       title: 'Reset your password',
       submit: 'Reset password',
       sent: 'A reset link has been sent to your email.',
+      tokenInvalid: 'That password reset link is invalid or has expired. Please request a new one.',
     },
     verify: {
       success: 'Your email address has been verified. You can now use Dockstash.',

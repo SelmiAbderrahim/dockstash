@@ -41,6 +41,7 @@ export const de: DictionaryShape = {
       title: 'Passwort zurücksetzen',
       submit: 'Zurücksetzen',
       sent: 'Ein Zurücksetzungs-Link wurde an Ihre E-Mail gesendet.',
+      tokenInvalid: 'Dieser Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen. Bitte fordern Sie einen neuen an.',
     },
     verify: {
       success: 'Ihre E-Mail-Adresse wurde bestätigt. Sie können Dockstash jetzt verwenden.',

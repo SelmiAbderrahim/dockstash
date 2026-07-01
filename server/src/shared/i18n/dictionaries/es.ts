@@ -41,6 +41,7 @@ export const es: DictionaryShape = {
       title: 'Restablecer contraseña',
       submit: 'Restablecer',
       sent: 'Se envió un enlace de restablecimiento a tu correo.',
+      tokenInvalid: 'Ese enlace de restablecimiento no es válido o ha expirado. Solicita uno nuevo.',
     },
     verify: {
       success: 'Tu dirección de correo ha sido verificada. Ya puedes usar Dockstash.',

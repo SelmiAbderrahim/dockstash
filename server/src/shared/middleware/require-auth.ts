@@ -12,7 +12,7 @@ export const requireAuth: RequestHandler = (req, res, next) => {
         return;
       }
       if (!user) {
-        next(HttpError.unauthorized('Authentication required.'));
+        next(HttpError.unauthorized('errors.unauthorized'));
         return;
       }
       req.user = user;

@@ -41,6 +41,7 @@ export const zh: DictionaryShape = {
       title: '重置密码',
       submit: '重置',
       sent: '重置链接已发送到您的邮箱。',
+      tokenInvalid: '该密码重置链接无效或已过期。请重新请求。',
     },
     verify: {
       success: '您的电子邮件地址已验证。您现在可以使用 Dockstash。',

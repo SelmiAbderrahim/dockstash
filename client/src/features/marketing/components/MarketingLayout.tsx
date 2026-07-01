@@ -88,7 +88,7 @@ export const MarketingLayout = () => {
       </main>
 
       <footer className="py-12 text-muted-foreground">
-        <Container className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
+        <Container className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr_1fr]">
           <div>
             <BrandLogo className="inline-flex items-center gap-2 font-bold text-foreground" />
             <p className="mt-3 max-w-prose text-sm text-muted-foreground">
@@ -123,6 +123,11 @@ export const MarketingLayout = () => {
             <Link to={href('/backup/wordpress-docker')} className={footerLinkClass}>
               Back up WordPress
             </Link>
+          </nav>
+          <nav className="flex flex-col gap-2" aria-label="Legal">
+            <h3 className={footerHeadingClass}>Legal</h3>
+            <Link to={href('/privacy')} className={footerLinkClass}>Privacy Policy</Link>
+            <Link to={href('/terms')} className={footerLinkClass}>Terms of Service</Link>
           </nav>
         </Container>
       </footer>

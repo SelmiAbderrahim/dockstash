@@ -43,7 +43,19 @@ const isAppPath = (pathname) =>
 
 /** Assemble the final HTML from the template + SSR fragments. */
 function renderHtml(template, { headTags = '', htmlAttrs = '', appHtml = '', ssr = false }) {
-  return template
+  let html = template;
+  // Helmet emits per-page <title>/<meta name="description">; drop the
+  // template's static fallbacks first so the document doesn't carry
+  // duplicates (browsers and crawlers use the FIRST <title>, which would
+  // otherwise always be the homepage one). Runs before headTags injection,
+  // so these regexes can only match the template's own tags.
+  if (headTags.includes('<title')) {
+    html = html.replace(/<title>[^<]*<\/title>\s*/, '');
+  }
+  if (headTags.includes('name="description"')) {
+    html = html.replace(/<meta\s+name="description"[\s\S]*?\/>\s*/, '');
+  }
+  return html
     .replace('<html lang="en">', `<html ${htmlAttrs || 'lang="en"'}>`)
     .replace('<!--ssr-head-->', headTags)
     .replace('<!--ssr-outlet-->', appHtml)

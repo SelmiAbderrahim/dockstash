@@ -154,6 +154,16 @@ describe('SettingsScreen — Storage tab', () => {
     renderScreen({ storageSaveStatus: 'succeeded' });
     expect(screen.getByText('Storage saved.')).toBeInTheDocument();
   });
+
+  it('shows the API error when a save fails', () => {
+    renderScreen({ storageSaveStatus: 'failed', error: 'endpoint missing' });
+    expect(screen.getByRole('alert')).toHaveTextContent('endpoint missing');
+  });
+
+  it('falls back to a generic save error when a save fails without a message', () => {
+    renderScreen({ storageSaveStatus: 'failed', error: null });
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not save settings.');
+  });
 });
 
 describe('SettingsScreen — Retention tab', () => {
@@ -186,6 +196,11 @@ describe('SettingsScreen — Retention tab', () => {
   it('shows the saved confirmation', () => {
     renderScreen({ retentionSaveStatus: 'succeeded' }, entry);
     expect(screen.getByText('Retention saved.')).toBeInTheDocument();
+  });
+
+  it('shows a save error when the save fails', () => {
+    renderScreen({ retentionSaveStatus: 'failed' }, entry);
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not save settings.');
   });
 });
 
@@ -233,5 +248,11 @@ describe('SettingsScreen — Password tab', () => {
   it('shows the saved confirmation', () => {
     renderScreen({ passwordSaveStatus: 'succeeded' }, entry);
     expect(screen.getByText('Password saved.')).toBeInTheDocument();
+  });
+
+  it('shows a save error when the save fails', () => {
+    renderScreen({ passwordSaveStatus: 'failed' }, entry);
+    // The static escrow warning Alert is also role=alert; match the save error.
+    expect(screen.getByText('Could not save settings.')).toBeInTheDocument();
   });
 });

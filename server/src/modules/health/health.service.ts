@@ -10,7 +10,7 @@ export interface RedisPingClient {
 
 export type RedisClientFactory = (url: string) => RedisPingClient;
 
-/* c8 ignore next 6 -- real ioredis socket; exercised in production, mocked in tests */
+/* c8 ignore start -- real ioredis socket; exercised in production, mocked in tests */
 const defaultRedisFactory: RedisClientFactory = (url) =>
   new Redis(url, {
     // Connect eagerly and let ping() queue until the socket is ready. Do NOT
@@ -20,6 +20,7 @@ const defaultRedisFactory: RedisClientFactory = (url) =>
     maxRetriesPerRequest: 1,
     connectTimeout: 1000,
   });
+/* c8 ignore stop */
 
 /**
  * Ping Redis and confirm it answers `PONG`. Any connection/timeout error is a

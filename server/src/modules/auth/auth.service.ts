@@ -71,7 +71,7 @@ export async function registerUser(
 ): Promise<IssuedToken> {
   const existing = await User.findOne({ email: input.email });
   if (existing) {
-    throw HttpError.conflict('That email address is already in use.');
+    throw HttpError.conflict('errors.emailAlreadyRegistered');
   }
 
   const passwordHash = await hashPassword(input.password);
@@ -129,9 +129,9 @@ export async function resendVerification(
 
 export async function authenticate(email: string, password: string): Promise<UserHydrated> {
   const user = await User.findOne({ email });
-  if (!user) throw HttpError.unauthorized('Invalid email or password.');
+  if (!user) throw HttpError.unauthorized('errors.invalidCredentials');
   const ok = await verifyPassword(password, user.password);
-  if (!ok) throw HttpError.unauthorized('Invalid email or password.');
+  if (!ok) throw HttpError.unauthorized('errors.invalidCredentials');
   return user;
 }
 
@@ -143,7 +143,7 @@ export function issueLoginResponse(user: UserHydrated): IssuedToken {
 export async function generateResetToken(email: string): Promise<{ user: UserHydrated; token: string }> {
   const user = await User.findOne({ email });
   if (!user) {
-    throw HttpError.badRequest('Your request could not be processed as entered.');
+    throw HttpError.badRequest('errors.badRequest');
   }
   const token = randomBytes(48).toString('hex');
   user.resetPasswordToken = token;
@@ -163,7 +163,7 @@ export async function resetPasswordWithToken(token: string, newPassword: string)
     resetPasswordExpires: { $gt: new Date() },
   });
   if (!user) {
-    throw HttpError.badRequest('Your token has expired. Please attempt to reset your password again.');
+    throw HttpError.badRequest('auth.reset.tokenInvalid');
   }
   user.password = await hashPassword(newPassword);
   user.resetPasswordToken = undefined;

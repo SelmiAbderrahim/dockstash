@@ -13,7 +13,8 @@
     "connect": "Connecter le stockage"
   },
   "errors": {
-    "load": "Impossible de charger les paramètres."
+    "load": "Impossible de charger les paramètres.",
+    "save": "Impossible d'enregistrer les paramètres."
   },
   "storage": {
     "host": "Hôte",

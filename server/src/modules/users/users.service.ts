@@ -27,6 +27,6 @@ export async function findUserById(userId: string): Promise<UserHydrated | null>
 
 export async function getUserProfile(userId: string): Promise<PublicUser> {
   const user = await User.findById(userId);
-  if (!user) throw HttpError.notFound('User not found.');
+  if (!user) throw HttpError.notFound('errors.userNotFound');
   return toPublicUser(user);
 }

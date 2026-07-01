@@ -6,6 +6,8 @@ import { selectProfile } from '../store/selectors';
 import { UserInfo } from './UserInfo';
 
 interface CookieUser {
+  /** PublicUser shape (auth thunks store `id`); `_id` kept for legacy cookies. */
+  id?: string;
   _id?: string;
 }
 
@@ -15,7 +17,7 @@ export const ViewProfile = () => {
 
   useEffect(() => {
     const user = loadCookie<CookieUser>('user');
-    const uid = user?._id ?? loadCookie<string>('uid');
+    const uid = user?.id ?? user?._id ?? loadCookie<string>('uid');
     if (uid && typeof uid === 'string') {
       void dispatch(fetchUser(uid));
     }

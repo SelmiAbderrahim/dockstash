@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -132,6 +132,17 @@ export const Register = () => {
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? 'Registering...' : 'Register'}
             </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              By registering you agree to our{' '}
+              <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </form>
         </CardContent>
       </Card>

@@ -36,6 +36,8 @@ describe('marketing static pages', () => {
     ['/alternatives', 'Dockstash alternatives'],
     ['/security', 'Security you can verify'],
     ['/faq', 'Frequently asked questions'],
+    ['/privacy', 'Privacy Policy'],
+    ['/terms', 'Terms of Service'],
     ['/guides', /guides/i],
     ['/compare/self-hosted-backup-vs-cloud-backup', /self-hosted/i],
   ])('renders %s', (path, needle) => {
