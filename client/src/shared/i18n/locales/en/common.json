@@ -1,0 +1,14 @@
+{
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "yes": "Yes",
+  "no": "No",
+  "logPanel": {
+    "title": "Backup output",
+    "running": "Running…",
+    "done": "Completed",
+    "failed": "Failed"
+  }
+}

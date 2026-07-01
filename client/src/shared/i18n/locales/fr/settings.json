@@ -1,0 +1,41 @@
+{
+  "heading": "Paramètres",
+  "loading": "Chargement…",
+  "tabs": {
+    "aria": "Sections des paramètres",
+    "storage": "Stockage",
+    "retention": "Rétention",
+    "password": "Mot de passe de chiffrement"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "connect": "Connecter le stockage"
+  },
+  "errors": {
+    "load": "Impossible de charger les paramètres."
+  },
+  "storage": {
+    "host": "Hôte",
+    "user": "Utilisateur",
+    "port": "Port",
+    "privateKey": "Clé SSH privée",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Stockée chiffrée. Jamais affichée à nouveau.",
+    "saved": "Stockage enregistré."
+  },
+  "retention": {
+    "daily": "Conserver N quotidiennes",
+    "weekly": "Conserver N hebdomadaires",
+    "monthly": "Conserver N mensuelles",
+    "saved": "Rétention enregistrée."
+  },
+  "password": {
+    "warning": "Mot de passe de chiffrement. Perdez-le et vos dépôts sont irrécupérables.",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer",
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "escrow": "J'ai sauvegardé ce mot de passe.",
+    "saved": "Mot de passe enregistré."
+  }
+}

@@ -3,7 +3,29 @@ import { createApp } from './app.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
-import { registerChatSocket } from './modules/chat/index.js';
+import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
+import type { ResticRunnerExt } from './modules/scheduler/index.js';
+
+/**
+ * Placeholder restic runner. The concrete child_process wrapper lands with the
+ * live-log spawn work in a follow-up prompt; until then, a job that actually
+ * fires will fail through the retry+alert path, which is the correct behaviour
+ * — we do NOT silently succeed backup requests without restic wired.
+ */
+function placeholderResticRunner(): ResticRunnerExt {
+  const notWired = async (): Promise<never> => {
+    throw new Error('restic runner not wired');
+  };
+  return {
+    init: notWired,
+    backup: notWired,
+    snapshots: notWired,
+    check: notWired,
+    restore: notWired,
+    unlock: notWired,
+    forget: notWired,
+  };
+}
 
 function main(): void {
   const app = createApp();
@@ -15,20 +37,31 @@ function main(): void {
   const io = new IoServer(server, {
     cors: { origin: env.CLIENT_URL, credentials: true },
   });
-  registerChatSocket(io);
 
-  // Connect to Mongo in the background so the HTTP port opens immediately for
-  // orchestrator health checks. Module routes that depend on Mongo will surface
-  // their own errors until the connection is established.
   connectDb().catch((err) => {
     logger.error({ err }, 'mongo connection unavailable');
   });
 
+  let scheduler: SchedulerRuntime | null = null;
+  startScheduler({
+    io,
+    resticRunnerFor: () => placeholderResticRunner(),
+  })
+    .then((rt) => {
+      scheduler = rt;
+    })
+    .catch((err) => {
+      logger.error({ err }, 'scheduler start failed');
+    });
+
   const shutdown = (signal: NodeJS.Signals): void => {
     logger.info({ signal }, 'shutting down');
-    io.close();
-    server.close(() => {
-      void disconnectDb().finally(() => process.exit(0));
+    const closeScheduler = scheduler ? scheduler.shutdown() : Promise.resolve();
+    void closeScheduler.finally(() => {
+      io.close();
+      server.close(() => {
+        void disconnectDb().finally(() => process.exit(0));
+      });
     });
     setTimeout(() => process.exit(1), 10_000).unref();
   };

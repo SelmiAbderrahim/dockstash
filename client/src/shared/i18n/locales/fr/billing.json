@@ -1,0 +1,82 @@
+{
+  "checkout": {
+    "title": "Paiement",
+    "submit": "Payer maintenant",
+    "success": "Paiement reçu. Merci !"
+  },
+  "portal": {
+    "title": "Facturation"
+  },
+  "plan": {
+    "free": "Gratuit",
+    "pro": "Pro",
+    "business": "Business"
+  },
+  "status": {
+    "active": "Actif",
+    "past_due": "En retard",
+    "canceled": "Annulé",
+    "revoked": "Révoqué",
+    "none": "Aucun"
+  },
+  "grid": {
+    "title": "Tarifs",
+    "subtitle": "Choisissez une offre. Annulable à tout moment.",
+    "intervalLabel": "Fréquence de facturation",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "yearlySavings": "2 mois offerts",
+    "loading": "Chargement des tarifs…",
+    "empty": "Aucun plan disponible.",
+    "free": "Gratuit",
+    "perMonth": "mois",
+    "perYear": "an",
+    "caps": {
+      "projects": "{{value}} projets",
+      "unlimited": "Illimité",
+      "retention": "Rétention {{days}} jours"
+    },
+    "frequency": {
+      "daily": "Sauvegardes quotidiennes",
+      "hourly": "Sauvegardes horaires",
+      "any-cron": "Toute expression cron"
+    },
+    "flag": {
+      "schedules": "Sauvegardes planifiées",
+      "emailAlerts": "Alertes e-mail",
+      "multiVps": "Multi-VPS"
+    },
+    "cta": {
+      "select": "Commencer",
+      "switch": "Passer à cette offre",
+      "current": "Offre actuelle"
+    }
+  },
+  "page": {
+    "title": "Facturation",
+    "tabsLabel": "Sections de facturation",
+    "tab": {
+      "overview": "Vue d’ensemble",
+      "usage": "Utilisation"
+    },
+    "loading": "Chargement…",
+    "empty": "Rien à afficher."
+  },
+  "overview": {
+    "plan": "Offre",
+    "status": "Statut",
+    "renewsOn": "Renouvellement",
+    "gracePeriod": "Fin de la période de grâce",
+    "cancelAtPeriodEnd": "Votre offre se terminera à la fin de la période. Vous ne serez plus prélevé."
+  },
+  "usage": {
+    "projects": "{{used}} sur {{cap}} projets utilisés",
+    "retention": "Rétention : {{days}} jours",
+    "overCap": "Vous dépassez votre quota de projets. Passez à l’offre supérieure ou choisissez les projets à garder actifs."
+  },
+  "selection": {
+    "title": "Choisissez les projets à garder actifs",
+    "help": "Votre offre permet jusqu’à {{cap}} projet(s) actif(s). Les autres seront mis en pause (jamais supprimés).",
+    "submit": "Enregistrer"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "loading": "Chargement…",
+  "tabs": {
+    "aria": "Sections du projet",
+    "plan": "Plan",
+    "schedule": "Planning",
+    "drill": "Test de restauration"
+  },
+  "plan": {
+    "files": "Fichiers",
+    "databases": "Bases de données",
+    "configs": "Fichiers de config",
+    "noFiles": "Aucun chemin détecté.",
+    "noDatabases": "Aucune base détectée.",
+    "noConfigs": "Aucun fichier de config détecté.",
+    "save": "Enregistrer le plan",
+    "saving": "Enregistrement…",
+    "saved": "Plan enregistré."
+  },
+  "schedule": {
+    "presetLegend": "Fréquence",
+    "preset": {
+      "daily": "Quotidien à 03:00",
+      "weekly": "Hebdo (dimanche 03:00)",
+      "cron": "Cron personnalisé"
+    },
+    "cronLabel": "Expression cron",
+    "enabled": "Activé",
+    "save": "Enregistrer le planning",
+    "saving": "Enregistrement…",
+    "saved": "Planning enregistré.",
+    "errors": {
+      "cronFormat": "Cron doit contenir 5 ou 6 champs séparés par des espaces."
+    }
+  },
+  "drill": {
+    "heading": "Test de restauration",
+    "none": "Aucun test de restauration.",
+    "pass": "Vérifié",
+    "fail": "Échec"
+  }
+}

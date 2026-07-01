@@ -1,0 +1,29 @@
+{
+  "heading": "Proyectos",
+  "lede": "Cada carpeta en /var/www es un proyecto. Un clic para hacer copia.",
+  "loading": "Cargando proyectos…",
+  "never": "Nunca",
+  "meta": {
+    "path": "Ruta",
+    "lastRun": "Última copia"
+  },
+  "status": {
+    "idle": "Inactivo",
+    "running": "En ejecución",
+    "success": "OK",
+    "failed": "Falló"
+  },
+  "actions": {
+    "backupNow": "Copiar ahora",
+    "running": "En ejecución…",
+    "open": "Detalles",
+    "retry": "Reintentar"
+  },
+  "empty": {
+    "title": "No hay proyectos.",
+    "hint": "Añade una carpeta a /var/www y actualiza."
+  },
+  "errors": {
+    "load": "No se pudieron cargar los proyectos."
+  }
+}

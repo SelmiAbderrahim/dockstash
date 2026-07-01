@@ -1,15 +1,4 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { App } from './App';
-import './styles/index.scss';
-
-const container = document.getElementById('root');
-if (!container) {
-  throw new Error('Root container #root not found in index.html');
-}
-
-createRoot(container).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Deprecated entrypoint. The app now boots via `entry-client.tsx`, which
+// index.html loads directly (it decides hydrate vs client-render based on
+// whether the page was server-rendered). Kept as an empty stub.
+export {};

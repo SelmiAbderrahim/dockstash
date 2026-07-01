@@ -1,0 +1,42 @@
+{
+  "loading": "Wird geladen…",
+  "tabs": {
+    "aria": "Projektabschnitte",
+    "plan": "Plan",
+    "schedule": "Zeitplan",
+    "drill": "Restore-Test"
+  },
+  "plan": {
+    "files": "Dateien",
+    "databases": "Datenbanken",
+    "configs": "Konfigurationsdateien",
+    "noFiles": "Keine Pfade erkannt.",
+    "noDatabases": "Keine Datenbanken erkannt.",
+    "noConfigs": "Keine Konfigurationsdateien erkannt.",
+    "save": "Plan speichern",
+    "saving": "Speichert…",
+    "saved": "Plan gespeichert."
+  },
+  "schedule": {
+    "presetLegend": "Frequenz",
+    "preset": {
+      "daily": "Täglich 03:00",
+      "weekly": "Wöchentlich (So. 03:00)",
+      "cron": "Cron manuell"
+    },
+    "cronLabel": "Cron-Ausdruck",
+    "enabled": "Aktiv",
+    "save": "Zeitplan speichern",
+    "saving": "Speichert…",
+    "saved": "Zeitplan gespeichert.",
+    "errors": {
+      "cronFormat": "Cron muss 5 oder 6 Felder haben."
+    }
+  },
+  "drill": {
+    "heading": "Restore-Test",
+    "none": "Noch kein Test durchgeführt.",
+    "pass": "Verifiziert",
+    "fail": "Fehlgeschlagen"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "heading": "Projets",
+  "lede": "Chaque dossier sous /var/www est un projet. Un clic pour le sauvegarder.",
+  "loading": "Chargement des projets…",
+  "never": "Jamais",
+  "meta": {
+    "path": "Chemin",
+    "lastRun": "Dernière sauvegarde"
+  },
+  "status": {
+    "idle": "Inactif",
+    "running": "En cours",
+    "success": "OK",
+    "failed": "Échec"
+  },
+  "actions": {
+    "backupNow": "Sauvegarder maintenant",
+    "running": "En cours…",
+    "open": "Détails",
+    "retry": "Réessayer"
+  },
+  "empty": {
+    "title": "Aucun projet trouvé.",
+    "hint": "Ajoutez un dossier sous /var/www puis rafraîchissez."
+  },
+  "errors": {
+    "load": "Impossible de charger les projets."
+  }
+}

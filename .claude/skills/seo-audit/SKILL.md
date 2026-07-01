@@ -2,7 +2,7 @@
 name: seo-audit
 description: When the user wants to audit, review, or diagnose SEO issues on their site. Also use when the user mentions "SEO audit," "technical SEO," "why am I not ranking," "SEO issues," "on-page SEO," "meta tags review," "SEO health check," "my traffic dropped," "lost rankings," "not showing up in Google," "site isn't ranking," "Google update hit me," "page speed," "core web vitals," "crawl errors," or "indexing issues." Use this even if the user just says something vague like "my SEO is bad" or "help with SEO" — start with an audit. For building pages at scale to target keywords, see programmatic-seo. For adding structured data, see schema-markup. For AI search optimization, see ai-seo.
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # SEO Audit
@@ -84,6 +84,36 @@ Reporting "no schema found" based solely on `web_fetch` or `curl` leads to false
 - Faceted navigation handled properly
 - Infinite scroll with pagination fallback
 - Session IDs not in URLs
+
+### Rendering for Bots
+
+Determine how the site delivers content and whether critical content survives for crawlers that don't fully execute JavaScript.
+
+**Determine the rendering mode**
+- **SSR** (server-side rendered) — HTML built per request; content is in the initial response. Safest for bots.
+- **SSG** (static site generation) — HTML pre-built at deploy; content is in the initial response. Also safe.
+- **CSR** (client-side rendered) — HTML shell + JS that fetches and paints content in the browser. Risky: content is *not* in the initial HTML.
+
+**How to check:** view the raw HTML with `curl` or "View Source" (not "Inspect," which shows the rendered DOM). If the main content, headings, and links are missing from raw source and only appear in the rendered DOM, it's client-rendered.
+
+**Flag as an issue when:**
+- Critical content (body copy, product info, internal links) is client-rendered and absent from initial HTML
+- Content is hidden behind JS-driven tabs, accordions, "load more," or interactions — traditional crawlers *and* AI crawlers (which often don't render JS at all) can't parse it
+- Primary navigation / internal links are injected by JS and not present as real `<a href>` in source
+
+**Rule:** content that must rank or be cited belongs in the initial server-delivered HTML. Google can render JS but with delay and no guarantee; most AI crawlers (GPTBot, PerplexityBot, ClaudeBot) do not render it at all.
+
+### AI-Crawler Allowlist
+
+Verify `robots.txt` — and any firewall/WAF/CDN bot rules — do **not** block AI crawlers. Many default security configurations block every non-Google bot, which silently makes the site invisible to AI search.
+
+**Confirm these are allowed (not `Disallow`ed, not firewall-blocked):**
+- `GPTBot`, `ChatGPT-User` — OpenAI (ChatGPT)
+- `PerplexityBot` — Perplexity
+- `ClaudeBot`, `anthropic-ai` — Anthropic (Claude)
+- `Google-Extended` — Google Gemini / AI Overviews
+
+**Check both layers** — a bot can be allowed in `robots.txt` yet still 403'd by Cloudflare/WAF "block AI bots" rules or a generic "block unknown user-agents" firewall setting. Test with a spoofed user-agent (e.g., `curl -A "GPTBot" https://example.com/`) and confirm a 200, not a 403/429. Blocked AI crawlers = zero AI-search citations. For the full allow/deny rationale, see the **ai-seo** skill.
 
 ### Indexation
 

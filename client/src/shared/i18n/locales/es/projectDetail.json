@@ -1,0 +1,42 @@
+{
+  "loading": "Cargando…",
+  "tabs": {
+    "aria": "Secciones del proyecto",
+    "plan": "Plan",
+    "schedule": "Programación",
+    "drill": "Prueba de restauración"
+  },
+  "plan": {
+    "files": "Archivos",
+    "databases": "Bases de datos",
+    "configs": "Archivos de configuración",
+    "noFiles": "No hay rutas detectadas.",
+    "noDatabases": "No hay bases detectadas.",
+    "noConfigs": "No hay configuraciones detectadas.",
+    "save": "Guardar plan",
+    "saving": "Guardando…",
+    "saved": "Plan guardado."
+  },
+  "schedule": {
+    "presetLegend": "Frecuencia",
+    "preset": {
+      "daily": "Diario a las 03:00",
+      "weekly": "Semanal (domingo 03:00)",
+      "cron": "Cron personalizado"
+    },
+    "cronLabel": "Expresión cron",
+    "enabled": "Activado",
+    "save": "Guardar programación",
+    "saving": "Guardando…",
+    "saved": "Programación guardada.",
+    "errors": {
+      "cronFormat": "Cron debe tener 5 o 6 campos."
+    }
+  },
+  "drill": {
+    "heading": "Prueba de restauración",
+    "none": "Aún no se ha ejecutado ninguna prueba.",
+    "pass": "Verificado",
+    "fail": "Falló"
+  }
+}

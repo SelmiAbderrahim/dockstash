@@ -1,0 +1,82 @@
+{
+  "checkout": {
+    "title": "结算",
+    "submit": "立即支付",
+    "success": "已收到付款。感谢！"
+  },
+  "portal": {
+    "title": "账单"
+  },
+  "plan": {
+    "free": "免费",
+    "pro": "专业版",
+    "business": "商业版"
+  },
+  "status": {
+    "active": "生效中",
+    "past_due": "逾期",
+    "canceled": "已取消",
+    "revoked": "已撤销",
+    "none": "无"
+  },
+  "grid": {
+    "title": "价格",
+    "subtitle": "选择方案。随时可取消。",
+    "intervalLabel": "结算周期",
+    "monthly": "按月",
+    "yearly": "按年",
+    "yearlySavings": "两个月免费",
+    "loading": "加载价格中…",
+    "empty": "暂无可用方案。",
+    "free": "免费",
+    "perMonth": "月",
+    "perYear": "年",
+    "caps": {
+      "projects": "{{value}} 个项目",
+      "unlimited": "无限",
+      "retention": "保留 {{days}} 天"
+    },
+    "frequency": {
+      "daily": "每日备份",
+      "hourly": "每小时备份",
+      "any-cron": "任意 cron 表达式"
+    },
+    "flag": {
+      "schedules": "定时备份",
+      "emailAlerts": "邮件提醒",
+      "multiVps": "多 VPS"
+    },
+    "cta": {
+      "select": "开始使用",
+      "switch": "切换到该方案",
+      "current": "当前方案"
+    }
+  },
+  "page": {
+    "title": "账单",
+    "tabsLabel": "账单分区",
+    "tab": {
+      "overview": "概览",
+      "usage": "使用情况"
+    },
+    "loading": "加载中…",
+    "empty": "无内容。"
+  },
+  "overview": {
+    "plan": "方案",
+    "status": "状态",
+    "renewsOn": "续订日期",
+    "gracePeriod": "宽限期结束",
+    "cancelAtPeriodEnd": "您的方案将在当前周期结束后终止，将不再扣款。"
+  },
+  "usage": {
+    "projects": "已使用 {{used}} / {{cap}} 个项目",
+    "retention": "保留：{{days}} 天",
+    "overCap": "已超过项目上限。请升级或选择保留哪些项目。"
+  },
+  "selection": {
+    "title": "选择保留的项目",
+    "help": "您的方案最多允许 {{cap}} 个活动项目，其余将被暂停（不会删除）。",
+    "submit": "保存选择"
+  }
+}

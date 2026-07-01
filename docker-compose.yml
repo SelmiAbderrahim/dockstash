@@ -1,0 +1,184 @@
+# Dockstash control plane — see docs/running-with-docker.md.
+# Secrets (MASTER_ENCRYPTION_KEY, POLAR_*, RESEND_API_KEY) are injected via env
+# or Docker secrets — never baked into images.
+
+name: dockstash
+
+networks:
+  dockstash:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  redis-data:
+
+secrets:
+  master_encryption_key:
+    file: ./secrets/master_encryption_key
+  polar_access_token:
+    file: ./secrets/polar_access_token
+  polar_webhook_secret:
+    file: ./secrets/polar_webhook_secret
+  resend_api_key:
+    file: ./secrets/resend_api_key
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    networks: [dockstash]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [dockstash]
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # Least-privilege proxy in front of /var/run/docker.sock. Only THIS service
+  # bind-mounts the raw socket; the api reaches Docker via DOCKER_HOST.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    networks: [dockstash]
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      INFO: 1
+      # Everything else denied.
+      IMAGES: 0
+      NETWORKS: 0
+      VOLUMES: 0
+      SERVICES: 0
+      TASKS: 0
+      NODES: 0
+      SWARM: 0
+      SYSTEM: 0
+      PLUGINS: 0
+      POST: 1
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      SECRETS: 0
+      SESSION: 0
+      DISTRIBUTION: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks: [dockstash]
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      docker-socket-proxy:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      # Fixed internal listen port. The host-side mapping is API_PORT below;
+      # keep this at 8080 so the port mapping and web's API_INTERNAL_URL agree.
+      PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MONGODB_URI: ${MONGODB_URI}
+      REDIS_URL: ${REDIS_URL}
+      CLIENT_URL: ${CLIENT_URL}
+      SERVER_URL: ${SERVER_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      # Required by config/env.ts (zod-validated at boot; parses process.env
+      # directly — no /run/secrets reader yet, so it must be an env var). The
+      # secrets: mount below stays for a future *_FILE loader.
+      MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    secrets:
+      - master_encryption_key
+      - polar_access_token
+      - polar_webhook_secret
+      - resend_api_key
+    volumes:
+      # Read-mostly view of the deploy target's site tree for backup scans.
+      - /var/www:/var/www:ro
+    ports:
+      # Loopback-only — nginx is the sole public entrypoint. Host port off the
+      # 8080 default to avoid colliding with other stacks on this box.
+      - "127.0.0.1:${API_PORT:-48080}:8080"
+    # Least-privilege hardening (prompt 11). The api never needs privilege
+    # escalation, extra capabilities, or a writable root — restic/dockerode
+    # reach Docker only through the socket-proxy above.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: false
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:'+ (process.env.PORT || 8080) +'/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Public web entrypoint — Node SSR server (server.js). Renders marketing
+  # pages server-side for crawlers/AI, serves the CSR shell for the app, and
+  # reverse-proxies /robots.txt + /sitemap*.xml to the api SEO module.
+  web:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+        VITE_SITE_URL: ${VITE_SITE_URL}
+    restart: unless-stopped
+    networks: [dockstash]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      WEB_PORT: 3000
+      # Internal origin of the api service for the SEO reverse-proxy.
+      API_INTERNAL_URL: http://api:8080
+    ports:
+      # Loopback-only — nginx is the sole public entrypoint. Host port off the
+      # 3000 default to avoid colliding with other stacks on this box.
+      - "127.0.0.1:${WEB_PORT:-43000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

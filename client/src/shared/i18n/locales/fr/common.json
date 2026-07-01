@@ -1,0 +1,14 @@
+{
+  "ok": "OK",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "delete": "Supprimer",
+  "yes": "Oui",
+  "no": "Non",
+  "logPanel": {
+    "title": "Sortie de sauvegarde",
+    "running": "En cours…",
+    "done": "Terminé",
+    "failed": "Échec"
+  }
+}

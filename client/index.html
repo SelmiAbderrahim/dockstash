@@ -4,12 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MERN starter</title>
+    <meta name="theme-color" content="#0f1113" />
+    <title>Dockstash — one-click backups for any Docker project</title>
+    <meta
+      name="description"
+      content="Dockstash auto-detects and backs up your Docker volumes, databases, and config to encrypted off-site Restic snapshots, with one-click restore and automated restore-drill verification."
+    />
+    <!--ssr-head-->
   </head>
   <body>
-    <div id="root">
-      <noscript>This MERN starter requires JavaScript.</noscript>
-    </div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="root"><!--ssr-outlet--></div>
+    <noscript>Dockstash requires JavaScript for the dashboard.</noscript>
+    <!--ssr-init-->
+    <script type="module" src="/src/entry-client.tsx"></script>
   </body>
 </html>

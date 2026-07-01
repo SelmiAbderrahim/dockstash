@@ -1,0 +1,95 @@
+# Dockstash CI — prompt 11.
+#
+# All jobs run inside Docker containers for prod parity (IDEA.md §2/§9). The
+# pipeline gates every merge on:
+#   1. typecheck (tsc --noEmit) — client + server
+#   2. lint (eslint) — client + server
+#   3. unit + integration tests (vitest, mongodb-memory-server) — client + server
+#   4. coverage gate — v8 100% on lines/branches/functions/statements
+#   5. npm audit --audit-level=high — ZERO high/critical advisories
+#
+# The build fails on any gate. See docs/ci-gates.en.md for the runbook.
+
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  server:
+    name: server (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install (npm ci)
+        working-directory: server
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: server
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: server
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: server
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:0/ci
+          JWT_SECRET: ci-jwt-secret-ci-jwt-secret-ci-jwt-secret-ci-jwt-secret
+          MASTER_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: server
+        run: npm audit --audit-level=high
+
+  client:
+    name: client (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install (npm ci)
+        working-directory: client
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: client
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: client
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: client
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: client
+        run: npm audit --audit-level=high
+
+  # Docker parity: build + boot the compose stack in the CI container to catch
+  # image drift before merge. Failure here means a Dockerfile change broke the
+  # image build.
+  docker-build:
+    name: docker (compose build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build compose images
+        run: docker compose -f docker-compose.yml build api web

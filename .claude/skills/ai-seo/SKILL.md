@@ -2,7 +2,7 @@
 name: ai-seo
 description: "When the user wants to optimize content for AI search engines, get cited by LLMs, or appear in AI-generated answers. Also use when the user mentions 'AI SEO,' 'AEO,' 'GEO,' 'LLMO,' 'answer engine optimization,' 'generative engine optimization,' 'LLM optimization,' 'AI Overviews,' 'optimize for ChatGPT,' 'optimize for Perplexity,' 'AI citations,' 'AI visibility,' 'zero-click search,' 'how do I show up in AI answers,' 'LLM mentions,' or 'optimize for Claude/Gemini.' Use this whenever someone wants their content to be cited or surfaced by AI assistants and AI search engines. For traditional technical and on-page SEO audits, see seo-audit. For structured data implementation, see schema-markup."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # AI SEO
@@ -226,6 +226,26 @@ AI systems don't just cite your website — they cite where you appear.
 - Create YouTube content for key how-to queries
 - Answer relevant Quora questions with depth
 
+#### Semantic Consensus
+
+AI engines do not recommend a brand on the strength of its own self-description. A polished product page saying "we're the best" carries almost no weight on its own. What LLMs look for is **agreement across multiple independent sources** — the same claim about your brand appearing on Reddit, YouTube, LinkedIn, and editorial publications. When independent sources converge on the same story, the model treats it as consensus and is far more likely to surface and recommend you.
+
+The mechanism for manufacturing that convergence is off-site: rank on third-party platforms and earn genuine editorial mentions so the same positioning shows up everywhere AI looks.
+
+- **parasite-seo** — rank your content and mentions *on* high-authority third-party platforms (Reddit, Medium, LinkedIn, YouTube, review sites) that AI engines heavily cite.
+- **digital-pr** — earn editorial mentions and links in industry publications so authoritative outlets independently corroborate your positioning.
+
+Aim for the same core claims (what you do, who you're best for, your differentiators) to appear consistently across all of these — that repetition *is* the consensus signal.
+
+#### Recency Signals
+
+AI platforms have a strong recency bias — they preferentially surface content that looks current and quietly discount anything that looks stale.
+
+- **Embed the current year** (e.g., "2026") in title tags and headers where it fits naturally — "Best [category] in 2026," "[Product] pricing (2026)."
+- **Keep a visible "Last updated" date** on every substantive page.
+- **Refresh quarterly** for competitive topics — update stats, pricing, and feature claims, then bump the date.
+- Undated or year-stale content loses citations to a fresher competitor even when the underlying information is equivalent.
+
 ### Schema Markup for AI
 
 Structured data helps AI systems understand your content. Key schemas:
@@ -396,3 +416,5 @@ For implementation, see the [tools registry](../../tools/REGISTRY.md).
 - **competitor-alternatives**: For building comparison pages that get cited
 - **programmatic-seo**: For building SEO pages at scale
 - **copywriting**: For writing content that's both human-readable and AI-extractable
+- **parasite-seo**: For ranking your content and mentions on high-authority third-party platforms AI engines cite
+- **digital-pr**: For earning editorial mentions that build the cross-source semantic consensus AI engines look for

@@ -1,0 +1,38 @@
+export type LastStatus = 'idle' | 'running' | 'success' | 'failed';
+export type PassFail = 'pass' | 'fail' | null;
+
+export interface ProjectPlan {
+  paths: string[];
+  databases: Array<{ service: string; type: string; container: string; enabled: boolean }>;
+  configs: string[];
+}
+
+export interface Project {
+  id: string;
+  owner: string;
+  name: string;
+  path: string;
+  plan: ProjectPlan;
+  lastStatus: LastStatus | string;
+  lastError: string;
+  lastRunAt: string | null;
+  lastCheckAt: string | null;
+  lastCheckStatus: PassFail;
+  lastCheckDetail: string;
+  lastDrillAt: string | null;
+  lastDrillStatus: PassFail;
+  lastDrillDetail: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Schedule {
+  id: string;
+  projectId: string;
+  kind: string;
+  cron: string;
+  enabled: boolean;
+  retention: { keepDaily: number; keepWeekly: number; keepMonthly: number };
+  createdAt: string;
+  updatedAt: string;
+}

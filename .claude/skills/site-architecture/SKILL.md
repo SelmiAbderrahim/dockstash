@@ -2,7 +2,7 @@
 name: site-architecture
 description: When the user wants to plan, map, or restructure their website's page hierarchy, navigation, URL structure, or internal linking. Also use when the user mentions "sitemap," "site map," "visual sitemap," "site structure," "page hierarchy," "information architecture," "IA," "navigation design," "URL structure," "breadcrumbs," "internal linking strategy," "website planning," "what pages do I need," "how should I organize my site," or "site navigation." Use this whenever someone is planning what pages a website should have and how they connect. NOT for XML sitemaps (that's technical SEO — see seo-audit). For SEO audits, see seo-audit. For structured data, see schema-markup.
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # Site Architecture
@@ -290,15 +290,44 @@ Hub: /blog/seo-guide (comprehensive overview)
 
 Each spoke links back to the hub. The hub links to all spokes. Spokes link to each other where relevant.
 
+### Silo Structure
+
+Silos are the discipline that keeps hub-and-spoke topically pure. A silo is a self-contained cluster of pages about one theme. There are two ways to build one:
+
+| Silo Type | How It's Enforced | Example |
+|-----------|-------------------|---------|
+| **Physical silo** | URL directory hierarchy — pages nest under a shared parent directory so the path itself groups the topic | `/seo/keyword-research`, `/seo/on-page`, `/seo/link-building` all under `/seo/` |
+| **Virtual silo** | Internal-linking patterns create the thematic cluster regardless of URL structure | Flat URLs (`/keyword-research`, `/on-page`) linked so tightly they read as one cluster |
+
+Physical silos are the stronger, more legible signal (the URL is a permanent, deterministic grouping). Virtual silos let you cluster content that can't be re-nested — but they depend entirely on link discipline, so they're more fragile.
+
+### Link-Equity Discipline
+
+Silos only work if link flow stays inside the theme. The rules:
+
+- **Spokes link UP to their hub** — every page in a silo links to that silo's pillar/hub page.
+- **Spokes link LATERALLY to same-silo siblings** — related pages within the same silo interlink freely.
+- **BAN internal links between competing silos.** Do not link from a page in Silo A to a page in Silo B if the two silos target different themes. Cross-silo links leak relevance and blur the topical signal.
+
+This produces **closed-loop linking**: link equity circulates within the cluster, and a crawler reading the internal-link graph sees a tightly-bound, authoritative group of pages on one subject rather than a diffuse web. Keeping the loop closed also **reduces external-link dependency** — a well-siloed cluster builds internal topical authority instead of relying on inbound links to prop up individual pages.
+
+> Cross-topic connections still belong in navigation and footer (site-wide utility links) — the ban is specifically on *contextual, in-content* links between competing content silos.
+
+### Breadcrumb Schema for Silos
+
+Implement `BreadcrumbList` structured data (schema.org) on every page in a silo. Breadcrumbs give crawlers a **deterministic hierarchy map** — an explicit machine-readable statement of where each page sits in the silo — which improves crawl efficiency and reinforces the physical-silo signal. Breadcrumb trails should mirror the URL path (see Breadcrumb-URL Alignment above). For implementation, see the **schema-markup** skill.
+
 ### Link Audit Checklist
 
 - [ ] Every page has at least one inbound internal link
 - [ ] No broken internal links (404s)
 - [ ] Anchor text is descriptive (not "click here" or "read more")
 - [ ] Important pages have the most inbound internal links
-- [ ] Breadcrumbs are implemented on all pages
+- [ ] Breadcrumbs are implemented on all pages (with `BreadcrumbList` schema)
 - [ ] Related content links exist on blog posts
 - [ ] Cross-section links connect features to case studies, blog to product pages
+- [ ] No contextual in-content links between competing silos (closed-loop linking)
+- [ ] Every spoke links up to its silo hub and laterally to same-silo siblings
 
 ---
 

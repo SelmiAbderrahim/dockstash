@@ -2,7 +2,7 @@
 name: competitor-alternatives
 description: "When the user wants to create competitor comparison or alternative pages for SEO and sales enablement. Also use when the user mentions 'alternative page,' 'vs page,' 'competitor comparison,' 'comparison page,' '[Product] vs [Product],' '[Product] alternative,' 'competitive landing pages,' 'how do we compare to X,' 'battle card,' or 'competitor teardown.' Use this for any content that positions your product against competitors. Covers four formats: singular alternative, plural alternatives, you vs competitor, and competitor vs competitor. For sales-specific competitor docs, see sales-enablement."
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # Competitor & Alternative Pages
@@ -186,6 +186,17 @@ Create a single source of truth for each competitor with:
 
 ## Research Process
 
+### Competitor Keyword-Gap Research
+
+Before writing pages, find where your competitors are winning traffic you're not. This tells you which alternative/vs pages to build first and against whom.
+
+1. **Run a Keyword Gap analysis** — use a competitor-analysis tool (Ahrefs Content Gap, Semrush Keyword Gap, or GSC comparison) to isolate high-intent keywords a competitor ranks for that you don't. Focus on commercial/comparison intent ("alternative," "vs," "best," "pricing"), not informational volume.
+2. **Benchmark competitor domain metrics** — domain authority/rating, referring domains, and organic traffic, so you know whether you can realistically outrank them on a given term.
+3. **Audit the ranking landing page** — its content depth, structure, freshness, and traffic estimate. A high-volume keyword defended by a thin, stale, or poorly-structured page is your best opening.
+4. **Prioritize against vulnerable competitors** — build alt pages first where the equation is **high search volume + poor content experience**. Skip terms where a competitor has a comprehensive, recently-updated page and strong authority (until your own authority grows).
+
+Feed the winning keyword list into the Page Formats and Keyword Targeting sections below.
+
 ### Deep Competitor Research
 
 For each competitor, gather:
@@ -201,6 +212,8 @@ For each competitor, gather:
 - **Quarterly**: Verify pricing, check for major feature changes
 - **When notified**: Customer mentions competitor change
 - **Annually**: Full refresh of all competitor data
+
+**Recency bias — keep comparisons visibly current.** Evaluators (and AI search engines) discount stale comparison data. Pricing and feature tables must reflect the competitor's *current* offering, and every page should carry a visible "Updated [year]" / "Last reviewed [month year]" signal. A comparison page showing last year's pricing reads as neglected and loses trust; refreshing on the quarterly cadence and surfacing the date is a cheap, high-leverage credibility win.
 
 ---
 

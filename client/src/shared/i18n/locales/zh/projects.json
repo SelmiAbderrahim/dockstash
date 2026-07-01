@@ -1,0 +1,29 @@
+{
+  "heading": "项目",
+  "lede": "/var/www 下的每个目录即一个项目。一键备份。",
+  "loading": "正在加载项目…",
+  "never": "从未",
+  "meta": {
+    "path": "路径",
+    "lastRun": "最近备份"
+  },
+  "status": {
+    "idle": "空闲",
+    "running": "运行中",
+    "success": "正常",
+    "failed": "失败"
+  },
+  "actions": {
+    "backupNow": "立即备份",
+    "running": "运行中…",
+    "open": "详情",
+    "retry": "重试"
+  },
+  "empty": {
+    "title": "未找到项目。",
+    "hint": "在 /var/www 下添加目录后刷新。"
+  },
+  "errors": {
+    "load": "无法加载项目。"
+  }
+}

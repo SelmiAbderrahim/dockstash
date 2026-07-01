@@ -29,6 +29,10 @@ export class HttpError extends Error {
     return new HttpError(409, message, details);
   }
 
+  static tooMany(message = 'Too Many Requests', details?: unknown): HttpError {
+    return new HttpError(429, message, details);
+  }
+
   static internal(message = 'Internal Server Error', details?: unknown): HttpError {
     return new HttpError(500, message, details);
   }

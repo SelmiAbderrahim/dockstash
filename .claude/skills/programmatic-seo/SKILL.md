@@ -2,7 +2,7 @@
 name: programmatic-seo
 description: When the user wants to create SEO-driven pages at scale using templates and data. Also use when the user mentions "programmatic SEO," "template pages," "pages at scale," "directory pages," "location pages," "[keyword] + [city] pages," "comparison pages," "integration pages," "building many pages for SEO," "pSEO," "generate 100 pages," "data-driven pages," or "templated landing pages." Use this whenever someone wants to create many similar pages targeting different keywords or locations. For auditing existing SEO issues, see seo-audit. For content strategy planning, see content-strategy.
 metadata:
-  version: 1.1.0
+  version: 1.2.0
 ---
 
 # Programmatic SEO
@@ -64,6 +64,54 @@ Better to have 100 great pages than 10,000 thin ones.
 - No keyword stuffing
 - No duplicate content
 - Genuine utility for users
+
+---
+
+## The 3-Layer Template Architecture
+
+A professional programmatic page is not a mail-merge document. It's assembled from three distinct layers. Skipping the third layer is what separates thin, deindexed pages from editorial-quality ones.
+
+### Layer 1: Data Layer
+
+The proprietary or aggregated dataset that gives each page its reason to exist.
+
+- One record per entity (per city, per tool, per integration, per profile)
+- Unique metrics per entity — the numbers that only your dataset holds
+- Structured fields (not free text) so downstream layers can query and branch on them
+- Defensibility hierarchy applies here (see Core Principles #2): proprietary > product-derived > user-generated > licensed > public
+
+### Layer 2: Rendering Layer
+
+Maps DB fields onto a visual template and generates the technical SEO scaffolding.
+
+- Bind each data field to a component slot in the template (Webflow CMS, Next.js dynamic route, or custom SSG)
+- Generate dynamic SEO titles, meta descriptions, canonical tags, and JSON-LD schema from the record's fields — never a single static string across all pages
+- Handle media, tables, and internal links as data-driven components
+
+### Layer 3: Semantic-Transformation Layer
+
+Converts raw data points into natural prose so pages read like they were written, not generated.
+
+- For each data point, program **3-5 alternative sentence structures** and select among them **deterministically** — seed the selection on a stable page attribute (e.g., a hash of the entity slug) so a given page always renders identically across builds, but the corpus as a whole has linguistic variance.
+- The goal is variance in *sentence construction*, not variable-swapping. "Austin has 42 coworking spaces" repeated with the city swapped is a mail-merge tell; rotating phrasing, order, and framing per record is editorial variance.
+- Deterministic (seeded) selection is mandatory — random-per-request output breaks caching, creates crawl inconsistency, and looks like cloaking.
+
+### Quality Bar (Doorway-Penalty Avoidance)
+
+Google penalizes doorway pages — pages built only to funnel search traffic with little standalone value. To stay on the right side:
+
+- **Minimum ~60-70% dynamic/unique content per page.** Boilerplate (nav, footer, static intro) should be the minority of the rendered page.
+- **Conditional rendering** — sections appear *only* when the DB actually has data for that field. Never render an empty "Reviews" or "Pricing" block with placeholder text; omit it entirely.
+- **Hold or noindex low-data pages** — records below your data-completeness threshold go to manual review or get `noindex` until enriched. Publishing thin variations at scale is what triggers penalties.
+
+### Amateur vs Professional
+
+| | Amateur | Professional |
+|--|---------|--------------|
+| Method | Web mail-merge — single template, variables swapped | Multi-layer editorial-quality templates |
+| Content | Thin, near-duplicate | 60-70%+ unique, conditionally rendered |
+| Prose | Same sentences, swapped nouns | 3-5 seeded sentence structures per data point |
+| Outcome | Deindexed / doorway penalty | Indexed, ranks, provides genuine utility |
 
 ---
 

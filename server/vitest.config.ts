@@ -12,8 +12,22 @@ export default defineConfig({
     fileParallelism: false,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
-      exclude: ['src/**/*.d.ts'],
+      reporter: ['text', 'html', 'lcov'],
+      exclude: [
+        'src/**/*.d.ts',
+        'src/**/*.test.ts',
+        'src/**/*.spec.ts',
+        'src/server.ts',
+        'src/config/logger.ts',
+      ],
+      // Prompt 11: CI enforces a 100% coverage gate on the four v8 dimensions.
+      // Runs are gated by .github/workflows/ci.yml — see docs/ci-gates.en.md.
+      thresholds: {
+        lines: 100,
+        branches: 100,
+        functions: 100,
+        statements: 100,
+      },
     },
   },
 });

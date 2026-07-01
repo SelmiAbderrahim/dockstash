@@ -1,0 +1,10 @@
+.prompt_executor_*.pid
+.prompt_executor_*.log
+.prompt_executor_*_failures.log
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml

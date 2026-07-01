@@ -1,0 +1,42 @@
+{
+  "loading": "Loading…",
+  "tabs": {
+    "aria": "Project sections",
+    "plan": "Plan",
+    "schedule": "Schedule",
+    "drill": "Restore drill"
+  },
+  "plan": {
+    "files": "Files",
+    "databases": "Databases",
+    "configs": "Config files",
+    "noFiles": "No file paths detected.",
+    "noDatabases": "No databases detected.",
+    "noConfigs": "No config files detected.",
+    "save": "Save plan",
+    "saving": "Saving…",
+    "saved": "Plan saved."
+  },
+  "schedule": {
+    "presetLegend": "Frequency",
+    "preset": {
+      "daily": "Daily at 03:00",
+      "weekly": "Weekly (Sunday 03:00)",
+      "cron": "Custom cron"
+    },
+    "cronLabel": "Cron expression",
+    "enabled": "Enabled",
+    "save": "Save schedule",
+    "saving": "Saving…",
+    "saved": "Schedule saved.",
+    "errors": {
+      "cronFormat": "Cron must have 5 or 6 whitespace-separated fields."
+    }
+  },
+  "drill": {
+    "heading": "Restore drill",
+    "none": "No drill has ever run for this project.",
+    "pass": "Verified",
+    "fail": "Failed"
+  }
+}

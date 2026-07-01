@@ -1,0 +1,29 @@
+{
+  "heading": "Projects",
+  "lede": "Every folder under /var/www is a project. One click to back it up.",
+  "loading": "Loading projects…",
+  "never": "Never",
+  "meta": {
+    "path": "Path",
+    "lastRun": "Last backup"
+  },
+  "status": {
+    "idle": "Idle",
+    "running": "Running",
+    "success": "Healthy",
+    "failed": "Failed"
+  },
+  "actions": {
+    "backupNow": "Backup Now",
+    "running": "Running…",
+    "open": "Details",
+    "retry": "Retry"
+  },
+  "empty": {
+    "title": "No projects found.",
+    "hint": "Add a folder under /var/www and refresh."
+  },
+  "errors": {
+    "load": "Could not load projects."
+  }
+}

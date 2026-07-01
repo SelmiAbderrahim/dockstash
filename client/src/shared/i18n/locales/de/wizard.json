@@ -1,0 +1,33 @@
+{
+  "heading": "Speicher einrichten",
+  "lede": "Einmalige Einrichtung: Speicher-VPS verbinden und Verschlüsselungspasswort wählen.",
+  "loading": "Wird geladen…",
+  "stepsAria": "Einrichtungsschritte",
+  "step": {
+    "storage": "Speicher-VPS",
+    "password": "Passwort",
+    "confirm": "Bestätigen"
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Benutzer",
+    "port": "Port",
+    "privateKey": "SSH-Privatschlüssel"
+  },
+  "password": {
+    "warning": "Wird nur einmal angezeigt. Verlust = keine Entschlüsselung möglich.",
+    "hidden": "Passwort ausgeblendet. Zum Bestätigen fortfahren."
+  },
+  "confirm": {
+    "body": "Bestätige, dass du das Passwort gespeichert hast.",
+    "escrow": "Habe es gespeichert — Verlust = keine Wiederherstellung."
+  },
+  "actions": {
+    "connect": "Speicher verbinden",
+    "connecting": "Verbinde…",
+    "copy": "Kopieren",
+    "saving": "Speichert…",
+    "continueToConfirm": "Weiter",
+    "done": "Fertig"
+  }
+}

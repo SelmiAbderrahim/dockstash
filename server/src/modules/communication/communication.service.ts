@@ -1,7 +1,17 @@
-import { sendEmail } from './mailers/mailgun.js';
+import { sendEmail } from './mailers/resend.js';
 import type { ContactFormInput } from './communication.schema.js';
+import {
+  translate,
+  DEFAULT_LOCALE,
+  type SupportedLocale,
+} from '../../shared/i18n/index.js';
+import { env } from '../../config/env.js';
 
 const CONTACT_FORM_RECIPIENT = 'you@example.com';
+
+function normalizedClientUrl(): string {
+  return env.CLIENT_URL.replace(/\/$/, '');
+}
 
 export async function deliverContactForm(input: ContactFormInput): Promise<void> {
   await sendEmail({
@@ -12,23 +22,154 @@ export async function deliverContactForm(input: ContactFormInput): Promise<void>
   });
 }
 
-export async function deliverPasswordResetEmail(email: string, resetUrl: string): Promise<void> {
+export async function deliverPasswordResetEmail(
+  email: string,
+  resetUrl: string,
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<void> {
   await sendEmail({
     to: email,
-    subject: 'Reset Password',
-    text:
-      'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
-      `Please click on the following link, or paste this into your browser to complete the process:\n\n${resetUrl}\n\n` +
-      'If you did not request this, please ignore this email and your password will remain unchanged.\n',
+    subject: translate(locale, 'email.passwordReset.subject'),
+    text: translate(locale, 'email.passwordReset.body', { resetUrl }),
   });
 }
 
-export async function deliverPasswordChangedEmail(email: string): Promise<void> {
+export async function deliverPasswordChangedEmail(
+  email: string,
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<void> {
   await sendEmail({
     to: email,
-    subject: 'Password Changed',
-    text:
-      'You are receiving this email because you changed your password.\n\n' +
-      'If you did not request this change, please contact us immediately.',
+    subject: translate(locale, 'email.passwordChanged.subject'),
+    text: translate(locale, 'email.passwordChanged.body'),
+  });
+}
+
+export interface WelcomeEmailInput {
+  email: string;
+  name: string;
+  locale?: SupportedLocale;
+}
+
+export async function deliverWelcomeEmail(input: WelcomeEmailInput): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, 'email.welcome.subject'),
+    text: translate(locale, 'email.welcome.body', {
+      name: input.name,
+      clientUrl: normalizedClientUrl(),
+    }),
+  });
+}
+
+export interface PaymentReceiptInput {
+  email: string;
+  amount: string;
+  plan: string;
+  locale?: SupportedLocale;
+}
+
+export async function deliverPaymentReceiptEmail(
+  input: PaymentReceiptInput,
+): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, 'email.paymentReceipt.subject'),
+    text: translate(locale, 'email.paymentReceipt.body', {
+      amount: input.amount,
+      plan: input.plan,
+      clientUrl: normalizedClientUrl(),
+    }),
+  });
+}
+
+export interface DunningInput {
+  email: string;
+  plan: string;
+  graceEndsAt: string;
+  locale?: SupportedLocale;
+}
+
+export async function deliverDunningEmail(input: DunningInput): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, 'email.dunning.subject'),
+    text: translate(locale, 'email.dunning.body', {
+      plan: input.plan,
+      graceEndsAt: input.graceEndsAt,
+      clientUrl: normalizedClientUrl(),
+    }),
+  });
+}
+
+export type AlertKind = 'backup' | 'restore' | 'drill' | 'heartbeat';
+
+export interface AlertEmailInput {
+  email: string;
+  kind: AlertKind;
+  project: string;
+  projectId: string;
+  error: string;
+  lastGoodAt: Date | null;
+  failedAt?: Date;
+  hoursThreshold?: number;
+  locale?: SupportedLocale;
+}
+
+/**
+ * `neverRun` — the recipient-locale word for "no successful run yet". Used by
+ * the alert renderer when `lastGoodAt` is null.
+ */
+function renderLastGoodAt(locale: SupportedLocale, lastGoodAt: Date | null): string {
+  if (!lastGoodAt) return translate(locale, 'email.neverRun');
+  return lastGoodAt.toISOString();
+}
+
+function subjectKeyFor(kind: AlertKind): string {
+  switch (kind) {
+    case 'backup':
+      return 'email.backupFailure.subject';
+    case 'restore':
+      return 'email.restoreFailure.subject';
+    case 'drill':
+      return 'email.drillFailure.subject';
+    case 'heartbeat':
+      return 'email.heartbeatMiss.subject';
+  }
+}
+
+function bodyKeyFor(kind: AlertKind): string {
+  switch (kind) {
+    case 'backup':
+      return 'email.backupFailure.body';
+    case 'restore':
+      return 'email.restoreFailure.body';
+    case 'drill':
+      return 'email.drillFailure.body';
+    case 'heartbeat':
+      return 'email.heartbeatMiss.body';
+  }
+}
+
+export async function deliverAlertEmail(input: AlertEmailInput): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  const failedAt = (input.failedAt ?? new Date()).toISOString();
+  const lastGoodAt = renderLastGoodAt(locale, input.lastGoodAt);
+  const vars = {
+    project: input.project,
+    projectId: input.projectId,
+    error: input.error,
+    failedAt,
+    lastGoodAt,
+    hours: input.hoursThreshold ?? '',
+    clientUrl: normalizedClientUrl(),
+  };
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, subjectKeyFor(input.kind), vars),
+    text: translate(locale, bodyKeyFor(input.kind), vars),
   });
 }

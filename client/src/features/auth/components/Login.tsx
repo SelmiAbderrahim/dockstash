@@ -3,23 +3,34 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { loginUser } from '../store/thunks';
 import { clearError } from '../store/slice';
 import { selectAuthError, selectAuthenticated } from '../store/selectors';
 
-const loginSchema = z.object({
-  email: z.string().min(1, 'Please enter an email'),
-  password: z.string().min(1, 'Please enter a password'),
-});
+const buildLoginSchema = (
+  requiredEmail: string,
+  requiredPassword: string,
+) =>
+  z.object({
+    email: z.string().min(1, requiredEmail),
+    password: z.string().min(1, requiredPassword),
+  });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type LoginFormValues = z.infer<ReturnType<typeof buildLoginSchema>>;
 
 export const Login = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const errorMessage = useAppSelector(selectAuthError);
   const authenticated = useAppSelector(selectAuthenticated);
+  const { t } = useTranslation(['auth', 'errors']);
+
+  const loginSchema = buildLoginSchema(
+    t('emailRequired', { ns: 'errors' }),
+    t('passwordRequired', { ns: 'errors' }),
+  );
 
   const {
     register,
@@ -51,24 +62,24 @@ export const Login = () => {
       <form onSubmit={onSubmit}>
         {errorMessage ? (
           <div role="alert">
-            <strong>Error!</strong> {errorMessage}
+            <strong>{t('login.errorPrefix')}</strong> {errorMessage}
           </div>
         ) : null}
         <div>
-          <label htmlFor="login-email">Email</label>
+          <label htmlFor="login-email">{t('login.email')}</label>
           <input id="login-email" type="text" {...register('email')} />
           {errors.email ? <div className="error">{errors.email.message}</div> : null}
         </div>
         <div>
-          <label htmlFor="login-password">Password</label>
+          <label htmlFor="login-password">{t('login.password')}</label>
           <input id="login-password" type="password" {...register('password')} />
           {errors.password ? <div className="error">{errors.password.message}</div> : null}
         </div>
         <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Signing in...' : 'Login'}
+          {isSubmitting ? t('login.submitting') : t('login.submit')}
         </button>
       </form>
-      <Link to="/forgot-password">Forgot Password?</Link>
+      <Link to="/forgot-password">{t('login.forgot')}</Link>
     </div>
   );
 };

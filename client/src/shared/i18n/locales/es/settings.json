@@ -1,0 +1,41 @@
+{
+  "heading": "Ajustes",
+  "loading": "Cargando…",
+  "tabs": {
+    "aria": "Secciones de ajustes",
+    "storage": "Almacenamiento",
+    "retention": "Retención",
+    "password": "Contraseña de cifrado"
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "connect": "Conectar almacenamiento"
+  },
+  "errors": {
+    "load": "No se pudieron cargar los ajustes."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Usuario",
+    "port": "Puerto",
+    "privateKey": "Clave SSH privada",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Se guarda cifrada. No se muestra otra vez.",
+    "saved": "Almacenamiento guardado."
+  },
+  "retention": {
+    "daily": "Diarias a mantener",
+    "weekly": "Semanales a mantener",
+    "monthly": "Mensuales a mantener",
+    "saved": "Retención guardada."
+  },
+  "password": {
+    "warning": "Contraseña de cifrado. Si la pierdes, los repositorios son irrecuperables.",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar",
+    "mismatch": "Las contraseñas no coinciden.",
+    "escrow": "He guardado la contraseña en lugar seguro.",
+    "saved": "Contraseña guardada."
+  }
+}

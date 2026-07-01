@@ -1,135 +1,142 @@
 # Product Marketing Context
 
-*Last updated: 2026-03-08*
+*Last updated: 2026-07-01*
 
 ## Product Overview
-**One-liner:** ServerlessBase is a cloud deployment platform that makes deploying apps, databases, and services as simple as a few clicks.
-**What it does:** ServerlessBase provides an all-in-one dashboard for deploying and managing web applications, databases (PostgreSQL, MySQL, MariaDB, MongoDB, Redis, ClickHouse, and more), Docker Compose stacks, and custom domains — with built-in monitoring, backups, and AI-powered tools like WebSmith (website builder) and App Studio.
-**Product category:** PaaS / Cloud Deployment Platform / DevOps Platform
-**Product type:** SaaS (cloud-hosted, users sign up at serverlessbase.com)
-**Business model:** Freemium SaaS — Free ($0, 2 projects, 3 services/project), Pro ($29/mo or $290/yr, unlimited projects/services, 5 team members, advanced monitoring), Enterprise (custom pricing, SSO, dedicated support, unlimited everything)
+**One-liner:** Dockstash makes backing up any Docker project one click — automatic detection, encrypted off-site snapshots, and one-click restore.
+**What it does:** Dockstash is a self-hostable backup orchestrator that runs on your production VPS. It auto-scans your Docker Compose projects, detects every backup-able layer (volumes/bind mounts, databases, compose + `.env` config, reverse-proxy config), and dumps databases the *correct* way (`pg_dumpall`, `mysqldump --single-transaction`, `mongodump --oplog` inside the running container — never a live file copy) before backing up with **Restic** (encryption, dedup, incremental snapshots) over SSH to a storage VPS. Scheduled backups, one-click restore with typed-confirm safety, automated restore-drill verification, and live-streaming logs. Built on the MERN stack with a Shadcn UI.
+**Product category:** Backup & disaster recovery / DevOps tooling / Docker infrastructure
+**Product type:** Self-hostable software with a managed freemium tier (open-source Free tier runs without any paid provider; Pro/Business add scale + support)
+**Business model:** Freemium, per-project metering, billed via **Polar** (merchant of record — handles VAT/tax):
+
+| Plan | Price | Projects | Retention | Frequency | Extras |
+|------|-------|----------|-----------|-----------|--------|
+| Free | $0 | 1 | 7 days | daily | community support, self-host default |
+| Pro | $X/mo (2 mo free yearly) | 10 | 30 days | hourly | schedules, email alerts |
+| Business | $Y/mo | unlimited | 90 days | any cron | priority support, multi-VPS |
 
 ## Target Audience
-**Target companies:** Solo developers, indie hackers, startups (seed to Series A), small dev teams (2-15 people), digital agencies deploying client projects
-**Decision-makers:** Founders, CTOs, lead developers, technical co-founders, agency tech leads
-**Primary use case:** Deploy and manage web applications and databases without DevOps complexity
+**Target companies:** Solo developers / indie hackers self-hosting on a VPS, small dev teams (2–15) running Docker Compose in prod, digital agencies managing many client projects, self-hosted-software enthusiasts (r/selfhosted).
+**Decision-makers:** The developer/founder who owns the server; agency technical leads; small-team platform/DevOps engineers.
+**Primary use case:** Get reliable, verified, off-site backups of a Docker Compose production stack without writing restic/cron scripts or risking corrupt database dumps.
 **Jobs to be done:**
-- "I need to get my app live without learning AWS/GCP infrastructure"
-- "I need one dashboard for all my projects, databases, and domains"
-- "I need predictable costs that don't surprise me at the end of the month"
+- "I need real backups of my Dockerized app + database that I can actually restore."
+- "I don't want to hand-roll restic + cron + pg_dump scripts and hope they work."
+- "I need to know my backups aren't silently failing."
 **Use cases:**
-- Deploy a Next.js/React app with a PostgreSQL database
-- Manage multiple client projects from a single dashboard (agencies)
-- Migrate from Heroku/Railway to a more cost-effective platform
-- Run Docker Compose stacks without managing servers
-- Build and deploy websites using AI (WebSmith)
+- Back up a WordPress/Ghost/n8n/Supabase Docker stack (app files + DB + config) off-site
+- Replace a fragile homemade `restic` + `cron` + `pg_dump` script
+- Agencies backing up many client Docker projects from one dashboard, per-project
+- Prove restorability with automated restore drills before disaster strikes
 
 ## Personas
 
 | Persona | Role | Cares about | Challenge | Value we promise |
 |---------|------|-------------|-----------|------------------|
-| Solo Dev Sam | Indie hacker / solo developer | Speed to deploy, zero DevOps, low cost | Vercel only does frontend, AWS is overkill, Heroku is expensive | Full-stack deploy in minutes, $0 to start |
-| Startup CTO Chen | Series A CTO, 3-8 person team | Cost predictability, team collaboration, reliability | Railway bills fluctuate, can't predict infra costs | Fixed pricing, team features, all-in-one |
-| Agency Lead Alex | Technical lead at digital agency | Multi-project management, client isolation, efficiency | Juggling DigitalOcean droplets per client, manual setup | One dashboard for all clients, fast project setup |
-| DevOps Dana | Small team DevOps/platform engineer | Docker support, monitoring, control | Needs Docker flexibility but doesn't want to manage K8s | Docker-native deploys + managed infrastructure |
+| Selfhost Sam | Indie hacker on a Hetzner/DO VPS | Data safety, low cost, no lock-in | Cron+restic scripts are fragile; unsure backups restore | One-click, auto-detected, verified backups on his own storage |
+| Team Lead Tariq | Lead dev, 5-person team, Docker Compose in prod | Correct DB dumps, off-site, alerts on failure | Live-file DB backups don't restore; failures go unnoticed | Docker-aware dumps + dead-man's-switch alerting |
+| Agency Alex | Technical lead at a dev agency | Many projects, per-client, efficiency | Manual restic setup per client server | One dashboard, per-project billing, multi-VPS agents |
+| Cautious Casey | Solo founder burned by data loss | Restore actually works, encrypted secrets | "Is my backup real?" anxiety | Automated restore-drill diff + encrypted-at-rest secrets |
 
 ## Problems & Pain Points
-**Core problem:** Deploying and managing web applications requires too much DevOps knowledge, too many tools, and costs are unpredictable.
+**Core problem:** Backing up a Dockerized production stack correctly is hard and easy to get silently wrong — most homemade tools back up live database files that won't restore, and nobody notices until recovery day.
 **Why alternatives fall short:**
-- **AWS/GCP/Azure:** Overwhelming complexity, surprise bills, requires dedicated DevOps engineer
-- **Vercel:** Great for frontend, but no database hosting, no Docker support, vendor lock-in to Next.js
-- **Railway:** Usage-based pricing leads to unpredictable bills, limited monitoring
-- **Heroku:** Expensive for what you get, outdated developer experience, Salesforce bloat
-- **Self-hosted (Coolify/CapRover):** Requires managing your own server, less polished, maintenance burden
-**What it costs them:** Hours/week on DevOps instead of building product; surprise cloud bills eating into runway; context-switching between 3-5 different tools
-**Emotional tension:** Fear of surprise bills, frustration with infrastructure complexity, anxiety about "doing deployment wrong," stress of managing servers when you just want to ship code
+- **Manual restic + cron scripts (DIY):** Fragile, no UI, easy to misconfigure, no verification, often back up live DB files (torn/unrestorable dumps).
+- **Backrest (open-source restic UI):** Great generic restic scheduler/UI, but **not Docker-aware** — no automatic DB-dump adapters, no compose/reverse-proxy detection, no per-project billing or managed alerting.
+- **Duplicati:** History of reliability/restore issues; not Docker-native.
+- **Cloud backup SaaS (e.g. SimpleBackups):** Recurring cost, your data on their infrastructure, less control/sovereignty than backing up to your own storage VPS.
+- **`docker exec` by hand:** No scheduling, no retention, no encryption discipline, no restore safety.
+**What it costs them:** Hours building/maintaining backup scripts; the catastrophic tail risk of an unrestorable backup discovered during an outage; silent-stall failures where nothing errors but nothing runs.
+**Emotional tension:** The quiet dread of "I *think* I have backups"; fear of the restore that doesn't work; guilt over data loss that was preventable.
 
 ## Competitive Landscape
-**Direct:** Vercel (frontend-only, vendor lock-in), Railway (unpredictable pricing), Render (slow builds, limited DBs), Fly.io (complex networking), DigitalOcean App Platform (poor DX)
-**Secondary:** Coolify (self-hosted, requires server management), CapRover (dated UI, manual setup), Dokku (CLI-only, single server)
-**Indirect:** Raw AWS/GCP (maximum complexity), managed K8s services (overkill for most), hiring a DevOps engineer ($150K+/yr)
+**Direct:** Backrest (open-source restic UI — closest; not Docker-aware), Duplicati (GUI backup — reliability concerns).
+**DIY substitute:** hand-written `restic` + `node-cron`/`cron` + `pg_dump` scripts (the real incumbent for most of the ICP).
+**Cloud SaaS:** SimpleBackups, SnapShooter, and similar managed backup services (cost + data-sovereignty tradeoff).
+**Indirect / do-nothing:** provider volume snapshots (whole-disk, not app/DB-consistent), "I'll set it up later," no backups at all.
 
 ## Differentiation
 **Key differentiators:**
-- All-in-one: apps + databases + domains + monitoring + AI tools in one dashboard
-- Transparent, fixed pricing (no surprise bills — unlike AWS/Railway)
-- Docker-native: any Dockerfile deploys, plus Docker Compose support
-- Built-in AI tools: WebSmith website builder, App Studio app builder
-- 8+ database types supported out of the box
-- Multi-language dashboard (English, Arabic, French, German, Spanish)
-**How we do it differently:** Instead of piecing together Vercel + PlanetScale + Datadog + Route53, everything is one dashboard with one bill.
-**Why that's better:** Fewer tools = less context-switching, less integration headaches, and one predictable bill.
-**Why customers choose us:** "I just want to deploy my app and get back to building" — we remove the infrastructure tax.
+- **Docker-aware DB adapters** — auto-detects Postgres/MySQL/MariaDB/Mongo and dumps consistently (`pg_dumpall`, `mysqldump --single-transaction`, `mongodump --oplog`) from the running container, then restics the dump. Never a live-file copy.
+- **Automatic project scan** — detects volumes, databases, compose/`.env`, and reverse-proxy (Traefik/nginx) config; the user confirms checkboxes instead of authoring a config file.
+- **Verified backups** — scheduled `restic check` + automated **restore-drill diff** (restore latest snapshot to scratch, diff vs source). A green drill is the proof.
+- **One-click restore with safety** — typed-confirm, restore-to-new-location default, DB staging before overwrite.
+- **Own your storage, no lock-in** — backups go to *your* storage VPS via SSH; standard restic repos, encrypted with your key. Free tier fully self-hostable.
+- **Loud failure** — Resend email alerts + dead-man's-switch heartbeat catch silent stalls.
+- **Encrypted secrets at rest** — AES-256-GCM; restic password + SSH keys never plaintext; recovery-code escrow.
+**How we do it differently:** Backrest and DIY treat backup generically; Dockstash understands your *Docker project* — it knows a Postgres container needs a `pg_dumpall`, not a file copy — and proves the backup restores.
+**Why that's better:** The single most common backup failure (unrestorable DB dumps) is designed out; you find out backups work *before* you need them.
+**Why customers choose us:** "I want backups I can trust and restore in one click, on my own storage, without writing scripts."
 
 ## Objections
 
 | Objection | Response |
 |-----------|----------|
-| "I've never heard of ServerlessBase" | We're built on battle-tested open-source (Dokploy fork) with Docker underneath. Your apps run on proven infrastructure. |
-| "What if you shut down?" | Your apps are standard Docker containers. Export and run anywhere. Zero vendor lock-in by design. |
-| "Why not just use Vercel?" | Vercel is great for Next.js frontends. But if you need databases, Docker support, or non-Next.js apps, you need additional services. We do it all in one place. |
-| "$29/mo seems expensive vs free tiers" | Compare total cost: Vercel Pro ($20) + PlanetScale ($29) + monitoring ($10) + domains ($varies) = $60+/mo. We're $29 for everything. |
+| "Why not just use Backrest?" | Backrest is a solid generic restic UI — but it doesn't know your database needs a `pg_dumpall`, doesn't detect your compose stack, and won't drill-test restores. Dockstash is Docker-project-aware. |
+| "Why not write my own restic + cron script?" | You can — and maintain it, and hope the DB dumps are consistent, and notice when it silently stops. Dockstash is that script, hardened, verified, and one-click. |
+| "Is my data safe with you?" | Free/self-host runs entirely on *your* servers to *your* storage VPS. We never hold your backups. Secrets are AES-256-GCM encrypted; restic repos are encrypted with your key. |
+| "What if you shut down?" | Repos are standard Restic. Point `restic` at your storage VPS and restore without us. Config export/import included. Zero lock-in. |
+| "How do I know backups actually restore?" | Automated restore-drill diffs the restored data against source on a schedule and surfaces per-project drill status. Untested backup = no backup. |
 
-**Anti-persona:** Enterprise companies with dedicated DevOps teams and existing K8s infrastructure. Companies that need multi-region deployment across 10+ regions. Teams that want to self-host everything and have the expertise to do so.
+**Anti-persona:** Enterprises with dedicated backup infrastructure and compliance teams; users not on Docker; people who want a fully-managed "we hold your data" cloud service with zero self-host involvement.
 
 ## Switching Dynamics
-**Push (away from current):** Surprise AWS/Railway bills; Heroku price increases; Vercel can't handle backend/databases; too many tools to manage; self-hosted solutions require too much maintenance
-**Pull (toward us):** One dashboard for everything; fixed, predictable pricing; deploys in minutes; AI tools included; Docker-native flexibility
-**Habit (keeps them stuck):** Existing CI/CD pipelines configured for current provider; team familiarity with current tooling; fear of migration downtime; "it works, why change?"
-**Anxiety (about switching):** Will migration break things? Is ServerlessBase reliable enough? What if I need features they don't have? Will my team adopt it?
+**Push (away from current):** A restore that failed (or the fear of one); a fragile script that broke on a version bump; a backup that was silently stalled; realizing volume snapshots aren't DB-consistent.
+**Pull (toward us):** One-click, auto-detected, verified backups on your own storage; alerts when something fails; honest Shadcn UX.
+**Habit (keeps them stuck):** "My cron script works" (until it doesn't); inertia of an existing setup; provider snapshots that feel like enough.
+**Anxiety (about switching):** Is it secure enough to hold my SSH key + restic password? Will restore really work? Is a new tool worth the setup?
 
 ## Customer Language
 **How they describe the problem:**
-- "I just want to deploy my app without becoming a DevOps engineer"
-- "My AWS bill keeps surprising me every month"
-- "I'm tired of juggling five different services to run one app"
-- "Heroku is too expensive for what it does now"
-- "Vercel can't handle my backend"
+- "I'm not sure my backups would actually restore."
+- "I've got a janky cron + restic script backing up my containers."
+- "My pg_dump runs but I've never tested a restore."
+- "Backrest is nice but it doesn't understand my database."
 **How they describe us:**
-- "It's like Vercel but for full-stack apps"
-- "All my deploys in one place"
-- "Finally, a platform that just works with Docker"
-- "The dashboard I wish AWS had"
-**Words to use:** deploy, ship, launch, dashboard, one-click, predictable, all-in-one, Docker-native, full-stack
-**Words to avoid:** cloud-native (too enterprise), serverless (confusing with brand name), devops (we eliminate it), infrastructure-as-code (too complex), enterprise-grade (too corporate)
+- "One-click backups for my Docker stack."
+- "It just knew my Postgres needed a dump, not a file copy."
+- "Finally something that tells me when a backup fails."
+**Words to use:** back up, restore, snapshot, one-click, encrypted, off-site, self-hosted, Docker-aware, verified, restore drill, restic
+**Words to avoid:** "cloud backup" (implies we hold your data), "enterprise-grade," "set and forget" (we're honest that verification matters), "sync" (backup ≠ sync)
 **Glossary:**
 
 | Term | Meaning |
 |------|---------|
-| Project | A logical grouping of related services (apps + databases) |
-| Service | An individual app, database, or compose stack within a project |
-| Environment | A set of configuration (env vars) for a service |
-| Deploy | Push code or configuration changes live |
-| WebSmith | AI-powered website builder integrated into the dashboard |
-| App Studio | AI-powered application builder for creating full apps |
+| Project | A Docker Compose project at `/var/www/<project>` that Dockstash backs up |
+| Adapter | Plugin that knows how to dump/restore a service type (postgres, mysql, mongo) |
+| Snapshot | A restic restore point for a project |
+| Restore drill | Automated test that restores the latest snapshot to scratch and diffs vs source |
+| Storage VPS | Your server that holds the encrypted restic repos (reached over SSH) |
+| Agent | Dockstash container running on a production VPS, backing up its projects |
 
 ## Brand Voice
-**Tone:** Technical but approachable. Developer-first. No enterprise jargon. Direct, honest, slightly opinionated.
-**Style:** Short sentences. Code examples over lengthy explanations. Show, don't tell. Use "you" not "users." Occasional humor, never corporate-speak.
-**Personality:** Competent, friendly, no-nonsense, builder-minded, empathetic to developer pain
+**Tone:** Technical, honest, reassuring without overpromising. Developer-first. Safety-conscious (this is people's data).
+**Style:** Short sentences. Show the exact command. "You," not "users." Never hype; a backup tool earns trust by being precise, not loud.
+**Personality:** Competent, careful, no-nonsense, builder-minded, empathetic to the dread of data loss.
 
 ## Proof Points
-**Metrics:**
-- Deploy an app in under 5 minutes (time-to-deploy)
-- 8+ database types supported (PostgreSQL, MySQL, MariaDB, MongoDB, Redis, ClickHouse, Dragonfly, KeyDB)
-- 5 languages supported in dashboard (EN, AR, FR, DE, ES)
-- Free tier: 2 projects, 3 services each — no credit card required
-- Pro at $29/mo saves ~50% vs equivalent multi-tool stack
-**Customers:** Early-stage startups, indie hackers, digital agencies (gather specific logos and names as customer base grows)
+**Metrics / concrete claims:**
+- One-click backup of a full Docker project (files + DB + config) — zero config file authored
+- Docker-aware adapters for Postgres, MySQL/MariaDB, MongoDB (consistent dumps)
+- Restic-backed: dedup, encryption, incremental snapshots, restore-to-any-point
+- Automated restore-drill diff proves restorability per project
+- Runs on your own VPS → storage VPS; Free tier needs no paid provider
+- AES-256-GCM encrypted secrets; SSH host-key pinning
+**Customers:** Early self-hosters, small Docker-Compose teams, agencies (gather logos as base grows).
 **Testimonials:**
-> "I moved 3 projects from Heroku and saved $120/month" — *[gather real testimonials]*
-> "Finally, a deployment platform that handles my database too" — *[gather real testimonials]*
+> "It caught that my nightly dump had been failing for a week." — *[gather real testimonials]*
+> "Set up in ten minutes and the restore drill actually passed." — *[gather real testimonials]*
 **Value themes:**
 
 | Theme | Proof |
 |-------|-------|
-| Simplicity | Deploy in 5 minutes, one dashboard for everything |
-| Cost savings | Fixed $29/mo vs $60+ multi-tool stack; $0 free tier |
-| Full-stack | Apps + 8 DB types + domains + monitoring + AI tools |
-| No lock-in | Standard Docker containers, export anytime |
-| Developer-first | Clean UI, API access, Git integration, Docker Compose |
+| Correctness | Docker-aware consistent DB dumps, never live-file copies |
+| Trust | Automated restore drills + loud failure alerts |
+| Simplicity | Auto-scan → confirm checkboxes → one-click backup/restore |
+| Ownership | Your storage VPS, standard restic repos, no lock-in |
+| Security | AES-256-GCM secrets, SSH host-key pinning, encrypted repos |
 
 ## Goals
-**Business goal:** Grow to 1,000 active free users and 100 Pro subscribers within 12 months
-**Conversion action:** Sign up for free account → deploy first app → upgrade to Pro
-**Current metrics:** Early stage — establishing baselines for all metrics
+**Business goal:** Establish Dockstash as the Docker-aware backup tool of choice for self-hosters and small teams; grow Free installs → Pro conversions.
+**Conversion action:** Install/self-host or start Free → connect storage VPS → first successful backup + passing restore drill → upgrade to Pro for scheduling/alerts/more projects.
+**Current metrics:** Early stage — establishing baselines.

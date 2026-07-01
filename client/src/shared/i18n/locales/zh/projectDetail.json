@@ -1,0 +1,42 @@
+{
+  "loading": "加载中…",
+  "tabs": {
+    "aria": "项目分区",
+    "plan": "计划",
+    "schedule": "计划任务",
+    "drill": "恢复演练"
+  },
+  "plan": {
+    "files": "文件",
+    "databases": "数据库",
+    "configs": "配置文件",
+    "noFiles": "未检测到路径。",
+    "noDatabases": "未检测到数据库。",
+    "noConfigs": "未检测到配置文件。",
+    "save": "保存计划",
+    "saving": "保存中…",
+    "saved": "计划已保存。"
+  },
+  "schedule": {
+    "presetLegend": "频率",
+    "preset": {
+      "daily": "每日 03:00",
+      "weekly": "每周（周日 03:00）",
+      "cron": "自定义 cron"
+    },
+    "cronLabel": "cron 表达式",
+    "enabled": "已启用",
+    "save": "保存计划任务",
+    "saving": "保存中…",
+    "saved": "计划任务已保存。",
+    "errors": {
+      "cronFormat": "cron 必须包含 5 或 6 个字段。"
+    }
+  },
+  "drill": {
+    "heading": "恢复演练",
+    "none": "尚未运行演练。",
+    "pass": "已验证",
+    "fail": "失败"
+  }
+}

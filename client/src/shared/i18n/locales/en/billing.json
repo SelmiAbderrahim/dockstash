@@ -1,0 +1,82 @@
+{
+  "checkout": {
+    "title": "Checkout",
+    "submit": "Pay now",
+    "success": "Payment received. Thank you!"
+  },
+  "portal": {
+    "title": "Billing"
+  },
+  "plan": {
+    "free": "Free",
+    "pro": "Pro",
+    "business": "Business"
+  },
+  "status": {
+    "active": "Active",
+    "past_due": "Past due",
+    "canceled": "Canceled",
+    "revoked": "Revoked",
+    "none": "None"
+  },
+  "grid": {
+    "title": "Pricing",
+    "subtitle": "Pick a plan. Cancel anytime.",
+    "intervalLabel": "Billing interval",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "yearlySavings": "2 months free",
+    "loading": "Loading pricing…",
+    "empty": "No plans available.",
+    "free": "Free",
+    "perMonth": "mo",
+    "perYear": "yr",
+    "caps": {
+      "projects": "{{value}} projects",
+      "unlimited": "Unlimited",
+      "retention": "{{days}} days retention"
+    },
+    "frequency": {
+      "daily": "Daily backups",
+      "hourly": "Hourly backups",
+      "any-cron": "Any cron expression"
+    },
+    "flag": {
+      "schedules": "Scheduled backups",
+      "emailAlerts": "Email alerts",
+      "multiVps": "Multi-VPS"
+    },
+    "cta": {
+      "select": "Get started",
+      "switch": "Switch to this plan",
+      "current": "Current plan"
+    }
+  },
+  "page": {
+    "title": "Billing",
+    "tabsLabel": "Billing sections",
+    "tab": {
+      "overview": "Overview",
+      "usage": "Usage"
+    },
+    "loading": "Loading…",
+    "empty": "Nothing to show."
+  },
+  "overview": {
+    "plan": "Plan",
+    "status": "Status",
+    "renewsOn": "Renews on",
+    "gracePeriod": "Grace period ends",
+    "cancelAtPeriodEnd": "Your plan will end at the current period. You will not be charged again."
+  },
+  "usage": {
+    "projects": "{{used}} of {{cap}} projects in use",
+    "retention": "Retention: {{days}} days",
+    "overCap": "You are over your project cap. Upgrade or pick which projects stay active."
+  },
+  "selection": {
+    "title": "Pick which projects stay active",
+    "help": "Your plan allows up to {{cap}} active project(s). The rest will be paused (never deleted).",
+    "submit": "Save selection"
+  }
+}

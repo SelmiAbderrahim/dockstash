@@ -1,0 +1,41 @@
+{
+  "heading": "设置",
+  "loading": "加载中…",
+  "tabs": {
+    "aria": "设置分区",
+    "storage": "存储",
+    "retention": "保留策略",
+    "password": "加密密码"
+  },
+  "actions": {
+    "save": "保存",
+    "saving": "保存中…",
+    "connect": "连接存储"
+  },
+  "errors": {
+    "load": "无法加载设置。"
+  },
+  "storage": {
+    "host": "主机",
+    "user": "用户",
+    "port": "端口",
+    "privateKey": "SSH 私钥",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "加密存储，不会再次显示。",
+    "saved": "存储已保存。"
+  },
+  "retention": {
+    "daily": "保留每日份数",
+    "weekly": "保留每周份数",
+    "monthly": "保留每月份数",
+    "saved": "保留策略已保存。"
+  },
+  "password": {
+    "warning": "加密密码。丢失后仓库将无法恢复。",
+    "new": "新密码",
+    "confirm": "确认密码",
+    "mismatch": "两次输入不一致。",
+    "escrow": "我已妥善保存该密码。",
+    "saved": "密码已保存。"
+  }
+}

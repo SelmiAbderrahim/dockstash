@@ -1,0 +1,34 @@
+{
+  "heading": "Snapshots",
+  "lede": "Jeder Wiederherstellungspunkt auf dem Storage-VPS.",
+  "loading": "Wird geladen…",
+  "selectProject": "Projekt",
+  "tableLabel": "Snapshots",
+  "columns": {
+    "date": "Datum",
+    "size": "Größe",
+    "actions": "Aktionen"
+  },
+  "actions": {
+    "restore": "Wiederherstellen"
+  },
+  "empty": {
+    "title": "Noch keine Snapshots.",
+    "hint": "Zuerst eine Sicherung ausführen."
+  },
+  "errors": {
+    "load": "Snapshots konnten nicht geladen werden."
+  },
+  "restore": {
+    "title": "Snapshot wiederherstellen",
+    "description": "Projekt \"{{projectName}}\" wird wiederhergestellt. Nicht rückgängig zu machen.",
+    "mode": "Modus",
+    "newLocation": "In neuen Ort wiederherstellen (sicher)",
+    "targetPath": "Zielpfad",
+    "overwrite": "Vorhandene Dateien überschreiben (gefährlich)",
+    "typeToConfirm": "Tippe \"{{projectName}}\" zur Bestätigung",
+    "confirm": "Wiederherstellen",
+    "cancel": "Abbrechen",
+    "stream": "Wiederherstellungs-Ausgabe"
+  }
+}

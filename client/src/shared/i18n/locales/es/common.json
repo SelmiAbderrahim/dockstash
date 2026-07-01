@@ -1,0 +1,14 @@
+{
+  "ok": "OK",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "yes": "Sí",
+  "no": "No",
+  "logPanel": {
+    "title": "Salida de la copia",
+    "running": "En ejecución…",
+    "done": "Completado",
+    "failed": "Fallido"
+  }
+}

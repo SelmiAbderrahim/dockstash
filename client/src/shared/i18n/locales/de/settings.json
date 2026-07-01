@@ -1,0 +1,41 @@
+{
+  "heading": "Einstellungen",
+  "loading": "Wird geladen…",
+  "tabs": {
+    "aria": "Einstellungsbereiche",
+    "storage": "Speicher",
+    "retention": "Aufbewahrung",
+    "password": "Verschlüsselungspasswort"
+  },
+  "actions": {
+    "save": "Speichern",
+    "saving": "Speichert…",
+    "connect": "Speicher verbinden"
+  },
+  "errors": {
+    "load": "Einstellungen konnten nicht geladen werden."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Benutzer",
+    "port": "Port",
+    "privateKey": "SSH-Privatschlüssel",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Verschlüsselt gespeichert. Nie wieder angezeigt.",
+    "saved": "Speicher gespeichert."
+  },
+  "retention": {
+    "daily": "Tägliche behalten",
+    "weekly": "Wöchentliche behalten",
+    "monthly": "Monatliche behalten",
+    "saved": "Aufbewahrung gespeichert."
+  },
+  "password": {
+    "warning": "Verschlüsselungspasswort. Verlust = keine Wiederherstellung.",
+    "new": "Neues Passwort",
+    "confirm": "Bestätigen",
+    "mismatch": "Passwörter stimmen nicht überein.",
+    "escrow": "Ich habe das Passwort sicher gespeichert.",
+    "saved": "Passwort gespeichert."
+  }
+}

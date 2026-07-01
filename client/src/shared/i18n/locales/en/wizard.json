@@ -1,0 +1,33 @@
+{
+  "heading": "Set up your storage",
+  "lede": "One-time setup: connect a storage VPS and choose an encryption password.",
+  "loading": "Loading…",
+  "stepsAria": "Setup steps",
+  "step": {
+    "storage": "Storage VPS",
+    "password": "Encryption password",
+    "confirm": "Confirm"
+  },
+  "storage": {
+    "host": "Host",
+    "user": "User",
+    "port": "Port",
+    "privateKey": "SSH private key"
+  },
+  "password": {
+    "warning": "This is shown once. If you lose this password, your backups cannot be decrypted.",
+    "hidden": "Password hidden. Continue to confirm."
+  },
+  "confirm": {
+    "body": "Confirm you have saved the encryption password.",
+    "escrow": "I saved it — losing this means the repos are unrecoverable."
+  },
+  "actions": {
+    "connect": "Connect storage",
+    "connecting": "Connecting…",
+    "copy": "Copy",
+    "saving": "Saving…",
+    "continueToConfirm": "Continue",
+    "done": "Done"
+  }
+}

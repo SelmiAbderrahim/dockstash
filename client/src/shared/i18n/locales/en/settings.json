@@ -1,0 +1,41 @@
+{
+  "heading": "Settings",
+  "loading": "Loading…",
+  "tabs": {
+    "aria": "Settings sections",
+    "storage": "Storage",
+    "retention": "Retention",
+    "password": "Encryption password"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "connect": "Connect storage"
+  },
+  "errors": {
+    "load": "Could not load settings."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "User",
+    "port": "Port",
+    "privateKey": "SSH private key",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Stored encrypted at rest. Never displayed again.",
+    "saved": "Storage saved."
+  },
+  "retention": {
+    "daily": "Keep last N daily",
+    "weekly": "Keep last N weekly",
+    "monthly": "Keep last N monthly",
+    "saved": "Retention saved."
+  },
+  "password": {
+    "warning": "Encryption password. If you lose this, the repositories are unrecoverable.",
+    "new": "New password",
+    "confirm": "Confirm password",
+    "mismatch": "Passwords do not match.",
+    "escrow": "I have saved this password somewhere safe.",
+    "saved": "Password saved."
+  }
+}

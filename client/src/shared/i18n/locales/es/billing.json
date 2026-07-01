@@ -1,0 +1,82 @@
+{
+  "checkout": {
+    "title": "Pago",
+    "submit": "Pagar ahora",
+    "success": "Pago recibido. ¡Gracias!"
+  },
+  "portal": {
+    "title": "Facturación"
+  },
+  "plan": {
+    "free": "Gratis",
+    "pro": "Pro",
+    "business": "Business"
+  },
+  "status": {
+    "active": "Activo",
+    "past_due": "Vencido",
+    "canceled": "Cancelado",
+    "revoked": "Revocado",
+    "none": "Ninguno"
+  },
+  "grid": {
+    "title": "Precios",
+    "subtitle": "Elige un plan. Cancela cuando quieras.",
+    "intervalLabel": "Intervalo de facturación",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "yearlySavings": "2 meses gratis",
+    "loading": "Cargando precios…",
+    "empty": "No hay planes disponibles.",
+    "free": "Gratis",
+    "perMonth": "mes",
+    "perYear": "año",
+    "caps": {
+      "projects": "{{value}} proyectos",
+      "unlimited": "Ilimitados",
+      "retention": "Retención {{days}} días"
+    },
+    "frequency": {
+      "daily": "Copias diarias",
+      "hourly": "Copias por hora",
+      "any-cron": "Cualquier expresión cron"
+    },
+    "flag": {
+      "schedules": "Copias programadas",
+      "emailAlerts": "Alertas por correo",
+      "multiVps": "Multi-VPS"
+    },
+    "cta": {
+      "select": "Empezar",
+      "switch": "Cambiar a este plan",
+      "current": "Plan actual"
+    }
+  },
+  "page": {
+    "title": "Facturación",
+    "tabsLabel": "Secciones de facturación",
+    "tab": {
+      "overview": "Resumen",
+      "usage": "Uso"
+    },
+    "loading": "Cargando…",
+    "empty": "Nada que mostrar."
+  },
+  "overview": {
+    "plan": "Plan",
+    "status": "Estado",
+    "renewsOn": "Renovación",
+    "gracePeriod": "Fin del período de gracia",
+    "cancelAtPeriodEnd": "Tu plan terminará al final del período actual. No se te volverá a cobrar."
+  },
+  "usage": {
+    "projects": "{{used}} de {{cap}} proyectos en uso",
+    "retention": "Retención: {{days}} días",
+    "overCap": "Superaste tu límite de proyectos. Actualiza o elige cuáles se mantienen activos."
+  },
+  "selection": {
+    "title": "Elige qué proyectos quedan activos",
+    "help": "Tu plan permite hasta {{cap}} proyecto(s) activo(s). El resto se pausarán (nunca se eliminan).",
+    "submit": "Guardar selección"
+  }
+}

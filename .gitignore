@@ -40,6 +40,9 @@ server/dist
 .env
 .env.local
 
+# Docker secret files (mounted via compose `secrets:` block — never commit)
+/secrets/
+
 # TypeScript incremental build info
 *.tsbuildinfo
 

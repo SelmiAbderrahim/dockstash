@@ -1,19 +1,8 @@
-import Stripe from 'stripe';
 import { env } from '../../config/env.js';
-import { HttpError } from '../../shared/utils/http-error.js';
 
-let cached: Stripe | null = null;
-
-export function getStripe(): Stripe {
-  if (!env.STRIPE_SECRET_KEY) {
-    throw HttpError.internal('Stripe is not configured (missing STRIPE_SECRET_KEY).');
-  }
-  if (!cached) {
-    cached = new Stripe(env.STRIPE_SECRET_KEY, { timeout: 20_000 });
-  }
-  return cached;
-}
-
+// Legacy Stripe presence probe kept alive for callers still on the pre-refactor
+// billing surface. The Stripe adapter (providers/stripe.ts) is inactive by
+// default; use `getPaymentProvider()` to reach the active provider (Polar).
 export function isStripeConfigured(): boolean {
   return Boolean(env.STRIPE_SECRET_KEY);
 }

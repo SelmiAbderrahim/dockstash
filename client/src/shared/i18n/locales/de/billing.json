@@ -1,0 +1,82 @@
+{
+  "checkout": {
+    "title": "Kasse",
+    "submit": "Jetzt bezahlen",
+    "success": "Zahlung erhalten. Vielen Dank!"
+  },
+  "portal": {
+    "title": "Abrechnung"
+  },
+  "plan": {
+    "free": "Kostenlos",
+    "pro": "Pro",
+    "business": "Business"
+  },
+  "status": {
+    "active": "Aktiv",
+    "past_due": "Überfällig",
+    "canceled": "Gekündigt",
+    "revoked": "Widerrufen",
+    "none": "Keine"
+  },
+  "grid": {
+    "title": "Preise",
+    "subtitle": "Wählen Sie einen Tarif. Jederzeit kündbar.",
+    "intervalLabel": "Abrechnungsintervall",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "yearlySavings": "2 Monate gratis",
+    "loading": "Preise werden geladen…",
+    "empty": "Keine Tarife verfügbar.",
+    "free": "Kostenlos",
+    "perMonth": "Mo",
+    "perYear": "Jahr",
+    "caps": {
+      "projects": "{{value}} Projekte",
+      "unlimited": "Unbegrenzt",
+      "retention": "Aufbewahrung {{days}} Tage"
+    },
+    "frequency": {
+      "daily": "Tägliche Backups",
+      "hourly": "Stündliche Backups",
+      "any-cron": "Beliebiger Cron-Ausdruck"
+    },
+    "flag": {
+      "schedules": "Geplante Backups",
+      "emailAlerts": "E-Mail-Benachrichtigungen",
+      "multiVps": "Multi-VPS"
+    },
+    "cta": {
+      "select": "Loslegen",
+      "switch": "Zu diesem Tarif wechseln",
+      "current": "Aktueller Tarif"
+    }
+  },
+  "page": {
+    "title": "Abrechnung",
+    "tabsLabel": "Abrechnungsbereiche",
+    "tab": {
+      "overview": "Übersicht",
+      "usage": "Nutzung"
+    },
+    "loading": "Wird geladen…",
+    "empty": "Nichts anzuzeigen."
+  },
+  "overview": {
+    "plan": "Tarif",
+    "status": "Status",
+    "renewsOn": "Verlängert am",
+    "gracePeriod": "Kulanzfrist endet",
+    "cancelAtPeriodEnd": "Ihr Tarif endet zum Ende des aktuellen Zeitraums. Es wird nichts weiter berechnet."
+  },
+  "usage": {
+    "projects": "{{used}} von {{cap}} Projekten in Nutzung",
+    "retention": "Aufbewahrung: {{days}} Tage",
+    "overCap": "Sie überschreiten Ihr Projektlimit. Upgraden oder Projekte auswählen, die aktiv bleiben."
+  },
+  "selection": {
+    "title": "Wählen Sie die aktiv bleibenden Projekte",
+    "help": "Ihr Tarif erlaubt bis zu {{cap}} aktive Projekte. Die übrigen werden pausiert (nie gelöscht).",
+    "submit": "Auswahl speichern"
+  }
+}

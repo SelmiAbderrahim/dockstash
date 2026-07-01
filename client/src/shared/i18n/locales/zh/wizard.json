@@ -1,0 +1,33 @@
+{
+  "heading": "设置存储",
+  "lede": "一次性设置：连接存储 VPS 并选择加密密码。",
+  "loading": "加载中…",
+  "stepsAria": "设置步骤",
+  "step": {
+    "storage": "存储 VPS",
+    "password": "加密密码",
+    "confirm": "确认"
+  },
+  "storage": {
+    "host": "主机",
+    "user": "用户",
+    "port": "端口",
+    "privateKey": "SSH 私钥"
+  },
+  "password": {
+    "warning": "仅显示一次。丢失后备份将无法解密。",
+    "hidden": "密码已隐藏。请继续确认。"
+  },
+  "confirm": {
+    "body": "确认已保存加密密码。",
+    "escrow": "我已保存 —— 丢失将无法恢复仓库。"
+  },
+  "actions": {
+    "connect": "连接存储",
+    "connecting": "连接中…",
+    "copy": "复制",
+    "saving": "保存中…",
+    "continueToConfirm": "继续",
+    "done": "完成"
+  }
+}

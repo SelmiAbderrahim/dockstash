@@ -1,0 +1,33 @@
+{
+  "heading": "Configurez votre stockage",
+  "lede": "Configuration unique : connectez un VPS de stockage et choisissez un mot de passe.",
+  "loading": "Chargement…",
+  "stepsAria": "Étapes de configuration",
+  "step": {
+    "storage": "VPS de stockage",
+    "password": "Mot de passe",
+    "confirm": "Confirmation"
+  },
+  "storage": {
+    "host": "Hôte",
+    "user": "Utilisateur",
+    "port": "Port",
+    "privateKey": "Clé SSH privée"
+  },
+  "password": {
+    "warning": "Affiché une seule fois. Perdez-le et vos sauvegardes seront illisibles.",
+    "hidden": "Mot de passe masqué. Continuez pour confirmer."
+  },
+  "confirm": {
+    "body": "Confirmez avoir sauvegardé le mot de passe.",
+    "escrow": "Je l'ai sauvegardé — le perdre = dépôts irrécupérables."
+  },
+  "actions": {
+    "connect": "Connecter le stockage",
+    "connecting": "Connexion…",
+    "copy": "Copier",
+    "saving": "Enregistrement…",
+    "continueToConfirm": "Continuer",
+    "done": "Terminé"
+  }
+}

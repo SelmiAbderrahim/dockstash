@@ -120,7 +120,23 @@ SESSION_SECRET=your-random-64-char-hex-string
 CLIENT_URL=http://localhost:3000
 SERVER_URL=http://localhost:8080
 LOG_LEVEL=info
-# Optional integrations:
+# REQUIRED — AES-256-GCM master key that encrypts secrets at rest.
+# Fails startup if missing or decodes to < 32 bytes. See
+# `server/src/shared/crypto/README.md` for the rotation runbook.
+MASTER_ENCRYPTION_KEY=your-random-64-char-hex-string
+# Optional payments (Polar) — Free / self-host boots without these:
+PAYMENT_PROVIDER=none
+POLAR_ACCESS_TOKEN=
+POLAR_WEBHOOK_SECRET=
+POLAR_SERVER=
+POLAR_PRO_PRODUCT_ID=
+POLAR_BUSINESS_PRODUCT_ID=
+# Optional email (Resend) — Free / self-host boots without these:
+RESEND_API_KEY=
+RESEND_FROM=
+# Optional alerting — sane default (24):
+ALERT_HEARTBEAT_HOURS=24
+# Optional legacy integrations:
 STRIPE_SECRET_KEY=
 MAILGUN_PRIVATE_KEY=
 MAILGUN_DOMAIN=
@@ -308,13 +324,13 @@ beforeEach(() => clearCollections());
 
 This list prevents agent assumptions from drifting into unrelated territory:
 
-- **No Docker.** The starter runs directly on Node. No containers, no `docker-compose.yml`, no Traefik.
-- **No SSR.** The client is a single-page app served as static files. No server-side rendering, no Next.js, no RSC.
+- **~~No Docker.~~** Superseded by `prompts/dockstash-build/00-dockerize-stack-and-strip-demo-*.md`. Dockstash is now Docker-first: `docker-compose.yml` at the repo root orchestrates `api`, `web`, `mongo`, `redis`, and a least-privilege `docker-socket-proxy`. See `docs/running-with-docker.md`.
+- **~~No SSR.~~** Superseded. The public marketing surface (`client/src/features/marketing/`) is now server-rendered via Vite native SSR — the public entrypoint is a Node server (`client/server.js`) that renders marketing routes with `client/src/entry-server.tsx` (React Router `createStaticHandler` + `renderToString` + `react-helmet-async`) so crawlers and AI engines receive full HTML with `<title>`, meta, Open Graph, hreflang, and JSON-LD. The authenticated dashboard stays a CSR SPA (`entry-client.tsx` hydrates only when server-rendered). Still no Next.js and no RSC. SEO infra (`/robots.txt`, `/sitemap*.xml`) is served by `server/src/modules/seo/` and proxied through the web server. See `client/server.js` and `client/src/shared/seo/`.
 - **No monorepo tooling.** No Turborepo, no Nx, no Lerna. `client/` and `server/` are independent npm packages.
 - **No GraphQL.** REST API via Express routes. No Apollo, no Relay.
 - **No tRPC.** Standard Express route handlers returning JSON.
-- **No PostgreSQL or Redis.** MongoDB via Mongoose is the only database.
+- **No PostgreSQL.** MongoDB via Mongoose is the primary database. Redis is now available (via the compose `redis` service, `REDIS_URL`) — reserved for BullMQ scheduling in a later phase.
 - **No CSS-in-JS.** Sass files (`.scss`) for styling. No styled-components, no Tailwind (yet).
-- **No CI/CD pipeline.** No GitHub Actions, no deployment automation included.
-- **No i18n framework.** No react-intl, no i18next. English-only strings.
+- **~~No CI/CD pipeline.~~** Superseded by `prompts/dockstash-build/11-security-legal-and-ci-in-docker-*.md`. CI now runs in Docker (`node:20-bookworm` containers) via `.github/workflows/ci.yml`. Pipeline gates: typecheck → lint → vitest + coverage (v8 **100%** on lines/branches/functions/statements) → `npm audit --audit-level=high` (**zero high/critical**). No allow-list. See `docs/ci-gates.en.md`. App-layer hardening (helmet, express-rate-limit on `/api/auth/*` and the Polar webhook, CORS locked to `env.CLIENT_URL`, double-submit CSRF for cookie surfaces) and the GDPR data-rights module live under `server/src/modules/legal/` — see `docs/security-model.en.md` and `docs/data-rights.en.md`.
+- **~~No i18n framework.~~** Superseded by `prompts/dockstash-build/01-i18n-foundation-seven-locales-autodetect-*.md`. i18n is now first-class: seven locales (`en, ar, fr, de, es, ru, zh`) with auto-detection (client uses `navigator.language`; server parses `Accept-Language` + honours `x-lang` header / `lang` cookie), RTL for Arabic, localized backend response messages, and full parity across every namespace. Client uses `i18next` + `react-i18next`; server uses a hand-written typed dictionary under `server/src/shared/i18n/`. See both `shared/i18n/README.md` files.
 - **No design system.** No shadcn/ui, no component library. Hand-written CSS and components.

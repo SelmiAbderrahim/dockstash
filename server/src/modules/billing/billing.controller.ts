@@ -2,50 +2,64 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import {
-  changeSubscriptionSchema,
-  createSubscriptionSchema,
-  stripeWebhookSchema,
-  updateBillingInfoSchema,
+  changePlanSchema,
+  createCheckoutSchema,
+  selectProjectsSchema,
 } from './billing.schema.js';
 import {
-  changeSubscriptionForUser,
-  createSubscriptionForUser,
-  deleteSubscriptionForUser,
-  getCustomerForUser,
-  handleStripeWebhook,
-  updateCustomerBillingInfoForUser,
+  changePlanForUser,
+  getBillingOverviewForUser,
+  getPricingTiersForClient,
+  getUsageForUser,
+  openPortalForUser,
+  selectProjectsForUser,
+  startCheckoutForUser,
 } from './billing.service.js';
+import { extractIp, recordAudit } from '../audit/index.js';
 
-export const webhook: RequestHandler = asyncHandler(async (req, res) => {
-  const payload = stripeWebhookSchema.parse(req.body);
-  await handleStripeWebhook(payload.data.id);
-  res.status(200).json({ received: true });
-});
-
-export const createSubscription: RequestHandler = asyncHandler(async (req, res) => {
-  const input = createSubscriptionSchema.parse(req.body);
-  const result = await createSubscriptionForUser(requireUserId(req.user), input);
+export const startCheckout: RequestHandler = asyncHandler(async (req, res) => {
+  const input = createCheckoutSchema.parse(req.body);
+  const result = await startCheckoutForUser(requireUserId(req.user), input);
   res.status(200).json(result);
 });
 
-export const changeSubscription: RequestHandler = asyncHandler(async (req, res) => {
-  const { newPlan } = changeSubscriptionSchema.parse(req.body);
-  const result = await changeSubscriptionForUser(requireUserId(req.user), newPlan);
+export const openPortal: RequestHandler = asyncHandler(async (req, res) => {
+  const result = await openPortalForUser(requireUserId(req.user));
   res.status(200).json(result);
 });
 
-export const deleteSubscription: RequestHandler = asyncHandler(async (req, res) => {
-  const result = await deleteSubscriptionForUser(requireUserId(req.user));
+export const changePlan: RequestHandler = asyncHandler(async (req, res) => {
+  const input = changePlanSchema.parse(req.body);
+  const userId = requireUserId(req.user);
+  const result = await changePlanForUser(userId, input);
+  await recordAudit({
+    actorUserId: userId,
+    action: 'plan.change',
+    targetType: 'subscription',
+    targetId: userId,
+    ip: extractIp(req),
+    metadata: { productId: input.productId },
+  });
   res.status(200).json(result);
 });
 
-export const getCustomer: RequestHandler = asyncHandler(async (req, res) => {
-  const result = await getCustomerForUser(requireUserId(req.user));
-  res.status(200).json(result);
+export const listPricingTiers: RequestHandler = asyncHandler(async (_req, res) => {
+  const tiers = await getPricingTiersForClient();
+  res.status(200).json({ tiers });
 });
 
-export const updateCustomerBillingInfo: RequestHandler = asyncHandler(async (req, res) => {
-  const { stripeToken } = updateBillingInfoSchema.parse(req.body);
-  const result = await updateCustomerBillingInfoForUser(requireUserId(req.user), stripeToken);
+export const getOverview: RequestHandler = asyncHandler(async (req, res) => {
+  const overview = await getBillingOverviewForUser(requireUserId(req.user));
+  res.status(200).json(overview);
+});
+
+export const getUsage: RequestHandler = asyncHandler(async (req, res) => {
+  const usage = await getUsageForUser(requireUserId(req.user));
+  res.status(200).json(usage);
+});
+
+export const selectProjectsToKeep: RequestHandler = asyncHandler(async (req, res) => {
+  const input = selectProjectsSchema.parse(req.body);
+  const result = await selectProjectsForUser(requireUserId(req.user), input);
   res.status(200).json(result);
 });

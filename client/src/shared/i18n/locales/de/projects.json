@@ -1,0 +1,29 @@
+{
+  "heading": "Projekte",
+  "lede": "Jeder Ordner unter /var/www ist ein Projekt. Ein Klick sichert es.",
+  "loading": "Projekte werden geladen…",
+  "never": "Nie",
+  "meta": {
+    "path": "Pfad",
+    "lastRun": "Letzte Sicherung"
+  },
+  "status": {
+    "idle": "Bereit",
+    "running": "Läuft",
+    "success": "OK",
+    "failed": "Fehlgeschlagen"
+  },
+  "actions": {
+    "backupNow": "Jetzt sichern",
+    "running": "Läuft…",
+    "open": "Details",
+    "retry": "Erneut versuchen"
+  },
+  "empty": {
+    "title": "Keine Projekte gefunden.",
+    "hint": "Ordner unter /var/www anlegen und aktualisieren."
+  },
+  "errors": {
+    "load": "Projekte konnten nicht geladen werden."
+  }
+}

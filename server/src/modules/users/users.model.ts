@@ -1,4 +1,5 @@
 import mongoose, { type InferSchemaType, type HydratedDocument } from 'mongoose';
+import { SUPPORTED_LOCALES } from '../../shared/i18n/locales.js';
 
 export const ROLE_MEMBER = 'Member';
 export const ROLE_CLIENT = 'Client';
@@ -42,6 +43,20 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       default: ROLE_MEMBER,
     },
+    // Provider-neutral billing refs (Polar/Stripe). Populated by the billing
+    // webhook pipeline; read by the entitlement gate (prompt 07).
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer',
+      default: null,
+    },
+    subscription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Subscription',
+      default: null,
+    },
+    // Legacy Stripe blob — kept for migrate-by-tolerance reads of pre-refactor
+    // documents. New writes go to `customer`/`subscription` above.
     stripe: {
       customerId: { type: String, default: '' },
       subscriptionId: { type: String, default: '' },
@@ -51,6 +66,23 @@ const userSchema = new mongoose.Schema(
     },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    // Per-user preferred locale — used by the communication module to render
+    // transactional + alert emails in the recipient's language (prompt 08).
+    // Falls back to DEFAULT_LOCALE when unset.
+    language: {
+      type: String,
+      enum: SUPPORTED_LOCALES,
+      default: null,
+    },
+    // Deletion lifecycle (prompt 11 GDPR right-to-deletion). A non-null
+    // `deletionScheduledAt` marks the account soft-deleted; the repo purge
+    // runs after that timestamp. `deletionWarningSentAt` dedupes the final
+    // Resend warning email.
+    deletionScheduledAt: { type: Date, default: null },
+    deletionWarningSentAt: { type: Date, default: null },
+    // Legal hold overrides the deletion purge — held accounts are retained
+    // until legal explicitly releases the hold, per IDEA.md §8.
+    legalHold: { type: Boolean, required: true, default: false },
   },
   { timestamps: true },
 );

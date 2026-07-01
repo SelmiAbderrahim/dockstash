@@ -10,7 +10,7 @@ describe('communication module', () => {
     expect(res.status).toBe(400);
   });
 
-  it('accepts a well-formed contact form even without mailgun configured', async () => {
+  it('accepts a well-formed contact form even without resend configured', async () => {
     const res = await request(app).post('/api/communication/contact').send({
       firstName: 'Jane',
       lastName: 'Doe',
@@ -20,5 +20,20 @@ describe('communication module', () => {
     });
     expect(res.status).toBe(200);
     expect(res.body.message).toMatch(/has been sent/i);
+  });
+
+  it('localizes the contact confirmation via Accept-Language', async () => {
+    const res = await request(app)
+      .post('/api/communication/contact')
+      .set('Accept-Language', 'fr')
+      .send({
+        firstName: 'Jean',
+        lastName: 'Dupont',
+        email: 'jean@example.com',
+        subject: 'Bonjour',
+        message: 'Salut.',
+      });
+    expect(res.status).toBe(200);
+    expect(res.body.message).toMatch(/envoyé/i);
   });
 });

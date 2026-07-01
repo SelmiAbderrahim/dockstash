@@ -1,0 +1,14 @@
+{
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "yes": "Ja",
+  "no": "Nein",
+  "logPanel": {
+    "title": "Sicherungsausgabe",
+    "running": "Läuft…",
+    "done": "Fertig",
+    "failed": "Fehlgeschlagen"
+  }
+}
