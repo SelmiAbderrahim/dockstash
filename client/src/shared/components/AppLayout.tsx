@@ -3,11 +3,11 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 
 export const AppLayout = () => (
-  <div>
+  <div className="flex min-h-dvh flex-col">
     <Header />
-    <div className="container">
+    <main className="container mx-auto w-full flex-1 px-4 py-6">
       <Outlet />
-    </div>
+    </main>
     <Footer />
   </div>
 );

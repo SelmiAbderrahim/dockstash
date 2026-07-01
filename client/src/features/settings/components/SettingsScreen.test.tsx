@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -74,14 +75,16 @@ describe('SettingsScreen shell', () => {
     expect(screen.getAllByRole('tab')).toHaveLength(3);
   });
 
-  it('switches tabs through the tablist', () => {
+  it('switches tabs through the tablist', async () => {
+    // Radix Tabs activate on mousedown, so drive them with user-event, not fireEvent.
+    const user = userEvent.setup();
     renderScreen();
-    fireEvent.click(screen.getByRole('tab', { name: 'Retention' }));
+    await user.click(screen.getByRole('tab', { name: 'Retention' }));
     expect(screen.getByRole('tab', { name: 'Retention' })).toHaveAttribute(
       'aria-selected',
       'true',
     );
-    fireEvent.click(screen.getByRole('tab', { name: 'Encryption password' }));
+    await user.click(screen.getByRole('tab', { name: 'Encryption password' }));
     expect(screen.getByRole('tab', { name: 'Encryption password' })).toHaveAttribute(
       'aria-selected',
       'true',
@@ -214,7 +217,8 @@ describe('SettingsScreen — Password tab', () => {
     const confirm = screen.getByLabelText(/Confirm password/) as HTMLInputElement;
     fireEvent.change(pw, { target: { value: 'longenoughpass1' } });
     fireEvent.change(confirm, { target: { value: 'longenoughpass1' } });
-    fireEvent.click(screen.getByRole('checkbox'));
+    // The escrow acknowledgement is now a shadcn Switch (role="switch").
+    fireEvent.click(screen.getByRole('switch'));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(mocked.savePassword).toHaveBeenCalledWith('longenoughpass1');
     expect(pw.value).toBe('');

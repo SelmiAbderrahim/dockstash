@@ -1,8 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { ResticLogPanel } from '@shared/components/ResticLogPanel';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/ui/button';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Skeleton } from '@shared/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@shared/ui/table';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from '@shared/ui/empty';
 import { fetchProjects } from '@features/projects/store/thunks';
 import { selectProjects } from '@features/projects/store/selectors';
 import { fetchSnapshots } from '../store/thunks';
@@ -58,19 +78,31 @@ export const SnapshotsScreen = () => {
   };
 
   return (
-    <section className="ds-screen" aria-labelledby="snapshots-heading">
-      <header className="ds-screen__header">
-        <h1 id="snapshots-heading">{t('heading')}</h1>
-        <p className="ds-screen__lede">{t('lede')}</p>
+    <section
+      className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6"
+      aria-labelledby="snapshots-heading"
+    >
+      <header className="flex flex-col gap-1 text-start">
+        <h1 id="snapshots-heading" className="text-2xl font-semibold tracking-tight">
+          {t('heading')}
+        </h1>
+        <p className="text-sm text-muted-foreground">{t('lede')}</p>
       </header>
 
       {projects.length > 0 && (
-        <label className="ds-field">
-          <span>{t('selectProject')}</span>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="snapshots-project">{t('selectProject')}</Label>
           <select
+            id="snapshots-project"
             value={projectId}
             onChange={(e) => onSelectProject(e.target.value)}
             aria-label={t('selectProject')}
+            className={cn(
+              'h-9 w-full max-w-sm rounded-md border border-input bg-transparent px-3 py-1',
+              'text-start text-sm shadow-xs transition-[color,box-shadow] outline-none',
+              'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+              'dark:bg-input/30',
+            )}
           >
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -78,58 +110,68 @@ export const SnapshotsScreen = () => {
               </option>
             ))}
           </select>
-        </label>
-      )}
-
-      {status === 'loading' && (
-        <p role="status" aria-live="polite" className="ds-loading">
-          <span className="ds-spinner" aria-hidden="true" /> {t('loading')}
-        </p>
-      )}
-
-      {status === 'failed' && (
-        <p role="alert" className="ds-alert">
-          {error ?? t('errors.load')}
-        </p>
-      )}
-
-      {status === 'succeeded' && snapshots.length === 0 && (
-        <div className="ds-empty">
-          <p>{t('empty.title')}</p>
-          <p className="ds-empty__hint">{t('empty.hint')}</p>
         </div>
       )}
 
+      {status === 'loading' && (
+        <div role="status" aria-live="polite" className="flex flex-col gap-3">
+          <span className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            {t('loading')}
+          </span>
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+          <Skeleton className="h-9 w-full" />
+        </div>
+      )}
+
+      {status === 'failed' && (
+        <Alert variant="destructive">
+          <AlertDescription>{error ?? t('errors.load')}</AlertDescription>
+        </Alert>
+      )}
+
+      {status === 'succeeded' && snapshots.length === 0 && (
+        <Empty data-testid="snapshots-empty">
+          <EmptyHeader>
+            <EmptyTitle>{t('empty.title')}</EmptyTitle>
+            <EmptyDescription>{t('empty.hint')}</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      )}
+
       {snapshots.length > 0 && (
-        <table className="ds-table" aria-label={t('tableLabel')}>
-          <thead>
-            <tr>
-              <th scope="col">{t('columns.date')}</th>
-              <th scope="col">{t('columns.size')}</th>
-              <th scope="col">
-                <span className="sr-only">{t('columns.actions')}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {snapshots.map((s) => (
-              <tr key={s.id}>
-                <td>{new Date(s.time).toLocaleString(i18n.language)}</td>
-                <td>{formatBytes(s.sizeBytes)}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="ds-btn ds-btn--primary"
-                    onClick={() => setTarget(s)}
-                    disabled={!project}
-                  >
-                    {t('actions.restore')}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="rounded-lg border">
+          <Table aria-label={t('tableLabel')}>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-start">{t('columns.date')}</TableHead>
+                <TableHead className="text-start">{t('columns.size')}</TableHead>
+                <TableHead className="text-end">
+                  <span className="sr-only">{t('columns.actions')}</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {snapshots.map((s) => (
+                <TableRow key={s.id}>
+                  <TableCell>{new Date(s.time).toLocaleString(i18n.language)}</TableCell>
+                  <TableCell>{formatBytes(s.sizeBytes)}</TableCell>
+                  <TableCell className="text-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setTarget(s)}
+                      disabled={!project}
+                    >
+                      {t('actions.restore')}
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {activeJobId && (

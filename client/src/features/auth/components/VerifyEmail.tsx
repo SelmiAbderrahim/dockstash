@@ -2,6 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { resendVerification, verifyEmail } from '../store/thunks';
 import { clearError, clearMessage } from '../store/slice';
 import {
@@ -48,43 +58,48 @@ export const VerifyEmail = () => {
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-card__title">{t('verify.title')}</h1>
+    <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">{t('verify.title')}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {token ? (
+            <p className="text-muted-foreground text-sm" aria-live="polite">
+              {t('verify.verifying')}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm">{t('verify.instructions')}</p>
+          )}
 
-        {token ? (
-          <p aria-live="polite">{t('verify.verifying')}</p>
-        ) : (
-          <p>{t('verify.instructions')}</p>
-        )}
+          {errorMessage ? (
+            <Alert variant="destructive" role="alert">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
+          {message ? (
+            <Alert role="status" aria-live="polite">
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          ) : null}
 
-        {errorMessage ? (
-          <div className="auth-alert" role="alert">
-            {errorMessage}
-          </div>
-        ) : null}
-        {message ? (
-          <div className="auth-alert auth-alert--success" aria-live="polite">
-            {message}
-          </div>
-        ) : null}
+          {pendingEmail ? null : (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="verify-email">{t('verify.emailLabel')}</Label>
+              <Input
+                id="verify-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          )}
 
-        {pendingEmail ? null : (
-          <div className="auth-field">
-            <label htmlFor="verify-email">{t('verify.emailLabel')}</label>
-            <input
-              id="verify-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-        )}
-
-        <button className="auth-button" type="button" onClick={onResend} disabled={resending}>
-          {resending ? t('verify.resending') : t('verify.resend')}
-        </button>
-      </div>
+          <Button type="button" onClick={onResend} disabled={resending} className="w-full">
+            {resending ? t('verify.resending') : t('verify.resend')}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

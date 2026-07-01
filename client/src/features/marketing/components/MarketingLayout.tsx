@@ -2,7 +2,10 @@ import { useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { loadCookie } from '@shared/utils/cookies';
 import { BrandLogo } from '@shared/brand';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/ui/button';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { Container } from './shared';
 import '../marketing.scss';
 
 const NAV = [
@@ -11,6 +14,9 @@ const NAV = [
   { basePath: '/security', label: 'Security' },
   { basePath: '/pricing', label: 'Pricing' },
 ];
+
+const navLinkClass =
+  'text-muted-foreground transition-colors hover:text-foreground';
 
 /**
  * Public marketing shell (header nav + footer). Sibling to the
@@ -31,77 +37,100 @@ export const MarketingLayout = () => {
   const href = (path: string) => localeHref(path, locale);
 
   return (
-    <div className="mk">
-      <header className="mk-header">
-        <div className="mk-container mk-header__inner">
-          <Link to={href('/')} className="mk-logo">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <header className="sticky top-0 z-10 border-b border-border bg-background">
+        <Container className="flex h-15 items-center gap-6">
+          <Link
+            to={href('/')}
+            className="inline-flex items-center gap-2 font-bold text-foreground"
+          >
             <BrandLogo />
           </Link>
-          <nav className="mk-nav" aria-label="Primary">
+          <nav className="hidden gap-5 md:flex" aria-label="Primary">
             {NAV.map((item) => (
-              <Link key={item.basePath} to={href(item.basePath)}>
+              <Link key={item.basePath} to={href(item.basePath)} className={navLinkClass}>
                 {item.label}
               </Link>
             ))}
           </nav>
-          <div className="mk-header__cta">
-            <Link to="/login" className="mk-link-muted">
+          <div className="ms-auto flex items-center gap-2 sm:gap-4">
+            <Link to="/login" className={cn(navLinkClass, 'hidden sm:inline')}>
               Log in
             </Link>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Get started
-            </Link>
+            <Button asChild>
+              <Link to="/register">Get started</Link>
+            </Button>
           </div>
-          <details className="mk-nav-mobile">
-            <summary aria-label="Open menu">Menu</summary>
-            <div className="mk-nav-mobile__panel">
+          <details className="relative ms-2 md:hidden">
+            <summary className="cursor-pointer list-none rounded-md border border-border px-2.5 py-1.5 text-sm marker:content-none [&::-webkit-details-marker]:hidden">
+              Menu
+            </summary>
+            <div className="absolute end-0 z-20 mt-2 flex w-44 flex-col gap-0.5 rounded-lg border border-border bg-background p-2 shadow-md">
               {NAV.map((item) => (
-                <Link key={item.basePath} to={href(item.basePath)}>
+                <Link
+                  key={item.basePath}
+                  to={href(item.basePath)}
+                  className="rounded-md px-3 py-2 text-foreground hover:bg-muted"
+                >
                   {item.label}
                 </Link>
               ))}
-              <Link to="/login">Log in</Link>
+              <Link to="/login" className="rounded-md px-3 py-2 text-foreground hover:bg-muted">
+                Log in
+              </Link>
             </div>
           </details>
-        </div>
+        </Container>
       </header>
 
-      <main className="mk-main">
+      <main className="flex-1">
         <Outlet />
       </main>
 
-      <footer className="mk-footer">
-        <div className="mk-container mk-footer__grid">
+      <footer className="py-12 text-muted-foreground">
+        <Container className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
-            <BrandLogo className="mk-logo" />
-            <p className="mk-muted">
+            <BrandLogo className="inline-flex items-center gap-2 font-bold text-foreground" />
+            <p className="mt-3 max-w-prose text-sm text-muted-foreground">
               One-click, verified backups for any Docker project.
             </p>
           </div>
-          <nav aria-label="Product">
-            <h3>Product</h3>
-            <Link to={href('/pricing')}>Pricing</Link>
-            <Link to={href('/security')}>Security</Link>
-            <Link to={href('/faq')}>FAQ</Link>
+          <nav className="flex flex-col gap-2" aria-label="Product">
+            <h3 className={footerHeadingClass}>Product</h3>
+            <Link to={href('/pricing')} className={footerLinkClass}>Pricing</Link>
+            <Link to={href('/security')} className={footerLinkClass}>Security</Link>
+            <Link to={href('/faq')} className={footerLinkClass}>FAQ</Link>
           </nav>
-          <nav aria-label="Compare">
-            <h3>Compare</h3>
-            <Link to={href('/alternatives')}>All alternatives</Link>
-            <Link to={href('/alternatives/backrest')}>Backrest alternative</Link>
-            <Link to={href('/compare/self-hosted-backup-vs-cloud-backup')}>
+          <nav className="flex flex-col gap-2" aria-label="Compare">
+            <h3 className={footerHeadingClass}>Compare</h3>
+            <Link to={href('/alternatives')} className={footerLinkClass}>All alternatives</Link>
+            <Link to={href('/alternatives/backrest')} className={footerLinkClass}>
+              Backrest alternative
+            </Link>
+            <Link
+              to={href('/compare/self-hosted-backup-vs-cloud-backup')}
+              className={footerLinkClass}
+            >
               Self-hosted vs cloud
             </Link>
           </nav>
-          <nav aria-label="Guides">
-            <h3>Guides</h3>
-            <Link to={href('/guides')}>All guides</Link>
-            <Link to={href('/guides/backup-postgres-docker')}>
+          <nav className="flex flex-col gap-2" aria-label="Guides">
+            <h3 className={footerHeadingClass}>Guides</h3>
+            <Link to={href('/guides')} className={footerLinkClass}>All guides</Link>
+            <Link to={href('/guides/backup-postgres-docker')} className={footerLinkClass}>
               Back up Postgres
             </Link>
-            <Link to={href('/backup/wordpress-docker')}>Back up WordPress</Link>
+            <Link to={href('/backup/wordpress-docker')} className={footerLinkClass}>
+              Back up WordPress
+            </Link>
           </nav>
-        </div>
+        </Container>
       </footer>
     </div>
   );
 };
+
+const footerHeadingClass =
+  'text-xs font-semibold uppercase tracking-wide text-foreground';
+const footerLinkClass =
+  'text-sm text-muted-foreground transition-colors hover:text-foreground';

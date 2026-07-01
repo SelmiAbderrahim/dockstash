@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { configureStore } from '@reduxjs/toolkit';
@@ -75,18 +76,22 @@ describe('RestoreDialog typed-confirm', () => {
     expect(confirm.disabled).toBe(false);
   });
 
-  it('overwrite mode defaults OFF, is an explicit opt-in', () => {
+  it('overwrite mode defaults OFF, is an explicit opt-in', async () => {
+    // Radix RadioGroupItem renders a <button role="radio"> whose state lives in
+    // aria-checked (not a native `.checked`) and toggles on a real click, so we
+    // drive it with user-event and assert on aria-checked.
+    const user = userEvent.setup();
     renderDialog();
     const radios = screen.getAllByRole('radio');
-    const [newLoc, overwrite] = radios as [HTMLInputElement, HTMLInputElement];
-    expect(newLoc.checked).toBe(true);
-    expect(overwrite.checked).toBe(false);
-    fireEvent.click(overwrite);
-    expect(overwrite.checked).toBe(true);
+    const [newLoc, overwrite] = radios as [HTMLElement, HTMLElement];
+    expect(newLoc).toHaveAttribute('aria-checked', 'true');
+    expect(overwrite).toHaveAttribute('aria-checked', 'false');
+    await user.click(overwrite);
+    expect(overwrite).toHaveAttribute('aria-checked', 'true');
     // Toggling back to "new location" runs its onChange (setOverwrite(false)).
-    fireEvent.click(newLoc);
-    expect(newLoc.checked).toBe(true);
-    fireEvent.click(overwrite);
+    await user.click(newLoc);
+    expect(newLoc).toHaveAttribute('aria-checked', 'true');
+    await user.click(overwrite);
     // Overwrite mode hides the target-path field and enables via typed match only.
     const confirm = screen.getByTestId('restore-confirm') as HTMLButtonElement;
     const typeInput = screen.getByRole('textbox', { name: /Type "my-project" to confirm/i });
@@ -99,11 +104,12 @@ describe('RestoreDialog typed-confirm', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('confirming dispatches restore, calls onConfirmed and onClose (overwrite)', () => {
+  it('confirming dispatches restore, calls onConfirmed and onClose (overwrite)', async () => {
+    const user = userEvent.setup();
     const onClose = vi.fn();
     const onConfirmed = vi.fn();
     const { store } = renderDialog({ onClose, onConfirmed });
-    fireEvent.click(screen.getAllByRole('radio')[1]!);
+    await user.click(screen.getAllByRole('radio')[1]!);
     fireEvent.change(
       screen.getByRole('textbox', { name: /Type "my-project" to confirm/i }),
       { target: { value: 'my-project' } },
@@ -129,35 +135,38 @@ describe('RestoreDialog typed-confirm', () => {
   });
 
   it('Escape key triggers onClose', () => {
+    // Radix's DismissableLayer listens for Escape on the document, so dispatch
+    // the keydown there (a window-target keydown never reaches that listener).
     const onClose = vi.fn();
     renderDialog({ onClose });
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
 
   it('ignores non-Escape keys', () => {
     const onClose = vi.fn();
     renderDialog({ onClose });
-    fireEvent.keyDown(window, { key: 'Enter' });
+    fireEvent.keyDown(document, { key: 'Enter' });
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('clicking the backdrop closes; clicking the dialog does not', () => {
+  it('Cancel button closes the dialog', () => {
+    // AlertDialog does not close on overlay/backdrop click by design; the
+    // explicit Cancel action is the dismissal path.
     const onClose = vi.fn();
     renderDialog({ onClose });
-    fireEvent.click(screen.getByRole('alertdialog'));
-    expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(document.querySelector('.ds-dialog__backdrop') as Element);
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('restores focus to the previously focused element when it closes', () => {
+  it('restores focus to the previously focused element when it closes', async () => {
+    // Radix FocusScope restores focus asynchronously (setTimeout) on unmount.
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
     trigger.focus();
     const { rerender } = renderDialog();
     rerender({ open: false });
-    expect(document.activeElement).toBe(trigger);
+    await waitFor(() => expect(document.activeElement).toBe(trigger));
     trigger.remove();
   });
 });

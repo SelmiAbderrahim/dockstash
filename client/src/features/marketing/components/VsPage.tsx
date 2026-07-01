@@ -1,13 +1,25 @@
 import { Link, useParams } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { getCompetitor } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Reveal } from '../useReveal';
 import {
   Breadcrumbs,
   ComparisonTable,
+  Container,
+  Eyebrow,
   FaqSection,
   LastUpdated,
+  h1Class,
+  h2Class,
+  sectionClass,
 } from './shared';
 
 export const VsPage = () => {
@@ -27,17 +39,20 @@ export const VsPage = () => {
           locale={locale}
           noindex
         />
-        <section className="mk-section">
-          <div className="mk-container">
-            <h1 className="mk-h1">Comparison not found</h1>
-            <p className="mk-muted">
+        <section className={sectionClass}>
+          <Container>
+            <h1 className={h1Class}>Comparison not found</h1>
+            <p className="text-muted-foreground">
               We could not find that comparison.{' '}
-              <Link to={href('/alternatives')}>
+              <Link
+                to={href('/alternatives')}
+                className="text-primary underline-offset-4 hover:underline"
+              >
                 See all Dockstash alternatives
               </Link>
               .
             </p>
-          </div>
+          </Container>
         </section>
       </>
     );
@@ -67,7 +82,7 @@ export const VsPage = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[
             { label: 'Home', basePath: '/' },
@@ -76,65 +91,72 @@ export const VsPage = () => {
           ]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <h1 className="mk-h1">
-            Dockstash vs {competitor.name}
-          </h1>
-          <p className="mk-answer">
+      <section className={sectionClass}>
+        <Container>
+          <h1 className={h1Class}>Dockstash vs {competitor.name}</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
             {competitor.positioning}
           </p>
-        </div>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Head to head</span>
-          <h2 className="mk-h2">At a glance</h2>
-          <div className="mk-table-wrap">
-            <ComparisonTable
-              rows={competitor.comparison}
-              competitorName={competitor.name}
-            />
-          </div>
-        </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Head to head</Eyebrow>
+          <h2 className={h2Class}>At a glance</h2>
+          <ComparisonTable
+            rows={competitor.comparison}
+            competitorName={competitor.name}
+          />
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Who each is for</h2>
-          <div className="mk-grid">
-            <div className="mk-card">
-              <h3>Choose Dockstash if…</h3>
-              <p className="mk-muted">{competitor.switchIf}</p>
-            </div>
-            <div className="mk-card">
-              <h3>Choose {competitor.name} if…</h3>
-              <p className="mk-muted">{competitor.bestFor}</p>
-            </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Who each is for</h2>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg tracking-tight">
+                  Choose Dockstash if…
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{competitor.switchIf}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg tracking-tight">
+                  Choose {competitor.name} if…
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">{competitor.bestFor}</p>
+              </CardContent>
+            </Card>
           </div>
-        </div>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Migrating to Dockstash</h2>
-          <p>{competitor.migrationNotes}</p>
-          <p style={{ marginTop: 20 }}>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Start free
-            </Link>{' '}
-            <Link
-              to={href(`/alternatives/${competitor.slug}`)}
-              className="mk-btn"
-            >
-              The {competitor.name} alternative in depth
-            </Link>
-          </p>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Migrating to Dockstash</h2>
+          <p className="max-w-prose">{competitor.migrationNotes}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/register">Start free</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={href(`/alternatives/${competitor.slug}`)}>
+                The {competitor.name} alternative in depth
+              </Link>
+            </Button>
+          </div>
           <LastUpdated iso={competitor.lastReviewed} />
-        </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={competitor.faq} />

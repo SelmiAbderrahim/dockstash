@@ -16,6 +16,21 @@
       name="description"
       content="Dockstash auto-detects and backs up your Docker volumes, databases, and config to encrypted off-site Restic snapshots, with one-click restore and automated restore-drill verification."
     />
+    <script>
+      // Resolve theme before first paint to avoid a flash. `system` (or unset)
+      // follows the OS; an explicit choice in localStorage wins. Mirrors
+      // src/shared/theme/ThemeProvider so hydration sees the same .dark class.
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          var dark =
+            t === 'dark' ||
+            ((!t || t === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
     <!--ssr-head-->
   </head>
   <body>

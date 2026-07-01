@@ -28,6 +28,11 @@ export default defineConfig({
         'src/App.tsx',
         'src/app/providers.tsx',
         'src/app/router.tsx',
+        // Generated shadcn/ui primitives — vendored component source, not
+        // hand-written app logic (mirrors the vendor-bundle exclusion below).
+        'src/shared/ui/**',
+        // shadcn CLI-generated hook (ships with the sidebar primitive).
+        'src/shared/hooks/use-mobile.ts',
         // SSR i18n bootstrap — the server-side counterpart of entry-server.
         'src/shared/i18n/server.ts',
         'src/test/**',

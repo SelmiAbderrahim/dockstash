@@ -1,6 +1,13 @@
 import { Seo, schema } from '@shared/seo';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  h1Class,
+  sectionClass,
+} from './shared';
 import type { FaqItem } from '../types';
 
 const ANSWER =
@@ -80,19 +87,21 @@ export const Faq = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[{ label: 'Home', basePath: '/' }, { label: 'FAQ' }]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">FAQ</span>
-          <h1 className="mk-h1">Frequently asked questions</h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <Eyebrow>FAQ</Eyebrow>
+          <h1 className={h1Class}>Frequently asked questions</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
       <FaqSection faqs={SITE_FAQ} />

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { cn } from '@shared/lib/utils';
 
 export const BRAND_NAME = 'Dockstash';
 export const BRAND_TAGLINE = 'One-click, verified backups for any Docker project.';
@@ -29,13 +30,16 @@ interface BrandLogoProps {
 
 export const BrandLogo = ({ className, markOnly = false, style }: BrandLogoProps) => (
   <span
-    className={['brand-logo', className].filter(Boolean).join(' ')}
+    className={cn(
+      'brand-logo inline-flex items-center gap-2 leading-none whitespace-nowrap text-inherit no-underline',
+      className,
+    )}
     style={style}
     aria-label={markOnly ? BRAND_NAME : undefined}
     role={markOnly ? 'img' : undefined}
   >
     <svg
-      className="brand-logo__mark"
+      className="brand-logo__mark size-8 shrink-0"
       viewBox="0 0 64 64"
       aria-hidden="true"
       focusable="false"
@@ -69,6 +73,10 @@ export const BrandLogo = ({ className, markOnly = false, style }: BrandLogoProps
         strokeLinejoin="round"
       />
     </svg>
-    {!markOnly && <span className="brand-logo__text">{BRAND_NAME}</span>}
+    {!markOnly && (
+      <span className="brand-logo__text text-lg font-bold tracking-normal">
+        {BRAND_NAME}
+      </span>
+    )}
   </span>
 );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useAppDispatch } from '@shared/hooks/redux';
+import { Alert, AlertDescription } from '@shared/ui/alert';
 import { createCustomer, updateBilling } from '../store/thunks';
 import { getStripe, loadStripeScript } from '../stripeGlobal';
 import { CheckoutFields, type CheckoutFormState } from './CheckoutFields';
@@ -68,8 +69,12 @@ export const CheckoutForm = ({ plan }: CheckoutFormProps) => {
   };
 
   return (
-    <div className="checkout-form">
-      {error ? <div role="alert">{error}</div> : null}
+    <div className="flex w-full max-w-md flex-col gap-4">
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
       <CheckoutFields formState={form} handleChange={handleChange} onSubmit={handleSubmit} />
     </div>
   );

@@ -1,7 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
+import { cn } from '@shared/lib/utils';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  cardClass,
+  h1Class,
+  h2Class,
+  sectionClass,
+} from './shared';
 import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
@@ -80,41 +91,45 @@ export const Security = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Security' }]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Security</span>
-          <h1 className="mk-h1">Security you can verify</h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <Eyebrow>Security</Eyebrow>
+          <h1 className={h1Class}>Security you can verify</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">How your data stays safe</h2>
-          <div className="mk-grid">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>How your data stays safe</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {CARDS.map((card, i) => (
-              <Reveal key={card.title} className="mk-card" index={i}>
-                <h3>{card.title}</h3>
-                <p className="mk-muted">{card.body}</p>
+              <Reveal key={card.title} className={cn(cardClass, 'space-y-2')} index={i}>
+                <h3 className="text-lg font-semibold tracking-tight">
+                  {card.title}
+                </h3>
+                <p className="text-muted-foreground">{card.body}</p>
               </Reveal>
             ))}
           </div>
-          <p style={{ marginTop: 24 }}>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Start free
-            </Link>{' '}
-            <Link to={href('/faq')} className="mk-btn">
-              Read the FAQ
-            </Link>
-          </p>
-        </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/register">Start free</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={href('/faq')}>Read the FAQ</Link>
+            </Button>
+          </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={SECURITY_FAQ} />

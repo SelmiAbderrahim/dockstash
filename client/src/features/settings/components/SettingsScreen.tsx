@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Clock, HardDrive, KeyRound, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { useTabParam } from '@shared/hooks/useTabParam';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Textarea } from '@shared/ui/textarea';
+import { Switch } from '@shared/ui/switch';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Card, CardContent } from '@shared/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import {
   fetchRetention,
   fetchStorage,
@@ -20,6 +29,18 @@ import {
 } from '../store/selectors';
 
 const TABS = ['storage', 'retention', 'password'] as const;
+
+const TAB_ICONS = {
+  storage: HardDrive,
+  retention: Clock,
+  password: KeyRound,
+} as const;
+
+const SavedNotice = ({ children }: { children: React.ReactNode }) => (
+  <span role="status" className="text-sm font-medium text-success">
+    {children}
+  </span>
+);
 
 const StorageTab = () => {
   const { t } = useTranslation('settings');
@@ -44,83 +65,90 @@ const StorageTab = () => {
 
   if (status === 'loading') {
     return (
-      <p role="status" aria-live="polite" className="ds-loading">
-        <span className="ds-spinner" aria-hidden="true" /> {t('loading')}
+      <p
+        role="status"
+        aria-live="polite"
+        className="flex items-center gap-2 text-sm text-muted-foreground"
+      >
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" /> {t('loading')}
       </p>
     );
   }
   if (status === 'failed') {
     return (
-      <p role="alert" className="ds-alert">
-        {error ?? t('errors.load')}
-      </p>
+      <Alert variant="destructive">
+        <AlertDescription>{error ?? t('errors.load')}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <form
-      className="ds-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void dispatch(saveStorage({ host, user, port, privateKey }));
-      }}
-    >
-      <label className="ds-field">
-        <span>{t('storage.host')}</span>
-        <input
-          type="text"
-          value={host}
-          onChange={(e) => setHost(e.target.value)}
-          required
-          autoComplete="off"
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('storage.user')}</span>
-        <input
-          type="text"
-          value={user}
-          onChange={(e) => setUser(e.target.value)}
-          required
-          autoComplete="off"
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('storage.port')}</span>
-        <input
-          type="number"
-          value={port}
-          min={1}
-          max={65535}
-          onChange={(e) => setPort(Number(e.target.value))}
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('storage.privateKey')}</span>
-        <textarea
-          value={privateKey}
-          onChange={(e) => setPrivateKey(e.target.value)}
-          rows={6}
-          placeholder={t('storage.privateKeyPlaceholder')}
-          autoComplete="off"
-        />
-        <small className="ds-muted">{t('storage.privateKeyHint')}</small>
-      </label>
-      <div className="ds-form__actions">
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={saveStatus === 'loading'}
+    <Card>
+      <CardContent>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void dispatch(saveStorage({ host, user, port, privateKey }));
+          }}
         >
-          {saveStatus === 'loading' ? t('actions.saving') : t('actions.connect')}
-        </button>
-        {saveStatus === 'succeeded' && (
-          <span role="status" className="ds-success">
-            {t('storage.saved')}
-          </span>
-        )}
-      </div>
-    </form>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="storage-host">{t('storage.host')}</Label>
+            <Input
+              id="storage-host"
+              type="text"
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              required
+              autoComplete="off"
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="storage-user">{t('storage.user')}</Label>
+              <Input
+                id="storage-user"
+                type="text"
+                value={user}
+                onChange={(e) => setUser(e.target.value)}
+                required
+                autoComplete="off"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="storage-port">{t('storage.port')}</Label>
+              <Input
+                id="storage-port"
+                type="number"
+                value={port}
+                min={1}
+                max={65535}
+                onChange={(e) => setPort(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="storage-key">{t('storage.privateKey')}</Label>
+            <Textarea
+              id="storage-key"
+              value={privateKey}
+              onChange={(e) => setPrivateKey(e.target.value)}
+              rows={6}
+              placeholder={t('storage.privateKeyPlaceholder')}
+              autoComplete="off"
+              className="font-mono text-xs"
+            />
+            <small className="text-sm text-muted-foreground">{t('storage.privateKeyHint')}</small>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={saveStatus === 'loading'}>
+              {saveStatus === 'loading' ? t('actions.saving') : t('actions.connect')}
+            </Button>
+            {saveStatus === 'succeeded' && <SavedNotice>{t('storage.saved')}</SavedNotice>}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -142,55 +170,56 @@ const RetentionTab = () => {
   }, [retention]);
 
   return (
-    <form
-      className="ds-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void dispatch(saveRetention({ keepDaily, keepWeekly, keepMonthly }));
-      }}
-    >
-      <label className="ds-field">
-        <span>{t('retention.daily')}</span>
-        <input
-          type="number"
-          min={0}
-          value={keepDaily}
-          onChange={(e) => setKeepDaily(Number(e.target.value))}
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('retention.weekly')}</span>
-        <input
-          type="number"
-          min={0}
-          value={keepWeekly}
-          onChange={(e) => setKeepWeekly(Number(e.target.value))}
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('retention.monthly')}</span>
-        <input
-          type="number"
-          min={0}
-          value={keepMonthly}
-          onChange={(e) => setKeepMonthly(Number(e.target.value))}
-        />
-      </label>
-      <div className="ds-form__actions">
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={saveStatus === 'loading'}
+    <Card>
+      <CardContent>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void dispatch(saveRetention({ keepDaily, keepWeekly, keepMonthly }));
+          }}
         >
-          {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
-        </button>
-        {saveStatus === 'succeeded' && (
-          <span role="status" className="ds-success">
-            {t('retention.saved')}
-          </span>
-        )}
-      </div>
-    </form>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="retention-daily">{t('retention.daily')}</Label>
+              <Input
+                id="retention-daily"
+                type="number"
+                min={0}
+                value={keepDaily}
+                onChange={(e) => setKeepDaily(Number(e.target.value))}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="retention-weekly">{t('retention.weekly')}</Label>
+              <Input
+                id="retention-weekly"
+                type="number"
+                min={0}
+                value={keepWeekly}
+                onChange={(e) => setKeepWeekly(Number(e.target.value))}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="retention-monthly">{t('retention.monthly')}</Label>
+              <Input
+                id="retention-monthly"
+                type="number"
+                min={0}
+                value={keepMonthly}
+                onChange={(e) => setKeepMonthly(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={saveStatus === 'loading'}>
+              {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
+            </Button>
+            {saveStatus === 'succeeded' && <SavedNotice>{t('retention.saved')}</SavedNotice>}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -206,65 +235,65 @@ const PasswordTab = () => {
   const canSubmit = password.length >= 12 && !mismatch && ack;
 
   return (
-    <form
-      className="ds-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!canSubmit) return;
-        void dispatch(savePassword(password));
-        setPassword('');
-        setConfirm('');
-      }}
-    >
-      <p className="ds-alert" role="alert">
-        {t('password.warning')}
-      </p>
-      <label className="ds-field">
-        <span>{t('password.new')}</span>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={12}
-          autoComplete="new-password"
-          required
-        />
-      </label>
-      <label className="ds-field">
-        <span>{t('password.confirm')}</span>
-        <input
-          type="password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          aria-invalid={mismatch}
-          autoComplete="new-password"
-          required
-        />
-        {mismatch && (
-          <span role="alert" className="ds-field__error">
-            {t('password.mismatch')}
-          </span>
-        )}
-      </label>
-      <label className="ds-switch">
-        <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
-        <span>{t('password.escrow')}</span>
-      </label>
-      <div className="ds-form__actions">
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={!canSubmit || saveStatus === 'loading'}
+    <Card>
+      <CardContent>
+        <form
+          className="flex flex-col gap-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!canSubmit) return;
+            void dispatch(savePassword(password));
+            setPassword('');
+            setConfirm('');
+          }}
         >
-          {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
-        </button>
-        {saveStatus === 'succeeded' && (
-          <span role="status" className="ds-success">
-            {t('password.saved')}
-          </span>
-        )}
-      </div>
-    </form>
+          <Alert variant="destructive">
+            <AlertDescription>{t('password.warning')}</AlertDescription>
+          </Alert>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password-new">{t('password.new')}</Label>
+            <Input
+              id="password-new"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={12}
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="password-confirm">{t('password.confirm')}</Label>
+            <Input
+              id="password-confirm"
+              type="password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              aria-invalid={mismatch}
+              autoComplete="new-password"
+              required
+            />
+            {mismatch && (
+              <span role="alert" className="text-sm text-destructive">
+                {t('password.mismatch')}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch id="password-escrow" checked={ack} onCheckedChange={setAck} />
+            <Label htmlFor="password-escrow" className="font-normal">
+              {t('password.escrow')}
+            </Label>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={!canSubmit || saveStatus === 'loading'}>
+              {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
+            </Button>
+            {saveStatus === 'succeeded' && <SavedNotice>{t('password.saved')}</SavedNotice>}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -279,31 +308,39 @@ export const SettingsScreen = () => {
   }, [dispatch]);
 
   return (
-    <section className="ds-screen" aria-labelledby="settings-heading">
-      <header className="ds-screen__header">
-        <h1 id="settings-heading">{t('heading')}</h1>
+    <section
+      className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8"
+      aria-labelledby="settings-heading"
+    >
+      <header>
+        <h1 id="settings-heading" className="text-2xl font-semibold tracking-tight">
+          {t('heading')}
+        </h1>
       </header>
 
-      <nav className="ds-tabs" role="tablist" aria-label={t('tabs.aria')}>
-        {TABS.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            type="button"
-            aria-selected={tab === k}
-            className={`ds-tab ${tab === k ? 'ds-tab--active' : ''}`}
-            onClick={() => setTab(k)}
-          >
-            {t(`tabs.${k}`)}
-          </button>
-        ))}
-      </nav>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList aria-label={t('tabs.aria')} className="w-full">
+          {TABS.map((k) => {
+            const Icon = TAB_ICONS[k];
+            return (
+              <TabsTrigger key={k} value={k}>
+                <Icon className="size-4" aria-hidden="true" />
+                {t(`tabs.${k}`)}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-      <div className="ds-tabs__panel" role="tabpanel">
-        {tab === 'storage' && <StorageTab />}
-        {tab === 'retention' && <RetentionTab />}
-        {tab === 'password' && <PasswordTab />}
-      </div>
+        <TabsContent value="storage" className="mt-4">
+          <StorageTab />
+        </TabsContent>
+        <TabsContent value="retention" className="mt-4">
+          <RetentionTab />
+        </TabsContent>
+        <TabsContent value="password" className="mt-4">
+          <PasswordTab />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 };

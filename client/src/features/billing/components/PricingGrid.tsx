@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Star } from 'lucide-react';
+import { cn } from '@shared/lib/utils';
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from '@shared/ui/card';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import {
   changePlan,
@@ -16,6 +27,9 @@ import {
 import type { PricingTier } from '../types';
 
 const formatPrice = (cents: number): string => `$${(cents / 100).toFixed(0)}`;
+
+/** The plan we surface as recommended (ring + badge). */
+const RECOMMENDED_SLUG: PricingTier['slug'] = 'pro';
 
 export const PricingGrid = () => {
   const dispatch = useAppDispatch();
@@ -55,30 +69,41 @@ export const PricingGrid = () => {
 
   if (loading) {
     return (
-      <div className="pricing-grid" role="status" aria-live="polite">
+      <div className="py-8 text-center text-muted-foreground" role="status" aria-live="polite">
         {t('grid.loading')}
       </div>
     );
   }
 
   if (tiers.length === 0) {
-    return <div className="pricing-grid pricing-grid--empty">{t('grid.empty')}</div>;
+    return (
+      <div className="py-8 text-center text-muted-foreground">{t('grid.empty')}</div>
+    );
   }
 
   return (
-    <section className="pricing-grid" aria-label={t('grid.title')}>
+    <section className="flex flex-col gap-6" aria-label={t('grid.title')}>
       {error ? (
-        <div role="alert" className="pricing-grid__error">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
 
-      <div className="pricing-grid__toggle" role="tablist" aria-label={t('grid.intervalLabel')}>
+      <div
+        className="inline-flex w-fit items-center gap-1 self-center rounded-lg border bg-muted p-1"
+        role="tablist"
+        aria-label={t('grid.intervalLabel')}
+      >
         <button
           type="button"
           role="tab"
           aria-selected={interval === 'month'}
-          className={interval === 'month' ? 'active' : ''}
+          className={cn(
+            'rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+            interval === 'month'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
           onClick={() => setInterval('month')}
         >
           {t('grid.monthly')}
@@ -87,59 +112,95 @@ export const PricingGrid = () => {
           type="button"
           role="tab"
           aria-selected={interval === 'year'}
-          className={interval === 'year' ? 'active' : ''}
+          className={cn(
+            'flex items-center gap-1.5 rounded-md px-4 py-1.5 text-sm font-medium transition-colors',
+            interval === 'year'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground',
+          )}
           onClick={() => setInterval('year')}
         >
-          {t('grid.yearly')} <small>{t('grid.yearlySavings')}</small>
+          {t('grid.yearly')}{' '}
+          <Badge variant="secondary" className="rounded-md text-xs font-normal">
+            {t('grid.yearlySavings')}
+          </Badge>
         </button>
       </div>
 
-      <div className="pricing-grid__list">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tiers.map((tier) => {
           const price = interval === 'month' ? tier.priceMonthly : tier.priceYearly;
           const productId =
             interval === 'month' ? tier.productIdMonthly : tier.productIdYearly;
           const isCurrent = tier.slug === currentSlug;
           const canSelect = tier.slug !== 'free' && productId !== null && !isCurrent;
+          const isRecommended = tier.slug === RECOMMENDED_SLUG;
           return (
-            <article key={tier.slug} className="pricing-tier" aria-labelledby={`tier-${tier.slug}`}>
-              <h3 id={`tier-${tier.slug}`}>{tier.name}</h3>
-              <p className="pricing-tier__price">
-                {tier.slug === 'free' ? t('grid.free') : formatPrice(price)}
-                {tier.slug !== 'free' && (
-                  <span className="pricing-tier__interval">
-                    {' '}
-                    /{interval === 'month' ? t('grid.perMonth') : t('grid.perYear')}
+            <Card
+              key={tier.slug}
+              aria-labelledby={`tier-${tier.slug}`}
+              className={cn(
+                'relative flex flex-col',
+                isRecommended && 'border-primary ring-1 ring-primary',
+              )}
+            >
+              {isRecommended ? (
+                <Badge
+                  aria-hidden="true"
+                  className="absolute -top-2.5 start-6 size-6 rounded-full p-0"
+                >
+                  <Star className="fill-current" />
+                </Badge>
+              ) : null}
+              <CardHeader>
+                <h3 id={`tier-${tier.slug}`} className="text-lg font-semibold">
+                  {tier.name}
+                </h3>
+                <p className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold">
+                    {tier.slug === 'free' ? t('grid.free') : formatPrice(price)}
                   </span>
-                )}
-              </p>
-              <ul className="pricing-tier__caps">
-                <li>
-                  {t('grid.caps.projects', {
-                    count: tier.caps.projects ?? 0,
-                    value:
-                      tier.caps.projects === null ? t('grid.caps.unlimited') : tier.caps.projects,
-                  })}
-                </li>
-                <li>{t('grid.caps.retention', { days: tier.caps.retentionDays })}</li>
-                <li>{t(`grid.frequency.${tier.caps.frequency}`)}</li>
-                {tier.flags.schedules ? <li>{t('grid.flag.schedules')}</li> : null}
-                {tier.flags.emailAlerts ? <li>{t('grid.flag.emailAlerts')}</li> : null}
-                {tier.flags.multiVps ? <li>{t('grid.flag.multiVps')}</li> : null}
-              </ul>
-              <button
-                type="button"
-                className="pricing-tier__cta"
-                disabled={!canSelect}
-                onClick={() => void onSelect(tier)}
-              >
-                {isCurrent
-                  ? t('grid.cta.current')
-                  : isExistingPaid
-                    ? t('grid.cta.switch')
-                    : t('grid.cta.select')}
-              </button>
-            </article>
+                  {tier.slug !== 'free' && (
+                    <span className="text-sm text-muted-foreground">
+                      /{interval === 'month' ? t('grid.perMonth') : t('grid.perYear')}
+                    </span>
+                  )}
+                </p>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <ul className="flex flex-col gap-2 text-sm">
+                  <li>
+                    {t('grid.caps.projects', {
+                      count: tier.caps.projects ?? 0,
+                      value:
+                        tier.caps.projects === null
+                          ? t('grid.caps.unlimited')
+                          : tier.caps.projects,
+                    })}
+                  </li>
+                  <li>{t('grid.caps.retention', { days: tier.caps.retentionDays })}</li>
+                  <li>{t(`grid.frequency.${tier.caps.frequency}`)}</li>
+                  {tier.flags.schedules ? <li>{t('grid.flag.schedules')}</li> : null}
+                  {tier.flags.emailAlerts ? <li>{t('grid.flag.emailAlerts')}</li> : null}
+                  {tier.flags.multiVps ? <li>{t('grid.flag.multiVps')}</li> : null}
+                </ul>
+              </CardContent>
+              <CardFooter>
+                <Button
+                  type="button"
+                  variant={isRecommended && canSelect ? 'default' : 'outline'}
+                  className="w-full"
+                  disabled={!canSelect}
+                  onClick={() => void onSelect(tier)}
+                >
+                  {isCurrent
+                    ? t('grid.cta.current')
+                    : isExistingPaid
+                      ? t('grid.cta.switch')
+                      : t('grid.cta.select')}
+                </Button>
+              </CardFooter>
+            </Card>
           );
         })}
       </div>

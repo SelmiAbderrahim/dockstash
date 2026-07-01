@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { Check, Copy, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Textarea } from '@shared/ui/textarea';
+import { Switch } from '@shared/ui/switch';
+import { Badge } from '@shared/ui/badge';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from '@shared/ui/card';
 import {
   fetchStorage,
   savePassword,
@@ -26,6 +40,8 @@ function genPassword(): string {
 }
 
 type Step = 'storage' | 'password' | 'confirm' | 'done';
+
+const STEP_ORDER: readonly Step[] = ['storage', 'password', 'confirm'];
 
 /**
  * One-time setup wizard. Renders only when no storage is configured. The
@@ -60,8 +76,12 @@ export const SetupWizard = () => {
 
   if (storageStatus !== 'succeeded') {
     return (
-      <p role="status" aria-live="polite" className="ds-loading">
-        <span className="ds-spinner" aria-hidden="true" /> {t('loading')}
+      <p
+        role="status"
+        aria-live="polite"
+        className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"
+      >
+        <Loader2 className="size-4 animate-spin" aria-hidden="true" /> {t('loading')}
       </p>
     );
   }
@@ -94,141 +114,186 @@ export const SetupWizard = () => {
     nav('/projects');
   };
 
+  const currentIndex = STEP_ORDER.indexOf(step);
+
   return (
-    <section className="ds-wizard" aria-labelledby="wizard-heading">
-      <header>
-        <h1 id="wizard-heading">{t('heading')}</h1>
-        <p className="ds-screen__lede">{t('lede')}</p>
-      </header>
+    <section className="mx-auto w-full max-w-xl px-4 py-8" aria-labelledby="wizard-heading">
+      <Card>
+        <CardHeader>
+          <h1
+            id="wizard-heading"
+            className="text-2xl leading-none font-semibold tracking-tight"
+          >
+            {t('heading')}
+          </h1>
+          <CardDescription>{t('lede')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <ol className="flex flex-col gap-2 sm:flex-row sm:gap-4" aria-label={t('stepsAria')}>
+            {STEP_ORDER.map((s, index) => {
+              const done = index < currentIndex;
+              const current = index === currentIndex;
+              return (
+                <li
+                  key={s}
+                  aria-current={current ? 'step' : undefined}
+                  className="flex items-center gap-2"
+                >
+                  <Badge
+                    variant={current ? 'default' : done ? 'secondary' : 'outline'}
+                    className="size-6 rounded-full p-0"
+                  >
+                    {done ? <Check className="size-3" aria-hidden="true" /> : index + 1}
+                  </Badge>
+                  <span
+                    className={
+                      current
+                        ? 'text-sm font-medium text-foreground'
+                        : 'text-sm text-muted-foreground'
+                    }
+                  >
+                    {t(`step.${s}`)}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
 
-      <ol className="ds-wizard__steps" aria-label={t('stepsAria')}>
-        <li aria-current={step === 'storage' ? 'step' : undefined}>{t('step.storage')}</li>
-        <li aria-current={step === 'password' ? 'step' : undefined}>{t('step.password')}</li>
-        <li aria-current={step === 'confirm' ? 'step' : undefined}>{t('step.confirm')}</li>
-      </ol>
-
-      {error && (
-        <p role="alert" className="ds-alert">
-          {error}
-        </p>
-      )}
-
-      {step === 'storage' && (
-        <form
-          className="ds-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void goPassword();
-          }}
-        >
-          <label className="ds-field">
-            <span>{t('storage.host')}</span>
-            <input
-              type="text"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              required
-              autoFocus
-            />
-          </label>
-          <label className="ds-field">
-            <span>{t('storage.user')}</span>
-            <input type="text" value={user} onChange={(e) => setUser(e.target.value)} required />
-          </label>
-          <label className="ds-field">
-            <span>{t('storage.port')}</span>
-            <input
-              type="number"
-              min={1}
-              max={65535}
-              value={port}
-              onChange={(e) => setPort(Number(e.target.value))}
-            />
-          </label>
-          <label className="ds-field">
-            <span>{t('storage.privateKey')}</span>
-            <textarea
-              value={privateKey}
-              onChange={(e) => setPrivateKey(e.target.value)}
-              rows={6}
-              required
-              autoComplete="off"
-            />
-          </label>
-          <div className="ds-form__actions">
-            <button
-              type="submit"
-              className="ds-btn ds-btn--primary"
-              disabled={storageSaveStatus === 'loading' || testStatus === 'loading'}
-            >
-              {storageSaveStatus === 'loading' ? t('actions.connecting') : t('actions.connect')}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {step === 'password' && (
-        <div className="ds-form">
-          <p className="ds-alert" role="alert">
-            {t('password.warning')}
-          </p>
-          {/* v8 ignore start -- the password step is only ever entered with the
-              password already revealed, so the `hidden` fallback never renders */}
-          {passwordRevealed ? (
-            <div className="ds-password-reveal" data-testid="wizard-password">
-              <code>{password}</code>
-              <button
-                type="button"
-                className="ds-btn ds-btn--ghost"
-                onClick={() => void navigator.clipboard?.writeText(password)}
-              >
-                {t('actions.copy')}
-              </button>
-            </div>
-          ) : (
-            <p className="ds-muted">{t('password.hidden')}</p>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
-          {/* v8 ignore stop */}
-          <div className="ds-form__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              onClick={() => void goConfirm()}
-              disabled={passwordSaveStatus === 'loading' || password.length === 0}
-            >
-              {passwordSaveStatus === 'loading'
-                ? t('actions.saving')
-                : t('actions.continueToConfirm')}
-            </button>
-          </div>
-        </div>
-      )}
 
-      {step === 'confirm' && (
-        <div className="ds-form">
-          <p>{t('confirm.body')}</p>
-          <label className="ds-switch">
-            <input
-              type="checkbox"
-              checked={ack}
-              onChange={(e) => setAck(e.target.checked)}
-              data-testid="wizard-escrow"
-            />
-            <span>{t('confirm.escrow')}</span>
-          </label>
-          <div className="ds-form__actions">
-            <button
-              type="button"
-              className="ds-btn ds-btn--primary"
-              disabled={!ack}
-              onClick={finish}
-              data-testid="wizard-done"
+          {step === 'storage' && (
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void goPassword();
+              }}
             >
-              {t('actions.done')}
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="wizard-host">{t('storage.host')}</Label>
+                <Input
+                  id="wizard-host"
+                  type="text"
+                  value={host}
+                  onChange={(e) => setHost(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="wizard-user">{t('storage.user')}</Label>
+                  <Input
+                    id="wizard-user"
+                    type="text"
+                    value={user}
+                    onChange={(e) => setUser(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="wizard-port">{t('storage.port')}</Label>
+                  <Input
+                    id="wizard-port"
+                    type="number"
+                    min={1}
+                    max={65535}
+                    value={port}
+                    onChange={(e) => setPort(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="wizard-key">{t('storage.privateKey')}</Label>
+                <Textarea
+                  id="wizard-key"
+                  value={privateKey}
+                  onChange={(e) => setPrivateKey(e.target.value)}
+                  rows={6}
+                  required
+                  autoComplete="off"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <Button
+                  type="submit"
+                  disabled={storageSaveStatus === 'loading' || testStatus === 'loading'}
+                >
+                  {storageSaveStatus === 'loading' ? t('actions.connecting') : t('actions.connect')}
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {step === 'password' && (
+            <div className="flex flex-col gap-4">
+              <Alert variant="destructive">
+                <AlertDescription>{t('password.warning')}</AlertDescription>
+              </Alert>
+              {/* v8 ignore start -- the password step is only ever entered with the
+                  password already revealed, so the `hidden` fallback never renders */}
+              {passwordRevealed ? (
+                <div
+                  className="flex flex-wrap items-center gap-3 rounded-md border bg-muted/40 p-3"
+                  data-testid="wizard-password"
+                >
+                  <code className="font-mono text-sm break-all">{password}</code>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void navigator.clipboard?.writeText(password)}
+                  >
+                    <Copy className="size-4" aria-hidden="true" />
+                    {t('actions.copy')}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">{t('password.hidden')}</p>
+              )}
+              {/* v8 ignore stop */}
+              <div>
+                <Button
+                  type="button"
+                  onClick={() => void goConfirm()}
+                  disabled={passwordSaveStatus === 'loading' || password.length === 0}
+                >
+                  {passwordSaveStatus === 'loading'
+                    ? t('actions.saving')
+                    : t('actions.continueToConfirm')}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 'confirm' && (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-muted-foreground">{t('confirm.body')}</p>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="wizard-escrow"
+                  checked={ack}
+                  onCheckedChange={setAck}
+                  data-testid="wizard-escrow"
+                />
+                <Label htmlFor="wizard-escrow" className="font-normal">
+                  {t('confirm.escrow')}
+                </Label>
+              </div>
+              <div>
+                <Button type="button" disabled={!ack} onClick={finish} data-testid="wizard-done">
+                  {t('actions.done')}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </section>
   );
 };

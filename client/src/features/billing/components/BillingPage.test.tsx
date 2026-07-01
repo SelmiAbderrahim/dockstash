@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
@@ -214,7 +215,9 @@ describe('BillingPage — usage tab', () => {
     mockedApi.fetchUsage.mockResolvedValue(usageEmpty);
     renderPage();
     await screen.findByText('Free');
-    fireEvent.click(screen.getByRole('tab', { name: /usage/i }));
+    // The tab bar is a Radix Tabs control; user-event drives the pointer
+    // interaction it expects (fireEvent.click does not activate it).
+    await userEvent.click(screen.getByRole('tab', { name: /usage/i }));
     expect(await screen.findByText(/no active projects yet/i)).toBeInTheDocument();
   });
 });

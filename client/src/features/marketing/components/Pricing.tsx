@@ -1,7 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
+import { cn } from '@shared/lib/utils';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  cardClass,
+  h1Class,
+  sectionClass,
+} from './shared';
 import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
@@ -118,73 +128,83 @@ export const Pricing = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Pricing' }]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Pricing</span>
-          <h1 className="mk-h1">Simple pricing for verified Docker backups</h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <Eyebrow>Pricing</Eyebrow>
+          <h1 className={h1Class}>Simple pricing for verified Docker backups</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <div className="mk-grid">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <div className="grid gap-5 lg:grid-cols-3">
             {TIERS.map((tier, i) => (
               <Reveal
                 key={tier.name}
-                className={
-                  tier.cta.primary ? 'mk-card mk-card--surface' : 'mk-card'
-                }
+                className={cn(
+                  cardClass,
+                  'flex flex-col',
+                  tier.cta.primary && 'border-primary ring-1 ring-primary/40',
+                )}
                 index={i}
               >
-                <h3>{tier.name}</h3>
-                <p style={{ margin: '0 0 4px' }}>
-                  <strong style={{ fontSize: 30, letterSpacing: '-0.02em' }}>
+                <h3 className="text-lg font-semibold tracking-tight">
+                  {tier.name}
+                </h3>
+                <p className="mt-1">
+                  <strong className="text-3xl font-bold tracking-tight">
                     {tier.price}
                   </strong>{' '}
-                  <span className="mk-muted">{tier.cadence}</span>
+                  <span className="text-muted-foreground">{tier.cadence}</span>
                 </p>
                 {tier.yearly ? (
-                  <p className="mk-muted" style={{ margin: '0 0 4px', fontSize: 13 }}>
+                  <p className="mt-1 text-[13px] text-muted-foreground">
                     {tier.yearly}
                   </p>
                 ) : null}
-                <p className="mk-muted">{tier.tagline}</p>
-                <ul>
+                <p className="mt-2 text-muted-foreground">{tier.tagline}</p>
+                <ul className="my-4 space-y-2 text-sm">
                   {tier.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
+                    <li key={feature} className="flex gap-2">
+                      <span aria-hidden="true" className="text-primary">
+                        ✓
+                      </span>
+                      <span>{feature}</span>
+                    </li>
                   ))}
                 </ul>
-                <p style={{ marginTop: 16 }}>
+                <Button
+                  asChild
+                  className="mt-auto w-full"
+                  variant={tier.cta.primary ? 'default' : 'outline'}
+                >
                   <Link
                     to={
                       tier.cta.to === '/register'
                         ? tier.cta.to
                         : href(tier.cta.to)
                     }
-                    className={
-                      tier.cta.primary
-                        ? 'mk-btn mk-btn--primary'
-                        : 'mk-btn'
-                    }
                   >
                     {tier.cta.label}
                   </Link>
-                </p>
+                </Button>
               </Reveal>
             ))}
           </div>
-          <p className="mk-muted" style={{ marginTop: 20 }}>
+          <p className="mt-5 text-muted-foreground">
             Yearly billing on Pro and Business gives you two months free.
           </p>
-        </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={PRICING_FAQ} />

@@ -1,0 +1,179 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/*
+ * Manual dark-mode strategy: the `.dark` class on <html> is toggled by the
+ * no-flash head script in index.html and the ThemeProvider. System preference
+ * is resolved into that class, so `@media (prefers-color-scheme)` is not used.
+ */
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --radius: 0.5rem;
+
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  /* Brand blue. */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4f4f5;
+  --secondary-foreground: #1a1a1a;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #6b7280;
+
+  --accent: #eff4ff;
+  --accent-foreground: #1a1a1a;
+
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #2f6fed;
+
+  /* Sidebar surface tokens (shadcn Sidebar). */
+  --sidebar: #fafafa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eff4ff;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #2f6fed;
+
+  /* Chart palette. */
+  --chart-1: #2563eb;
+  --chart-2: #16a34a;
+  --chart-3: #f59e0b;
+  --chart-4: #a855f7;
+  --chart-5: #ef4444;
+}
+
+.dark {
+  --background: #0b0b0c;
+  --foreground: #f5f5f5;
+
+  --card: #131315;
+  --card-foreground: #f5f5f5;
+
+  --popover: #131315;
+  --popover-foreground: #f5f5f5;
+
+  --primary: #4b8bf5;
+  --primary-foreground: #0b0b0c;
+
+  --secondary: #27272a;
+  --secondary-foreground: #f5f5f5;
+
+  --muted: #1c1c1f;
+  --muted-foreground: #9ca3af;
+
+  --accent: #1e293b;
+  --accent-foreground: #f5f5f5;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #0b0b0c;
+
+  --success: #22c55e;
+  --success-foreground: #0b0b0c;
+
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #4b8bf5;
+
+  --sidebar: #131315;
+  --sidebar-foreground: #f5f5f5;
+  --sidebar-primary: #4b8bf5;
+  --sidebar-primary-foreground: #0b0b0c;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #27272a;
+  --sidebar-ring: #4b8bf5;
+
+  --chart-1: #4b8bf5;
+  --chart-2: #22c55e;
+  --chart-3: #fbbf24;
+  --chart-4: #c084fc;
+  --chart-5: #f87171;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  #root {
+    min-height: 100dvh;
+  }
+}

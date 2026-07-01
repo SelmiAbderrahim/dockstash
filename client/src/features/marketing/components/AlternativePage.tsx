@@ -1,14 +1,22 @@
 import { Link, useParams } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
 import { getCompetitor, altIntro } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Reveal } from '../useReveal';
 import {
   Breadcrumbs,
   ComparisonTable,
+  Container,
+  Eyebrow,
   FaqSection,
   LastUpdated,
+  h1Class,
+  h2Class,
+  sectionClass,
 } from './shared';
+
+const listClass = 'list-disc space-y-1.5 ps-5 text-muted-foreground';
 
 export const AlternativePage = () => {
   const { slug } = useParams();
@@ -27,17 +35,20 @@ export const AlternativePage = () => {
           locale={locale}
           noindex
         />
-        <section className="mk-section">
-          <div className="mk-container">
-            <h1 className="mk-h1">Alternative not found</h1>
-            <p className="mk-muted">
+        <section className={sectionClass}>
+          <Container>
+            <h1 className={h1Class}>Alternative not found</h1>
+            <p className="text-muted-foreground">
               We could not find that comparison.{' '}
-              <Link to={href('/alternatives')}>
+              <Link
+                to={href('/alternatives')}
+                className="text-primary underline-offset-4 hover:underline"
+              >
                 See all Dockstash alternatives
               </Link>
               .
             </p>
-          </div>
+          </Container>
         </section>
       </>
     );
@@ -70,7 +81,7 @@ export const AlternativePage = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[
             { label: 'Home', basePath: '/' },
@@ -79,82 +90,86 @@ export const AlternativePage = () => {
           ]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <h1 className="mk-h1">
+      <section className={sectionClass}>
+        <Container>
+          <h1 className={h1Class}>
             The Dockstash alternative to {competitor.name}
           </h1>
-          <p className="mk-answer">{altIntro(competitor)}</p>
-          <p className="mk-muted" style={{ marginTop: 12 }}>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {altIntro(competitor)}
+          </p>
+          <p className="mt-3 text-muted-foreground">
             {competitor.name} — {competitor.category}. {competitor.pricing}.
           </p>
-        </div>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Comparison</span>
-          <h2 className="mk-h2">How Dockstash compares to {competitor.name}</h2>
-          <div className="mk-table-wrap">
-            <ComparisonTable
-              rows={competitor.comparison}
-              competitorName={competitor.name}
-            />
-          </div>
-        </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Comparison</Eyebrow>
+          <h2 className={h2Class}>How Dockstash compares to {competitor.name}</h2>
+          <ComparisonTable
+            rows={competitor.comparison}
+            competitorName={competitor.name}
+          />
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Where {competitor.name} is strong</h2>
-          <ul>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Where {competitor.name} is strong</h2>
+          <ul className={listClass}>
             {competitor.strengths.map((strength) => (
               <li key={strength}>{strength}</li>
             ))}
           </ul>
-          <h2 className="mk-h2" style={{ marginTop: 32 }}>
-            Where Dockstash pulls ahead
-          </h2>
-          <ul>
+          <h2 className={`${h2Class} mt-8`}>Where Dockstash pulls ahead</h2>
+          <ul className={listClass}>
             {competitor.weaknesses.map((weakness) => (
               <li key={weakness}>{weakness}</li>
             ))}
           </ul>
-        </div>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Who should switch to Dockstash</h2>
-          <p className="mk-answer">{competitor.switchIf}</p>
-          <p className="mk-muted" style={{ marginTop: 16 }}>
-            <strong>{competitor.name} is the right choice when:</strong>{' '}
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Who should switch to Dockstash</h2>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {competitor.switchIf}
+          </p>
+          <p className="mt-4 text-muted-foreground">
+            <strong className="text-foreground">
+              {competitor.name} is the right choice when:
+            </strong>{' '}
             {competitor.bestFor}
           </p>
-        </div>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Migrating from {competitor.name}</h2>
-          <p>{competitor.migrationNotes}</p>
-          <p style={{ marginTop: 20 }}>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Start free
-            </Link>{' '}
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Migrating from {competitor.name}</h2>
+          <p className="max-w-prose">{competitor.migrationNotes}</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/register">Start free</Link>
+            </Button>
             {competitor.slug === 'backrest' && (
-              <Link to={href('/vs/backrest')} className="mk-btn">
-                Dockstash vs Backrest, head-to-head
-              </Link>
-            )}{' '}
-            <Link to={href('/alternatives')} className="mk-btn">
-              All alternatives
-            </Link>
-          </p>
+              <Button asChild variant="outline">
+                <Link to={href('/vs/backrest')}>
+                  Dockstash vs Backrest, head-to-head
+                </Link>
+              </Button>
+            )}
+            <Button asChild variant="outline">
+              <Link to={href('/alternatives')}>All alternatives</Link>
+            </Button>
+          </div>
           <LastUpdated iso={competitor.lastReviewed} />
-        </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={competitor.faq} />

@@ -135,7 +135,7 @@ describe('SnapshotsScreen', () => {
 
   it('shows the empty state when succeeded with no snapshots', () => {
     renderScreen({ projects: [makeProject()], status: 'succeeded', byProject: { p1: [] } });
-    expect(document.querySelector('.ds-empty')).toBeTruthy();
+    expect(screen.getByTestId('snapshots-empty')).toBeInTheDocument();
   });
 
   it('renders a table of snapshots and formats byte sizes', () => {
@@ -162,8 +162,9 @@ describe('SnapshotsScreen', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /restore/i }));
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
-    // Closing the dialog runs the onClose callback (setTarget(null)).
-    fireEvent.keyDown(window, { key: 'Escape' });
+    // Closing the dialog runs the onClose callback (setTarget(null)). Radix's
+    // AlertDialog listens for Escape on the document, so dispatch it there.
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('alertdialog')).toBeNull();
   });
 

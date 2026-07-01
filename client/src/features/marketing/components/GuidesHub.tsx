@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
 import {
   SERVICE_GUIDES,
@@ -7,7 +6,16 @@ import {
   USE_CASE_SLUGS,
 } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  LinkCard,
+  h1Class,
+  h2Class,
+  sectionClass,
+} from './shared';
 import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
@@ -64,63 +72,61 @@ export const GuidesHub = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Guides' }]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Guides</span>
-          <h1 className="mk-h1">Docker backup guides</h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <Eyebrow>Guides</Eyebrow>
+          <h1 className={h1Class}>Docker backup guides</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">By database</span>
-          <h2 className="mk-h2">Back up a database in Docker</h2>
-          <div className="mk-grid">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>By database</Eyebrow>
+          <h2 className={h2Class}>Back up a database in Docker</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICE_GUIDE_SLUGS.map((slug) => {
               const guide = SERVICE_GUIDES[slug]!;
               return (
-                <Link
+                <LinkCard
                   key={slug}
                   to={href(`/guides/backup-${slug}-docker`)}
-                  className="mk-card"
-                >
-                  <h3>{guide.serviceName}</h3>
-                  <p className="mk-muted">Back up {guide.serviceName} in Docker</p>
-                </Link>
+                  title={guide.serviceName}
+                  description={`Back up ${guide.serviceName} in Docker`}
+                />
               );
             })}
           </div>
-        </div>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">By app stack</span>
-          <h2 className="mk-h2">Back up an app stack in Docker</h2>
-          <div className="mk-grid">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>By app stack</Eyebrow>
+          <h2 className={h2Class}>Back up an app stack in Docker</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {USE_CASE_SLUGS.map((slug) => {
               const app = USE_CASES[slug]!;
               return (
-                <Link
+                <LinkCard
                   key={slug}
                   to={href(`/backup/${slug}-docker`)}
-                  className="mk-card"
-                >
-                  <h3>{app.appName}</h3>
-                  <p className="mk-muted">{app.category}</p>
-                </Link>
+                  title={app.appName}
+                  description={app.category}
+                />
               );
             })}
           </div>
-        </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={HUB_FAQ} />

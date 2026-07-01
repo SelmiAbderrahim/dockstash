@@ -4,6 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { registerUser } from '../store/thunks';
 import { clearError } from '../store/slice';
 import {
@@ -55,40 +65,76 @@ export const Register = () => {
   });
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-card__title">Create your account</h1>
-        <form className="auth-form" onSubmit={onSubmit}>
-          {errorMessage ? (
-            <div className="auth-alert" role="alert">
-              <strong>Error!</strong> {errorMessage}
+    <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create your account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+            {errorMessage ? (
+              <Alert variant="destructive" role="alert">
+                <AlertDescription>
+                  <strong>Error!</strong> {errorMessage}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="register-first-name">First Name</Label>
+                <Input
+                  id="register-first-name"
+                  type="text"
+                  aria-invalid={!!errors.firstName}
+                  {...register('firstName')}
+                />
+                {errors.firstName ? (
+                  <p className="text-destructive text-sm">{errors.firstName.message}</p>
+                ) : null}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="register-last-name">Last Name</Label>
+                <Input
+                  id="register-last-name"
+                  type="text"
+                  aria-invalid={!!errors.lastName}
+                  {...register('lastName')}
+                />
+                {errors.lastName ? (
+                  <p className="text-destructive text-sm">{errors.lastName.message}</p>
+                ) : null}
+              </div>
             </div>
-          ) : null}
-          <div className="auth-field">
-            <label htmlFor="register-first-name">First Name</label>
-            <input id="register-first-name" type="text" {...register('firstName')} />
-            {errors.firstName ? <div className="error">{errors.firstName.message}</div> : null}
-          </div>
-          <div className="auth-field">
-            <label htmlFor="register-last-name">Last Name</label>
-            <input id="register-last-name" type="text" {...register('lastName')} />
-            {errors.lastName ? <div className="error">{errors.lastName.message}</div> : null}
-          </div>
-          <div className="auth-field">
-            <label htmlFor="register-email">Email</label>
-            <input id="register-email" type="text" {...register('email')} />
-            {errors.email ? <div className="error">{errors.email.message}</div> : null}
-          </div>
-          <div className="auth-field">
-            <label htmlFor="register-password">Password</label>
-            <input id="register-password" type="password" {...register('password')} />
-            {errors.password ? <div className="error">{errors.password.message}</div> : null}
-          </div>
-          <button className="auth-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-      </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="register-email">Email</Label>
+              <Input
+                id="register-email"
+                type="text"
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
+              {errors.email ? (
+                <p className="text-destructive text-sm">{errors.email.message}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="register-password">Password</Label>
+              <Input
+                id="register-password"
+                type="password"
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
+              {errors.password ? (
+                <p className="text-destructive text-sm">{errors.password.message}</p>
+              ) : null}
+            </div>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? 'Registering...' : 'Register'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

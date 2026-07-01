@@ -1,8 +1,31 @@
 import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@shared/ui/table';
 import { getCompetitor } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  h1Class,
+  h2Class,
+  sectionClass,
+} from './shared';
 import { Reveal } from '../useReveal';
 import type { ComparisonRow, FaqItem } from '../types';
 
@@ -99,7 +122,7 @@ export const CompareCategoryPage = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[
             { label: 'Home', basePath: '/' },
@@ -108,75 +131,102 @@ export const CompareCategoryPage = () => {
           ]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <h1 className="mk-h1">
-            Self-hosted backup vs cloud backup
-          </h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <h1 className={h1Class}>Self-hosted backup vs cloud backup</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Head to head</span>
-          <h2 className="mk-h2">Side by side</h2>
-          <div className="mk-table-wrap">
-            <table className="mk-table">
-              <thead>
-                <tr>
-                  <th scope="col">Dimension</th>
-                  <th scope="col">Self-hosted (Dockstash)</th>
-                  <th scope="col">Cloud backup SaaS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ROWS.map((row) => (
-                  <tr key={row.feature}>
-                    <th scope="row">{row.feature}</th>
-                    <td>{row.dockstash}</td>
-                    <td>{row.competitor}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Head to head</Eyebrow>
+          <h2 className={h2Class}>Side by side</h2>
+          <Table className="border">
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col" className="text-start align-top">
+                  Dimension
+                </TableHead>
+                <TableHead scope="col" className="text-start align-top">
+                  Self-hosted (Dockstash)
+                </TableHead>
+                <TableHead scope="col" className="text-start align-top">
+                  Cloud backup SaaS
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ROWS.map((row) => (
+                <TableRow key={row.feature}>
+                  <TableHead
+                    scope="row"
+                    className="whitespace-normal text-start align-top font-medium"
+                  >
+                    {row.feature}
+                  </TableHead>
+                  <TableCell className="whitespace-normal align-top">
+                    {row.dockstash}
+                  </TableCell>
+                  <TableCell className="whitespace-normal align-top">
+                    {row.competitor}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">When to pick each</h2>
-          <div className="mk-grid">
-            <div className="mk-card">
-              <h3>Pick self-hosted backup</h3>
-              <p className="mk-muted">
-                You want backups that stay entirely on your own infrastructure,
-                with no recurring per-source fee and no third party in the data
-                path — and you run your workloads in Docker.
-              </p>
-            </div>
-            <div className="mk-card">
-              <h3>Pick cloud backup SaaS</h3>
-              <p className="mk-muted">
-                {/* v8 ignore next 3 -- every comparison category resolves a cloud competitor */}
-                {cloud
-                  ? cloud.bestFor
-                  : 'You want a hands-off managed service and are happy to pay a subscription and route backups through a third-party platform.'}
-              </p>
-            </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>When to pick each</h2>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg tracking-tight">
+                  Pick self-hosted backup
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  You want backups that stay entirely on your own infrastructure,
+                  with no recurring per-source fee and no third party in the data
+                  path — and you run your workloads in Docker.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg tracking-tight">
+                  Pick cloud backup SaaS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">
+                  {/* v8 ignore next 3 -- every comparison category resolves a cloud competitor */}
+                  {cloud
+                    ? cloud.bestFor
+                    : 'You want a hands-off managed service and are happy to pay a subscription and route backups through a third-party platform.'}
+                </p>
+              </CardContent>
+            </Card>
           </div>
-          <p style={{ marginTop: 24 }}>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Start free, self-hosted
-            </Link>{' '}
-            <Link to={href('/alternatives/simplebackups')} className="mk-btn">
-              Dockstash vs a cloud backup SaaS
-            </Link>
-          </p>
-        </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/register">Start free, self-hosted</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={href('/alternatives/simplebackups')}>
+                Dockstash vs a cloud backup SaaS
+              </Link>
+            </Button>
+          </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={FAQ} />

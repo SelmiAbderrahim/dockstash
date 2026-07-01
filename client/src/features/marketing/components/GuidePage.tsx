@@ -1,5 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import { Button } from '@shared/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from '@shared/ui/table';
 import {
   getServiceGuide,
   getUseCase,
@@ -10,10 +18,18 @@ import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import {
   Breadcrumbs,
   CodeBlock,
+  Container,
+  Eyebrow,
   FaqSection,
   LastUpdated,
+  LinkCard,
+  h1Class,
+  h2Class,
+  sectionClass,
 } from './shared';
 import { Reveal } from '../useReveal';
+
+const listClass = 'list-disc space-y-1.5 ps-5 text-muted-foreground';
 
 export const GuidePage = () => {
   const { entry } = useParams();
@@ -35,14 +51,20 @@ export const GuidePage = () => {
           locale={locale}
           noindex
         />
-        <section className="mk-section">
-          <div className="mk-container">
-            <h1 className="mk-h1">Guide not found</h1>
-            <p className="mk-muted">
+        <section className={sectionClass}>
+          <Container>
+            <h1 className={h1Class}>Guide not found</h1>
+            <p className="text-muted-foreground">
               We could not find that guide.{' '}
-              <Link to={href('/guides')}>See all Docker backup guides</Link>.
+              <Link
+                to={href('/guides')}
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                See all Docker backup guides
+              </Link>
+              .
             </p>
-          </div>
+          </Container>
         </section>
       </>
     );
@@ -102,7 +124,7 @@ export const GuidePage = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[
             { label: 'Home', basePath: '/' },
@@ -111,114 +133,134 @@ export const GuidePage = () => {
           ]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <h1 className="mk-h1">
+      <section className={sectionClass}>
+        <Container>
+          <h1 className={h1Class}>
             How to back up a {guide.serviceName} Docker container (2026)
           </h1>
-          <p className="mk-answer">{guideIntro(guide)}</p>
-        </div>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {guideIntro(guide)}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Detection</span>
-          <h2 className="mk-h2">What Dockstash detects</h2>
-          <div className="mk-table-wrap">
-            <table className="mk-table">
-              <tbody>
-                <tr>
-                  <th scope="row">Env keys detected</th>
-                  <td>{guide.envKeysDetected.join(', ')}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Default port</th>
-                  <td>{guide.defaultPort || '—'}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Live data paths (never copied live)</th>
-                  <td>{guide.liveDataPaths.join(', ')}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Example images</th>
-                  <td>{guide.dockerImages.join(', ')}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Detection</Eyebrow>
+          <h2 className={h2Class}>What Dockstash detects</h2>
+          <Table className="border">
+            <TableBody>
+              <TableRow>
+                <TableHead
+                  scope="row"
+                  className="w-1/3 whitespace-normal text-start align-top font-medium"
+                >
+                  Env keys detected
+                </TableHead>
+                <TableCell className="whitespace-normal align-top">
+                  {guide.envKeysDetected.join(', ')}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableHead
+                  scope="row"
+                  className="w-1/3 whitespace-normal text-start align-top font-medium"
+                >
+                  Default port
+                </TableHead>
+                <TableCell className="whitespace-normal align-top">
+                  {guide.defaultPort || '—'}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableHead
+                  scope="row"
+                  className="w-1/3 whitespace-normal text-start align-top font-medium"
+                >
+                  Live data paths (never copied live)
+                </TableHead>
+                <TableCell className="whitespace-normal align-top">
+                  {guide.liveDataPaths.join(', ')}
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableHead
+                  scope="row"
+                  className="w-1/3 whitespace-normal text-start align-top font-medium"
+                >
+                  Example images
+                </TableHead>
+                <TableCell className="whitespace-normal align-top">
+                  {guide.dockerImages.join(', ')}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Commands</span>
-          <h2 className="mk-h2">The dump command</h2>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Commands</Eyebrow>
+          <h2 className={h2Class}>The dump command</h2>
           <CodeBlock>{guide.dumpCmd}</CodeBlock>
-          <h2 className="mk-h2" style={{ marginTop: 32 }}>
-            The restore command
-          </h2>
+          <h2 className={`${h2Class} mt-8`}>The restore command</h2>
           <CodeBlock>{guide.restoreCmd}</CodeBlock>
-          <p className="mk-muted" style={{ marginTop: 16 }}>
-            {consistencyNote(guide)}
-          </p>
-        </div>
+          <p className="mt-4 text-muted-foreground">{consistencyNote(guide)}</p>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">The gotchas</span>
-          <h2 className="mk-h2">Gotchas to avoid</h2>
-          <ul>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>The gotchas</Eyebrow>
+          <h2 className={h2Class}>Gotchas to avoid</h2>
+          <ul className={listClass}>
             {guide.gotchas.map((gotcha) => (
               <li key={gotcha}>{gotcha}</li>
             ))}
           </ul>
-        </div>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Do it in one click with Dockstash</h2>
-          <p className="mk-muted">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Do it in one click with Dockstash</h2>
+          <p className="max-w-prose text-muted-foreground">
             Dockstash runs the exact dump above, restics it off-site, and
             drill-tests the restore automatically — no script to maintain.
           </p>
-          <p style={{ marginTop: 20 }}>
-            <Link to="/register" className="mk-btn mk-btn--primary">
-              Start free
-            </Link>{' '}
-            <Link to={href('/guides')} className="mk-btn">
-              All guides
-            </Link>
-          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link to="/register">Start free</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={href('/guides')}>All guides</Link>
+            </Button>
+          </div>
           <LastUpdated iso={guide.lastReviewed} />
-        </div>
+        </Container>
       </Reveal>
 
       {/* v8 ignore next 2 -- shipped guides always carry related content; the false arm is unreachable */}
       {(guide.relatedServices.length > 0 ||
         guide.relatedUseCases.length > 0) && (
-        <Reveal as="section" className="mk-section">
-          <div className="mk-container">
-            <h2 className="mk-h2">Related</h2>
-            <div className="mk-grid">
+        <Reveal as="section" className={sectionClass}>
+          <Container>
+            <h2 className={h2Class}>Related</h2>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {guide.relatedServices.map((related) => {
                 const relatedGuide = getServiceGuide(related);
                 /* v8 ignore next -- every shipped relatedService slug resolves */
                 if (!relatedGuide) return null;
                 return (
-                  <Link
+                  <LinkCard
                     key={`svc-${related}`}
                     to={href(`/guides/backup-${related}-docker`)}
-                    className="mk-card"
-                  >
-                    <h3>{relatedGuide.serviceName}</h3>
-                    <p className="mk-muted">
-                      Back up {relatedGuide.serviceName} in Docker
-                    </p>
-                  </Link>
+                    title={relatedGuide.serviceName}
+                    description={`Back up ${relatedGuide.serviceName} in Docker`}
+                  />
                 );
               })}
               {guide.relatedUseCases.map((related) => {
@@ -226,18 +268,16 @@ export const GuidePage = () => {
                 /* v8 ignore next -- every shipped relatedUseCase slug resolves */
                 if (!relatedApp) return null;
                 return (
-                  <Link
+                  <LinkCard
                     key={`app-${related}`}
                     to={href(`/backup/${related}-docker`)}
-                    className="mk-card"
-                  >
-                    <h3>{relatedApp.appName}</h3>
-                    <p className="mk-muted">{relatedApp.category}</p>
-                  </Link>
+                    title={relatedApp.appName}
+                    description={relatedApp.category}
+                  />
                 );
               })}
             </div>
-          </div>
+          </Container>
         </Reveal>
       )}
 

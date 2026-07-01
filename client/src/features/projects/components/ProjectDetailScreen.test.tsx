@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -103,6 +104,8 @@ describe('ProjectDetailScreen shell', () => {
   });
 
   it('renders the header and switches tabs', async () => {
+    // Radix Tabs activate on focus, so drive tab switches with user-event.
+    const user = userEvent.setup();
     renderDetail({ projects: { items: [baseProject()] } });
     // fetchProjects should NOT run because the project is already present.
     await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
@@ -112,11 +115,11 @@ describe('ProjectDetailScreen shell', () => {
     // Default tab is plan.
     expect(screen.getByRole('button', { name: /save plan/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /schedule/i }));
-    expect(screen.getByRole('button', { name: /save schedule/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /schedule/i }));
+    expect(await screen.findByRole('button', { name: /save schedule/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: /restore drill/i }));
-    expect(screen.getByRole('heading', { name: /restore drill/i })).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: /restore drill/i }));
+    expect(await screen.findByRole('heading', { name: /restore drill/i })).toBeInTheDocument();
   });
 });
 

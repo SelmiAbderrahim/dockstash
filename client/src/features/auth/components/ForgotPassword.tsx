@@ -4,6 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { requestPasswordReset } from '../store/thunks';
 import { clearError, clearMessage } from '../store/slice';
 import { selectAuthError, selectAuthMessage, selectAuthenticated } from '../store/selectors';
@@ -48,30 +58,45 @@ export const ForgotPassword = () => {
   });
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-card__title">Reset your password</h1>
-        <form className="auth-form" onSubmit={onSubmit}>
-          {errorMessage ? (
-            <div className="auth-alert" role="alert">
-              <strong>Error!</strong> {errorMessage}
+    <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Reset your password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+            {errorMessage ? (
+              <Alert variant="destructive" role="alert">
+                <AlertDescription>
+                  <strong>Error!</strong> {errorMessage}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            {message ? (
+              <Alert role="status">
+                <AlertDescription>
+                  <strong>Success!</strong> {message}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="forgot-email">Email</Label>
+              <Input
+                id="forgot-email"
+                type="text"
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
+              {errors.email ? (
+                <p className="text-destructive text-sm">{errors.email.message}</p>
+              ) : null}
             </div>
-          ) : null}
-          {message ? (
-            <div className="auth-alert auth-alert--success">
-              <strong>Success!</strong> {message}
-            </div>
-          ) : null}
-          <div className="auth-field">
-            <label htmlFor="forgot-email">Email</label>
-            <input id="forgot-email" type="text" {...register('email')} />
-            {errors.email ? <div className="error">{errors.email.message}</div> : null}
-          </div>
-          <button className="auth-button" type="submit" disabled={isSubmitting}>
-            Reset Password
-          </button>
-        </form>
-      </div>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              Reset Password
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import moment from 'moment';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Button } from '@shared/ui/button';
+import { Card, CardContent } from '@shared/ui/card';
+import { cn } from '@shared/lib/utils';
 import {
   cancelSubscription,
   fetchCustomer,
@@ -9,6 +13,11 @@ import {
 } from '../store/thunks';
 import { selectBillingError, selectBillingMessage, selectCustomer } from '../store/selectors';
 import { CheckoutForm } from './CheckoutForm';
+
+const selectClass = cn(
+  'h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs',
+  'outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
+);
 
 export const BillingSettings = () => {
   const dispatch = useAppDispatch();
@@ -36,85 +45,71 @@ export const BillingSettings = () => {
   const renderAccountActions = () => {
     if (cancelConfirm) {
       return (
-        <div className="cancel-confirm">
+        <div className="mt-4 flex flex-col gap-3">
           <p>Do you really want to cancel your membership?</p>
-          <div className="action-buttons">
-            <button
+          <div className="flex flex-wrap gap-2">
+            <Button
               type="button"
-              className="btn btn-danger"
+              variant="destructive"
               onClick={() => void dispatch(cancelSubscription())}
             >
               Yes
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => setCancelConfirm(false)}
-            >
+            </Button>
+            <Button type="button" onClick={() => setCancelConfirm(false)}>
               No
-            </button>
+            </Button>
           </div>
         </div>
       );
     }
     if (showChangeSubscription) {
       return (
-        <div className="action-buttons">
-          <select name="newPlan" value={newPlan} onChange={handlePlanChange}>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <select
+            name="newPlan"
+            value={newPlan}
+            onChange={handlePlanChange}
+            className={selectClass}
+          >
             <option value="bronze">Bronze</option>
             <option value="silver">Silver</option>
             <option value="gold">Gold</option>
           </select>
-          <button type="button" className="btn btn-primary" onClick={submitPlanChange}>
+          <Button type="button" onClick={submitPlanChange}>
             Change
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setShowChangeSubscription(false)}
-          >
+          </Button>
+          <Button type="button" variant="outline" onClick={() => setShowChangeSubscription(false)}>
             Cancel
-          </button>
+          </Button>
         </div>
       );
     }
     if (showUpdateBilling) {
       return (
-        <div className="action-buttons">
+        <div className="mt-4 flex flex-col gap-3">
           <CheckoutForm />
-          <button
+          <Button
             type="button"
-            className="btn btn-danger"
+            variant="destructive"
+            className="w-fit"
             onClick={() => setShowUpdateBilling(false)}
           >
             Cancel
-          </button>
+          </Button>
         </div>
       );
     }
     return (
-      <div className="action-buttons">
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => setShowChangeSubscription(true)}
-        >
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button type="button" onClick={() => setShowChangeSubscription(true)}>
           Change Subscription
-        </button>
-        <button
-          type="button"
-          className="btn btn-info"
-          onClick={() => setShowUpdateBilling(true)}
-        >
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setShowUpdateBilling(true)}>
           Update Billing Information
-        </button>
-        <button
-          type="button"
-          className="btn btn-danger"
-          onClick={() => setCancelConfirm(true)}
-        >
+        </Button>
+        <Button type="button" variant="destructive" onClick={() => setCancelConfirm(true)}>
           Cancel Subscription
-        </button>
+        </Button>
       </div>
     );
   };
@@ -123,13 +118,13 @@ export const BillingSettings = () => {
     const subscriptions = customer.subscriptions;
     const sources = customer.sources;
     if (!subscriptions || !sources) {
-      return <div className="loading">Loading...</div>;
+      return <div className="text-muted-foreground">Loading...</div>;
     }
 
     const lastSubscription = subscriptions.data[subscriptions.total_count - 1];
     const lastSource = sources.data[sources.total_count - 1];
     if (!lastSubscription || !lastSource) {
-      return <div className="loading">Loading...</div>;
+      return <div className="text-muted-foreground">Loading...</div>;
     }
 
     const subscribedPlan = lastSubscription.plan.id;
@@ -141,14 +136,14 @@ export const BillingSettings = () => {
 
     if (lastSubscription.cancel_at_period_end) {
       return (
-        <div className="active-subscription">
+        <div>
           Your {subscribedPlan} plan will expire on {pmtDate}. You will not be charged again.
         </div>
       );
     }
 
     return (
-      <div className="active-subscription">
+      <div>
         You are subscribed to the {subscribedPlan} plan. Your credit card ending in {lastFour}{' '}
         will be charged ${pmtAmt} on {pmtDate}.{renderAccountActions()}
       </div>
@@ -156,18 +151,24 @@ export const BillingSettings = () => {
   };
 
   return (
-    <div className="user-subscription">
-      {errorMessage ? (
-        <div role="alert">
-          <strong>Oops!</strong> {errorMessage}
-        </div>
-      ) : null}
-      {successMessage ? (
-        <div>
-          <strong>Success!</strong> {successMessage}
-        </div>
-      ) : null}
-      {renderPlan()}
-    </div>
+    <Card className="mx-auto w-full max-w-2xl">
+      <CardContent className="flex flex-col gap-4">
+        {errorMessage ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              <strong>Oops!</strong> {errorMessage}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {successMessage ? (
+          <Alert>
+            <AlertDescription>
+              <strong>Success!</strong> {successMessage}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {renderPlan()}
+      </CardContent>
+    </Card>
   );
 };

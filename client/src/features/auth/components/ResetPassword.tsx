@@ -4,6 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { performPasswordReset } from '../store/thunks';
 import { clearError, clearMessage } from '../store/slice';
 import { selectAuthError, selectAuthMessage, selectAuthenticated } from '../store/selectors';
@@ -59,39 +69,59 @@ export const ResetPassword = () => {
   });
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-card__title">Choose a new password</h1>
-        <form className="auth-form" onSubmit={onSubmit}>
-          <div className="auth-field">
-            <label htmlFor="reset-password">New Password</label>
-            <input id="reset-password" type="password" {...register('password')} />
-            {errors.password ? <div className="error">{errors.password.message}</div> : null}
-          </div>
+    <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">Choose a new password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="reset-password">New Password</Label>
+              <Input
+                id="reset-password"
+                type="password"
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
+              {errors.password ? (
+                <p className="text-destructive text-sm">{errors.password.message}</p>
+              ) : null}
+            </div>
 
-          <div className="auth-field">
-            <label htmlFor="reset-password-confirm">Confirm New Password</label>
-            <input id="reset-password-confirm" type="password" {...register('passwordConfirm')} />
-            {errors.passwordConfirm ? (
-              <div className="error">{errors.passwordConfirm.message}</div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="reset-password-confirm">Confirm New Password</Label>
+              <Input
+                id="reset-password-confirm"
+                type="password"
+                aria-invalid={!!errors.passwordConfirm}
+                {...register('passwordConfirm')}
+              />
+              {errors.passwordConfirm ? (
+                <p className="text-destructive text-sm">{errors.passwordConfirm.message}</p>
+              ) : null}
+            </div>
+
+            {errorMessage ? (
+              <Alert variant="destructive" role="alert">
+                <AlertDescription>
+                  <strong>Oops!</strong> {errorMessage}
+                </AlertDescription>
+              </Alert>
             ) : null}
-          </div>
-
-          {errorMessage ? (
-            <div className="auth-alert" role="alert">
-              <strong>Oops!</strong> {errorMessage}
-            </div>
-          ) : null}
-          {message ? (
-            <div className="auth-alert auth-alert--success">
-              <strong>Success!</strong> {message}
-            </div>
-          ) : null}
-          <button className="auth-button" type="submit" disabled={isSubmitting}>
-            Change Password
-          </button>
-        </form>
-      </div>
+            {message ? (
+              <Alert role="status">
+                <AlertDescription>
+                  <strong>Success!</strong> {message}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              Change Password
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

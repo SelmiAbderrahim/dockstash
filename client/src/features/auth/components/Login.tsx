@@ -5,6 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { loginUser } from '../store/thunks';
 import { clearError } from '../store/slice';
 import {
@@ -63,33 +73,53 @@ export const Login = () => {
   });
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <h1 className="auth-card__title">{t('login.submit')}</h1>
-        <form className="auth-form" onSubmit={onSubmit}>
-          {errorMessage ? (
-            <div className="auth-alert" role="alert">
-              <strong>{t('login.errorPrefix')}</strong> {errorMessage}
+    <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl">{t('login.submit')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+            {errorMessage ? (
+              <Alert variant="destructive" role="alert">
+                <AlertDescription>
+                  <strong>{t('login.errorPrefix')}</strong> {errorMessage}
+                </AlertDescription>
+              </Alert>
+            ) : null}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="login-email">{t('login.email')}</Label>
+              <Input
+                id="login-email"
+                type="text"
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
+              {errors.email ? (
+                <p className="text-destructive text-sm">{errors.email.message}</p>
+              ) : null}
             </div>
-          ) : null}
-          <div className="auth-field">
-            <label htmlFor="login-email">{t('login.email')}</label>
-            <input id="login-email" type="text" {...register('email')} />
-            {errors.email ? <div className="error">{errors.email.message}</div> : null}
-          </div>
-          <div className="auth-field">
-            <label htmlFor="login-password">{t('login.password')}</label>
-            <input id="login-password" type="password" {...register('password')} />
-            {errors.password ? <div className="error">{errors.password.message}</div> : null}
-          </div>
-          <button className="auth-button" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t('login.submitting') : t('login.submit')}
-          </button>
-        </form>
-        <Link className="auth-link" to="/forgot-password">
-          {t('login.forgot')}
-        </Link>
-      </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="login-password">{t('login.password')}</Label>
+              <Input
+                id="login-password"
+                type="password"
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
+              {errors.password ? (
+                <p className="text-destructive text-sm">{errors.password.message}</p>
+              ) : null}
+            </div>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? t('login.submitting') : t('login.submit')}
+            </Button>
+          </form>
+          <Button asChild variant="link" className="mt-2 px-0">
+            <Link to="/forgot-password">{t('login.forgot')}</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

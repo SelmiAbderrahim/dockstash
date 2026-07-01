@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Button } from '@shared/ui/button';
+import { Card, CardContent } from '@shared/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@shared/ui/table';
 import { useTabParam } from '../hooks/useTabParam';
 import {
   loadOverview,
@@ -61,171 +73,181 @@ export const BillingPage = () => {
   };
 
   return (
-    <main className="billing-page" aria-labelledby="billing-page-title">
-      <h1 id="billing-page-title">{t('page.title')}</h1>
-
-      <nav role="tablist" aria-label={t('page.tabsLabel')} className="billing-tabs">
-        {TABS.map((name) => (
-          <button
-            key={name}
-            role="tab"
-            type="button"
-            aria-selected={tab === name}
-            aria-controls={`tab-${name}`}
-            className={tab === name ? 'active' : ''}
-            onClick={() => setTab(name)}
-          >
-            {t(`page.tab.${name}`)}
-          </button>
-        ))}
-      </nav>
+    <main
+      className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8"
+      aria-labelledby="billing-page-title"
+    >
+      <h1 id="billing-page-title" className="text-2xl font-bold tracking-tight">
+        {t('page.title')}
+      </h1>
 
       {error ? (
-        <div role="alert" className="billing-page__alert">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
-      {message ? <div className="billing-page__notice">{message}</div> : null}
+      {message ? (
+        <Alert>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      {tab === 'overview' ? (
-        <section
-          role="tabpanel"
-          id="tab-overview"
-          aria-labelledby="billing-page-title"
-          className="billing-overview"
-        >
+      <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
+        <TabsList aria-label={t('page.tabsLabel')}>
+          {TABS.map((name) => (
+            <TabsTrigger key={name} value={name}>
+              {t(`page.tab.${name}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="overview">
           {loadingOverview ? (
-            <p role="status" aria-live="polite">
+            <p role="status" aria-live="polite" className="py-6 text-muted-foreground">
               {t('page.loading')}
             </p>
           ) : overview ? (
-            <dl>
-              <div>
-                <dt>{t('overview.plan')}</dt>
-                <dd>{t(`plan.${overview.slug}`)}</dd>
-              </div>
-              <div>
-                <dt>{t('overview.status')}</dt>
-                <dd>{t(`status.${overview.status}`)}</dd>
-              </div>
-              {overview.currentPeriodEnd ? (
-                <div>
-                  <dt>{t('overview.renewsOn')}</dt>
-                  <dd>{new Date(overview.currentPeriodEnd).toLocaleDateString()}</dd>
-                </div>
-              ) : null}
-              {overview.graceEndsAt ? (
-                <div>
-                  <dt>{t('overview.gracePeriod')}</dt>
-                  <dd>{new Date(overview.graceEndsAt).toLocaleDateString()}</dd>
-                </div>
-              ) : null}
-              {overview.cancelAtPeriodEnd ? (
-                <div className="billing-overview__cancel">
-                  {t('overview.cancelAtPeriodEnd')}
-                </div>
-              ) : null}
-            </dl>
+            <Card>
+              <CardContent>
+                <dl className="grid gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1">
+                    <dt className="text-sm text-muted-foreground">{t('overview.plan')}</dt>
+                    <dd className="font-medium">{t(`plan.${overview.slug}`)}</dd>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <dt className="text-sm text-muted-foreground">{t('overview.status')}</dt>
+                    <dd className="font-medium">{t(`status.${overview.status}`)}</dd>
+                  </div>
+                  {overview.currentPeriodEnd ? (
+                    <div className="flex flex-col gap-1">
+                      <dt className="text-sm text-muted-foreground">{t('overview.renewsOn')}</dt>
+                      <dd className="font-medium">
+                        {new Date(overview.currentPeriodEnd).toLocaleDateString()}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {overview.graceEndsAt ? (
+                    <div className="flex flex-col gap-1">
+                      <dt className="text-sm text-muted-foreground">
+                        {t('overview.gracePeriod')}
+                      </dt>
+                      <dd className="font-medium">
+                        {new Date(overview.graceEndsAt).toLocaleDateString()}
+                      </dd>
+                    </div>
+                  ) : null}
+                  {overview.cancelAtPeriodEnd ? (
+                    <div className="text-sm text-muted-foreground sm:col-span-2">
+                      {t('overview.cancelAtPeriodEnd')}
+                    </div>
+                  ) : null}
+                </dl>
+              </CardContent>
+            </Card>
           ) : (
-            <p>{t('page.empty')}</p>
+            <p className="py-6 text-muted-foreground">{t('page.empty')}</p>
           )}
-        </section>
-      ) : null}
+        </TabsContent>
 
-      {tab === 'usage' ? (
-        <section
-          role="tabpanel"
-          id="tab-usage"
-          aria-labelledby="billing-page-title"
-          className="billing-usage"
-        >
+        <TabsContent value="usage">
           {loadingUsage ? (
-            <p role="status" aria-live="polite">
+            <p role="status" aria-live="polite" className="py-6 text-muted-foreground">
               {t('page.loading')}
             </p>
           ) : usage ? (
-            <>
-              <p>
-                {t('usage.projects', {
-                  used: usage.projects.used,
-                  cap: usage.projects.cap ?? t('grid.caps.unlimited'),
-                })}
-              </p>
-              <p>{t('usage.retention', { days: usage.retentionDays })}</p>
-              <p>{t(`grid.frequency.${usage.frequency}`)}</p>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-1 text-sm">
+                <p>
+                  {t('usage.projects', {
+                    used: usage.projects.used,
+                    cap: usage.projects.cap ?? t('grid.caps.unlimited'),
+                  })}
+                </p>
+                <p>{t('usage.retention', { days: usage.retentionDays })}</p>
+                <p>{t(`grid.frequency.${usage.frequency}`)}</p>
+              </div>
 
-              <div className="usage-metering">
-                <h2>{t('usage.metering.title')}</h2>
+              <div className="flex flex-col gap-3">
+                <h2 className="text-lg font-semibold">{t('usage.metering.title')}</h2>
                 {usage.metering.length === 0 ? (
-                  <p>{t('usage.metering.empty')}</p>
+                  <p className="text-sm text-muted-foreground">{t('usage.metering.empty')}</p>
                 ) : (
-                  <table className="usage-metering__table">
-                    <thead>
-                      <tr>
-                        <th scope="col">{t('usage.metering.colProject')}</th>
-                        <th scope="col">{t('usage.metering.colSnapshots')}</th>
-                        <th scope="col">{t('usage.metering.colSize')}</th>
-                        <th scope="col">{t('usage.metering.colLastRun')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usage.metering.map((m) => (
-                        <tr key={m.id}>
-                          <th scope="row">{m.name}</th>
-                          <td>{m.snapshotCount}</td>
-                          <td>{formatBytes(m.sizeBytes)}</td>
-                          <td>
-                            {m.lastRunAt
-                              ? new Date(m.lastRunAt).toLocaleString()
-                              : t('usage.metering.never')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <Card>
+                    <CardContent className="px-0">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead scope="col">{t('usage.metering.colProject')}</TableHead>
+                            <TableHead scope="col">{t('usage.metering.colSnapshots')}</TableHead>
+                            <TableHead scope="col">{t('usage.metering.colSize')}</TableHead>
+                            <TableHead scope="col">{t('usage.metering.colLastRun')}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {usage.metering.map((m) => (
+                            <TableRow key={m.id}>
+                              <TableHead scope="row">{m.name}</TableHead>
+                              <TableCell>{m.snapshotCount}</TableCell>
+                              <TableCell>{formatBytes(m.sizeBytes)}</TableCell>
+                              <TableCell>
+                                {m.lastRunAt
+                                  ? new Date(m.lastRunAt).toLocaleString()
+                                  : t('usage.metering.never')}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
 
               {usage.projects.cap !== null && usage.projects.used > usage.projects.cap ? (
-                <p role="alert" className="usage-over-cap">
-                  {t('usage.overCap')}
-                </p>
+                <Alert variant="destructive">
+                  <AlertDescription>{t('usage.overCap')}</AlertDescription>
+                </Alert>
               ) : null}
 
               {usage.selectionRequired ? (
-                <div className="downgrade-selection">
-                  <h2>{t('selection.title')}</h2>
-                  <p>{t('selection.help', { cap: usage.projects.cap ?? '' })}</p>
-                  <ul>
-                    {[...usage.projects.active, ...usage.projects.paused].map((p) => (
-                      <li key={p.id}>
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={keepIds.includes(p.id)}
-                            onChange={() => toggleKeep(p.id)}
-                          />{' '}
-                          {p.name}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={submitSelection}
-                    disabled={keepIds.length === 0}
-                  >
-                    {t('selection.submit')}
-                  </button>
-                </div>
+                <Card>
+                  <CardContent className="flex flex-col gap-3">
+                    <h2 className="text-lg font-semibold">{t('selection.title')}</h2>
+                    <p className="text-sm text-muted-foreground">
+                      {t('selection.help', { cap: usage.projects.cap ?? '' })}
+                    </p>
+                    <ul className="flex flex-col gap-2">
+                      {[...usage.projects.active, ...usage.projects.paused].map((p) => (
+                        <li key={p.id}>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="size-4 accent-primary"
+                              checked={keepIds.includes(p.id)}
+                              onChange={() => toggleKeep(p.id)}
+                            />{' '}
+                            {p.name}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      type="button"
+                      className="w-fit"
+                      onClick={submitSelection}
+                      disabled={keepIds.length === 0}
+                    >
+                      {t('selection.submit')}
+                    </Button>
+                  </CardContent>
+                </Card>
               ) : null}
-            </>
+            </div>
           ) : (
-            <p>{t('page.empty')}</p>
+            <p className="py-6 text-muted-foreground">{t('page.empty')}</p>
           )}
-        </section>
-      ) : null}
+        </TabsContent>
+      </Tabs>
     </main>
   );
 };

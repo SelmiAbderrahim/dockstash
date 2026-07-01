@@ -15,7 +15,9 @@ export const LanguageSwitcher = ({ className, id = 'language-switcher' }: Langua
 
   return (
     <div className={className}>
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
       <select
         id={id}
         aria-label={label}
@@ -24,6 +26,7 @@ export const LanguageSwitcher = ({ className, id = 'language-switcher' }: Langua
           const next = event.target.value;
           if (isSupportedLocale(next)) void changeLanguage(next);
         }}
+        className="border-input bg-background focus-visible:ring-ring h-9 rounded-md border px-2 text-sm shadow-xs focus-visible:ring-2 focus-visible:outline-none"
       >
         {SUPPORTED_LOCALES.map((locale) => (
           <option key={locale} value={locale}>

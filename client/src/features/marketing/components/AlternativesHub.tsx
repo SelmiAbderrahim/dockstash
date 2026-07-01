@@ -1,9 +1,26 @@
 import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@shared/ui/table';
 import { COMPETITORS } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Reveal } from '../useReveal';
-import { Breadcrumbs, FaqSection } from './shared';
+import {
+  Breadcrumbs,
+  Container,
+  Eyebrow,
+  FaqSection,
+  LinkCard,
+  h1Class,
+  h2Class,
+  sectionClass,
+} from './shared';
 import type { FaqItem } from '../types';
 
 const COMPETITOR_LIST = Object.values(COMPETITORS);
@@ -70,80 +87,91 @@ export const AlternativesHub = () => {
         jsonLd={jsonLd}
       />
 
-      <div className="mk-container">
+      <Container>
         <Breadcrumbs
           crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Alternatives' }]}
           locale={locale}
         />
-      </div>
+      </Container>
 
-      <section className="mk-section">
-        <div className="mk-container">
-          <h1 className="mk-h1">Dockstash alternatives</h1>
-          <p className="mk-answer">{ANSWER}</p>
-        </div>
+      <section className={sectionClass}>
+        <Container>
+          <h1 className={h1Class}>Dockstash alternatives</h1>
+          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+            {ANSWER}
+          </p>
+        </Container>
       </section>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <span className="mk-eyebrow">Comparison</span>
-          <h2 className="mk-h2">At a glance</h2>
-          <div className="mk-table-wrap">
-            <table className="mk-table">
-              <thead>
-                <tr>
-                  <th scope="col">Tool</th>
-                  <th scope="col">Category</th>
-                  <th scope="col">Pricing</th>
-                  <th scope="col">Docker-aware</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPETITOR_LIST.map((competitor) => (
-                  <tr key={competitor.slug}>
-                    <th scope="row">
-                      <Link to={href(`/alternatives/${competitor.slug}`)}>
-                        {competitor.name}
-                      </Link>
-                    </th>
-                    <td>{competitor.category}</td>
-                    <td>{competitor.pricing}</td>
-                    <td>No — Dockstash is</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>Comparison</Eyebrow>
+          <h2 className={h2Class}>At a glance</h2>
+          <Table className="border">
+            <TableHeader>
+              <TableRow>
+                <TableHead scope="col" className="text-start align-top">Tool</TableHead>
+                <TableHead scope="col" className="text-start align-top">Category</TableHead>
+                <TableHead scope="col" className="text-start align-top">Pricing</TableHead>
+                <TableHead scope="col" className="text-start align-top">
+                  Docker-aware
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {COMPETITOR_LIST.map((competitor) => (
+                <TableRow key={competitor.slug}>
+                  <TableHead
+                    scope="row"
+                    className="whitespace-normal text-start align-top font-medium"
+                  >
+                    <Link
+                      to={href(`/alternatives/${competitor.slug}`)}
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      {competitor.name}
+                    </Link>
+                  </TableHead>
+                  <TableCell className="whitespace-normal align-top">
+                    {competitor.category}
+                  </TableCell>
+                  <TableCell className="whitespace-normal align-top">
+                    {competitor.pricing}
+                  </TableCell>
+                  <TableCell className="whitespace-normal align-top">
+                    No — Dockstash is
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Container>
       </Reveal>
 
-      <Reveal as="section" className="mk-section">
-        <div className="mk-container">
-          <h2 className="mk-h2">Compare each alternative</h2>
-          <div className="mk-grid">
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>Compare each alternative</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {COMPETITOR_LIST.map((competitor) => (
-              <Link
+              <LinkCard
                 key={competitor.slug}
                 to={href(`/alternatives/${competitor.slug}`)}
-                className="mk-card"
-              >
-                <h3>{competitor.name}</h3>
-                <p className="mk-muted">{competitor.category}</p>
-              </Link>
+                title={competitor.name}
+                description={competitor.category}
+              />
             ))}
-            <Link to={href('/vs/backrest')} className="mk-card">
-              <h3>Dockstash vs Backrest</h3>
-              <p className="mk-muted">Head-to-head comparison</p>
-            </Link>
-            <Link
+            <LinkCard
+              to={href('/vs/backrest')}
+              title="Dockstash vs Backrest"
+              description="Head-to-head comparison"
+            />
+            <LinkCard
               to={href('/compare/self-hosted-backup-vs-cloud-backup')}
-              className="mk-card"
-            >
-              <h3>Self-hosted vs cloud backup</h3>
-              <p className="mk-muted">Category comparison</p>
-            </Link>
+              title="Self-hosted vs cloud backup"
+              description="Category comparison"
+            />
           </div>
-        </div>
+        </Container>
       </Reveal>
 
       <FaqSection faqs={HUB_FAQ} />

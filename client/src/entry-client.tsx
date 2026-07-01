@@ -11,7 +11,7 @@ import { MARKETING_LOCALE_PREFIXES } from '@features/marketing/useMarketingRoute
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
-import './styles/index.scss';
+import './styles/tailwind.css';
 
 declare global {
   interface Window {

@@ -79,9 +79,13 @@ describe('SetupWizard', () => {
   });
 
   it('renders nothing once storage is already configured', () => {
-    const { container } = { container: document.body } as { container: HTMLElement };
+    // The loaded wizard is now a shadcn Card (no `.ds-wizard` wrapper), so a
+    // `.ds-wizard` query would pass vacuously. Assert the real intent instead:
+    // when storage is configured the component renders neither the loading
+    // status nor the wizard heading — it returns nothing.
     renderWizard({ storage: { host: 'h', user: 'root', port: 22, configured: true } });
-    expect(container.querySelector('.ds-wizard')).toBeNull();
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Set up your storage' })).toBeNull();
   });
 
   it('renders the wizard when setup is needed and surfaces store errors', () => {

@@ -1,5 +1,18 @@
 # UI/UX Patterns - Best Practice Guide
 
+> **UPDATE (shadcn/ui adoption).** The client has migrated to **shadcn/ui + Tailwind v4**
+> with a fresh, modern shadcn default aesthetic. shadcn's component variants and design
+> tokens (`client/src/styles/tailwind.css`) are now the source of truth for look-and-feel,
+> and they **supersede** the strict "anti-Codex" visual constraints below (button/card
+> radius values, no-gradient, pill-shape, transition rules). Do NOT hand-fight shadcn
+> defaults to satisfy those specific rules. Use `@shared/ui/*` primitives and semantic
+> tokens (`bg-primary`, `text-muted-foreground`, …) rather than raw colors.
+>
+> **Still fully in force:** the **Accessibility**, **Touch & Interaction**, **Forms &
+> Feedback**, **Loading/Error states**, and **responsive/layout** sections below, plus
+> "no emoji as icons" (use lucide-react) and light/dark contrast parity. Prefer existing
+> shadcn components over custom markup (Alert, Empty, Skeleton, Badge, Separator, Sonner).
+
 ## MANDATORY REQUIREMENT
 
 All UI components MUST follow these patterns. Build interfaces that feel human-designed, functional, and honest — not like default AI-generated output.

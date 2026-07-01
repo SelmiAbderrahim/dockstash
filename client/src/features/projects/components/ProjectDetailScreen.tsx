@@ -1,11 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { useTabParam } from '@shared/hooks/useTabParam';
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Separator } from '@shared/ui/separator';
+import { Alert, AlertDescription } from '@shared/ui/alert';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from '@shared/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { fetchProjects, fetchSchedules, savePlan, saveSchedule } from '../store/thunks';
 import {
   selectPlanSaveStatus,
@@ -17,7 +28,6 @@ import { resetSaveStatus } from '../store/slice';
 import type { Project, ProjectPlan } from '../types';
 
 const TABS = ['plan', 'schedule', 'drill'] as const;
-type Tab = (typeof TABS)[number];
 
 // Loose cron sanity check (5 or 6 whitespace-separated tokens). Server does
 // full node-cron validation on submit.
@@ -80,78 +90,94 @@ const PlanEditor = ({ project }: PlanEditorProps) => {
   );
 
   return (
-    <form
-      className="ds-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void dispatch(savePlan({ projectId: project.id, plan }));
-      }}
-    >
-      <fieldset>
-        <legend>{t('plan.files')}</legend>
-        {allPaths.length === 0 && <p className="ds-muted">{t('plan.noFiles')}</p>}
-        {allPaths.map((p) => (
-          <label key={p} className="ds-switch">
-            <input
-              type="checkbox"
-              checked={plan.paths.includes(p)}
-              onChange={() => togglePath(p)}
-              aria-label={p}
-            />
-            <span>{p}</span>
-          </label>
-        ))}
-      </fieldset>
-
-      <fieldset>
-        <legend>{t('plan.databases')}</legend>
-        {plan.databases.length === 0 && <p className="ds-muted">{t('plan.noDatabases')}</p>}
-        {plan.databases.map((db, idx) => (
-          <label key={`${db.service}-${idx}`} className="ds-switch">
-            <input
-              type="checkbox"
-              checked={db.enabled}
-              onChange={() => toggleDb(idx)}
-              aria-label={`${db.service} (${db.type})`}
-            />
-            <span>
-              {db.service} <em>({db.type})</em>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-
-      <fieldset>
-        <legend>{t('plan.configs')}</legend>
-        {allConfigs.length === 0 && <p className="ds-muted">{t('plan.noConfigs')}</p>}
-        {allConfigs.map((c) => (
-          <label key={c} className="ds-switch">
-            <input
-              type="checkbox"
-              checked={plan.configs.includes(c)}
-              onChange={() => toggleConfig(c)}
-              aria-label={c}
-            />
-            <span>{c}</span>
-          </label>
-        ))}
-      </fieldset>
-
-      <div className="ds-form__actions">
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={saveStatus === 'loading'}
+    <Card>
+      <CardContent>
+        <form
+          className="flex flex-col gap-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void dispatch(savePlan({ projectId: project.id, plan }));
+          }}
         >
-          {saveStatus === 'loading' ? t('plan.saving') : t('plan.save')}
-        </button>
-        {saveStatus === 'succeeded' && (
-          <span role="status" aria-live="polite" className="ds-success">
-            {t('plan.saved')}
-          </span>
-        )}
-      </div>
-    </form>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium">{t('plan.files')}</legend>
+            {allPaths.length === 0 && (
+              <p className="text-muted-foreground text-sm">{t('plan.noFiles')}</p>
+            )}
+            {allPaths.map((p) => (
+              <label key={p} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={plan.paths.includes(p)}
+                  onChange={() => togglePath(p)}
+                  aria-label={p}
+                />
+                <span className="font-mono text-xs break-all">{p}</span>
+              </label>
+            ))}
+          </fieldset>
+
+          <Separator />
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium">{t('plan.databases')}</legend>
+            {plan.databases.length === 0 && (
+              <p className="text-muted-foreground text-sm">{t('plan.noDatabases')}</p>
+            )}
+            {plan.databases.map((db, idx) => (
+              <label key={`${db.service}-${idx}`} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={db.enabled}
+                  onChange={() => toggleDb(idx)}
+                  aria-label={`${db.service} (${db.type})`}
+                />
+                <span>
+                  {db.service} <em className="text-muted-foreground">({db.type})</em>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          <Separator />
+
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium">{t('plan.configs')}</legend>
+            {allConfigs.length === 0 && (
+              <p className="text-muted-foreground text-sm">{t('plan.noConfigs')}</p>
+            )}
+            {allConfigs.map((c) => (
+              <label key={c} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-primary"
+                  checked={plan.configs.includes(c)}
+                  onChange={() => toggleConfig(c)}
+                  aria-label={c}
+                />
+                <span className="font-mono text-xs break-all">{c}</span>
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={saveStatus === 'loading'}>
+              {saveStatus === 'loading' && (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              )}
+              {saveStatus === 'loading' ? t('plan.saving') : t('plan.save')}
+            </Button>
+            {saveStatus === 'succeeded' && (
+              <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+                {t('plan.saved')}
+              </span>
+            )}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -209,63 +235,70 @@ const ScheduleEditor = ({ project }: ScheduleEditorProps) => {
   });
 
   return (
-    <form className="ds-form" onSubmit={onSubmit} noValidate>
-      <fieldset>
-        <legend>{t('schedule.presetLegend')}</legend>
-        {(['daily', 'weekly', 'cron'] as const).map((p) => (
-          <label key={p} className="ds-radio">
+    <Card>
+      <CardContent>
+        <form className="flex flex-col gap-6" onSubmit={onSubmit} noValidate>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-2 text-sm font-medium">{t('schedule.presetLegend')}</legend>
+            {(['daily', 'weekly', 'cron'] as const).map((p) => (
+              <label key={p} className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  className="size-4 accent-primary"
+                  name="preset"
+                  value={p}
+                  checked={preset === p}
+                  onChange={() => applyPreset(p)}
+                />
+                <span>{t(`schedule.preset.${p}`)}</span>
+              </label>
+            ))}
+          </fieldset>
+
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="font-medium">{t('schedule.cronLabel')}</span>
             <input
-              type="radio"
-              name="preset"
-              value={p}
-              checked={preset === p}
-              onChange={() => applyPreset(p)}
+              type="text"
+              className="border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive h-9 w-full rounded-md border px-3 py-1 font-mono text-sm shadow-xs outline-none focus-visible:ring-[3px] read-only:opacity-70"
+              {...register('cron')}
+              aria-invalid={Boolean(errors.cron)}
+              aria-describedby={errors.cron ? 'cron-error' : undefined}
+              readOnly={preset !== 'cron'}
+              value={cronValue}
+              onChange={(e) => setValue('cron', e.target.value)}
             />
-            <span>{t(`schedule.preset.${p}`)}</span>
+            {errors.cron && (
+              <Alert variant="destructive" id="cron-error">
+                <AlertDescription>
+                  {/* zodResolver always sets a message here; the fallback is unreachable. */}
+                  {/* v8 ignore next */}
+                  {t((errors.cron?.message as string | undefined) ?? 'schedule.errors.cronFormat')}
+                </AlertDescription>
+              </Alert>
+            )}
           </label>
-        ))}
-      </fieldset>
 
-      <label className="ds-field">
-        <span>{t('schedule.cronLabel')}</span>
-        <input
-          type="text"
-          {...register('cron')}
-          aria-invalid={Boolean(errors.cron)}
-          aria-describedby={errors.cron ? 'cron-error' : undefined}
-          readOnly={preset !== 'cron'}
-          value={cronValue}
-          onChange={(e) => setValue('cron', e.target.value)}
-        />
-        {errors.cron && (
-          <span id="cron-error" role="alert" className="ds-field__error">
-            {/* zodResolver always sets a message here; the fallback is unreachable. */}
-            {/* v8 ignore next */}
-            {t((errors.cron?.message as string | undefined) ?? 'schedule.errors.cronFormat')}
-          </span>
-        )}
-      </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" className="size-4 accent-primary" {...register('enabled')} />
+            <span>{t('schedule.enabled')}</span>
+          </label>
 
-      <label className="ds-switch">
-        <input type="checkbox" {...register('enabled')} />
-        <span>{t('schedule.enabled')}</span>
-      </label>
-
-      <div className="ds-form__actions">
-        <button
-          type="submit"
-          className="ds-btn ds-btn--primary"
-          disabled={saveStatus === 'loading'}
-        >
-          {saveStatus === 'loading' ? t('schedule.saving') : t('schedule.save')}
-        </button>
-        {saveStatus === 'succeeded' && (
-          <span role="status" aria-live="polite" className="ds-success">
-            {t('schedule.saved')}
-          </span>
-        )}
-      </div>
-    </form>
+          <div className="flex items-center gap-3">
+            <Button type="submit" disabled={saveStatus === 'loading'}>
+              {saveStatus === 'loading' && (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              )}
+              {saveStatus === 'loading' ? t('schedule.saving') : t('schedule.save')}
+            </Button>
+            {saveStatus === 'succeeded' && (
+              <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+                {t('schedule.saved')}
+              </span>
+            )}
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -279,22 +312,30 @@ const DrillStatus = ({ project }: DrillProps) => {
     ? new Date(project.lastDrillAt).toLocaleString(i18n.language)
     : null;
   return (
-    <section className="ds-drill" aria-labelledby="drill-heading">
-      <h2 id="drill-heading">{t('drill.heading')}</h2>
-      {!at && <p className="ds-muted">{t('drill.none')}</p>}
-      {at && (
-        <p>
-          <span
-            className="ds-badge"
-            data-status={project.lastDrillStatus === 'pass' ? 'success' : 'failed'}
-          >
-            {t(`drill.${project.lastDrillStatus ?? 'fail'}`)}
-          </span>{' '}
-          <span>{at}</span>
-        </p>
-      )}
-      {project.lastDrillDetail && <p className="ds-muted">{project.lastDrillDetail}</p>}
-    </section>
+    <Card aria-labelledby="drill-heading">
+      <CardHeader>
+        <h2 id="drill-heading" className="text-base leading-none font-semibold">
+          {t('drill.heading')}
+        </h2>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {!at && <p className="text-muted-foreground text-sm">{t('drill.none')}</p>}
+        {at && (
+          <p className="flex items-center gap-2 text-sm">
+            <Badge
+              variant={project.lastDrillStatus === 'pass' ? 'default' : 'destructive'}
+              data-status={project.lastDrillStatus === 'pass' ? 'success' : 'failed'}
+            >
+              {t(`drill.${project.lastDrillStatus ?? 'fail'}`)}
+            </Badge>
+            <span>{at}</span>
+          </p>
+        )}
+        {project.lastDrillDetail && (
+          <p className="text-muted-foreground text-sm">{project.lastDrillDetail}</p>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
@@ -315,43 +356,49 @@ export const ProjectDetailScreen = () => {
 
   if (!project) {
     return (
-      <section className="ds-screen">
-        <p role="status" aria-live="polite" className="ds-loading">
-          <span className="ds-spinner" aria-hidden="true" /> {t('loading')}
+      <section className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
+        <p
+          role="status"
+          aria-live="polite"
+          className="text-muted-foreground inline-flex items-center gap-2 text-sm"
+        >
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" /> {t('loading')}
         </p>
       </section>
     );
   }
 
-  const activeTab = tab as Tab;
-
   return (
-    <section className="ds-screen" aria-labelledby="detail-heading">
-      <header className="ds-screen__header">
-        <h1 id="detail-heading">{project.name}</h1>
-        <p className="ds-muted">{project.path}</p>
+    <section
+      className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8"
+      aria-labelledby="detail-heading"
+    >
+      <header className="flex flex-col gap-1">
+        <h1 id="detail-heading" className="text-2xl font-semibold tracking-tight">
+          {project.name}
+        </h1>
+        <p className="text-muted-foreground font-mono text-xs break-all">{project.path}</p>
       </header>
 
-      <nav className="ds-tabs" role="tablist" aria-label={t('tabs.aria')}>
-        {TABS.map((k) => (
-          <button
-            key={k}
-            role="tab"
-            type="button"
-            aria-selected={activeTab === k}
-            className={`ds-tab ${activeTab === k ? 'ds-tab--active' : ''}`}
-            onClick={() => setTab(k)}
-          >
-            {t(`tabs.${k}`)}
-          </button>
-        ))}
-      </nav>
+      <Tabs value={tab} onValueChange={setTab} className="gap-6">
+        <TabsList aria-label={t('tabs.aria')}>
+          {TABS.map((k) => (
+            <TabsTrigger key={k} value={k}>
+              {t(`tabs.${k}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="ds-tabs__panel" role="tabpanel">
-        {activeTab === 'plan' && <PlanEditor project={project} />}
-        {activeTab === 'schedule' && <ScheduleEditor project={project} />}
-        {activeTab === 'drill' && <DrillStatus project={project} />}
-      </div>
+        <TabsContent value="plan">
+          <PlanEditor project={project} />
+        </TabsContent>
+        <TabsContent value="schedule">
+          <ScheduleEditor project={project} />
+        </TabsContent>
+        <TabsContent value="drill">
+          <DrillStatus project={project} />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 };
