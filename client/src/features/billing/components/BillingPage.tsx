@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Button } from '@shared/ui/button';
 import { Card, CardContent } from '@shared/ui/card';
+import { Checkbox } from '@shared/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import {
   Table,
@@ -231,12 +232,14 @@ export const BillingPage = () => {
                     <ul className="flex flex-col gap-2">
                       {[...usage.projects.active, ...usage.projects.paused].map((p) => (
                         <li key={p.id}>
-                          <label className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              className="size-4 accent-primary"
+                          <label
+                            htmlFor={`keep-${p.id}`}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Checkbox
+                              id={`keep-${p.id}`}
                               checked={keepIds.includes(p.id)}
-                              onChange={() => toggleKeep(p.id)}
+                              onCheckedChange={() => toggleKeep(p.id)}
                             />{' '}
                             {p.name}
                           </label>

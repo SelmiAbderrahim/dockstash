@@ -215,17 +215,18 @@ describe('BillingPage — usage tab', () => {
     mockedApi.fetchUsage.mockResolvedValue(usageOverCap);
     mockedApi.selectProjectsToKeep.mockResolvedValue({ active: 1, paused: 1 });
     renderPage('/billing?tab=usage');
-    const alphaCheckbox = (await screen.findByLabelText(/alpha/i)) as HTMLInputElement;
+    // shadcn/Radix Checkbox renders a <button role="checkbox"> tracked via aria-checked.
+    const alphaCheckbox = await screen.findByRole('checkbox', { name: /alpha/i });
     const submit = screen.getByRole('button', { name: /save selection/i });
 
     expect(submit).toBeDisabled();
     // toggle on
     fireEvent.click(alphaCheckbox);
-    expect(alphaCheckbox.checked).toBe(true);
+    expect(alphaCheckbox).toBeChecked();
     expect(submit).toBeEnabled();
     // toggle off (covers the remove branch)
     fireEvent.click(alphaCheckbox);
-    expect(alphaCheckbox.checked).toBe(false);
+    expect(alphaCheckbox).not.toBeChecked();
     // toggle back on and submit
     fireEvent.click(alphaCheckbox);
     fireEvent.click(submit);

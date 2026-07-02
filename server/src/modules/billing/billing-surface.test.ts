@@ -165,17 +165,32 @@ describe('billing / controller + service surface', () => {
     expect(res.status).toBe(500);
   });
 
-  it('GET /pricing-tiers seeds and returns tiers (business projects → null)', async () => {
+  it('GET /pricing-tiers is PUBLIC: seeds and returns tiers without auth (business projects → null)', async () => {
     __setPaymentProviderForTests(mockProvider());
-    const user = await createBuyer('pt@example.com');
-    const token = signToken(toPublicUser(user));
-    const res = await request(app).get('/api/billing/pricing-tiers').set(auth(token));
+    // No Authorization header — pricing catalog must be reachable anonymously.
+    const res = await request(app).get('/api/billing/pricing-tiers');
     expect(res.status).toBe(200);
     const tiers = res.body.tiers as Array<{ slug: string; caps: { projects: number | null } }>;
     const business = tiers.find((t) => t.slug === 'business');
     expect(business?.caps.projects).toBeNull();
     const free = tiers.find((t) => t.slug === 'free');
     expect(free?.caps.projects).toBe(1);
+  });
+
+  it('GET /pricing-tiers also works for an authenticated caller', async () => {
+    __setPaymentProviderForTests(mockProvider());
+    const user = await createBuyer('pt@example.com');
+    const token = signToken(toPublicUser(user));
+    const res = await request(app).get('/api/billing/pricing-tiers').set(auth(token));
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.tiers)).toBe(true);
+  });
+
+  it('authed billing routes still 401 without a token (public split did not open the gate)', async () => {
+    for (const path of ['/api/billing/overview', '/api/billing/usage', '/api/billing/portal']) {
+      const res = await request(app).get(path);
+      expect(res.status).toBe(401);
+    }
   });
 
   it('getPricingTiersForClient falls back for tiers missing caps/flags and keeps set product ids', async () => {

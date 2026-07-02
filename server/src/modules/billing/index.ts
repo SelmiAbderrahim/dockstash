@@ -1,4 +1,4 @@
-export { billingRouter } from './billing.routes.js';
+export { billingRouter, billingPublicRouter } from './billing.routes.js';
 export { webhookHandler } from './webhook/handler.js';
 export { getPaymentProvider, __setPaymentProviderForTests } from './active-provider.js';
 export { ingestWebhook } from './webhook/ingest.js';

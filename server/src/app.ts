@@ -13,7 +13,7 @@ import { createAuthRateLimiter, createWebhookRateLimiter } from './shared/middle
 import { issueCsrfToken } from './shared/middleware/csrf.js';
 import { authRouter, requireVerified } from './modules/auth/index.js';
 import { requireAuth } from './shared/middleware/require-auth.js';
-import { billingRouter, webhookHandler } from './modules/billing/index.js';
+import { billingRouter, billingPublicRouter, webhookHandler } from './modules/billing/index.js';
 import { communicationRouter } from './modules/communication/index.js';
 import { usersRouter } from './modules/users/index.js';
 import { backupsRouter } from './modules/backups/index.js';
@@ -92,6 +92,10 @@ export function createApp(): Express {
   const verified = [requireAuth, requireVerified];
   app.use('/api/audit', verified, auditRouter);
   app.use('/api/users', verified, usersRouter);
+  // Public pricing catalog is mounted BEFORE the `verified` gate; Express matches
+  // routers in order so `GET /api/billing/pricing-tiers` resolves here and never
+  // reaches `requireAuth`. All other billing surfaces stay gated below.
+  app.use('/api/billing', billingPublicRouter);
   app.use('/api/billing', verified, billingRouter);
   app.use('/api/backups', verified, backupsRouter);
   app.use('/api/scheduler', verified, schedulerRouter);
