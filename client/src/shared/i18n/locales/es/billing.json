@@ -29,6 +29,7 @@
     "yearlySavings": "2 meses gratis",
     "loading": "Cargando precios…",
     "empty": "No hay planes disponibles.",
+    "unavailable": "Las mejoras de plan no están disponibles en este momento. Contacta con soporte si necesitas cambiar tu plan.",
     "free": "Gratis",
     "perMonth": "mes",
     "perYear": "año",
@@ -50,7 +51,8 @@
     "cta": {
       "select": "Empezar",
       "switch": "Cambiar a este plan",
-      "current": "Plan actual"
+      "current": "Plan actual",
+      "unavailable": "No disponible"
     }
   },
   "page": {
@@ -72,8 +74,20 @@
     "cancelAtPeriodEnd": "Tu plan terminará al final del período actual. No se te volverá a cobrar."
   },
   "usage": {
+    "title": "Uso",
+    "lede": "Los límites de tu plan actual y la medición de copias por proyecto.",
+    "quotaLabel": "Proyectos usados",
     "projects": "{{used}} de {{cap}} proyectos en uso",
     "retention": "Retención: {{days}} días",
+    "stat": {
+      "projects": "Proyectos",
+      "retention": "Retención",
+      "retentionValue": "{{days}} días",
+      "frequency": "Frecuencia de copias"
+    },
+    "features": {
+      "title": "Funciones incluidas"
+    },
     "overCap": "Superaste tu límite de proyectos. Actualiza o elige cuáles se mantienen activos.",
     "metering": {
       "title": "Uso por proyecto",

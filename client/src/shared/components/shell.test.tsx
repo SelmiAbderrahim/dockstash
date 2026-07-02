@@ -11,6 +11,7 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { AppLayout } from './AppLayout';
 import { authReducer } from '@features/auth';
+import { guideReducer } from '@features/guide';
 import { routes, appShellRoutes } from '@app/routes';
 
 beforeEach(() => {
@@ -27,7 +28,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 
 const makeStore = (authenticated: boolean) =>
   configureStore({
-    reducer: { auth: authReducer },
+    reducer: { auth: authReducer, guide: guideReducer },
     preloadedState: {
       auth: {
         authenticated,

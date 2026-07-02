@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../app.js';
+import { env } from '../../config/env.js';
 import {
   clearCollections,
   startMemoryMongo,
@@ -212,12 +213,15 @@ describe('billing / controller + service surface', () => {
     expect(tiers[0]?.flags).toEqual({ schedules: false, emailAlerts: false, multiVps: false });
   });
 
-  it('GET /overview returns none/null shape when provider is not configured', async () => {
+  it('GET /overview fails safe to free/none when a paid provider is not configured', async () => {
+    // PAYMENT_PROVIDER stays 'polar' (test env); an unconfigured provider must
+    // NOT grant the business ceiling — a no-subscription user is free.
     __setPaymentProviderForTests(mockProvider({ isConfigured: () => false }));
     const user = await createBuyer('ov@example.com');
     const token = signToken(toPublicUser(user));
     const res = await request(app).get('/api/billing/overview').set(auth(token));
     expect(res.status).toBe(200);
+    expect(res.body.slug).toBe('free');
     expect(res.body.status).toBe('none');
     expect(res.body.currentPeriodEnd).toBeNull();
     expect(res.body.graceEndsAt).toBeNull();
@@ -255,38 +259,45 @@ describe('billing / controller + service surface', () => {
     expect(res.body.slug).toBe('pro');
   });
 
-  it('GET /usage returns null cap when unconfigured (business ceiling)', async () => {
-    __setPaymentProviderForTests(mockProvider({ isConfigured: () => false }));
-    const user = await createBuyer('us@example.com');
-    await Project.create({
-      owner: user._id,
-      name: 'active-proj',
-      path: '/var/www/a',
-      plan: { paths: ['/var/www/a'], databases: [], configs: [] },
-      repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
-      lastStatus: 'idle',
-      lastRunAt: new Date(),
-      totalRepoBytes: 42,
-      snapshotCount: 3,
-      paused: false,
-    });
-    await Project.create({
-      owner: user._id,
-      name: 'paused-proj',
-      path: '/var/www/b',
-      plan: { paths: ['/var/www/b'], databases: [], configs: [] },
-      repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
-      lastStatus: 'idle',
-      paused: true,
-    });
-    const token = signToken(toPublicUser(user));
-    const res = await request(app).get('/api/billing/usage').set(auth(token));
-    expect(res.status).toBe(200);
-    expect(res.body.projects.cap).toBeNull();
-    expect(res.body.projects.used).toBe(1);
-    expect(res.body.projects.paused).toHaveLength(1);
-    expect(res.body.metering[0].lastRunAt).not.toBeNull();
-    expect(res.body.metering[0].sizeBytes).toBe(42);
+  it('GET /usage returns null cap for OSS self-host (PAYMENT_PROVIDER=none, business ceiling)', async () => {
+    const prevProvider = env.PAYMENT_PROVIDER;
+    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
+    __setPaymentProviderForTests(null);
+    try {
+      const user = await createBuyer('us@example.com');
+      await Project.create({
+        owner: user._id,
+        name: 'active-proj',
+        path: '/var/www/a',
+        plan: { paths: ['/var/www/a'], databases: [], configs: [] },
+        repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
+        lastStatus: 'idle',
+        lastRunAt: new Date(),
+        totalRepoBytes: 42,
+        snapshotCount: 3,
+        paused: false,
+      });
+      await Project.create({
+        owner: user._id,
+        name: 'paused-proj',
+        path: '/var/www/b',
+        plan: { paths: ['/var/www/b'], databases: [], configs: [] },
+        repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
+        lastStatus: 'idle',
+        paused: true,
+      });
+      const token = signToken(toPublicUser(user));
+      const res = await request(app).get('/api/billing/usage').set(auth(token));
+      expect(res.status).toBe(200);
+      expect(res.body.projects.cap).toBeNull();
+      expect(res.body.projects.used).toBe(1);
+      expect(res.body.projects.paused).toHaveLength(1);
+      expect(res.body.metering[0].lastRunAt).not.toBeNull();
+      expect(res.body.metering[0].sizeBytes).toBe(42);
+    } finally {
+      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prevProvider;
+      __setPaymentProviderForTests(null);
+    }
   });
 
   it('GET /usage returns a finite cap for an active pro subscription and null lastRunAt', async () => {

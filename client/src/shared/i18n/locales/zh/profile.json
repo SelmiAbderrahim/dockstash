@@ -1,0 +1,21 @@
+{
+  "heading": "个人资料",
+  "loading": "加载中…",
+  "errors": {
+    "load": "无法加载您的个人资料。",
+    "save": "无法保存您的个人资料。",
+    "noSession": "请登录以查看您的个人资料。"
+  },
+  "identity": {
+    "roleLabel": "角色"
+  },
+  "form": {
+    "firstName": "名字",
+    "lastName": "姓氏",
+    "email": "电子邮箱",
+    "emailHint": "电子邮箱无法在此处更改。",
+    "saved": "个人资料已保存。",
+    "save": "保存更改",
+    "saving": "保存中…"
+  }
+}

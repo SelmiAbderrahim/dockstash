@@ -122,6 +122,25 @@ describe('PricingGrid', () => {
     expect(screen.getAllByRole('button', { name: /get started/i }).length).toBe(2);
   });
 
+  it('shows an unavailable banner and disables paid CTAs when product ids are null', async () => {
+    const tiersNoProducts: PricingTier[] = [
+      TIERS[0]!,
+      { ...TIERS[1]!, productIdMonthly: null, productIdYearly: null },
+      { ...TIERS[2]!, productIdMonthly: null, productIdYearly: null },
+    ];
+    mockedApi.fetchPricingTiers.mockResolvedValue({ tiers: tiersNoProducts });
+    mockedApi.fetchBillingOverview.mockResolvedValue(overview('free', 'none'));
+    renderGrid();
+    expect(await screen.findByText(/upgrades aren't available/i)).toBeInTheDocument();
+    // Both paid tiers show the "Unavailable" label and are disabled.
+    const unavailable = screen.getAllByRole('button', { name: /^unavailable$/i });
+    expect(unavailable).toHaveLength(2);
+    unavailable.forEach((b) => expect(b).toBeDisabled());
+    // Clicking a disabled/unpurchasable tier never starts checkout.
+    fireEvent.click(unavailable[0]!);
+    expect(mockedApi.createCheckout).not.toHaveBeenCalled();
+  });
+
   it('toggles between yearly and monthly pricing', async () => {
     mockedApi.fetchPricingTiers.mockResolvedValue({ tiers: TIERS });
     mockedApi.fetchBillingOverview.mockResolvedValue(overview('free', 'none'));

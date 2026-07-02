@@ -30,6 +30,7 @@ import {
   savePassword,
   saveRetention,
   saveStorage,
+  testStorage,
   triggerSelfBackup,
 } from '../store/thunks';
 import {
@@ -46,6 +47,7 @@ import {
   selectStorage,
   selectStorageSaveStatus,
   selectStorageStatus,
+  selectStorageTestStatus,
 } from '../store/selectors';
 
 const TABS = ['storage', 'retention', 'password', 'recovery'] as const;
@@ -74,6 +76,7 @@ const StorageTab = () => {
   const dispatch = useAppDispatch();
   const status = useAppSelector(selectStorageStatus);
   const saveStatus = useAppSelector(selectStorageSaveStatus);
+  const testStatus = useAppSelector(selectStorageTestStatus);
   const storage = useAppSelector(selectStorage);
   const error = useAppSelector(selectSettingsError);
 
@@ -123,6 +126,7 @@ const StorageTab = () => {
             <Label htmlFor="storage-host">{t('storage.host')}</Label>
             <Input
               id="storage-host"
+              data-tour="storage-host"
               type="text"
               value={host}
               onChange={(e) => setHost(e.target.value)}
@@ -158,6 +162,7 @@ const StorageTab = () => {
             <Label htmlFor="storage-key">{t('storage.privateKey')}</Label>
             <Textarea
               id="storage-key"
+              data-tour="storage-key"
               value={privateKey}
               onChange={(e) => setPrivateKey(e.target.value)}
               rows={6}
@@ -168,11 +173,22 @@ const StorageTab = () => {
             <small className="text-sm text-muted-foreground">{t('storage.privateKeyHint')}</small>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={saveStatus === 'loading'}>
+            <Button type="submit" data-tour="storage-save" disabled={saveStatus === 'loading'}>
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.connect')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              data-tour="storage-test"
+              onClick={() => void dispatch(testStorage())}
+              disabled={testStatus === 'loading' || !storage?.configured}
+            >
+              {testStatus === 'loading' ? t('actions.testing') : t('actions.test')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('storage.saved')}</SavedNotice>}
             {saveStatus === 'failed' && <SaveError>{error ?? t('errors.save')}</SaveError>}
+            {testStatus === 'succeeded' && <SavedNotice>{t('storage.testOk')}</SavedNotice>}
+            {testStatus === 'failed' && <SaveError>{error ?? t('storage.testFailed')}</SaveError>}
           </div>
         </form>
       </CardContent>
@@ -212,6 +228,7 @@ const RetentionTab = () => {
               <Label htmlFor="retention-daily">{t('retention.daily')}</Label>
               <Input
                 id="retention-daily"
+                data-tour="retention-daily"
                 type="number"
                 min={0}
                 value={keepDaily}
@@ -240,7 +257,7 @@ const RetentionTab = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={saveStatus === 'loading'}>
+            <Button type="submit" data-tour="retention-save" disabled={saveStatus === 'loading'}>
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('retention.saved')}</SavedNotice>}
@@ -256,6 +273,7 @@ const PasswordTab = () => {
   const { t } = useTranslation('settings');
   const dispatch = useAppDispatch();
   const saveStatus = useAppSelector(selectPasswordSaveStatus);
+  const storage = useAppSelector(selectStorage);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [ack, setAck] = useState(false);
@@ -276,6 +294,12 @@ const PasswordTab = () => {
             setConfirm('');
           }}
         >
+          {storage?.passwordSet && (
+            <Badge variant="secondary" className="w-fit gap-1.5">
+              <KeyRound className="size-4" aria-hidden="true" />
+              {t('password.isSet')}
+            </Badge>
+          )}
           <Alert variant="destructive">
             <AlertDescription>{t('password.warning')}</AlertDescription>
           </Alert>
@@ -283,6 +307,7 @@ const PasswordTab = () => {
             <Label htmlFor="password-new">{t('password.new')}</Label>
             <Input
               id="password-new"
+              data-tour="password-new"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -295,6 +320,7 @@ const PasswordTab = () => {
             <Label htmlFor="password-confirm">{t('password.confirm')}</Label>
             <Input
               id="password-confirm"
+              data-tour="password-confirm"
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
@@ -309,13 +335,22 @@ const PasswordTab = () => {
             )}
           </div>
           <div className="flex items-center gap-3">
-            <Switch id="password-escrow" checked={ack} onCheckedChange={setAck} />
+            <Switch
+              id="password-escrow"
+              data-tour="password-escrow"
+              checked={ack}
+              onCheckedChange={setAck}
+            />
             <Label htmlFor="password-escrow" className="font-normal">
               {t('password.escrow')}
             </Label>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" disabled={!canSubmit || saveStatus === 'loading'}>
+            <Button
+              type="submit"
+              data-tour="password-save"
+              disabled={!canSubmit || saveStatus === 'loading'}
+            >
               {saveStatus === 'loading' ? t('actions.saving') : t('actions.save')}
             </Button>
             {saveStatus === 'succeeded' && <SavedNotice>{t('password.saved')}</SavedNotice>}

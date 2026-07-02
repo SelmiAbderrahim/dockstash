@@ -1,4 +1,20 @@
 {
+  "nav": {
+    "menu": "打开菜单",
+    "home": "首页",
+    "dashboard": "仪表盘",
+    "projects": "项目",
+    "snapshots": "快照",
+    "fleet": "集群",
+    "settings": "设置",
+    "logout": "退出登录",
+    "superadmin": "超级管理员",
+    "login": "登录",
+    "register": "注册"
+  },
+  "footer": {
+    "copyright": "© {{year}}，{{brand}}。保留所有权利。"
+  },
   "ok": "确定",
   "cancel": "取消",
   "save": "保存",
@@ -49,7 +65,9 @@
       "description": "将一台 VPS 加入你的集群。代理使用下方生成的 API 密钥进行认证。",
       "name": "名称",
       "host": "主机",
+      "hostHint": "您要添加为代理的机器的主机名或 IP 地址。",
       "port": "端口",
+      "portHint": "可选 — 留空则默认使用 22（标准 SSH 端口）。",
       "submit": "注册",
       "submitting": "注册中…",
       "cancel": "取消",

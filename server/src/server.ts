@@ -4,7 +4,11 @@ import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
-import { registerBillingCrons, unregisterBillingCrons } from './modules/billing/index.js';
+import {
+  registerBillingCrons,
+  seedPricingTiers,
+  unregisterBillingCrons,
+} from './modules/billing/index.js';
 import {
   configureSnapshotsController,
   makeDispatchDepsFor,
@@ -28,6 +32,13 @@ function main(): void {
   connectDb()
     .then(() => {
       registerBillingCrons();
+      // Reconcile pricing-tier rows against the current env on every boot so
+      // Polar product IDs (and caps/flags) backfill after they are configured.
+      // The seeder is an idempotent `$set` upsert; `$setOnInsert` preserves
+      // merchant edits to price/active. Without this, tiers seeded before the
+      // POLAR_*_PRODUCT_ID vars were set stay null forever and every upgrade
+      // button is disabled.
+      return seedPricingTiers();
     })
     .catch((err) => {
       logger.error({ err }, 'mongo connection unavailable');

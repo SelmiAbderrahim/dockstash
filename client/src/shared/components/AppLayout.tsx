@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { GuideWidget } from '@features/guide';
 import { Footer } from './Footer';
 import { Header } from './Header';
 
@@ -9,5 +10,6 @@ export const AppLayout = () => (
       <Outlet />
     </main>
     <Footer />
+    <GuideWidget />
   </div>
 );

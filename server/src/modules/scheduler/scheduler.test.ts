@@ -4,6 +4,18 @@ import jwt from 'jsonwebtoken';
 import { EventEmitter } from 'node:events';
 import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
+
+// Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
+// entitlements (schedules) are unrestricted for schedule creation. Per-test
+// entitlement DENIAL is exercised via injected hooks, not this env — billing
+// tiering itself is covered by the billing suites.
+const __prevPaymentProvider = env.PAYMENT_PROVIDER;
+beforeAll(() => {
+  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
+});
+afterAll(() => {
+  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
+});
 import {
   clearCollections,
   startMemoryMongo,

@@ -127,6 +127,7 @@ const slice = createSlice({
       })
       .addCase(savePassword.fulfilled, (state) => {
         state.passwordSaveStatus = 'succeeded';
+        if (state.storage) state.storage.passwordSet = true;
       })
       .addCase(savePassword.rejected, (state, action) => {
         state.passwordSaveStatus = 'failed';

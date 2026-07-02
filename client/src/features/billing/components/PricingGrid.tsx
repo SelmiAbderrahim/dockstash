@@ -48,6 +48,15 @@ export const PricingGrid = () => {
   const currentSlug = overview?.slug ?? 'free';
   const isExistingPaid = currentSlug !== 'free' && overview?.status === 'active';
 
+  const productIdFor = (tier: PricingTier) =>
+    interval === 'month' ? tier.productIdMonthly : tier.productIdYearly;
+  // When payments are unconfigured every paid tier ships a null product ID, so
+  // no upgrade is purchasable. Surface that explicitly instead of leaving a row
+  // of dead disabled buttons with no explanation.
+  const upgradesAvailable = tiers.some(
+    (tier) => tier.slug !== 'free' && productIdFor(tier) !== null,
+  );
+
   const onSelect = async (tier: PricingTier) => {
     const productId = interval === 'month' ? tier.productIdMonthly : tier.productIdYearly;
     if (!productId) return;
@@ -86,6 +95,12 @@ export const PricingGrid = () => {
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {!upgradesAvailable ? (
+        <Alert>
+          <AlertDescription>{t('grid.unavailable')}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -130,8 +145,7 @@ export const PricingGrid = () => {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tiers.map((tier) => {
           const price = interval === 'month' ? tier.priceMonthly : tier.priceYearly;
-          const productId =
-            interval === 'month' ? tier.productIdMonthly : tier.productIdYearly;
+          const productId = productIdFor(tier);
           const isCurrent = tier.slug === currentSlug;
           const canSelect = tier.slug !== 'free' && productId !== null && !isCurrent;
           const isRecommended = tier.slug === RECOMMENDED_SLUG;
@@ -195,9 +209,11 @@ export const PricingGrid = () => {
                 >
                   {isCurrent
                     ? t('grid.cta.current')
-                    : isExistingPaid
-                      ? t('grid.cta.switch')
-                      : t('grid.cta.select')}
+                    : tier.slug !== 'free' && productId === null
+                      ? t('grid.cta.unavailable')
+                      : isExistingPaid
+                        ? t('grid.cta.switch')
+                        : t('grid.cta.select')}
                 </Button>
               </CardFooter>
             </Card>

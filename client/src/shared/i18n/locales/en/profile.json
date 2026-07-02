@@ -1,0 +1,21 @@
+{
+  "heading": "Profile",
+  "loading": "Loading…",
+  "errors": {
+    "load": "Could not load your profile.",
+    "save": "Could not save your profile.",
+    "noSession": "Sign in to view your profile."
+  },
+  "identity": {
+    "roleLabel": "Role"
+  },
+  "form": {
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "emailHint": "Email cannot be changed here.",
+    "saved": "Profile saved.",
+    "save": "Save changes",
+    "saving": "Saving…"
+  }
+}

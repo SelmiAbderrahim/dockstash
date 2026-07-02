@@ -83,7 +83,11 @@ export const SnapshotsScreen = () => {
       aria-labelledby="snapshots-heading"
     >
       <header className="flex flex-col gap-1 text-start">
-        <h1 id="snapshots-heading" className="text-2xl font-semibold tracking-tight">
+        <h1
+          id="snapshots-heading"
+          data-tour="snapshots-heading"
+          className="text-2xl font-semibold tracking-tight"
+        >
           {t('heading')}
         </h1>
         <p className="text-sm text-muted-foreground">{t('lede')}</p>

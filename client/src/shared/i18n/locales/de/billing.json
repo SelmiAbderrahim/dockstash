@@ -29,6 +29,7 @@
     "yearlySavings": "2 Monate gratis",
     "loading": "Preise werden geladen…",
     "empty": "Keine Tarife verfügbar.",
+    "unavailable": "Tarif-Upgrades sind derzeit nicht verfügbar. Wenden Sie sich an den Support, wenn Sie Ihren Tarif ändern möchten.",
     "free": "Kostenlos",
     "perMonth": "Mo",
     "perYear": "Jahr",
@@ -50,7 +51,8 @@
     "cta": {
       "select": "Loslegen",
       "switch": "Zu diesem Tarif wechseln",
-      "current": "Aktueller Tarif"
+      "current": "Aktueller Tarif",
+      "unavailable": "Nicht verfügbar"
     }
   },
   "page": {
@@ -72,8 +74,20 @@
     "cancelAtPeriodEnd": "Ihr Tarif endet zum Ende des aktuellen Zeitraums. Es wird nichts weiter berechnet."
   },
   "usage": {
+    "title": "Nutzung",
+    "lede": "Ihre aktuellen Tariflimits und die Backup-Messung pro Projekt.",
+    "quotaLabel": "Genutzte Projekte",
     "projects": "{{used}} von {{cap}} Projekten in Nutzung",
     "retention": "Aufbewahrung: {{days}} Tage",
+    "stat": {
+      "projects": "Projekte",
+      "retention": "Aufbewahrung",
+      "retentionValue": "{{days}} Tage",
+      "frequency": "Backup-Häufigkeit"
+    },
+    "features": {
+      "title": "Enthaltene Funktionen"
+    },
     "overCap": "Sie überschreiten Ihr Projektlimit. Upgraden oder Projekte auswählen, die aktiv bleiben.",
     "metering": {
       "title": "Nutzung pro Projekt",

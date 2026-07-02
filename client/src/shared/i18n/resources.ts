@@ -11,6 +11,8 @@ import enSettings from './locales/en/settings.json';
 import enWizard from './locales/en/wizard.json';
 import enMarketing from './locales/en/marketing.json';
 import enSuperadmin from './locales/en/superadmin.json';
+import enGuide from './locales/en/guide.json';
+import enProfile from './locales/en/profile.json';
 
 import arCommon from './locales/ar/common.json';
 import arErrors from './locales/ar/errors.json';
@@ -25,6 +27,8 @@ import arSettings from './locales/ar/settings.json';
 import arWizard from './locales/ar/wizard.json';
 import arMarketing from './locales/ar/marketing.json';
 import arSuperadmin from './locales/ar/superadmin.json';
+import arGuide from './locales/ar/guide.json';
+import arProfile from './locales/ar/profile.json';
 
 import frCommon from './locales/fr/common.json';
 import frErrors from './locales/fr/errors.json';
@@ -39,6 +43,8 @@ import frSettings from './locales/fr/settings.json';
 import frWizard from './locales/fr/wizard.json';
 import frMarketing from './locales/fr/marketing.json';
 import frSuperadmin from './locales/fr/superadmin.json';
+import frGuide from './locales/fr/guide.json';
+import frProfile from './locales/fr/profile.json';
 
 import deCommon from './locales/de/common.json';
 import deErrors from './locales/de/errors.json';
@@ -53,6 +59,8 @@ import deSettings from './locales/de/settings.json';
 import deWizard from './locales/de/wizard.json';
 import deMarketing from './locales/de/marketing.json';
 import deSuperadmin from './locales/de/superadmin.json';
+import deGuide from './locales/de/guide.json';
+import deProfile from './locales/de/profile.json';
 
 import esCommon from './locales/es/common.json';
 import esErrors from './locales/es/errors.json';
@@ -67,6 +75,8 @@ import esSettings from './locales/es/settings.json';
 import esWizard from './locales/es/wizard.json';
 import esMarketing from './locales/es/marketing.json';
 import esSuperadmin from './locales/es/superadmin.json';
+import esGuide from './locales/es/guide.json';
+import esProfile from './locales/es/profile.json';
 
 import ruCommon from './locales/ru/common.json';
 import ruErrors from './locales/ru/errors.json';
@@ -81,6 +91,8 @@ import ruSettings from './locales/ru/settings.json';
 import ruWizard from './locales/ru/wizard.json';
 import ruMarketing from './locales/ru/marketing.json';
 import ruSuperadmin from './locales/ru/superadmin.json';
+import ruGuide from './locales/ru/guide.json';
+import ruProfile from './locales/ru/profile.json';
 
 import zhCommon from './locales/zh/common.json';
 import zhErrors from './locales/zh/errors.json';
@@ -95,6 +107,8 @@ import zhSettings from './locales/zh/settings.json';
 import zhWizard from './locales/zh/wizard.json';
 import zhMarketing from './locales/zh/marketing.json';
 import zhSuperadmin from './locales/zh/superadmin.json';
+import zhGuide from './locales/zh/guide.json';
+import zhProfile from './locales/zh/profile.json';
 
 import type { Namespace, SupportedLocale } from './locales.js';
 
@@ -113,6 +127,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: enWizard,
     marketing: enMarketing,
     superadmin: enSuperadmin,
+    guide: enGuide,
+    profile: enProfile,
   },
   ar: {
     common: arCommon,
@@ -128,6 +144,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: arWizard,
     marketing: arMarketing,
     superadmin: arSuperadmin,
+    guide: arGuide,
+    profile: arProfile,
   },
   fr: {
     common: frCommon,
@@ -143,6 +161,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: frWizard,
     marketing: frMarketing,
     superadmin: frSuperadmin,
+    guide: frGuide,
+    profile: frProfile,
   },
   de: {
     common: deCommon,
@@ -158,6 +178,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: deWizard,
     marketing: deMarketing,
     superadmin: deSuperadmin,
+    guide: deGuide,
+    profile: deProfile,
   },
   es: {
     common: esCommon,
@@ -173,6 +195,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: esWizard,
     marketing: esMarketing,
     superadmin: esSuperadmin,
+    guide: esGuide,
+    profile: esProfile,
   },
   ru: {
     common: ruCommon,
@@ -188,6 +212,8 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: ruWizard,
     marketing: ruMarketing,
     superadmin: ruSuperadmin,
+    guide: ruGuide,
+    profile: ruProfile,
   },
   zh: {
     common: zhCommon,
@@ -203,5 +229,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     wizard: zhWizard,
     marketing: zhMarketing,
     superadmin: zhSuperadmin,
+    guide: zhGuide,
+    profile: zhProfile,
   },
 };

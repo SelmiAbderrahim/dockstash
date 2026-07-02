@@ -1,0 +1,21 @@
+{
+  "heading": "Profil",
+  "loading": "Wird geladen…",
+  "errors": {
+    "load": "Profil konnte nicht geladen werden.",
+    "save": "Profil konnte nicht gespeichert werden.",
+    "noSession": "Bitte melde dich an, um dein Profil anzuzeigen."
+  },
+  "identity": {
+    "roleLabel": "Rolle"
+  },
+  "form": {
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "emailHint": "Die E-Mail-Adresse kann hier nicht geändert werden.",
+    "saved": "Profil gespeichert.",
+    "save": "Änderungen speichern",
+    "saving": "Wird gespeichert…"
+  }
+}

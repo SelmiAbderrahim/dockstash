@@ -6,6 +6,7 @@ import { dashboardRoutes } from '@features/dashboard';
 import { adminRoutes } from '@features/admin';
 import { fleetRoutes } from '@features/fleet';
 import { marketingRoutes } from '@features/marketing';
+import { profileRoutes } from '@features/profile';
 import { projectsRoutes } from '@features/projects';
 import { snapshotsRoutes } from '@features/snapshots';
 import { settingsRoutes } from '@features/settings';
@@ -24,6 +25,7 @@ export const appShellRoutes: RouteObject[] = [
       ...dashboardRoutes,
       ...adminRoutes,
       ...fleetRoutes,
+      ...profileRoutes,
       ...projectsRoutes,
       ...snapshotsRoutes,
       ...settingsRoutes,

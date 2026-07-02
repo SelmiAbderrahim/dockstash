@@ -12,6 +12,17 @@ import { sendFailureAlert } from './alert.service.js';
 import { runHeartbeatSweep } from './heartbeat.service.js';
 import { env } from '../../config/env.js';
 
+// Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
+// entitlements (email alerts, restore drills) are unrestricted here — billing
+// tiering itself is covered by the billing suites.
+const __prevPaymentProvider = env.PAYMENT_PROVIDER;
+beforeAll(() => {
+  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
+});
+afterAll(() => {
+  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
+});
+
 async function seedProject(opts: {
   ownerLang?: 'en' | 'fr' | 'ar' | 'zh';
   lastSuccessAt?: Date | null;

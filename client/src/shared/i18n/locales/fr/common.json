@@ -1,4 +1,20 @@
 {
+  "nav": {
+    "menu": "Ouvrir le menu",
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "projects": "Projets",
+    "snapshots": "Instantanés",
+    "fleet": "Flotte",
+    "settings": "Paramètres",
+    "logout": "Déconnexion",
+    "superadmin": "Superadmin",
+    "login": "Connexion",
+    "register": "Inscription"
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. Tous droits réservés."
+  },
   "ok": "OK",
   "cancel": "Annuler",
   "save": "Enregistrer",
@@ -49,7 +65,9 @@
       "description": "Ajoutez un VPS à votre flotte. L'agent s'authentifie avec la clé API générée ci-dessous.",
       "name": "Nom",
       "host": "Hôte",
+      "hostHint": "Le nom d'hôte ou l'adresse IP de la machine que vous ajoutez comme agent.",
       "port": "Port",
+      "portHint": "Facultatif — utilise le port 22 (port SSH standard) par défaut si laissé vide.",
       "submit": "Enregistrer",
       "submitting": "Enregistrement…",
       "cancel": "Annuler",

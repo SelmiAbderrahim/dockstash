@@ -120,7 +120,13 @@ describe('SettingsScreen — Storage tab', () => {
 
   it('prefills fields from an existing storage config', () => {
     renderScreen({
-      storage: { host: 'ssh.example', user: 'deploy', port: 2222, configured: true },
+      storage: {
+        host: 'ssh.example',
+        user: 'deploy',
+        port: 2222,
+        configured: true,
+        passwordSet: false,
+      },
     });
     expect((screen.getByLabelText('Host') as HTMLInputElement).value).toBe('ssh.example');
     expect((screen.getByLabelText('User') as HTMLInputElement).value).toBe('deploy');
@@ -129,7 +135,7 @@ describe('SettingsScreen — Storage tab', () => {
 
   it('defaults user to root and port to 22 when the config omits them', () => {
     renderScreen({
-      storage: { host: 'h', user: '', port: 0, configured: false },
+      storage: { host: 'h', user: '', port: 0, configured: false, passwordSet: false },
     });
     expect((screen.getByLabelText('User') as HTMLInputElement).value).toBe('root');
     expect((screen.getByLabelText('Port') as HTMLInputElement).value).toBe('22');
@@ -173,6 +179,44 @@ describe('SettingsScreen — Storage tab', () => {
   it('falls back to a generic save error when a save fails without a message', () => {
     renderScreen({ storageSaveStatus: 'failed', error: null });
     expect(screen.getByRole('alert')).toHaveTextContent('Could not save settings.');
+  });
+
+  it('disables the test-connection button until storage is configured', () => {
+    renderScreen({ storage: null });
+    expect(screen.getByRole('button', { name: 'Test connection' })).toBeDisabled();
+  });
+
+  it('dispatches testStorage from the test-connection button when configured', () => {
+    renderScreen({
+      storage: { host: 'h', user: 'root', port: 22, configured: true, passwordSet: false },
+    });
+    const button = screen.getByRole('button', { name: 'Test connection' });
+    expect(button).toBeEnabled();
+    fireEvent.click(button);
+    expect(mocked.testStorage).toHaveBeenCalled();
+  });
+
+  it('shows the testing state while a test is in flight', () => {
+    renderScreen({
+      storageTestStatus: 'loading',
+      storage: { host: 'h', user: 'root', port: 22, configured: true, passwordSet: false },
+    });
+    expect(screen.getByRole('button', { name: 'Testing…' })).toBeDisabled();
+  });
+
+  it('shows the success notice after a passing test', () => {
+    renderScreen({ storageTestStatus: 'succeeded' });
+    expect(screen.getByText('Connection succeeded.')).toBeInTheDocument();
+  });
+
+  it('shows the API error when a test fails', () => {
+    renderScreen({ storageTestStatus: 'failed', error: 'connection refused' });
+    expect(screen.getByRole('alert')).toHaveTextContent('connection refused');
+  });
+
+  it('falls back to a generic test error when a test fails without a message', () => {
+    renderScreen({ storageTestStatus: 'failed', error: null });
+    expect(screen.getByRole('alert')).toHaveTextContent('Connection failed.');
   });
 });
 
@@ -242,7 +286,6 @@ describe('SettingsScreen — Password tab', () => {
     const confirm = screen.getByLabelText(/Confirm password/) as HTMLInputElement;
     fireEvent.change(pw, { target: { value: 'longenoughpass1' } });
     fireEvent.change(confirm, { target: { value: 'longenoughpass1' } });
-    // The escrow acknowledgement is now a shadcn Switch (role="switch").
     fireEvent.click(screen.getByRole('switch'));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(mocked.savePassword).toHaveBeenCalledWith('longenoughpass1');
@@ -264,6 +307,26 @@ describe('SettingsScreen — Password tab', () => {
     renderScreen({ passwordSaveStatus: 'failed' }, entry);
     // The static escrow warning Alert is also role=alert; match the save error.
     expect(screen.getByText('Could not save settings.')).toBeInTheDocument();
+  });
+
+  it('shows the persistent "password set" badge when one is configured', () => {
+    renderScreen(
+      {
+        storage: { host: '', user: '', port: 22, configured: false, passwordSet: true },
+      },
+      entry,
+    );
+    expect(screen.getByText('An encryption password is set.')).toBeInTheDocument();
+  });
+
+  it('hides the "password set" badge when none is configured', () => {
+    renderScreen(
+      {
+        storage: { host: '', user: '', port: 22, configured: false, passwordSet: false },
+      },
+      entry,
+    );
+    expect(screen.queryByText('An encryption password is set.')).not.toBeInTheDocument();
   });
 });
 

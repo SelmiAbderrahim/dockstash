@@ -38,7 +38,7 @@ beforeEach(() => {
 
 describe('settings thunks', () => {
   it('fetchStorage resolves and rejects', async () => {
-    const cfg = { host: 'h', user: 'u', port: 22, configured: true };
+    const cfg = { host: 'h', user: 'u', port: 22, configured: true, passwordSet: false };
     mocked.fetchStorageRequest.mockResolvedValue(cfg);
     const store = makeStore();
     const ok = await store.dispatch(fetchStorage());
@@ -52,7 +52,7 @@ describe('settings thunks', () => {
   });
 
   it('saveStorage resolves and rejects', async () => {
-    const cfg = { host: 'x', user: 'root', port: 22, configured: true };
+    const cfg = { host: 'x', user: 'root', port: 22, configured: true, passwordSet: false };
     mocked.saveStorageRequest.mockResolvedValue(cfg);
     const store = makeStore();
     const input = { host: 'x', user: 'root', port: 22, privateKey: 'k' };

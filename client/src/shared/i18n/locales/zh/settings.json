@@ -11,7 +11,9 @@
   "actions": {
     "save": "保存",
     "saving": "保存中…",
-    "connect": "连接存储"
+    "connect": "连接存储",
+    "test": "测试连接",
+    "testing": "测试中…"
   },
   "errors": {
     "load": "无法加载设置。",
@@ -24,7 +26,9 @@
     "privateKey": "SSH 私钥",
     "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
     "privateKeyHint": "加密存储，不会再次显示。",
-    "saved": "存储已保存。"
+    "saved": "存储已保存。",
+    "testOk": "连接成功。",
+    "testFailed": "连接失败。"
   },
   "retention": {
     "daily": "保留每日份数",
@@ -38,7 +42,8 @@
     "confirm": "确认密码",
     "mismatch": "两次输入不一致。",
     "escrow": "我已妥善保存该密码。",
-    "saved": "密码已保存。"
+    "saved": "密码已保存。",
+    "isSet": "已设置加密密码。"
   },
   "recovery": {
     "export": {

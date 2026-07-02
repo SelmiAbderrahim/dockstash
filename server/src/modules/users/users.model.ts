@@ -88,6 +88,9 @@ const userSchema = new mongoose.Schema(
       enum: SUPPORTED_LOCALES,
       default: null,
     },
+    // In-app guided-tour widget preference. Defaults on; pre-existing
+    // documents lack the field and are treated as enabled (`?? true`).
+    guideMe: { type: Boolean, required: true, default: true },
     // Deletion lifecycle (prompt 11 GDPR right-to-deletion). A non-null
     // `deletionScheduledAt` marks the account soft-deleted; the repo purge
     // runs after that timestamp. `deletionWarningSentAt` dedupes the final

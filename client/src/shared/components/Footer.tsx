@@ -1,23 +1,25 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@shared/hooks/redux';
 import { selectAuthenticated } from '@features/auth';
 import { BRAND_NAME } from '@shared/brand';
 import { Separator } from '@shared/ui/separator';
 
 const AUTHED_LINKS = [
-  { to: '/', label: 'Home' },
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/logout', label: 'Logout' },
+  { to: '/', labelKey: 'nav.home' },
+  { to: '/dashboard', labelKey: 'nav.dashboard' },
+  { to: '/logout', labelKey: 'nav.logout' },
 ];
 
 const ANON_LINKS = [
-  { to: '/', label: 'Home' },
-  { to: '/login', label: 'Login' },
-  { to: '/register', label: 'Register' },
+  { to: '/', labelKey: 'nav.home' },
+  { to: '/login', labelKey: 'nav.login' },
+  { to: '/register', labelKey: 'nav.register' },
 ];
 
 export const Footer = () => {
   const authenticated = useAppSelector(selectAuthenticated);
+  const { t } = useTranslation('common');
   const year = new Date().getFullYear();
   const links = authenticated ? AUTHED_LINKS : ANON_LINKS;
 
@@ -29,16 +31,14 @@ export const Footer = () => {
             {links.map((link) => (
               <li key={link.to}>
                 <Link to={link.to} className="hover:text-foreground transition-colors">
-                  {link.label}
+                  {t(link.labelKey)}
                 </Link>
               </li>
             ))}
           </ul>
         </nav>
         <Separator className="sm:hidden" />
-        <p>
-          © {year}, {BRAND_NAME}. All Rights Reserved.
-        </p>
+        <p>{t('footer.copyright', { year, brand: BRAND_NAME })}</p>
       </div>
     </footer>
   );

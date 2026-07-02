@@ -182,6 +182,36 @@ describe('BillingPage — usage tab', () => {
     renderPage('/billing?tab=usage');
     expect(await screen.findByText(/no active projects yet/i)).toBeInTheDocument();
     expect(screen.queryByText(/over your project cap/i)).not.toBeInTheDocument();
+    // Unlimited cap → no quota progress bar.
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+  });
+
+  it('renders stat tiles, a quota bar, and feature badges for a capped plan', async () => {
+    mockedApi.fetchUsage.mockResolvedValue(usageOverCap);
+    renderPage('/billing?tab=usage');
+    // Stat tile labels.
+    expect(await screen.findByText('Projects')).toBeInTheDocument();
+    expect(screen.getByText('Retention')).toBeInTheDocument();
+    expect(screen.getByText(/backup frequency/i)).toBeInTheDocument();
+    // Capped plan → quota progress bar reflecting used/cap.
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow', '3');
+    expect(bar).toHaveAttribute('aria-valuemax', '1');
+    // Entitlement flags surface as badges (schedules + emailAlerts on, multiVps off).
+    expect(screen.getByText(/scheduled backups/i)).toBeInTheDocument();
+    expect(screen.getByText(/email alerts/i)).toBeInTheDocument();
+    expect(screen.queryByText(/multi-vps/i)).not.toBeInTheDocument();
+  });
+
+  it('renders only the multi-VPS badge when it is the sole entitlement', async () => {
+    mockedApi.fetchUsage.mockResolvedValue({
+      ...usageEmpty,
+      flags: { schedules: false, emailAlerts: false, multiVps: true },
+    });
+    renderPage('/billing?tab=usage');
+    expect(await screen.findByText(/multi-vps/i)).toBeInTheDocument();
+    expect(screen.queryByText(/scheduled backups/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/email alerts/i)).not.toBeInTheDocument();
   });
 
   it('renders the selection UI with an unlimited (null) cap', async () => {

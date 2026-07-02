@@ -107,6 +107,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
               <Label htmlFor="agent-name">{t('fleet.dialog.name')}</Label>
               <Input
                 id="agent-name"
+                data-tour="agent-name-input"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -119,23 +120,27 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
                 <Label htmlFor="agent-host">{t('fleet.dialog.host')}</Label>
                 <Input
                   id="agent-host"
+                  data-tour="agent-host-input"
                   type="text"
                   value={host}
                   onChange={(e) => setHost(e.target.value)}
                   required
                   autoComplete="off"
                 />
+                <small className="text-sm text-muted-foreground">{t('fleet.dialog.hostHint')}</small>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="agent-port">{t('fleet.dialog.port')}</Label>
                 <Input
                   id="agent-port"
+                  data-tour="agent-port-input"
                   type="number"
                   min={1}
                   max={65535}
                   value={port}
                   onChange={(e) => setPort(e.target.value)}
                 />
+                <small className="text-sm text-muted-foreground">{t('fleet.dialog.portHint')}</small>
               </div>
             </div>
             {registerStatus === 'failed' && (
@@ -147,7 +152,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 {t('fleet.dialog.cancel')}
               </Button>
-              <Button type="submit" disabled={!canSubmit || saving}>
+              <Button type="submit" data-tour="agent-register-submit" disabled={!canSubmit || saving}>
                 {saving ? t('fleet.dialog.submitting') : t('fleet.dialog.submit')}
               </Button>
             </DialogFooter>

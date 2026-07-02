@@ -1,0 +1,133 @@
+{
+  "launcher": {
+    "ariaLabel": "打开引导",
+    "tooltip": "引导（Shift+?）"
+  },
+  "nudge": {
+    "text": "第一次使用？我可以带您完成设置。",
+    "cta": "带我看看",
+    "dismiss": "关闭"
+  },
+  "panel": {
+    "title": "引导我",
+    "progress": "已完成 {{done}} / {{total}}",
+    "youAreHere": "您在这里",
+    "completed": "已完成",
+    "start": "开始",
+    "resume": "从第 {{step}} 步继续",
+    "replay": "重新播放"
+  },
+  "toggle": {
+    "label": "显示引导助手",
+    "description": "悬浮帮助按钮，提供分步产品引导。"
+  },
+  "overlay": {
+    "counter": "第 {{current}} 步，共 {{total}} 步",
+    "close": "关闭引导",
+    "searching": "正在寻找目标位置…",
+    "missing": "该元素当前不可见。",
+    "takeMeThere": "带我前往",
+    "skipStep": "跳过此步",
+    "endTour": "结束引导",
+    "skipTour": "跳过引导",
+    "back": "上一步",
+    "next": "下一步",
+    "done": "完成"
+  },
+  "tours": {
+    "encryptionPassword": {
+      "title": "设置加密密码",
+      "description": "用只有您知道的密码保护您的备份。",
+      "steps": {
+        "new": {
+          "title": "选择密码",
+          "body": "在此输入一个强加密密码。它保护您创建的每一个备份。"
+        },
+        "confirm": {
+          "title": "确认密码",
+          "body": "再次输入相同的密码，以免输入错误将您锁在外面。"
+        },
+        "escrow": {
+          "title": "可选的恢复托管",
+          "body": "启用后，如果您忘记密码，恢复码可以帮您恢复访问权限。"
+        },
+        "save": {
+          "title": "保存",
+          "body": "保存以应用新的加密密码。"
+        }
+      }
+    },
+    "configureStorage": {
+      "title": "连接存储主机",
+      "description": "将 Dockstash 指向存放备份的 SSH 主机。",
+      "steps": {
+        "host": {
+          "title": "主机地址",
+          "body": "输入存储服务器的主机名或 IP 地址。"
+        },
+        "key": {
+          "title": "SSH 私钥",
+          "body": "粘贴用于连接的私钥。它会以加密方式存储。"
+        },
+        "save": {
+          "title": "保存并测试",
+          "body": "保存连接，然后测试以验证访问。"
+        }
+      }
+    },
+    "retentionPolicy": {
+      "title": "调整保留策略",
+      "description": "决定保留多少每日、每周和每月快照。",
+      "steps": {
+        "daily": {
+          "title": "每日快照",
+          "body": "设置轮换前保留多少每日快照。"
+        },
+        "save": {
+          "title": "保存",
+          "body": "将保留策略应用于以后的备份任务。"
+        }
+      }
+    },
+    "exploreFleet": {
+      "title": "浏览您的集群",
+      "description": "在一个页面查看所有已注册的代理及其连接状态。",
+      "steps": {
+        "overview": {
+          "title": "集群概览",
+          "body": "此页面列出您已注册的每个代理——Dockstash 为其创建备份的 VPS 服务器——以及它们的连接状态。"
+        },
+        "register": {
+          "title": "注册代理",
+          "body": "点击此处添加新代理。代理是您希望 Dockstash 为其创建备份的 VPS。"
+        },
+        "name": {
+          "title": "命名",
+          "body": "为代理起一个您以后能认出的名称，例如 \"web-1\" 或 \"db-prod\"。"
+        },
+        "host": {
+          "title": "主机地址",
+          "body": "输入该 VPS 的主机名或 IP 地址。"
+        },
+        "port": {
+          "title": "端口",
+          "body": "留空则使用默认 SSH 端口 22，或输入自定义端口。"
+        },
+        "submit": {
+          "title": "完成注册",
+          "body": "注册代理以生成其 API 密钥。密钥仅显示一次，请在关闭对话框前复制。"
+        }
+      }
+    },
+    "exploreSnapshots": {
+      "title": "浏览快照",
+      "description": "按项目查找并恢复备份快照。",
+      "steps": {
+        "overview": {
+          "title": "快照",
+          "body": "选择一个项目以浏览其快照和恢复点。"
+        }
+      }
+    }
+  }
+}

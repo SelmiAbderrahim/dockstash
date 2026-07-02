@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 const baseState = (over: Partial<SettingsState> = {}): SettingsState => ({
-  storage: { host: '', user: '', port: 22, configured: false },
+  storage: { host: '', user: '', port: 22, configured: false, passwordSet: false },
   storageStatus: 'succeeded',
   storageSaveStatus: 'idle',
   storageTestStatus: 'idle',
@@ -89,7 +89,9 @@ describe('SetupWizard', () => {
     // `.ds-wizard` query would pass vacuously. Assert the real intent instead:
     // when storage is configured the component renders neither the loading
     // status nor the wizard heading — it returns nothing.
-    renderWizard({ storage: { host: 'h', user: 'root', port: 22, configured: true } });
+    renderWizard({
+      storage: { host: 'h', user: 'root', port: 22, configured: true, passwordSet: false },
+    });
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Set up your storage' })).toBeNull();
   });
@@ -124,6 +126,7 @@ describe('SetupWizard', () => {
       user: 'root',
       port: 2222,
       configured: false,
+      passwordSet: false,
     });
     mocked.testStorageRequest.mockReturnValue(new Promise(() => {}));
     renderWizard();
@@ -139,6 +142,7 @@ describe('SetupWizard', () => {
       user: 'root',
       port: 2222,
       configured: false,
+      passwordSet: false,
     });
     mocked.testStorageRequest.mockResolvedValue({ ok: true });
     mocked.savePasswordRequest.mockResolvedValue({ ok: true });
@@ -176,6 +180,7 @@ describe('SetupWizard', () => {
       user: 'root',
       port: 2222,
       configured: false,
+      passwordSet: false,
     });
     mocked.testStorageRequest.mockResolvedValue({ ok: true });
     mocked.savePasswordRequest.mockReturnValue(new Promise(() => {}));
@@ -193,6 +198,7 @@ describe('SetupWizard', () => {
       user: 'root',
       port: 2222,
       configured: false,
+      passwordSet: false,
     });
     mocked.testStorageRequest.mockResolvedValue({ ok: true });
     mocked.savePasswordRequest.mockRejectedValue(new Error('bad'));
@@ -211,6 +217,7 @@ describe('SetupWizard', () => {
       user: 'root',
       port: 2222,
       configured: false,
+      passwordSet: false,
     });
     mocked.testStorageRequest.mockResolvedValue({ ok: true });
     vi.stubGlobal('crypto', undefined);

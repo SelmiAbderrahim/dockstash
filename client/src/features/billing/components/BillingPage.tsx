@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CalendarClock, FolderGit2, Mail, Server } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
-import { Card, CardContent } from '@shared/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@shared/ui/card';
 import { Checkbox } from '@shared/ui/checkbox';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@shared/ui/empty';
+import { Progress } from '@shared/ui/progress';
+import { Skeleton } from '@shared/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import {
   Table,
@@ -164,26 +175,109 @@ export const BillingPage = () => {
 
         <TabsContent value="usage">
           {loadingUsage ? (
-            <p role="status" aria-live="polite" className="py-6 text-muted-foreground">
-              {t('page.loading')}
-            </p>
+            <div role="status" aria-live="polite" className="flex flex-col gap-4 py-2">
+              <span className="sr-only">{t('page.loading')}</span>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+                <Skeleton className="h-24" />
+              </div>
+              <Skeleton className="h-40" />
+            </div>
           ) : usage ? (
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-1 text-sm">
-                <p>
-                  {t('usage.projects', {
-                    used: usage.projects.used,
-                    cap: usage.projects.cap ?? t('grid.caps.unlimited'),
-                  })}
-                </p>
-                <p>{t('usage.retention', { days: usage.retentionDays })}</p>
-                <p>{t(`grid.frequency.${usage.frequency}`)}</p>
+              <header className="flex flex-col gap-1">
+                <h2 className="text-lg font-semibold tracking-tight">{t('usage.title')}</h2>
+                <p className="text-sm text-muted-foreground">{t('usage.lede')}</p>
+              </header>
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Card>
+                  <CardHeader className="gap-1">
+                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
+                      {t('usage.stat.projects')}
+                    </CardDescription>
+                    <CardTitle className="text-2xl">
+                      {usage.projects.used}
+                      <span className="text-base font-normal text-muted-foreground">
+                        {' / '}
+                        {usage.projects.cap ?? t('grid.caps.unlimited')}
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  {usage.projects.cap !== null ? (
+                    <CardContent>
+                      <Progress
+                        value={usage.projects.used}
+                        max={usage.projects.cap}
+                        aria-label={t('usage.quotaLabel')}
+                      />
+                    </CardContent>
+                  ) : null}
+                </Card>
+
+                <Card>
+                  <CardHeader className="gap-1">
+                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
+                      {t('usage.stat.retention')}
+                    </CardDescription>
+                    <CardTitle className="text-2xl">
+                      {t('usage.stat.retentionValue', { days: usage.retentionDays })}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+
+                <Card>
+                  <CardHeader className="gap-1">
+                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
+                      {t('usage.stat.frequency')}
+                    </CardDescription>
+                    <CardTitle className="text-2xl">
+                      {t(`grid.frequency.${usage.frequency}`)}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
               </div>
 
+              {usage.flags.schedules || usage.flags.emailAlerts || usage.flags.multiVps ? (
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-sm font-medium">{t('usage.features.title')}</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {usage.flags.schedules ? (
+                      <Badge variant="outline" className="gap-1.5">
+                        <CalendarClock className="size-3.5" />
+                        {t('grid.flag.schedules')}
+                      </Badge>
+                    ) : null}
+                    {usage.flags.emailAlerts ? (
+                      <Badge variant="outline" className="gap-1.5">
+                        <Mail className="size-3.5" />
+                        {t('grid.flag.emailAlerts')}
+                      </Badge>
+                    ) : null}
+                    {usage.flags.multiVps ? (
+                      <Badge variant="outline" className="gap-1.5">
+                        <Server className="size-3.5" />
+                        {t('grid.flag.multiVps')}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3">
-                <h2 className="text-lg font-semibold">{t('usage.metering.title')}</h2>
+                <h3 className="text-sm font-medium">{t('usage.metering.title')}</h3>
                 {usage.metering.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t('usage.metering.empty')}</p>
+                  <Empty className="border">
+                    <EmptyHeader>
+                      <EmptyMedia variant="icon">
+                        <FolderGit2 />
+                      </EmptyMedia>
+                      <EmptyTitle className="text-base">
+                        {t('usage.metering.empty')}
+                      </EmptyTitle>
+                    </EmptyHeader>
+                  </Empty>
                 ) : (
                   <Card>
                     <CardContent className="px-0">
@@ -191,8 +285,12 @@ export const BillingPage = () => {
                         <TableHeader>
                           <TableRow>
                             <TableHead scope="col">{t('usage.metering.colProject')}</TableHead>
-                            <TableHead scope="col">{t('usage.metering.colSnapshots')}</TableHead>
-                            <TableHead scope="col">{t('usage.metering.colSize')}</TableHead>
+                            <TableHead scope="col" className="text-end">
+                              {t('usage.metering.colSnapshots')}
+                            </TableHead>
+                            <TableHead scope="col" className="text-end">
+                              {t('usage.metering.colSize')}
+                            </TableHead>
                             <TableHead scope="col">{t('usage.metering.colLastRun')}</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -200,8 +298,12 @@ export const BillingPage = () => {
                           {usage.metering.map((m) => (
                             <TableRow key={m.id}>
                               <TableHead scope="row">{m.name}</TableHead>
-                              <TableCell>{m.snapshotCount}</TableCell>
-                              <TableCell>{formatBytes(m.sizeBytes)}</TableCell>
+                              <TableCell className="text-end tabular-nums">
+                                {m.snapshotCount}
+                              </TableCell>
+                              <TableCell className="text-end tabular-nums">
+                                {formatBytes(m.sizeBytes)}
+                              </TableCell>
                               <TableCell>
                                 {m.lastRunAt
                                   ? new Date(m.lastRunAt).toLocaleString()

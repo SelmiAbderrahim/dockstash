@@ -1,4 +1,20 @@
 {
+  "nav": {
+    "menu": "Open menu",
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "snapshots": "Snapshots",
+    "fleet": "Fleet",
+    "settings": "Settings",
+    "logout": "Logout",
+    "superadmin": "Superadmin",
+    "login": "Login",
+    "register": "Register"
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. All Rights Reserved."
+  },
   "ok": "OK",
   "cancel": "Cancel",
   "save": "Save",
@@ -49,7 +65,9 @@
       "description": "Add a VPS to your fleet. The agent authenticates with the API key generated below.",
       "name": "Name",
       "host": "Host",
+      "hostHint": "The hostname or IP address of the machine you're adding as an agent.",
       "port": "Port",
+      "portHint": "Optional — defaults to 22 (the standard SSH port) if left blank.",
       "submit": "Register",
       "submitting": "Registering…",
       "cancel": "Cancel",

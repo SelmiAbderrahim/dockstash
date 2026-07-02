@@ -4,6 +4,7 @@ export interface StorageConfig {
   port: number;
   keyFingerprint?: string;
   configured: boolean;
+  passwordSet: boolean;
 }
 
 export interface RetentionPolicy {

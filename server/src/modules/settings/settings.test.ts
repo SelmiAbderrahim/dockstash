@@ -84,7 +84,13 @@ describe('settings: storage CRUD', () => {
       .get('/api/settings/storage')
       .set('Authorization', `JWT ${token}`);
     expect(res.status).toBe(200);
-    expect(res.body.storage).toEqual({ host: '', user: '', port: 22, configured: false });
+    expect(res.body.storage).toEqual({
+      host: '',
+      user: '',
+      port: 22,
+      configured: false,
+      passwordSet: false,
+    });
   });
 
   it('saves storage config, encrypts the key, and never echoes it back', async () => {
@@ -290,6 +296,22 @@ describe('settings: encryption password', () => {
     expect(decryptSecret(row!.defaultRepoPasswordEnc!)).toBe('correct-horse-battery');
   });
 
+  it('reflects passwordSet in the serialized storage before and after setting it', async () => {
+    const { token } = await seedUser('a@t.com');
+    const before = await request(app)
+      .get('/api/settings/storage')
+      .set('Authorization', `JWT ${token}`);
+    expect(before.body.storage.passwordSet).toBe(false);
+    await request(app)
+      .put('/api/settings/encryption-password')
+      .set('Authorization', `JWT ${token}`)
+      .send({ password: 'correct-horse-battery' });
+    const after = await request(app)
+      .get('/api/settings/storage')
+      .set('Authorization', `JWT ${token}`);
+    expect(after.body.storage.passwordSet).toBe(true);
+  });
+
   it('rejects a short password', async () => {
     const { token } = await seedUser('a@t.com');
     const res = await request(app)
@@ -353,6 +375,7 @@ describe('settings: serializers', () => {
       user: '',
       port: 22,
       configured: false,
+      passwordSet: false,
     });
     expect(serializeRetention(null)).toEqual({
       keepDaily: 7,

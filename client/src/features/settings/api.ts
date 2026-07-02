@@ -24,7 +24,7 @@ export const fetchStorageRequest = async (): Promise<StorageConfig> => {
   } catch (err) {
     // If the backend endpoint is not yet mounted, treat as unconfigured
     if (err instanceof ApiError && err.status === 404) {
-      return { host: '', user: '', port: 22, configured: false };
+      return { host: '', user: '', port: 22, configured: false, passwordSet: false };
     }
     throw err;
   }

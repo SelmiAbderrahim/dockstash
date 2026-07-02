@@ -14,4 +14,10 @@ export {
   type UserDocument,
   type UserHydrated,
 } from './users.model.js';
-export { toPublicUser, findUserById, getUserProfile, type PublicUser } from './users.service.js';
+export {
+  toPublicUser,
+  findUserById,
+  getUserProfile,
+  updateUserPreferences,
+  type PublicUser,
+} from './users.service.js';

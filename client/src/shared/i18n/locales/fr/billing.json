@@ -29,6 +29,7 @@
     "yearlySavings": "2 mois offerts",
     "loading": "Chargement des tarifs…",
     "empty": "Aucun plan disponible.",
+    "unavailable": "Les changements d’offre ne sont pas disponibles pour le moment. Contactez le support si vous devez modifier votre offre.",
     "free": "Gratuit",
     "perMonth": "mois",
     "perYear": "an",
@@ -50,7 +51,8 @@
     "cta": {
       "select": "Commencer",
       "switch": "Passer à cette offre",
-      "current": "Offre actuelle"
+      "current": "Offre actuelle",
+      "unavailable": "Indisponible"
     }
   },
   "page": {
@@ -72,8 +74,20 @@
     "cancelAtPeriodEnd": "Votre offre se terminera à la fin de la période. Vous ne serez plus prélevé."
   },
   "usage": {
+    "title": "Utilisation",
+    "lede": "Les limites de votre offre actuelle et le décompte des sauvegardes par projet.",
+    "quotaLabel": "Projets utilisés",
     "projects": "{{used}} sur {{cap}} projets utilisés",
     "retention": "Rétention : {{days}} jours",
+    "stat": {
+      "projects": "Projets",
+      "retention": "Rétention",
+      "retentionValue": "{{days}} jours",
+      "frequency": "Fréquence des sauvegardes"
+    },
+    "features": {
+      "title": "Fonctionnalités incluses"
+    },
     "overCap": "Vous dépassez votre quota de projets. Passez à l’offre supérieure ou choisissez les projets à garder actifs.",
     "metering": {
       "title": "Utilisation par projet",

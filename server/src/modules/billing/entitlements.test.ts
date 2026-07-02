@@ -120,14 +120,33 @@ describe('polar-config reverse lookup', () => {
 });
 
 describe('entitlements resolution', () => {
-  it('OSS default (no provider) → business ceiling', async () => {
+  it('OSS self-host (PAYMENT_PROVIDER=none) → business ceiling', async () => {
+    const prev = env.PAYMENT_PROVIDER;
+    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
+    __setPaymentProviderForTests(null);
+    try {
+      const user = await createOwner();
+      const resolved = await resolveEntitlements(String(user._id));
+      expect(resolved.slug).toBe('business');
+    } finally {
+      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prev;
+      __setPaymentProviderForTests(null);
+    }
+  });
+
+  it('paid provider selected but uncredentialled → free (fail safe, not open)', async () => {
+    // Regression: PAYMENT_PROVIDER=polar with no access token must NOT hand every
+    // user the business ceiling. A no-subscription user resolves to free.
     const prevToken = env.POLAR_ACCESS_TOKEN;
     (env as { POLAR_ACCESS_TOKEN?: string }).POLAR_ACCESS_TOKEN = undefined;
     __setPaymentProviderForTests(null);
     try {
       const user = await createOwner();
       const resolved = await resolveEntitlements(String(user._id));
-      expect(resolved.slug).toBe('business');
+      expect(resolved.slug).toBe('free');
+      expect(resolved.entitlements.projects).toBe(1);
+      expect(resolved.entitlements.multiVps).toBe(false);
+      expect(resolved.status).toBe('none');
     } finally {
       (env as { POLAR_ACCESS_TOKEN?: string }).POLAR_ACCESS_TOKEN = prevToken;
       __setPaymentProviderForTests(null);

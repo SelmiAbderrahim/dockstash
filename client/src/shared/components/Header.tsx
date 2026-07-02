@@ -18,24 +18,24 @@ import { ThemeToggle } from './ThemeToggle';
 
 interface NavLink {
   to: string;
-  label: string;
+  labelKey: string;
 }
 
 const AUTHED_LINKS: NavLink[] = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/projects', label: 'Projects' },
-  { to: '/snapshots', label: 'Snapshots' },
-  { to: '/fleet', label: 'Fleet' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/logout', label: 'Logout' },
+  { to: '/dashboard', labelKey: 'nav.dashboard' },
+  { to: '/projects', labelKey: 'nav.projects' },
+  { to: '/snapshots', labelKey: 'nav.snapshots' },
+  { to: '/fleet', labelKey: 'nav.fleet' },
+  { to: '/settings', labelKey: 'nav.settings' },
+  { to: '/logout', labelKey: 'nav.logout' },
 ];
 
-const SUPERADMIN_LINK: NavLink = { to: '/superadmin', label: 'Superadmin' };
+const SUPERADMIN_LINK: NavLink = { to: '/superadmin', labelKey: 'nav.superadmin' };
 
 const ANON_LINKS: NavLink[] = [
-  { to: '/', label: 'Home' },
-  { to: '/login', label: 'Login' },
-  { to: '/register', label: 'Register' },
+  { to: '/', labelKey: 'nav.home' },
+  { to: '/login', labelKey: 'nav.login' },
+  { to: '/register', labelKey: 'nav.register' },
 ];
 
 export const Header = () => {
@@ -57,7 +57,7 @@ export const Header = () => {
         <nav className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
             <Button key={link.to} asChild variant="ghost" size="sm">
-              <Link to={link.to}>{link.label}</Link>
+              <Link to={link.to}>{t(link.labelKey)}</Link>
             </Button>
           ))}
         </nav>
@@ -92,7 +92,7 @@ export const Header = () => {
                     className="justify-start"
                     onClick={() => setOpen(false)}
                   >
-                    <Link to={link.to}>{link.label}</Link>
+                    <Link to={link.to}>{t(link.labelKey)}</Link>
                   </Button>
                 ))}
                 <LanguageSwitcher className="mt-2 px-2 sm:hidden" />

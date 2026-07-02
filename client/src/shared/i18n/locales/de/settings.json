@@ -11,7 +11,9 @@
   "actions": {
     "save": "Speichern",
     "saving": "Speichert…",
-    "connect": "Speicher verbinden"
+    "connect": "Speicher verbinden",
+    "test": "Verbindung testen",
+    "testing": "Testet…"
   },
   "errors": {
     "load": "Einstellungen konnten nicht geladen werden.",
@@ -24,7 +26,9 @@
     "privateKey": "SSH-Privatschlüssel",
     "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
     "privateKeyHint": "Verschlüsselt gespeichert. Nie wieder angezeigt.",
-    "saved": "Speicher gespeichert."
+    "saved": "Speicher gespeichert.",
+    "testOk": "Verbindung erfolgreich.",
+    "testFailed": "Verbindung fehlgeschlagen."
   },
   "retention": {
     "daily": "Tägliche behalten",
@@ -38,7 +42,8 @@
     "confirm": "Bestätigen",
     "mismatch": "Passwörter stimmen nicht überein.",
     "escrow": "Ich habe das Passwort sicher gespeichert.",
-    "saved": "Passwort gespeichert."
+    "saved": "Passwort gespeichert.",
+    "isSet": "Ein Verschlüsselungspasswort ist festgelegt."
   },
   "recovery": {
     "export": {

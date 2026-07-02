@@ -1,0 +1,21 @@
+{
+  "heading": "Perfil",
+  "loading": "Cargando…",
+  "errors": {
+    "load": "No se pudo cargar tu perfil.",
+    "save": "No se pudo guardar tu perfil.",
+    "noSession": "Inicia sesión para ver tu perfil."
+  },
+  "identity": {
+    "roleLabel": "Rol"
+  },
+  "form": {
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo electrónico",
+    "emailHint": "El correo electrónico no se puede cambiar aquí.",
+    "saved": "Perfil guardado.",
+    "save": "Guardar cambios",
+    "saving": "Guardando…"
+  }
+}

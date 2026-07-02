@@ -1,9 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
-import { configureStore } from '@reduxjs/toolkit';
 import { Dashboard } from './Dashboard';
 import { i18n, initI18n } from '@shared/i18n';
 
@@ -17,15 +15,11 @@ beforeEach(() => {
   clearCookies();
 });
 
-const makeStore = () => configureStore({ reducer: {} });
-
 const renderComp = (ui: React.ReactNode) =>
   render(
-    <Provider store={makeStore()}>
-      <I18nextProvider i18n={i18n}>
-        <MemoryRouter>{ui}</MemoryRouter>
-      </I18nextProvider>
-    </Provider>,
+    <I18nextProvider i18n={i18n}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </I18nextProvider>,
   );
 
 describe('Dashboard', () => {

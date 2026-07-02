@@ -6,6 +6,7 @@ export interface SerializedStorage {
   port: number;
   keyFingerprint?: string;
   configured: boolean;
+  passwordSet: boolean;
 }
 
 export interface SerializedRetention {
@@ -29,13 +30,14 @@ export function serializeStorage(
   settings: StorageSettingsHydrated | null,
 ): SerializedStorage {
   if (!settings) {
-    return { host: '', user: '', port: 22, configured: false };
+    return { host: '', user: '', port: 22, configured: false, passwordSet: false };
   }
   const out: SerializedStorage = {
     host: settings.host,
     user: settings.user,
     port: settings.port,
     configured: isStorageConfigured(settings),
+    passwordSet: Boolean(settings.defaultRepoPasswordEnc),
   };
   if (settings.hostKeyFingerprint) {
     out.keyFingerprint = settings.hostKeyFingerprint;

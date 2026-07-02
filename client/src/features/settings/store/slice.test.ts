@@ -40,9 +40,20 @@ describe('settings slice', () => {
     expect(s.storageSaveStatus).toBe('succeeded');
   });
 
-  it('savePassword.fulfilled marks succeeded', () => {
+  it('savePassword.fulfilled marks succeeded and flips passwordSet when storage exists', () => {
+    const withStorage = {
+      ...initial(),
+      storage: { host: 'h', user: 'u', port: 22, configured: true, passwordSet: false },
+    };
+    const s = settingsReducer(withStorage, { type: savePassword.fulfilled.type, payload: true });
+    expect(s.passwordSaveStatus).toBe('succeeded');
+    expect(s.storage?.passwordSet).toBe(true);
+  });
+
+  it('savePassword.fulfilled is a no-op on storage when none is loaded', () => {
     const s = settingsReducer(initial(), { type: savePassword.fulfilled.type, payload: true });
     expect(s.passwordSaveStatus).toBe('succeeded');
+    expect(s.storage).toBeNull();
   });
 
   it('fetchStorage.rejected sets error, with payload and fallback', () => {

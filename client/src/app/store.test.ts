@@ -4,10 +4,11 @@ import { store, makeStore } from './store';
 describe('store after demo strip', () => {
   const state = store.getState();
 
-  it('registers auth, billing, dashboard slices', () => {
+  it('registers auth, billing, profile slices', () => {
     expect(state).toHaveProperty('auth');
     expect(state).toHaveProperty('billing');
-    expect(state).toHaveProperty('dashboard');
+    expect(state).toHaveProperty('profile');
+    expect(state).toHaveProperty('guide');
   });
 
   it('does NOT register removed demo slices', () => {

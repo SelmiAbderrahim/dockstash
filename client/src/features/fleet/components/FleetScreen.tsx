@@ -77,13 +77,17 @@ export const FleetScreen = () => {
     >
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1 text-start">
-          <h1 id="fleet-heading" className="text-2xl font-semibold tracking-tight">
+          <h1
+            id="fleet-heading"
+            data-tour="fleet-heading"
+            className="text-2xl font-semibold tracking-tight"
+          >
             {t('fleet.heading')}
           </h1>
           <p className="text-sm text-muted-foreground">{t('fleet.lede')}</p>
         </div>
         {!locked && (
-          <Button type="button" onClick={() => setRegisterOpen(true)}>
+          <Button type="button" data-tour="fleet-register-button" onClick={() => setRegisterOpen(true)}>
             <Plus className="size-4" aria-hidden="true" />
             {t('fleet.register')}
           </Button>

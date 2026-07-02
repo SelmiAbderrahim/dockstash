@@ -29,6 +29,7 @@
     "yearlySavings": "2 months free",
     "loading": "Loading pricing…",
     "empty": "No plans available.",
+    "unavailable": "Plan upgrades aren't available right now. Contact support if you need to change your plan.",
     "free": "Free",
     "perMonth": "mo",
     "perYear": "yr",
@@ -50,7 +51,8 @@
     "cta": {
       "select": "Get started",
       "switch": "Switch to this plan",
-      "current": "Current plan"
+      "current": "Current plan",
+      "unavailable": "Unavailable"
     }
   },
   "page": {
@@ -72,8 +74,20 @@
     "cancelAtPeriodEnd": "Your plan will end at the current period. You will not be charged again."
   },
   "usage": {
+    "title": "Usage",
+    "lede": "Your current plan limits and per-project backup metering.",
+    "quotaLabel": "Projects used",
     "projects": "{{used}} of {{cap}} projects in use",
     "retention": "Retention: {{days}} days",
+    "stat": {
+      "projects": "Projects",
+      "retention": "Retention",
+      "retentionValue": "{{days}} days",
+      "frequency": "Backup frequency"
+    },
+    "features": {
+      "title": "Included features"
+    },
     "overCap": "You are over your project cap. Upgrade or pick which projects stay active.",
     "metering": {
       "title": "Per-project usage",

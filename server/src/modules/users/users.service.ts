@@ -8,6 +8,7 @@ export type PublicUser = {
   lastName: string;
   role: string;
   emailVerified: boolean;
+  guideMe: boolean;
 };
 
 export function toPublicUser(user: UserHydrated): PublicUser {
@@ -18,6 +19,7 @@ export function toPublicUser(user: UserHydrated): PublicUser {
     lastName: user.profile?.lastName ?? '',
     role: user.role,
     emailVerified: user.emailVerified ?? false,
+    guideMe: user.guideMe ?? true,
   };
 }
 
@@ -27,6 +29,28 @@ export async function findUserById(userId: string): Promise<UserHydrated | null>
 
 export async function getUserProfile(userId: string): Promise<PublicUser> {
   const user = await User.findById(userId);
+  if (!user) throw HttpError.notFound('errors.userNotFound');
+  return toPublicUser(user);
+}
+
+export async function updateUserPreferences(
+  userId: string,
+  input: { guideMe: boolean },
+): Promise<PublicUser> {
+  const user = await User.findByIdAndUpdate(userId, { guideMe: input.guideMe }, { new: true });
+  if (!user) throw HttpError.notFound('errors.userNotFound');
+  return toPublicUser(user);
+}
+
+export async function updateUserProfile(
+  userId: string,
+  input: { firstName: string; lastName: string },
+): Promise<PublicUser> {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { 'profile.firstName': input.firstName, 'profile.lastName': input.lastName },
+    { new: true },
+  );
   if (!user) throw HttpError.notFound('errors.userNotFound');
   return toPublicUser(user);
 }

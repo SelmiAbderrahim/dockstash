@@ -11,7 +11,9 @@
   "actions": {
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "connect": "Connecter le stockage"
+    "connect": "Connecter le stockage",
+    "test": "Tester la connexion",
+    "testing": "Test en cours…"
   },
   "errors": {
     "load": "Impossible de charger les paramètres.",
@@ -24,7 +26,9 @@
     "privateKey": "Clé SSH privée",
     "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
     "privateKeyHint": "Stockée chiffrée. Jamais affichée à nouveau.",
-    "saved": "Stockage enregistré."
+    "saved": "Stockage enregistré.",
+    "testOk": "Connexion réussie.",
+    "testFailed": "Échec de la connexion."
   },
   "retention": {
     "daily": "Conserver N quotidiennes",
@@ -38,7 +42,8 @@
     "confirm": "Confirmer",
     "mismatch": "Les mots de passe ne correspondent pas.",
     "escrow": "J'ai sauvegardé ce mot de passe.",
-    "saved": "Mot de passe enregistré."
+    "saved": "Mot de passe enregistré.",
+    "isSet": "Un mot de passe de chiffrement est défini."
   },
   "recovery": {
     "export": {

@@ -1,4 +1,5 @@
 import { HttpError } from '../../shared/utils/http-error.js';
+import { env } from '../../config/env.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { getPaymentProvider } from './active-provider.js';
@@ -25,18 +26,24 @@ export interface ResolvedEntitlements {
 
 /**
  * Resolve the effective entitlements for a user. Behaviour by state:
- * - No paid provider configured (OSS default) → the highest OSS ceiling
- *   (`business` matrix) so self-hosters are unrestricted.
+ * - Billing intentionally disabled (`PAYMENT_PROVIDER=none`, OSS self-host) →
+ *   the highest ceiling (`business` matrix) so self-hosters are unrestricted.
  * - No subscription row → `free`.
  * - `active` → the tier from `planSlug`.
  * - `past_due` within grace (`graceEndsAt > now`) → keep paid entitlements.
  * - `past_due` past grace, `incomplete`, `canceled`, `revoked` → `free`.
+ *
+ * NOTE: the OSS-unrestricted branch is gated on the operator explicitly opting
+ * out of billing (`PAYMENT_PROVIDER=none`) — NOT on whether the provider is
+ * `isConfigured()`. A selected-but-uncredentialled paid provider (e.g.
+ * `PAYMENT_PROVIDER=polar` with an empty `POLAR_ACCESS_TOKEN`) must fail SAFE to
+ * `free`, never fail open by handing every user the business ceiling for free.
  */
 export async function resolveEntitlements(
   userId: string,
 ): Promise<ResolvedEntitlements> {
   const provider = getPaymentProvider();
-  if (!provider.isConfigured()) {
+  if (env.PAYMENT_PROVIDER === 'none') {
     return {
       slug: 'business',
       entitlements: ENTITLEMENTS.business,

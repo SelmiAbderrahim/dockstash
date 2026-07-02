@@ -11,7 +11,9 @@
   "actions": {
     "save": "Guardar",
     "saving": "Guardando…",
-    "connect": "Conectar almacenamiento"
+    "connect": "Conectar almacenamiento",
+    "test": "Probar conexión",
+    "testing": "Probando…"
   },
   "errors": {
     "load": "No se pudieron cargar los ajustes.",
@@ -24,7 +26,9 @@
     "privateKey": "Clave SSH privada",
     "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
     "privateKeyHint": "Se guarda cifrada. No se muestra otra vez.",
-    "saved": "Almacenamiento guardado."
+    "saved": "Almacenamiento guardado.",
+    "testOk": "Conexión correcta.",
+    "testFailed": "Error de conexión."
   },
   "retention": {
     "daily": "Diarias a mantener",
@@ -38,7 +42,8 @@
     "confirm": "Confirmar",
     "mismatch": "Las contraseñas no coinciden.",
     "escrow": "He guardado la contraseña en lugar seguro.",
-    "saved": "Contraseña guardada."
+    "saved": "Contraseña guardada.",
+    "isSet": "Hay una contraseña de cifrado configurada."
   },
   "recovery": {
     "export": {

@@ -37,7 +37,7 @@ describe('settings api wrappers', () => {
   it('fetchStorageRequest treats a 404 as unconfigured', async () => {
     apiClient.mockRejectedValue(new ApiError('not found', 404, null));
     const result = await fetchStorageRequest();
-    expect(result).toEqual({ host: '', user: '', port: 22, configured: false });
+    expect(result).toEqual({ host: '', user: '', port: 22, configured: false, passwordSet: false });
   });
 
   it('fetchStorageRequest rethrows non-404 errors', async () => {

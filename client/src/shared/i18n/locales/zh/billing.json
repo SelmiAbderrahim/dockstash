@@ -29,6 +29,7 @@
     "yearlySavings": "两个月免费",
     "loading": "加载价格中…",
     "empty": "暂无可用方案。",
+    "unavailable": "目前无法升级方案。如需更改方案，请联系支持团队。",
     "free": "免费",
     "perMonth": "月",
     "perYear": "年",
@@ -50,7 +51,8 @@
     "cta": {
       "select": "开始使用",
       "switch": "切换到该方案",
-      "current": "当前方案"
+      "current": "当前方案",
+      "unavailable": "不可用"
     }
   },
   "page": {
@@ -72,8 +74,20 @@
     "cancelAtPeriodEnd": "您的方案将在当前周期结束后终止，将不再扣款。"
   },
   "usage": {
+    "title": "使用情况",
+    "lede": "您当前方案的限额以及各项目的备份计量。",
+    "quotaLabel": "已用项目",
     "projects": "已使用 {{used}} / {{cap}} 个项目",
     "retention": "保留：{{days}} 天",
+    "stat": {
+      "projects": "项目",
+      "retention": "保留",
+      "retentionValue": "{{days}} 天",
+      "frequency": "备份频率"
+    },
+    "features": {
+      "title": "包含的功能"
+    },
     "overCap": "已超过项目上限。请升级或选择保留哪些项目。",
     "metering": {
       "title": "按项目用量",
