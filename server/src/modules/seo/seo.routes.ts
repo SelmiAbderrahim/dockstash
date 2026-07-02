@@ -161,16 +161,21 @@ function urlsetHandler(paths: readonly string[]): RequestHandler {
 export const seoRouter: Router = Router();
 
 // Content is deterministic per deploy — safe for shared caches to hold for an
-// hour and revalidate lazily.
-seoRouter.use((_req, res, next) => {
-  res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
-  next();
-});
+// hour and revalidate lazily. This header MUST be scoped to the actual SEO
+// responses: the router is mounted at `/`, so a blanket `.use()` would set it
+// on every fall-through request (including `/api/*`) and mark private API JSON
+// publicly cacheable. `cacheable()` applies it per-handler instead.
+const cacheable =
+  (handler: RequestHandler): RequestHandler =>
+  (req, res, next) => {
+    res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+    handler(req, res, next);
+  };
 
-seoRouter.get('/robots.txt', robotsHandler);
-seoRouter.get('/llms.txt', llmsHandler);
-seoRouter.get('/sitemap.xml', sitemapIndexHandler);
-seoRouter.get('/sitemap-core.xml', urlsetHandler(CORE_PATHS));
-seoRouter.get('/sitemap-alternatives.xml', urlsetHandler(ALTERNATIVE_PATHS));
-seoRouter.get('/sitemap-guides.xml', urlsetHandler(GUIDE_PATHS));
-seoRouter.get('/sitemap-usecases.xml', urlsetHandler(USECASE_PATHS));
+seoRouter.get('/robots.txt', cacheable(robotsHandler));
+seoRouter.get('/llms.txt', cacheable(llmsHandler));
+seoRouter.get('/sitemap.xml', cacheable(sitemapIndexHandler));
+seoRouter.get('/sitemap-core.xml', cacheable(urlsetHandler(CORE_PATHS)));
+seoRouter.get('/sitemap-alternatives.xml', cacheable(urlsetHandler(ALTERNATIVE_PATHS)));
+seoRouter.get('/sitemap-guides.xml', cacheable(urlsetHandler(GUIDE_PATHS)));
+seoRouter.get('/sitemap-usecases.xml', cacheable(urlsetHandler(USECASE_PATHS)));

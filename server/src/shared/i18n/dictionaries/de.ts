@@ -251,6 +251,7 @@ export const de: DictionaryShape = {
       unauthorized: 'Agent-Authentifizierung fehlgeschlagen.',
       jobNotFound: 'Agent-Auftrag nicht gefunden.',
       drillNotSupported: 'Wiederherstellungsübungen werden auf Remote-Agents noch nicht unterstützt.',
+      duplicateHost: 'Für diesen Host existiert bereits ein Agent.',
     },
   },
   language: {

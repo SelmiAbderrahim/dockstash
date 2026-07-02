@@ -70,16 +70,18 @@ export const AgentSetupDialog = ({ agent, onClose }: Props) => {
 
   return (
     <Dialog open={agent !== null} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="p-6 pb-4">
           <DialogTitle>{t('fleet.setup.title')}</DialogTitle>
           <DialogDescription>{t('fleet.setup.description')}</DialogDescription>
         </DialogHeader>
 
         {token ? (
-          <AgentKeyReveal token={token} />
+          <div className="flex-1 overflow-y-auto px-6 pb-2">
+            <AgentKeyReveal token={token} />
+          </div>
         ) : (
-          <div className="flex flex-col gap-4 text-start">
+          <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pb-2 text-start">
             <AgentInstallCommand />
             <p className="text-sm text-muted-foreground">{t('fleet.setup.keyPlaceholderNote')}</p>
             {rotateStatus === 'failed' && (
@@ -107,7 +109,7 @@ export const AgentSetupDialog = ({ agent, onClose }: Props) => {
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="border-t p-6 pt-4">
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
             {t('fleet.setup.close')}
           </Button>

@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   ProcessResticRunner,
   TmpfsKeyMaterializer,
+  normalizePrivateKey,
   type KeyMaterializer,
   type SpawnImpl,
   type SpawnedChild,
@@ -281,6 +282,20 @@ describe('ProcessResticRunner', () => {
   });
 });
 
+describe('normalizePrivateKey', () => {
+  it('adds a trailing newline when missing', () => {
+    expect(normalizePrivateKey('body')).toBe('body\n');
+  });
+
+  it('converts CRLF and lone CR to LF', () => {
+    expect(normalizePrivateKey('a\r\nb\rc')).toBe('a\nb\nc\n');
+  });
+
+  it('collapses surrounding blank lines to one trailing newline', () => {
+    expect(normalizePrivateKey('\n\n key \n\n')).toBe('key\n');
+  });
+});
+
 describe('TmpfsKeyMaterializer', () => {
   it('writes 0600 key files and removes them afterwards', async () => {
     const materializer = new TmpfsKeyMaterializer(os.tmpdir());
@@ -289,7 +304,7 @@ describe('TmpfsKeyMaterializer', () => {
       { privateKey: 'KEY-BYTES', hostKeyLine: 'host ssh-ed25519 AAAA' },
       async ({ keyPath, knownHostsPath }) => {
         seenDir = path.dirname(keyPath);
-        expect(await fs.readFile(keyPath, 'utf8')).toBe('KEY-BYTES');
+        expect(await fs.readFile(keyPath, 'utf8')).toBe('KEY-BYTES\n');
         expect(await fs.readFile(knownHostsPath, 'utf8')).toBe('host ssh-ed25519 AAAA\n');
         const mode = (await fs.stat(keyPath)).mode & 0o777;
         expect(mode).toBe(0o600);

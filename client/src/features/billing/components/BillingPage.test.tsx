@@ -267,6 +267,28 @@ describe('BillingPage — usage tab', () => {
     await waitFor(() => expect(mockedApi.fetchUsage).toHaveBeenCalledTimes(2));
   });
 
+  it('locks the selection form with a spinner while the downgrade is in flight', async () => {
+    mockedApi.fetchUsage.mockResolvedValue(usageOverCap);
+    let resolveSelect: (v: { active: number; paused: number }) => void = () => {};
+    mockedApi.selectProjectsToKeep.mockReturnValue(
+      new Promise<{ active: number; paused: number }>((resolve) => {
+        resolveSelect = resolve;
+      }),
+    );
+    renderPage('/billing?tab=usage');
+    const alphaCheckbox = await screen.findByRole('checkbox', { name: /alpha/i });
+    const submit = screen.getByRole('button', { name: /save selection/i });
+    fireEvent.click(alphaCheckbox);
+    fireEvent.click(submit);
+    // While the request is unresolved the whole form is locked.
+    await waitFor(() => expect(submit).toBeDisabled());
+    expect(submit).toHaveAttribute('aria-busy', 'true');
+    expect(alphaCheckbox).toBeDisabled();
+    // Resolving unlocks the form and reloads usage.
+    resolveSelect({ active: 1, paused: 1 });
+    await waitFor(() => expect(mockedApi.fetchUsage).toHaveBeenCalledTimes(2));
+  });
+
   it('switches tabs via the tab buttons', async () => {
     mockedApi.fetchUsage.mockResolvedValue(usageEmpty);
     renderPage();

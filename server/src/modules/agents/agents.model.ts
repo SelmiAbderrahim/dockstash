@@ -37,6 +37,13 @@ const agentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+// One agent per (owner, host): a host is registered exactly once per account.
+// DB-level uniqueness is the only race-proof guard against two near-simultaneous
+// POSTs; the service also pre-checks for a friendly 409. The compound index
+// also serves list-by-owner queries, so the standalone `owner` index above is
+// redundant but harmless.
+agentSchema.index({ owner: 1, host: 1 }, { unique: true });
+
 export type AgentDocument = InferSchemaType<typeof agentSchema>;
 export type AgentHydrated = HydratedDocument<AgentDocument>;
 

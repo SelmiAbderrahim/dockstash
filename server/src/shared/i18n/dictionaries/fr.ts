@@ -251,6 +251,7 @@ export const fr: DictionaryShape = {
       unauthorized: "Échec de l'authentification de l'agent.",
       jobNotFound: "Tâche d'agent introuvable.",
       drillNotSupported: "Les exercices de restauration ne sont pas encore pris en charge sur les agents distants.",
+      duplicateHost: "Un agent pour cet hôte existe déjà.",
     },
   },
   language: {

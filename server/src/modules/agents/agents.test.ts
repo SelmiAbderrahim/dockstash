@@ -92,6 +92,19 @@ describe('agents: service', () => {
     expect(agent.status).toBe('offline');
   });
 
+  it('registerAgent rejects a duplicate (owner, host) with 409', async () => {
+    const a = await seedUser('a@t.com');
+    const b = await seedUser('b@t.com');
+    await registerAgent(a.id, { name: 'first', host: 'dup.example' });
+    await expect(
+      registerAgent(a.id, { name: 'second', host: 'dup.example' }),
+    ).rejects.toMatchObject({ status: 409 });
+    // Only the first survives, and the same host under another owner is allowed.
+    expect(await listAgentsForUser(a.id)).toHaveLength(1);
+    const other = await registerAgent(b.id, { name: 'b-host', host: 'dup.example' });
+    expect(String(other.agent.owner)).toBe(b.id);
+  });
+
   it('listAgentsForUser returns only the caller agents', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
@@ -297,6 +310,41 @@ describe('agents: HTTP routes', () => {
       .get('/api/agents')
       .set('Authorization', `JWT ${token}`);
     expect(after.body.agents).toHaveLength(0);
+    // The fleet rollup must drop it too — this is the surface the UI polls.
+    const fleetAfter = await request(app)
+      .get('/api/agents/fleet')
+      .set('Authorization', `JWT ${token}`);
+    expect(fleetAfter.body.fleet).toHaveLength(0);
+  });
+
+  it('marks API responses Cache-Control: no-store so stale lists are never replayed', async () => {
+    const { token } = await seedUser('a@t.com');
+    const list = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `JWT ${token}`);
+    expect(list.headers['cache-control']).toBe('no-store');
+    const fleet = await request(app)
+      .get('/api/agents/fleet')
+      .set('Authorization', `JWT ${token}`);
+    expect(fleet.headers['cache-control']).toBe('no-store');
+  });
+
+  it('rejects registering the same host twice with 409', async () => {
+    const { token } = await seedUser('a@t.com');
+    const first = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `JWT ${token}`)
+      .send({ name: 'prod', host: '10.0.0.9' });
+    expect(first.status).toBe(201);
+    const dup = await request(app)
+      .post('/api/agents')
+      .set('Authorization', `JWT ${token}`)
+      .send({ name: 'prod-again', host: '10.0.0.9' });
+    expect(dup.status).toBe(409);
+    const list = await request(app)
+      .get('/api/agents')
+      .set('Authorization', `JWT ${token}`);
+    expect(list.body.agents).toHaveLength(1);
   });
 
   it('rejects an invalid agent id at the zod layer', async () => {

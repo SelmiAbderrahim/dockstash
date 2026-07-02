@@ -91,6 +91,7 @@ export const UsageTab = () => {
   const loadingUsage = useAppSelector(selectLoadingUsage);
   const usageError = useAppSelector(selectUsageError);
   const [keepIds, setKeepIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     void dispatch(loadUsage());
@@ -100,15 +101,18 @@ export const UsageTab = () => {
     setKeepIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const submitSelection = () => {
+  const submitSelection = async () => {
     // The submit button is `disabled` whenever `keepIds` is empty, so this
     // early-return is a defensive guard that cannot be reached through the UI.
     /* v8 ignore next */
     if (keepIds.length === 0) return;
-    void dispatch(selectProjectsThunk({ keepIds })).then(() => {
-      void dispatch(loadUsage());
-      setKeepIds([]);
-    });
+    // Lock the form (submit + checkboxes) while the downgrade is in flight so the
+    // selection can't change and the request can't be double-fired.
+    setSubmitting(true);
+    await dispatch(selectProjectsThunk({ keepIds }));
+    await dispatch(loadUsage());
+    setKeepIds([]);
+    setSubmitting(false);
   };
 
   if (loadingUsage) {
@@ -309,6 +313,7 @@ export const UsageTab = () => {
                       id={`keep-${p.id}`}
                       checked={keepIds.includes(p.id)}
                       onCheckedChange={() => toggleKeep(p.id)}
+                      disabled={submitting}
                     />{' '}
                     {p.name}
                   </label>
@@ -318,9 +323,11 @@ export const UsageTab = () => {
             <Button
               type="button"
               className="w-fit"
-              onClick={submitSelection}
-              disabled={keepIds.length === 0}
+              onClick={() => void submitSelection()}
+              disabled={keepIds.length === 0 || submitting}
+              aria-busy={submitting}
             >
+              {submitting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
               {t('selection.submit')}
             </Button>
           </CardContent>

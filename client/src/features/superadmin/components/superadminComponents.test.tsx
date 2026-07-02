@@ -273,6 +273,31 @@ describe('UsersTab', () => {
     await waitFor(() => expect(mocked.scheduleDeletionRequest).toHaveBeenCalledWith('u1'));
   });
 
+  it('locks the delete dialog with a spinner while the deletion is pending', async () => {
+    const user = userEvent.setup();
+    renderWithStore(<UsersTab />, usersState({}, { actionPending: true }));
+    await user.click(screen.getByRole('button', { name: /open user actions/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /schedule deletion/i }));
+    const confirm = await screen.findByRole('button', { name: /confirm/i });
+    expect(confirm).toBeDisabled();
+    expect(confirm).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
+    // Escape is ignored while the request is in flight — the dialog stays locked.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
+  it('keeps the delete dialog open when the deletion is rejected', async () => {
+    const user = userEvent.setup();
+    mocked.scheduleDeletionRequest.mockRejectedValue(new Error('nope'));
+    renderWithStore(<UsersTab />, usersState());
+    await user.click(screen.getByRole('button', { name: /open user actions/i }));
+    await user.click(await screen.findByRole('menuitem', { name: /schedule deletion/i }));
+    await user.click(await screen.findByRole('button', { name: /confirm/i }));
+    await waitFor(() => expect(mocked.scheduleDeletionRequest).toHaveBeenCalledWith('u1'));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
   it('opens the release-hold dialog for a held user and dispatches with legalHold false', async () => {
     const user = userEvent.setup();
     mocked.setLegalHoldRequest.mockResolvedValue({ message: 'done', user: sampleUser() });

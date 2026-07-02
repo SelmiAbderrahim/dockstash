@@ -49,6 +49,10 @@ export const apiClient = async <T = unknown>(
   const url = path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
 
   const response = await fetch(url, {
+    // Never replay a stale API response from the HTTP cache — the server also
+    // sends `Cache-Control: no-store`, this forces a network round-trip even if
+    // a heuristic cache entry already exists. Callers may still override.
+    cache: 'no-store',
     ...rest,
     headers: buildHeaders(headers, hasJsonBody, auth),
     body: hasJsonBody ? JSON.stringify(body) : undefined,

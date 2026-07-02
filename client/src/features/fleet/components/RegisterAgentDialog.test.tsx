@@ -1,11 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { configureStore } from '@reduxjs/toolkit';
 import { RegisterAgentDialog } from './RegisterAgentDialog';
 import { fleetReducer, type FleetState } from '../store/slice';
 import * as api from '../api';
+import { ApiError } from '@shared/api/client';
 import { i18n, initI18n } from '@shared/i18n';
 
 vi.mock('../api', () => ({
@@ -144,6 +145,27 @@ describe('RegisterAgentDialog form', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('name taken');
     expect(store.getState().fleet.registerStatus).toBe('failed');
     expect(screen.queryByTestId('agent-api-key')).not.toBeInTheDocument();
+  });
+
+  it('shows a duplicate-host 409 as an inline error on the host field', async () => {
+    mocked.registerAgentRequest.mockRejectedValue(
+      new ApiError('m', 409, { error: { message: 'An agent for this host already exists.' } }),
+    );
+    renderDialog();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+
+    const host = screen.getByLabelText('Host');
+    await waitFor(() => expect(host).toHaveAttribute('aria-invalid', 'true'));
+    // The error is wired to the host input for assistive tech.
+    expect(host).toHaveAttribute('aria-describedby', 'agent-host-error');
+    const err = document.getElementById('agent-host-error');
+    expect(err).toHaveAttribute('role', 'alert');
+    expect(err).toHaveTextContent('An agent for this host already exists.');
+    // Editing the host clears the field error.
+    fireEvent.change(host, { target: { value: 'vps2.example' } });
+    expect(host).not.toHaveAttribute('aria-invalid');
+    expect(document.getElementById('agent-host-error')).toBeNull();
   });
 
   it('falls back to a generic register error without a message', () => {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -79,6 +80,8 @@ interface ConfirmActionDialogProps {
   description: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** While true the dialog is locked: buttons disabled, confirm shows a spinner. */
+  pending?: boolean;
 }
 
 export const ConfirmActionDialog = ({
@@ -86,20 +89,30 @@ export const ConfirmActionDialog = ({
   description,
   onConfirm,
   onCancel,
+  pending = false,
 }: ConfirmActionDialogProps) => {
   const { t } = useTranslation('superadmin');
   return (
-    <AlertDialog open onOpenChange={(open) => !open && onCancel()}>
+    <AlertDialog open onOpenChange={(open) => !open && !pending && onCancel()}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>
+          <AlertDialogCancel onClick={onCancel} disabled={pending}>
             {t('users.dialogs.cancel')}
           </AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogAction
+            onClick={(event) => {
+              // Don't let Radix auto-close; the parent closes on success only.
+              event.preventDefault();
+              onConfirm();
+            }}
+            disabled={pending}
+            aria-busy={pending}
+          >
+            {pending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
             {t('users.dialogs.confirm')}
           </AlertDialogAction>
         </AlertDialogFooter>

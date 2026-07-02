@@ -36,6 +36,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '
 import { selectActiveStepTarget } from '@features/guide';
 import { deleteAgent, fetchFleet } from '../store/thunks';
 import {
+  selectDeleteError,
+  selectDeleteStatus,
   selectFleet,
   selectFleetError,
   selectFleetLockedReason,
@@ -94,6 +96,8 @@ export const FleetScreen = () => {
   const status = useAppSelector(selectFleetStatus);
   const error = useAppSelector(selectFleetError);
   const lockedReason = useAppSelector(selectFleetLockedReason);
+  const deleting = useAppSelector(selectDeleteStatus) === 'loading';
+  const deleteError = useAppSelector(selectDeleteError);
 
   const [registerOpen, setRegisterOpen] = useState(false);
   const [setupAgent, setSetupAgent] = useState<FleetEntry | null>(null);
@@ -113,13 +117,15 @@ export const FleetScreen = () => {
     return () => clearInterval(id);
   }, [dispatch]);
 
-  const confirmRemove = () => {
+  const confirmRemove = async () => {
     // Defensive only: the confirm action lives inside the `removeAgent !== null`
     // branch of the AlertDialog below, so `removeAgent` is always set when this runs.
     /* v8 ignore next */
     if (!removeAgent) return;
-    void dispatch(deleteAgent(removeAgent.id));
-    setRemoveAgent(null);
+    // Keep the dialog open (spinner + disabled buttons) until the request settles;
+    // only close on success. A rejected delete surfaces `deleteError` in the dialog.
+    const res = await dispatch(deleteAgent(removeAgent.id));
+    if (deleteAgent.fulfilled.match(res)) setRemoveAgent(null);
   };
 
   // Open the register dialog when the guide tour targets one of its fields, so
@@ -274,7 +280,12 @@ export const FleetScreen = () => {
 
       <RegisterAgentDialog open={registerOpen} onClose={() => setRegisterOpen(false)} />
       <AgentSetupDialog agent={setupAgent} onClose={() => setSetupAgent(null)} />
-      <AlertDialog open={removeAgent !== null} onOpenChange={(open) => !open && setRemoveAgent(null)}>
+      <AlertDialog
+        open={removeAgent !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setRemoveAgent(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('fleet.remove.title')}</AlertDialogTitle>
@@ -282,9 +293,26 @@ export const FleetScreen = () => {
               {t('fleet.remove.description', { name: removeAgent?.name ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <Alert variant="destructive">
+              <AlertDescription>{deleteError}</AlertDescription>
+            </Alert>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel>{t('fleet.remove.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRemove}>{t('fleet.remove.confirm')}</AlertDialogAction>
+            <AlertDialogCancel disabled={deleting}>{t('fleet.remove.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                // Prevent Radix from auto-closing the dialog on click; we close
+                // manually only once the delete succeeds.
+                event.preventDefault();
+                void confirmRemove();
+              }}
+              disabled={deleting}
+              aria-busy={deleting}
+            >
+              {deleting && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {t('fleet.remove.confirm')}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

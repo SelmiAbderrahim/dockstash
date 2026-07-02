@@ -251,6 +251,7 @@ export const ar: DictionaryShape = {
       unauthorized: 'فشلت مصادقة الوكيل.',
       jobNotFound: 'لم يتم العثور على مهمة الوكيل.',
       drillNotSupported: 'تمارين الاستعادة غير مدعومة بعد على الوكلاء البعيدين.',
+      duplicateHost: 'يوجد وكيل لهذا المضيف بالفعل.',
     },
   },
   language: {

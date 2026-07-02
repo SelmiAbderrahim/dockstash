@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import { render, screen, fireEvent, within, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
@@ -26,7 +26,13 @@ vi.mock('../store/thunks', async () => {
     fetchFleet: make(actual.fetchFleet),
     registerAgent: make(actual.registerAgent),
     rotateAgentKey: make(actual.rotateAgentKey),
-    deleteAgent: make(actual.deleteAgent),
+    // deleteAgent resolves to a real fulfilled action so the component's
+    // `deleteAgent.fulfilled.match(res)` success check (which closes the dialog)
+    // is exercised. Per-test overrides can resolve a rejected action instead.
+    deleteAgent: Object.assign(
+      vi.fn((id: string) => () => Promise.resolve(actual.deleteAgent.fulfilled(id, 'req', id))),
+      actual.deleteAgent,
+    ),
     lockedReasonFromError: actual.lockedReasonFromError,
   };
 });
@@ -313,7 +319,49 @@ describe('FleetScreen row actions', () => {
 
     await user.click(screen.getByRole('button', { name: 'Remove' }));
     expect(mocked.deleteAgent).toHaveBeenCalledWith('a1');
-    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    // The dialog closes only once the delete resolves successfully.
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+  });
+
+  it('locks the remove dialog with a spinner while the delete is in flight', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries, deleteStatus: 'loading' });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove agent' }));
+    const confirm = screen.getByRole('button', { name: 'Remove' });
+    expect(confirm).toBeDisabled();
+    expect(confirm).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    // Escape is ignored while the delete is in flight — the dialog stays locked.
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+  });
+
+  it('keeps the dialog open and surfaces the error when the delete fails', async () => {
+    const user = userEvent.setup();
+    renderScreen({
+      status: 'succeeded',
+      items: entries,
+      deleteStatus: 'failed',
+      deleteError: 'Could not remove the agent.',
+    });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove agent' }));
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Could not remove the agent.');
+  });
+
+  it('does not close the dialog when the delete is rejected', async () => {
+    const user = userEvent.setup();
+    mocked.deleteAgent.mockReturnValueOnce(
+      (() =>
+        Promise.resolve(thunks.deleteAgent.rejected(new Error('x'), 'req', 'a1'))) as never,
+    );
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove agent' }));
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    await waitFor(() => expect(mocked.deleteAgent).toHaveBeenCalledWith('a1'));
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
   it('cancel on the remove confirmation does not dispatch deleteAgent', async () => {

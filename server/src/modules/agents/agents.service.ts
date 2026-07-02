@@ -33,7 +33,13 @@ export interface RegisterAgentResult {
 export async function registerAgent(
   userId: string,
   input: RegisterAgentInput,
+  deps: { t?: Translator } = {},
 ): Promise<RegisterAgentResult> {
+  const t = deps.t ?? identityT;
+  // A host is registered once per account. Pre-check for a friendly 409; the
+  // unique (owner, host) index is the race-proof backstop for concurrent POSTs.
+  const existing = await Agent.findOne({ owner: userId, host: input.host });
+  if (existing) throw HttpError.conflict(t('agents.error.duplicateHost'));
   const secret = mintSecret();
   const agent = await Agent.create({
     owner: userId,

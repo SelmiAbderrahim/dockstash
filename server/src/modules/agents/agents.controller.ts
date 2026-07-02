@@ -30,7 +30,7 @@ export const registerAgentHandler: RequestHandler = asyncHandler(async (req, res
   const userId = requireUserId(req.user);
   await assertMultiVpsAllowed(userId, { t: req.t });
   const input = registerAgentSchema.parse(req.body);
-  const { agent, token } = await registerAgent(userId, input);
+  const { agent, token } = await registerAgent(userId, input, { t: req.t });
   await recordAudit({
     actorUserId: userId,
     action: 'agent.register',

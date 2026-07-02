@@ -251,6 +251,7 @@ export const zh: DictionaryShape = {
       unauthorized: '代理认证失败。',
       jobNotFound: '未找到代理任务。',
       drillNotSupported: '远程代理暂不支持恢复演练。',
+      duplicateHost: '该主机的代理已存在。',
     },
   },
   language: {

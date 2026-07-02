@@ -46,6 +46,18 @@ export interface KeyMaterializer {
   ): Promise<T>;
 }
 
+/**
+ * Normalize a pasted SSH private key so OpenSSH/libcrypto can load it: strip
+ * CRLF line endings and guarantee one trailing newline. Without this, keys
+ * pasted through the dashboard textarea fail with
+ * `Load key "...": error in libcrypto`. Kept in sync with
+ * server/src/shared/utils/ssh-key.ts.
+ */
+export function normalizePrivateKey(privateKey: string): string {
+  const body = privateKey.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  return `${body}\n`;
+}
+
 export class TmpfsKeyMaterializer implements KeyMaterializer {
   constructor(private readonly baseDir: string = os.tmpdir()) {}
 
@@ -57,7 +69,7 @@ export class TmpfsKeyMaterializer implements KeyMaterializer {
     const keyPath = path.join(dir, 'id_key');
     const knownHostsPath = path.join(dir, 'known_hosts');
     try {
-      await fs.writeFile(keyPath, material.privateKey, { mode: 0o600 });
+      await fs.writeFile(keyPath, normalizePrivateKey(material.privateKey), { mode: 0o600 });
       await fs.writeFile(knownHostsPath, `${material.hostKeyLine}\n`, { mode: 0o600 });
       return await run({ keyPath, knownHostsPath });
     } finally {

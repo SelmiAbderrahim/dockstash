@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import type { Readable } from 'node:stream';
 import { env } from '../../config/env.js';
+import { normalizePrivateKey } from '../../shared/utils/ssh-key.js';
 import type { ResticRunnerExt } from '../scheduler/scheduler.boundaries.js';
 
 /** Narrow child-process surface so tests can inject an EventEmitter stub. */
@@ -44,7 +45,7 @@ export class TmpfsKeyMaterializer implements KeyMaterializer {
     const keyPath = path.join(dir, 'id_key');
     const knownHostsPath = path.join(dir, 'known_hosts');
     try {
-      await fs.writeFile(keyPath, material.privateKey, { mode: 0o600 });
+      await fs.writeFile(keyPath, normalizePrivateKey(material.privateKey), { mode: 0o600 });
       await fs.writeFile(knownHostsPath, `${material.hostKeyLine}\n`, { mode: 0o600 });
       return await run({ keyPath, knownHostsPath });
     } finally {

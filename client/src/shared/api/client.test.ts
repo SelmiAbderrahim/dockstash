@@ -85,6 +85,18 @@ describe('apiClient', () => {
     expect(spy).toHaveBeenCalledWith('http://example.com/external', expect.any(Object));
   });
 
+  it("defaults to cache: 'no-store' so stale API responses are never replayed", async () => {
+    const spy = fetchSpy().mockResolvedValue(fakeResponse({ text: '' }));
+    await apiClient('/thing');
+    expect(spy.mock.calls[0]![1]?.cache).toBe('no-store');
+  });
+
+  it('lets a caller override the cache mode', async () => {
+    const spy = fetchSpy().mockResolvedValue(fakeResponse({ text: '' }));
+    await apiClient('/thing', { cache: 'reload' });
+    expect(spy.mock.calls[0]![1]?.cache).toBe('reload');
+  });
+
   it('respects caller-supplied headers instead of overriding them', async () => {
     document.cookie = `token=${encodeURIComponent('JWT z')}; path=/`;
     const spy = fetchSpy().mockResolvedValue(fakeResponse({ text: '' }));

@@ -251,6 +251,7 @@ export const ru: DictionaryShape = {
       unauthorized: 'Ошибка аутентификации агента.',
       jobNotFound: 'Задание агента не найдено.',
       drillNotSupported: 'Тренировочные восстановления пока не поддерживаются на удалённых агентах.',
+      duplicateHost: 'Агент для этого хоста уже существует.',
     },
   },
   language: {

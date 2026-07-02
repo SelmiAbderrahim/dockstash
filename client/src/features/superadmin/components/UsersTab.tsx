@@ -32,6 +32,7 @@ import {
 } from '../store/thunks';
 import { setUsersSearch } from '../store/slice';
 import {
+  selectActionPending,
   selectLoadingUsers,
   selectSuperadminError,
   selectSuperadminUsers,
@@ -56,6 +57,7 @@ export const UsersTab = () => {
   const loading = useAppSelector(selectLoadingUsers);
   const error = useAppSelector(selectSuperadminError);
   const search = useAppSelector(selectUsersSearch);
+  const actionPending = useAppSelector(selectActionPending);
   const { t } = useTranslation('superadmin');
   const [term, setTerm] = useState(search);
   const [state, setState] = useState<DialogState>({ dialog: null, user: null });
@@ -226,10 +228,13 @@ export const UsersTab = () => {
         <ConfirmActionDialog
           title={t('users.dialogs.deleteTitle')}
           description={t('users.dialogs.deleteDescription', { email: state.user.email })}
+          pending={actionPending}
           onCancel={closeDialog}
-          onConfirm={() => {
-            void dispatch(scheduleUserDeletion({ userId: state.user!.id }));
-            closeDialog();
+          onConfirm={async () => {
+            // Keep the dialog open (spinner + disabled buttons) until the request
+            // settles; close only on success.
+            const res = await dispatch(scheduleUserDeletion({ userId: state.user!.id }));
+            if (scheduleUserDeletion.fulfilled.match(res)) closeDialog();
           }}
         />
       ) : null}

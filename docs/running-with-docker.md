@@ -87,3 +87,20 @@ Its runtime env lives on the remote VPS, not in root `.env`:
 Upgrade an agent with `docker compose -f docker-compose.agent.yml pull &&
 docker compose -f docker-compose.agent.yml up -d`. Full setup and security model:
 `docs/fleet-agents.en.md`.
+
+### Publishing the agent image
+
+Remote VPS operators **pull** `dockstash/agent:latest` — the install snippet never
+runs `docker login`, so the Docker Hub repo must stay **public**. Publishing is
+automated: the `publish-agent` job in `.github/workflows/ci.yml` builds `agent/` and
+pushes `:latest` + `:<sha>` on every push to `master` (repo secrets
+`DOCKERHUB_USERNAME` / `DOCKERHUB_TOKEN`, write scope on the `dockstash` org).
+
+To publish by hand (e.g. a hotfix before CI runs):
+
+```bash
+docker build -t dockstash/agent:latest agent/
+docker push dockstash/agent:latest
+# arm64 hosts — build multi-arch instead:
+# docker buildx build --platform linux/amd64,linux/arm64 -t dockstash/agent:latest --push agent/
+```

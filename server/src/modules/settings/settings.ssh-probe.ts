@@ -3,6 +3,7 @@ import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import type { SpawnedChild, SpawnImpl } from '../backups/backups.restic-runner.js';
+import { normalizePrivateKey } from '../../shared/utils/ssh-key.js';
 import type { SshProbe } from './settings.service.js';
 
 const FINGERPRINT_LINE = /SHA256:([A-Za-z0-9+/=]+)/;
@@ -58,7 +59,7 @@ export function makeProductionSshProbe(opts: ProductionSshProbeOptions = {}): Ss
       try {
         const keyPath = path.join(dir, 'id_key');
         const knownHostsPath = path.join(dir, 'known_hosts');
-        await fs.writeFile(keyPath, privateKey, { mode: 0o600 });
+        await fs.writeFile(keyPath, normalizePrivateKey(privateKey), { mode: 0o600 });
 
         const scan = await run(spawnImpl, 'ssh-keyscan', [
           '-p',

@@ -9,6 +9,7 @@ import { notFound } from './shared/middleware/not-found.js';
 import { requestId } from './shared/middleware/request-id.js';
 import { language } from './shared/middleware/language.js';
 import { securityHeaders } from './shared/middleware/security-headers.js';
+import { apiNoStore } from './shared/middleware/no-store.js';
 import {
   createAgentRateLimiter,
   createAuthRateLimiter,
@@ -67,6 +68,12 @@ export function createApp(): Express {
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(language);
   app.use(passport.initialize());
+
+  // Every /api response is private, per-user JSON — never let a browser or proxy
+  // cache it. Mounted before all /api routers so the CSRF token, health, and
+  // every product surface inherit `Cache-Control: no-store`. The SEO router is
+  // mounted at `/` (not `/api`) below and keeps its own cacheable headers.
+  app.use('/api', apiNoStore);
 
   // CSRF token endpoint (double-submit). Cookie-authenticated surfaces call
   // this before any mutating request. Bearer-token API calls are exempt from

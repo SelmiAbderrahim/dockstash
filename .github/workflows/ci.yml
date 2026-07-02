@@ -93,3 +93,35 @@ jobs:
         uses: actions/checkout@v4
       - name: Build compose images
         run: docker compose -f docker-compose.yml build api web
+
+  # Publish the fleet-agent image to Docker Hub. Runs ONLY on pushes to master
+  # (never on PRs / forks — those have no credentials) so the copy-paste install
+  # snippet shown after agent registration — image: dockstash/agent:latest —
+  # resolves for every remote VPS operator. Kept separate from docker-build so a
+  # missing or expired publish credential can never block PR CI.
+  #
+  # Requires repo secrets DOCKERHUB_USERNAME + DOCKERHUB_TOKEN (write scope on the
+  # dockstash org). The Docker Hub repo must be PUBLIC — the VPS install flow pulls
+  # without docker login.
+  publish-agent:
+    name: publish (dockstash/agent)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./agent
+          push: true
+          tags: |
+            dockstash/agent:latest
+            dockstash/agent:${{ github.sha }}

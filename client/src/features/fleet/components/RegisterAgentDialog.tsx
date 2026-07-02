@@ -13,6 +13,7 @@ import {
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { registerAgent } from '../store/thunks';
+import type { FleetRejection } from '../store/thunks';
 import { resetRegisterState } from '../store/slice';
 import { selectRegisterError, selectRegisterStatus } from '../store/selectors';
 import { AgentKeyReveal } from './AgentKeyReveal';
@@ -37,6 +38,9 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
   const [host, setHost] = useState('');
   const [port, setPort] = useState('');
   const [token, setToken] = useState<string | null>(null);
+  // Set from a 409 (duplicate host) so the error lands on the offending field
+  // rather than the generic form alert. Cleared as soon as the host is edited.
+  const [hostError, setHostError] = useState<string | null>(null);
 
   const canSubmit = name.trim().length > 0 && host.trim().length > 0;
   const saving = registerStatus === 'loading';
@@ -47,6 +51,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
       setHost('');
       setPort('');
       setToken(null);
+      setHostError(null);
       dispatch(resetRegisterState());
       onClose();
     }
@@ -55,6 +60,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSubmit || saving) return;
+    setHostError(null);
     void dispatch(
       registerAgent({
         name: name.trim(),
@@ -64,30 +70,37 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
     )
       .unwrap()
       .then((result) => setToken(result.token))
-      .catch(() => {
-        /* surfaced via selectRegisterError */
+      .catch((rejection: FleetRejection | undefined) => {
+        // A duplicate host (409) belongs on the field; other errors fall through
+        // to the generic alert via selectRegisterError.
+        if (rejection?.conflict) setHostError(rejection.message);
       });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
+      <DialogContent
+        className={`flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 ${token ? 'sm:max-w-2xl' : 'sm:max-w-lg'}`}
+      >
+        <DialogHeader className="p-6 pb-4">
           <DialogTitle>{t('fleet.dialog.title')}</DialogTitle>
           <DialogDescription>{t('fleet.dialog.description')}</DialogDescription>
         </DialogHeader>
 
         {token ? (
-          <div className="flex flex-col gap-4">
-            <AgentKeyReveal token={token} />
-            <DialogFooter>
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex-1 overflow-y-auto px-6 pb-2">
+              <AgentKeyReveal token={token} />
+            </div>
+            <DialogFooter className="border-t p-6 pt-4">
               <Button type="button" onClick={() => handleOpenChange(false)}>
                 {t('fleet.dialog.done')}
               </Button>
             </DialogFooter>
           </div>
         ) : (
-          <form className="flex flex-col gap-4 text-start" onSubmit={onSubmit}>
+          <form className="flex min-h-0 flex-1 flex-col text-start" onSubmit={onSubmit}>
+            <div className="flex flex-col gap-4 overflow-y-auto px-6 pb-2 pt-1">
             <div className="flex flex-col gap-2">
               <Label htmlFor="agent-name">{t('fleet.dialog.name')}</Label>
               <Input
@@ -108,11 +121,26 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
                   data-tour="agent-host-input"
                   type="text"
                   value={host}
-                  onChange={(e) => setHost(e.target.value)}
+                  onChange={(e) => {
+                    setHost(e.target.value);
+                    if (hostError) setHostError(null);
+                  }}
                   required
                   autoComplete="off"
+                  aria-invalid={hostError ? true : undefined}
+                  aria-describedby={hostError ? 'agent-host-error' : undefined}
                 />
-                <small className="text-sm text-muted-foreground">{t('fleet.dialog.hostHint')}</small>
+                {hostError ? (
+                  <span
+                    id="agent-host-error"
+                    role="alert"
+                    className="text-sm font-medium text-destructive"
+                  >
+                    {hostError}
+                  </span>
+                ) : (
+                  <small className="text-sm text-muted-foreground">{t('fleet.dialog.hostHint')}</small>
+                )}
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="agent-port">{t('fleet.dialog.port')}</Label>
@@ -128,12 +156,13 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
                 <small className="text-sm text-muted-foreground">{t('fleet.dialog.portHint')}</small>
               </div>
             </div>
-            {registerStatus === 'failed' && (
+            {registerStatus === 'failed' && !hostError && (
               <span role="alert" className="text-sm font-medium text-destructive">
                 {registerError ?? t('fleet.errors.register')}
               </span>
             )}
-            <DialogFooter>
+            </div>
+            <DialogFooter className="border-t p-6 pt-4">
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 {t('fleet.dialog.cancel')}
               </Button>

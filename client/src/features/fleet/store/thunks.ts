@@ -17,6 +17,8 @@ import type {
 export interface FleetRejection {
   message: string;
   lockedReason: FleetLockedReason | null;
+  /** True when the server rejected a duplicate registration (HTTP 409). */
+  conflict: boolean;
 }
 
 /**
@@ -39,6 +41,7 @@ export const lockedReasonFromError = (err: unknown): FleetLockedReason | null =>
 const toRejection = (err: unknown, fallback: string): FleetRejection => ({
   message: messageFromError(err, fallback),
   lockedReason: lockedReasonFromError(err),
+  conflict: err instanceof ApiError && err.status === 409,
 });
 
 /**

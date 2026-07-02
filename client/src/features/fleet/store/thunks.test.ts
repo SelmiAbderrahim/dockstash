@@ -93,8 +93,9 @@ describe('fetchFleet', () => {
     const result = await store.dispatch(fetchFleet());
     expect(fetchFleet.rejected.match(result)).toBe(true);
     expect(result.payload).toEqual({
-      message: 'Request failed with status 403',
+      message: 'Locked',
       lockedReason: 'multiVpsLocked',
+      conflict: false,
     });
   });
 
@@ -103,7 +104,7 @@ describe('fetchFleet', () => {
     const store = makeStore();
     const result = await store.dispatch(fetchFleet());
     expect(fetchFleet.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'boom', lockedReason: null });
+    expect(result.payload).toEqual({ message: 'boom', lockedReason: null, conflict: false });
   });
 
   it('passes the silent flag through to the pending/fulfilled meta', async () => {
@@ -149,8 +150,24 @@ describe('registerAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(registerAgent({ name: 'w', host: 'h' }));
     expect(registerAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'nope', lockedReason: null });
+    expect(result.payload).toEqual({ message: 'nope', lockedReason: null, conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
+  });
+
+  it('flags a 409 duplicate host as a conflict', async () => {
+    mocked.registerAgentRequest.mockRejectedValue(
+      new ApiError('An agent for this host already exists.', 409, {
+        error: { message: 'An agent for this host already exists.' },
+      }),
+    );
+    const store = makeStore();
+    const result = await store.dispatch(registerAgent({ name: 'w', host: 'dup' }));
+    expect(registerAgent.rejected.match(result)).toBe(true);
+    expect(result.payload).toEqual({
+      message: 'An agent for this host already exists.',
+      lockedReason: null,
+      conflict: true,
+    });
   });
 });
 
@@ -174,7 +191,7 @@ describe('rotateAgentKey', () => {
     const store = makeStore();
     const result = await store.dispatch(rotateAgentKey('a1'));
     expect(rotateAgentKey.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null });
+    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null, conflict: false });
   });
 });
 
@@ -195,7 +212,7 @@ describe('deleteAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(deleteAgent('a1'));
     expect(deleteAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null });
+    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null, conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 });

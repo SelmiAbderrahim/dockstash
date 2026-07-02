@@ -15,6 +15,16 @@ describe('messageFromError', () => {
     expect(messageFromError(new ApiError('m', 400, { error: 42 }), 'fb')).toBe('m');
   });
 
+  it('unwraps the nested message from a `{ error: { message } }` body', () => {
+    expect(
+      messageFromError(new ApiError('m', 409, { error: { message: 'host taken', details: {} } }), 'fb'),
+    ).toBe('host taken');
+  });
+
+  it('falls back when the nested `error.message` is not a string', () => {
+    expect(messageFromError(new ApiError('m', 409, { error: { message: 42 } }), 'fb')).toBe('m');
+  });
+
   it('falls back to the ApiError message when the body is an object without `error`', () => {
     expect(messageFromError(new ApiError('the-message', 500, { other: 1 }), 'fb')).toBe('the-message');
   });

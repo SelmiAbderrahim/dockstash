@@ -251,6 +251,7 @@ export const en = {
       unauthorized: 'Agent authentication failed.',
       jobNotFound: 'Agent job not found.',
       drillNotSupported: 'Restore drills are not supported on remote agents yet.',
+      duplicateHost: 'An agent for this host already exists.',
     },
   },
   language: {
