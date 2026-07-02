@@ -24,3 +24,4 @@ export type {
   StorageSettingsDocument,
   StorageSettingsHydrated,
 } from './settings.model.js';
+export { makeProductionSshProbe } from './settings.ssh-probe.js';

@@ -89,15 +89,15 @@ export interface PricingTierClient {
 }
 
 /**
- * Read the persisted tiers. `seedPricingTiers` is idempotent and `$set`s the
- * product IDs (and caps/flags) from live env on every run, so calling it
- * unconditionally makes env the source of truth — product IDs configured after
- * the initial seed reconcile into the DB here instead of staying stale forever.
- * `projects: Number.MAX_SAFE_INTEGER` is returned to the client as `null` to
- * mean "unlimited".
+ * Read the persisted tiers. The catalog is created + reconciled from env by the
+ * `seed-pricing-tiers` entrypoint on every boot (env is the source of truth);
+ * here we only seed a cold/empty DB as a safety net so a fresh install without
+ * the entrypoint still serves tiers. `projects: Number.MAX_SAFE_INTEGER` is
+ * returned to the client as `null` to mean "unlimited".
  */
 export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
-  await seedPricingTiers();
+  const count = await PricingTier.countDocuments();
+  if (count === 0) await seedPricingTiers();
   const tiers = await PricingTier.find({ active: true }).sort({ priceMonthly: 1 }).lean();
   // When Polar is not fully configured (e.g. missing access token) checkout
   // would 500 on click. The client's only signal is product-id nullity, so null

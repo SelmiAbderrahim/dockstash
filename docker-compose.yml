@@ -121,6 +121,17 @@ services:
       MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
+      # Polar credentials + product catalog. env.ts reads process.env directly
+      # (the polar_* secrets mounted below are NOT consumed), so these must be
+      # plain env vars or checkout stays unconfigured and every plan renders
+      # "unavailable". Empty values are treated as unset by env.ts / polar-config.
+      POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
+      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
+      POLAR_SERVER: ${POLAR_SERVER:-production}
+      POLAR_PRO_PRODUCT_ID: ${POLAR_PRO_PRODUCT_ID:-}
+      POLAR_BUSINESS_PRODUCT_ID: ${POLAR_BUSINESS_PRODUCT_ID:-}
+      POLAR_PRO_YEARLY_PRODUCT_ID: ${POLAR_PRO_YEARLY_PRODUCT_ID:-}
+      POLAR_BUSINESS_YEARLY_PRODUCT_ID: ${POLAR_BUSINESS_YEARLY_PRODUCT_ID:-}
       # env.ts reads process.env directly (no /run/secrets reader yet), so
       # these must be plain env vars — the `resend_api_key` secret below is
       # mounted but never actually consumed by the app.

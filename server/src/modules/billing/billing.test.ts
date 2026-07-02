@@ -288,16 +288,16 @@ describe('billing / webhook verification', () => {
     );
   });
 
-  it('accepts whsec_ prefixed base64 secret', () => {
-    const rawSecret = Buffer.from('a-secret-inside').toString('base64');
-    const secret = `whsec_${rawSecret}`;
+  it('treats a whsec_-prefixed secret as a raw string (matches Polar validateEvent)', () => {
+    // Polar signs with the secret's raw UTF-8 bytes verbatim — the `whsec_`
+    // prefix is part of the key, NOT stripped and base64-decoded.
+    const secret = `whsec_${Buffer.from('a-secret-inside').toString('base64')}`;
     const provider = new PolarProvider({
       nowSeconds: () => NOW_SECONDS,
       getWebhookSecret: () => secret,
     });
     const body = JSON.stringify(subscriptionEnvelope());
-    const key = Buffer.from(rawSecret, 'base64');
-    const sig = createHmac('sha256', key)
+    const sig = createHmac('sha256', Buffer.from(secret, 'utf8'))
       .update(`wh_2.${NOW_SECONDS}.${body}`, 'utf8')
       .digest('base64');
     const headers = {
@@ -306,6 +306,18 @@ describe('billing / webhook verification', () => {
       'webhook-signature': `v1,${sig}`,
     };
     expect(() => provider.verifyWebhook(Buffer.from(body), headers)).not.toThrow();
+    // The old base64-decode-after-whsec key must NOT validate anymore.
+    const wrongKey = Buffer.from(secret.slice('whsec_'.length), 'base64');
+    const wrongSig = createHmac('sha256', wrongKey)
+      .update(`wh_2.${NOW_SECONDS}.${body}`, 'utf8')
+      .digest('base64');
+    expect(() =>
+      provider.verifyWebhook(Buffer.from(body), {
+        'webhook-id': 'wh_2',
+        'webhook-timestamp': String(NOW_SECONDS),
+        'webhook-signature': `v1,${wrongSig}`,
+      }),
+    ).toThrow();
   });
 
   it('parseEvent rejects invalid JSON after signature passes', () => {

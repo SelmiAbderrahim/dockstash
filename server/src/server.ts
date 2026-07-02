@@ -16,6 +16,7 @@ import {
   makeResticRunnerFor,
   placeholderResticRunner,
 } from './modules/backups/index.js';
+import { configureSettingsController, makeProductionSshProbe } from './modules/settings/index.js';
 import { wireRecoveryController } from './boot/recovery.js';
 
 function main(): void {
@@ -50,6 +51,7 @@ function main(): void {
   if (useRealRunner) {
     configureSnapshotsController(makeProductionSnapshotLister());
     wireRecoveryController();
+    configureSettingsController({ probe: makeProductionSshProbe() });
   }
   let scheduler: SchedulerRuntime | null = null;
   startScheduler({

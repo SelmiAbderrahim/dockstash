@@ -129,10 +129,13 @@ function toNormalizedOrder(raw: RawPolarOrder): NormalizedOrder {
 // Standard Webhooks HMAC helpers.
 // ---------------------------------------------------------------------------
 
+// Polar follows Standard Webhooks but treats the configured secret as a RAW
+// string: its SDK base64-encodes the secret before handing it to the
+// standardwebhooks lib, which base64-decodes it straight back — so the HMAC key
+// is the raw secret's UTF-8 bytes verbatim (a `whsec_` prefix is part of the
+// key, never stripped: `_` isn't valid base64). This mirrors `validateEvent` in
+// `@polar-sh/sdk`. Do NOT base64-decode here, or every signature 401s.
 function decodeStandardWebhookSecret(secret: string): Buffer {
-  if (secret.startsWith('whsec_')) {
-    return Buffer.from(secret.slice('whsec_'.length), 'base64');
-  }
   return Buffer.from(secret, 'utf8');
 }
 

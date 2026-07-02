@@ -15,6 +15,7 @@ import { Customer } from './customer.model.js';
 import { Subscription } from './subscription.model.js';
 import { PricingTier } from './pricing-tier.model.js';
 import { getPricingTiersForClient, startCheckoutForUser } from './billing.service.js';
+import { seedPricingTiers } from './pricing-tier.seed.js';
 import type { IPaymentProvider } from './payment-provider.js';
 
 const app = createApp();
@@ -196,9 +197,9 @@ describe('billing / controller + service surface', () => {
 
   it('getPricingTiersForClient falls back for tiers missing caps/flags and passes product ids through when configured', async () => {
     __setPaymentProviderForTests(mockProvider()); // configured
-    // Raw doc bypassing the schema so caps/flags are absent. Use a non-plan
-    // slug so the idempotent seed (free/pro/business) leaves it untouched and
-    // the fallback branch stays exercised.
+    // Raw doc bypassing the schema so caps/flags are absent. A non-empty
+    // collection means the read path skips the cold-start seed, so this row is
+    // returned as-is and the caps/flags fallback branch stays exercised.
     await PricingTier.collection.insertOne({
       slug: 'legacy',
       name: 'Raw',
@@ -216,12 +217,12 @@ describe('billing / controller + service surface', () => {
     expect(legacy?.flags).toEqual({ schedules: false, emailAlerts: false, multiVps: false });
   });
 
-  it('getPricingTiersForClient reconciles product ids from env into stale (pre-seeded null) rows', async () => {
-    __setPaymentProviderForTests(mockProvider()); // configured
+  it('seedPricingTiers reconciles product ids from env into stale (pre-seeded null) rows', async () => {
+    // The entrypoint re-runs this on every boot; it must $set product IDs that
+    // were null when the catalog was first seeded (before Polar was configured).
     const prev = env.POLAR_PRO_PRODUCT_ID;
     (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = 'prod_env_pro';
     try {
-      // Simulate a seed performed before the product IDs were configured.
       await PricingTier.collection.insertOne({
         slug: 'pro',
         name: 'Pro',
@@ -234,8 +235,8 @@ describe('billing / controller + service surface', () => {
         caps: { projects: 5, retentionDays: 30, frequency: 'daily' },
         flags: { schedules: true, emailAlerts: true, multiVps: false },
       });
-      const tiers = await getPricingTiersForClient();
-      const pro = tiers.find((t) => t.slug === 'pro');
+      await seedPricingTiers();
+      const pro = await PricingTier.findOne({ slug: 'pro' }).lean();
       expect(pro?.productIdMonthly).toBe('prod_env_pro');
     } finally {
       (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = prev;
