@@ -1,13 +1,20 @@
 import { logger } from '../../../config/logger.js';
 import { WebhookVerifyError } from '../payment-provider.js';
-import type { IPaymentProvider } from '../payment-provider.js';
-import { WebhookEvent } from '../webhook-event.model.js';
+import type { IPaymentProvider, ParsedEvent } from '../payment-provider.js';
+import { WebhookEvent, type WebhookEventHydrated } from '../webhook-event.model.js';
 import { dispatchEvent, payloadHashOf } from './registry.js';
 
 export interface IngestResult {
   statusCode: number;
   body: { status: string; eventId?: string; error?: string };
 }
+
+/**
+ * Give up re-processing a failing event after this many attempts (the poison
+ * pill case). Beyond the cap we ack with 200 so the provider stops retrying;
+ * the reconciliation cron is the safety net for the lost state transition.
+ */
+export const MAX_WEBHOOK_RETRIES = 5;
 
 export interface IngestInput {
   provider: IPaymentProvider;
@@ -78,7 +85,17 @@ export async function ingestWebhook(input: IngestInput): Promise<IngestResult> {
       const existing = await WebhookEvent.findOne({
         provider: provider.name,
         eventId: parsed.eventId,
-      }).lean();
+      });
+      // Re-dispatch a previously failed delivery (the provider is retrying
+      // because we returned 5xx) until the retry cap. `pending` means a
+      // concurrent worker owns the event — never double-dispatch.
+      if (
+        existing &&
+        existing.status === 'failed' &&
+        existing.retryCount < MAX_WEBHOOK_RETRIES
+      ) {
+        return runDispatch(provider.name, parsed, existing);
+      }
       return {
         statusCode: 200,
         body: {
@@ -91,27 +108,48 @@ export async function ingestWebhook(input: IngestInput): Promise<IngestResult> {
   }
 
   // 4. Dispatch to handler.
+  return runDispatch(provider.name, parsed, inserted);
+}
+
+/**
+ * Run the handler for an event row and persist the outcome. On failure the
+ * row is marked `failed` and we return 500 (so the provider retries) until
+ * `MAX_WEBHOOK_RETRIES` is reached, after which we ack with 200 to stop the
+ * retry storm.
+ */
+async function runDispatch(
+  providerName: IPaymentProvider['name'],
+  parsed: ParsedEvent,
+  row: WebhookEventHydrated,
+): Promise<IngestResult> {
   try {
-    const result = await dispatchEvent(provider.name, parsed);
-    inserted.status = result.status;
-    if (result.reason) inserted.error = result.reason;
-    await inserted.save();
+    const result = await dispatchEvent(providerName, parsed);
+    row.status = result.status;
+    row.error = result.reason ?? null;
+    await row.save();
     return {
       statusCode: 200,
       body: { status: result.status, eventId: parsed.eventId },
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    inserted.status = 'failed';
-    inserted.retryCount = (inserted.retryCount ?? 0) + 1;
-    inserted.error = message;
-    await inserted.save();
+    row.status = 'failed';
+    row.retryCount = (row.retryCount ?? 0) + 1;
+    row.error = message;
+    await row.save();
+    const exhausted = row.retryCount >= MAX_WEBHOOK_RETRIES;
     logger.error(
-      { err, eventId: parsed.eventId, type: parsed.type },
+      {
+        err,
+        eventId: parsed.eventId,
+        type: parsed.type,
+        retryCount: row.retryCount,
+        exhausted,
+      },
       'billing.webhook: dispatch failed',
     );
     return {
-      statusCode: 200,
+      statusCode: exhausted ? 200 : 500,
       body: { status: 'failed', eventId: parsed.eventId, error: message },
     };
   }

@@ -12,6 +12,14 @@ export type SeoLocale = (typeof LOCALES)[number];
 /** The locale served on un-prefixed paths (also the hreflang x-default). */
 export const DEFAULT_LOCALE: SeoLocale = 'en';
 
+/**
+ * Paths whose content is actually translated per locale. Only these emit
+ * `<xhtml:link>` hreflang alternates in the sitemaps — every other page is
+ * programmatic English served under locale prefixes and must not advertise
+ * locale variants (they canonicalise onto the un-prefixed English URL).
+ */
+export const TRANSLATED_PATHS = ['/', '/pricing', '/security', '/faq'] as const;
+
 /** Core marketing/product pages. */
 export const CORE_PATHS: readonly string[] = [
   '/',
@@ -25,15 +33,19 @@ export const CORE_PATHS: readonly string[] = [
   '/compare/self-hosted-backup-vs-cloud-backup',
 ];
 
-/** Competitor "alternative" / "vs" pages. */
-export const ALTERNATIVE_PATHS: readonly string[] = [
-  '/alternatives/backrest',
-  '/vs/backrest',
-  '/alternatives/simplebackups',
-  '/alternatives/duplicati',
-  '/alternatives/restic-cron-scripts',
-  '/alternatives/provider-snapshots',
+/** Competitor slugs → `/alternatives/<slug>` + `/vs/<slug>` pages. */
+export const COMPETITOR_SLUGS: readonly string[] = [
+  'backrest',
+  'simplebackups',
+  'duplicati',
+  'restic-cron-scripts',
+  'provider-snapshots',
 ];
+
+/** Competitor "alternative" / "vs" pages. */
+export const ALTERNATIVE_PATHS: readonly string[] = COMPETITOR_SLUGS.flatMap(
+  (slug) => [`/alternatives/${slug}`, `/vs/${slug}`],
+);
 
 /** Database backup guide slugs → `/guides/backup-<slug>-docker`. */
 export const GUIDE_SLUGS: readonly string[] = [
@@ -105,7 +117,24 @@ export const DISALLOWED_PATHS: readonly string[] = [
   '/checkout',
   '/login',
   '/register',
+  '/logout',
+  '/profile',
+  '/settings',
+  '/setup',
+  '/projects',
+  '/snapshots',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
 ];
+
+/**
+ * Build-time content date used for sitemap `<lastmod>`. Deterministic on
+ * purpose (no `Date.now()`). Bump together with `SITE_LAST_UPDATED` in
+ * `client/src/shared/seo/schema.ts` whenever marketing content materially
+ * changes — parity is enforced by `seo.parity.test.ts`.
+ */
+export const SEO_LASTMOD = '2026-07-01';
 
 /** Escape a string for safe inclusion in XML text / attribute values. */
 export function escapeXml(value: string): string {
@@ -132,21 +161,33 @@ export function localizedUrl(origin: string, locale: SeoLocale, path: string): s
 }
 
 /**
- * Build a single `<url>` entry (as an XML string) for the given path, including
- * the un-prefixed English `<loc>`, one `<xhtml:link>` alternate per locale, and
- * an `x-default` alternate pointing at the un-prefixed path.
+ * Build a single `<url>` entry (as an XML string) for the given path with the
+ * un-prefixed English `<loc>` and `<lastmod>`. When `withAlternates` is true
+ * (translated pages only) it also emits one `<xhtml:link>` alternate per
+ * locale plus an `x-default` alternate pointing at the un-prefixed path;
+ * untranslated pages emit zero alternate lines.
  */
-export function buildUrlEntry(origin: string, path: string, lastmod: string): string {
+export function buildUrlEntry(
+  origin: string,
+  path: string,
+  lastmod: string,
+  withAlternates = true,
+): string {
   const loc = escapeXml(localizedUrl(origin, DEFAULT_LOCALE, path));
-  const xDefault = escapeXml(localizedUrl(origin, DEFAULT_LOCALE, path));
 
-  const alternates = LOCALES.map((locale) => {
-    const href = escapeXml(localizedUrl(origin, locale, path));
-    return `    <xhtml:link rel="alternate" hreflang="${locale}" href="${href}"/>`;
-  });
-  alternates.push(
-    `    <xhtml:link rel="alternate" hreflang="x-default" href="${xDefault}"/>`,
-  );
+  const alternates: string[] = [];
+  if (withAlternates) {
+    const xDefault = escapeXml(localizedUrl(origin, DEFAULT_LOCALE, path));
+    for (const locale of LOCALES) {
+      const href = escapeXml(localizedUrl(origin, locale, path));
+      alternates.push(
+        `    <xhtml:link rel="alternate" hreflang="${locale}" href="${href}"/>`,
+      );
+    }
+    alternates.push(
+      `    <xhtml:link rel="alternate" hreflang="x-default" href="${xDefault}"/>`,
+    );
+  }
 
   return [
     '  <url>',

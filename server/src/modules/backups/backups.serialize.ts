@@ -23,6 +23,9 @@ export interface PublicProject {
   lastDrillAt: string | null;
   lastDrillStatus: 'pass' | 'fail' | null;
   lastDrillDetail: string;
+  lastRestoreAt: string | null;
+  lastRestoreStatus: 'pass' | 'fail' | null;
+  lastRestoreDetail: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -52,7 +55,40 @@ export function serializeProject(project: ProjectHydrated): PublicProject {
     lastDrillAt: project.lastDrillAt ? new Date(project.lastDrillAt).toISOString() : null,
     lastDrillStatus: (project.lastDrillStatus ?? null) as 'pass' | 'fail' | null,
     lastDrillDetail: project.lastDrillDetail ?? '',
+    lastRestoreAt: project.lastRestoreAt
+      ? new Date(project.lastRestoreAt).toISOString()
+      : null,
+    lastRestoreStatus: (project.lastRestoreStatus ?? null) as 'pass' | 'fail' | null,
+    lastRestoreDetail: project.lastRestoreDetail ?? '',
     createdAt: new Date((project as unknown as { createdAt: Date }).createdAt).toISOString(),
     updatedAt: new Date((project as unknown as { updatedAt: Date }).updatedAt).toISOString(),
   };
+}
+
+import type { ResticSnapshotDetail } from './backups.restic-runner.js';
+
+/** Public JSON shape for a restic snapshot, matching the client contract. */
+export interface PublicSnapshot {
+  id: string;
+  projectId: string;
+  time: string;
+  sizeBytes: number;
+  hostname?: string;
+  tags?: string[];
+}
+
+export function serializeSnapshot(
+  snap: ResticSnapshotDetail,
+  projectId: string,
+): PublicSnapshot {
+  const out: PublicSnapshot = {
+    // Short ids are stable restore identifiers and friendlier in the UI.
+    id: snap.short_id || snap.id,
+    projectId,
+    time: snap.time,
+    sizeBytes: snap.summary?.total_bytes_processed ?? 0,
+  };
+  if (snap.hostname) out.hostname = snap.hostname;
+  if (snap.tags && snap.tags.length > 0) out.tags = snap.tags;
+  return out;
 }

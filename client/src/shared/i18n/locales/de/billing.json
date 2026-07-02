@@ -17,7 +17,8 @@
     "past_due": "Überfällig",
     "canceled": "Gekündigt",
     "revoked": "Widerrufen",
-    "none": "Keine"
+    "none": "Keine",
+    "incomplete": "Zahlung ausstehend"
   },
   "grid": {
     "title": "Preise",
@@ -57,7 +58,8 @@
     "tabsLabel": "Abrechnungsbereiche",
     "tab": {
       "overview": "Übersicht",
-      "usage": "Nutzung"
+      "usage": "Nutzung",
+      "plans": "Tarife"
     },
     "loading": "Wird geladen…",
     "empty": "Nichts anzuzeigen."
@@ -81,11 +83,15 @@
       "colSize": "Größe",
       "colLastRun": "Letzter Lauf",
       "never": "Nie"
-    }
+    },
+    "retry": "Erneut versuchen"
   },
   "selection": {
     "title": "Wählen Sie die aktiv bleibenden Projekte",
     "help": "Ihr Tarif erlaubt bis zu {{cap}} aktive Projekte. Die übrigen werden pausiert (nie gelöscht).",
     "submit": "Auswahl speichern"
+  },
+  "plans": {
+    "portal": "Abrechnung verwalten"
   }
 }

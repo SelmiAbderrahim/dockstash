@@ -2,14 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import { billingReducer } from './slice';
 import {
-  createCustomer,
-  fetchCustomer,
-  cancelSubscription,
-  updateSubscription,
-  updateBilling,
   loadPricingTiers,
   loadOverview,
   loadUsage,
+  openPortal,
   startCheckout,
   changePlan,
   selectProjectsToKeep,
@@ -17,15 +13,11 @@ import {
 import * as api from '../api';
 
 vi.mock('../api', () => ({
-  createCustomerRequest: vi.fn(),
-  fetchCustomerRequest: vi.fn(),
-  cancelSubscriptionRequest: vi.fn(),
-  updateSubscriptionRequest: vi.fn(),
-  updateBillingRequest: vi.fn(),
   fetchPricingTiers: vi.fn(),
   fetchBillingOverview: vi.fn(),
   fetchUsage: vi.fn(),
   createCheckout: vi.fn(),
+  openPortalRequest: vi.fn(),
   changePlan: vi.fn(),
   selectProjectsToKeep: vi.fn(),
 }));
@@ -38,44 +30,6 @@ beforeEach(() => {
 });
 
 describe('billing thunks — fulfilled paths', () => {
-  it('createCustomer returns the message', async () => {
-    mocked.createCustomerRequest.mockResolvedValue({ message: 'started' });
-    const store = makeStore();
-    const res = await store.dispatch(
-      createCustomer({ stripeToken: 't', plan: 'gold', lastFour: '4242' }),
-    );
-    expect(createCustomer.fulfilled.match(res)).toBe(true);
-    expect(res.payload).toBe('started');
-  });
-
-  it('fetchCustomer returns the customer', async () => {
-    mocked.fetchCustomerRequest.mockResolvedValue({ customer: { sources: undefined } });
-    const store = makeStore();
-    const res = await store.dispatch(fetchCustomer());
-    expect(fetchCustomer.fulfilled.match(res)).toBe(true);
-  });
-
-  it('cancelSubscription returns the message', async () => {
-    mocked.cancelSubscriptionRequest.mockResolvedValue({ message: 'canceled' });
-    const store = makeStore();
-    const res = await store.dispatch(cancelSubscription());
-    expect(res.payload).toBe('canceled');
-  });
-
-  it('updateSubscription returns the message', async () => {
-    mocked.updateSubscriptionRequest.mockResolvedValue({ message: 'changed' });
-    const store = makeStore();
-    const res = await store.dispatch(updateSubscription('silver'));
-    expect(res.payload).toBe('changed');
-  });
-
-  it('updateBilling returns the message', async () => {
-    mocked.updateBillingRequest.mockResolvedValue({ message: 'updated' });
-    const store = makeStore();
-    const res = await store.dispatch(updateBilling('tok'));
-    expect(res.payload).toBe('updated');
-  });
-
   it('loadPricingTiers returns the tiers', async () => {
     mocked.fetchPricingTiers.mockResolvedValue({ tiers: [] });
     const store = makeStore();
@@ -124,6 +78,14 @@ describe('billing thunks — fulfilled paths', () => {
     expect(res.payload).toEqual({ url: 'https://x', providerCheckoutId: 'pc_1' });
   });
 
+  it('openPortal returns the portal url', async () => {
+    mocked.openPortalRequest.mockResolvedValue({ url: 'https://portal' });
+    const store = makeStore();
+    const res = await store.dispatch(openPortal());
+    expect(openPortal.fulfilled.match(res)).toBe(true);
+    expect(res.payload).toEqual({ url: 'https://portal' });
+  });
+
   it('changePlan returns the change response', async () => {
     mocked.changePlan.mockResolvedValue({ status: 'active' });
     const store = makeStore();
@@ -140,39 +102,6 @@ describe('billing thunks — fulfilled paths', () => {
 });
 
 describe('billing thunks — rejected paths', () => {
-  it('createCustomer rejects with a message', async () => {
-    mocked.createCustomerRequest.mockRejectedValue(new Error('boom'));
-    const res = await makeStore().dispatch(
-      createCustomer({ stripeToken: 't', plan: 'g', lastFour: '1' }),
-    );
-    expect(createCustomer.rejected.match(res)).toBe(true);
-    expect(res.payload).toBe('boom');
-  });
-
-  it('fetchCustomer rejects with a fallback message', async () => {
-    mocked.fetchCustomerRequest.mockRejectedValue('nope');
-    const res = await makeStore().dispatch(fetchCustomer());
-    expect(res.payload).toBe('Could not load customer.');
-  });
-
-  it('cancelSubscription rejects', async () => {
-    mocked.cancelSubscriptionRequest.mockRejectedValue(new Error('x'));
-    const res = await makeStore().dispatch(cancelSubscription());
-    expect(cancelSubscription.rejected.match(res)).toBe(true);
-  });
-
-  it('updateSubscription rejects', async () => {
-    mocked.updateSubscriptionRequest.mockRejectedValue(new Error('x'));
-    const res = await makeStore().dispatch(updateSubscription('s'));
-    expect(updateSubscription.rejected.match(res)).toBe(true);
-  });
-
-  it('updateBilling rejects', async () => {
-    mocked.updateBillingRequest.mockRejectedValue(new Error('x'));
-    const res = await makeStore().dispatch(updateBilling('t'));
-    expect(updateBilling.rejected.match(res)).toBe(true);
-  });
-
   it('loadPricingTiers rejects', async () => {
     mocked.fetchPricingTiers.mockRejectedValue(new Error('x'));
     const res = await makeStore().dispatch(loadPricingTiers());
@@ -185,10 +114,11 @@ describe('billing thunks — rejected paths', () => {
     expect(loadOverview.rejected.match(res)).toBe(true);
   });
 
-  it('loadUsage rejects', async () => {
-    mocked.fetchUsage.mockRejectedValue(new Error('x'));
+  it('loadUsage rejects with a fallback message', async () => {
+    mocked.fetchUsage.mockRejectedValue('nope');
     const res = await makeStore().dispatch(loadUsage());
     expect(loadUsage.rejected.match(res)).toBe(true);
+    expect(res.payload).toBe('Could not load usage.');
   });
 
   it('startCheckout rejects', async () => {
@@ -197,6 +127,13 @@ describe('billing thunks — rejected paths', () => {
       startCheckout({ productId: 'p', successUrl: 's' }),
     );
     expect(startCheckout.rejected.match(res)).toBe(true);
+  });
+
+  it('openPortal rejects with the error message', async () => {
+    mocked.openPortalRequest.mockRejectedValue(new Error('portal down'));
+    const res = await makeStore().dispatch(openPortal());
+    expect(openPortal.rejected.match(res)).toBe(true);
+    expect(res.payload).toBe('portal down');
   });
 
   it('changePlan rejects', async () => {

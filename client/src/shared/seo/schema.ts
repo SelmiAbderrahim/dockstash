@@ -133,6 +133,8 @@ export interface ArticleInput {
   datePublished?: string;
   /** ISO date last modified (freshness signal). Defaults to datePublished. */
   dateModified?: string;
+  /** BCP-47 language of the page content. Defaults to 'en'. */
+  inLanguage?: string;
 }
 
 /**
@@ -146,6 +148,7 @@ export function article({
   path,
   datePublished = SITE_LAST_UPDATED,
   dateModified,
+  inLanguage = 'en',
 }: ArticleInput): JsonLd {
   const url = absoluteUrl(path);
   return {
@@ -156,10 +159,24 @@ export function article({
     mainEntityOfPage: url,
     datePublished,
     dateModified: dateModified ?? datePublished,
-    inLanguage: 'en',
+    inLanguage,
     author: { '@id': `${SITE_URL}/#organization` },
     publisher: { '@id': `${SITE_URL}/#organization` },
     image: absoluteUrl(BRAND_ASSETS.ogDefault),
+  };
+}
+
+/**
+ * WebPage node for pages without a richer primary type (legal, vs pages).
+ * `isPartOf` links it to the site-wide WebSite entity emitted on Home.
+ */
+export function webPage(name: string, description: string, path: string): JsonLd {
+  return {
+    '@type': 'WebPage',
+    name,
+    description,
+    url: absoluteUrl(path),
+    isPartOf: { '@id': `${SITE_URL}/#website` },
   };
 }
 

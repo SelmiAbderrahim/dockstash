@@ -126,7 +126,18 @@ services:
       # mounted but never actually consumed by the app.
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM: ${RESEND_FROM}
+      # Superadmin bootstrap — consumed by the entrypoint seeder. The `:-`
+      # default yields '' when unset; env.ts preprocesses '' → undefined so
+      # the free / self-host tier still boots.
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      # Real restic execution inside the container (the image bakes the pinned
+      # restic binary + openssh-client). Set to `placeholder` to disable.
+      RESTIC_RUNNER: ${RESTIC_RUNNER:-process}
+      RESTIC_CACHE_DIR: /tmp/restic-cache
+      # Contact-form recipient (falls back to a placeholder when unset).
+      CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
     secrets:
       - master_encryption_key
       - polar_access_token
@@ -177,6 +188,9 @@ services:
       WEB_PORT: 3000
       # Internal origin of the api service for the SEO reverse-proxy.
       API_INTERNAL_URL: http://api:8080
+      # Runtime copy of the public origin — drives the www→apex canonical
+      # redirect in server.js (the build ARG only reaches the Vite bundle).
+      VITE_SITE_URL: ${VITE_SITE_URL}
     ports:
       # Loopback-only — nginx is the sole public entrypoint. Host port off the
       # 3000 default to avoid colliding with other stacks on this box.

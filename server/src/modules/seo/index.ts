@@ -1,8 +1,11 @@
-export { seoRouter } from './seo.routes.js';
+export { seoRouter, renderLlmsTxt } from './seo.routes.js';
 export {
   LOCALES,
   DEFAULT_LOCALE,
+  SEO_LASTMOD,
+  TRANSLATED_PATHS,
   CORE_PATHS,
+  COMPETITOR_SLUGS,
   ALTERNATIVE_PATHS,
   GUIDE_SLUGS,
   GUIDE_PATHS,

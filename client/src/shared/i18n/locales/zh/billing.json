@@ -17,7 +17,8 @@
     "past_due": "逾期",
     "canceled": "已取消",
     "revoked": "已撤销",
-    "none": "无"
+    "none": "无",
+    "incomplete": "等待付款"
   },
   "grid": {
     "title": "价格",
@@ -57,7 +58,8 @@
     "tabsLabel": "账单分区",
     "tab": {
       "overview": "概览",
-      "usage": "使用情况"
+      "usage": "使用情况",
+      "plans": "套餐"
     },
     "loading": "加载中…",
     "empty": "无内容。"
@@ -81,11 +83,15 @@
       "colSize": "大小",
       "colLastRun": "上次运行",
       "never": "从未"
-    }
+    },
+    "retry": "重试"
   },
   "selection": {
     "title": "选择保留的项目",
     "help": "您的方案最多允许 {{cap}} 个活动项目，其余将被暂停（不会删除）。",
     "submit": "保存选择"
+  },
+  "plans": {
+    "portal": "管理账单"
   }
 }

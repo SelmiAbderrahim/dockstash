@@ -60,7 +60,7 @@ describe('projects api wrappers', () => {
   });
 
   it('runBackupNowRequest enqueues a backup job and unwraps jobId', async () => {
-    apiClient.mockResolvedValue({ jobId: 'j-1' } as never);
+    apiClient.mockResolvedValue({ job: { id: 'j-1', kind: 'backup' } } as never);
     const result = await runBackupNowRequest('p1');
     expect(apiClient).toHaveBeenCalledWith('/scheduler/enqueue', {
       method: 'POST',

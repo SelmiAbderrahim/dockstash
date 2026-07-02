@@ -12,3 +12,8 @@ process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? 'fatal';
 // security-middleware integration test exercises the 429 path via a scoped
 // mini-app with an explicit small `max`.
 process.env.RATE_LIMIT_AUTH_MAX = process.env.RATE_LIMIT_AUTH_MAX ?? '10000';
+// `isConfigured()` requires the opt-in flag AND a credential. Tests default to
+// the Polar flag so setting only POLAR_ACCESS_TOKEN configures the provider,
+// as suites written before the flag check assume. Configured-ness is still
+// driven per-test by (un)setting the token.
+process.env.PAYMENT_PROVIDER = process.env.PAYMENT_PROVIDER ?? 'polar';

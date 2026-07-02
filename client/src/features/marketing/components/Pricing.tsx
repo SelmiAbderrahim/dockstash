@@ -1,109 +1,134 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CheckIcon } from 'lucide-react';
 import { Seo, schema } from '@shared/seo';
+import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
 import { cn } from '@shared/lib/utils';
-import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { localeHref } from '../useMarketingRoute';
 import {
   Breadcrumbs,
   Container,
   Eyebrow,
   FaqSection,
+  answerClass,
   cardClass,
   h1Class,
   sectionClass,
+  useMarketingT,
 } from './shared';
 import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
-const ANSWER =
-  'Dockstash has three plans. Free ($0) self-hosts one project with 7-day retention and daily backups. Pro ($9/mo) adds 10 projects, 30-day retention, hourly schedules, and email alerts. Business ($29/mo) is unlimited projects, 90-day retention, any cron, priority support, and multi-VPS. Yearly billing gives you two months free — $90/yr for Pro and $290/yr for Business.';
+/**
+ * Plan facts (prices, limits) are product data, not copy — they stay in TSX
+ * and interpolate into the marketing-namespace strings via `{{var}}` slots,
+ * so translators can never drift a price.
+ */
+export const PLAN_FACTS = {
+  freePrice: '$0',
+  proMonthly: '$9',
+  bizMonthly: '$29',
+  proYearly: '$90',
+  bizYearly: '$290',
+  freeRetentionDays: 7,
+  proRetentionDays: 30,
+  bizRetentionDays: 90,
+  freeProjects: 1,
+  proProjects: 10,
+} as const;
+
+type BillingPeriod = 'monthly' | 'yearly';
 
 interface Tier {
   name: string;
-  price: string;
-  cadence: string;
+  /** Emphasized tier — badge, primary border, solid CTA. */
+  popular?: boolean;
+  price: Record<BillingPeriod, string>;
+  cadence: Record<BillingPeriod, string>;
+  /** Always-in-SSR yearly note (AEO: yearly figures must exist in the HTML). */
   yearly?: string;
   tagline: string;
   features: string[];
-  cta: { label: string; to: string; primary?: boolean };
+  cta: { label: string; to: string };
 }
 
-const TIERS: Tier[] = [
-  {
-    name: 'Free',
-    price: '$0',
-    cadence: 'forever',
-    tagline: 'Self-host one project, entirely on your own storage.',
-    features: [
-      '1 project',
-      '7-day retention',
-      'Daily backups',
-      'Community support',
-      'Self-host default — no paid provider',
-      'Standard Restic repos on your storage VPS',
-    ],
-    cta: { label: 'Start free', to: '/register', primary: true },
-  },
-  {
-    name: 'Pro',
-    price: '$9',
-    cadence: 'per month',
-    yearly: 'or $90/yr — two months free',
-    tagline: 'For teams running Docker Compose in production.',
-    features: [
-      '10 projects',
-      '30-day retention',
-      'Hourly backups',
-      'Custom schedules',
-      'Email alerts + dead-man’s-switch heartbeat',
-      'Automated restore-drill verification',
-    ],
-    cta: { label: 'Choose Pro', to: '/billing' },
-  },
-  {
-    name: 'Business',
-    price: '$29',
-    cadence: 'per month',
-    yearly: 'or $290/yr — two months free',
-    tagline: 'For agencies managing many client servers.',
-    features: [
-      'Unlimited projects',
-      '90-day retention',
-      'Any cron schedule',
-      'Priority support',
-      'Multi-VPS fleet view',
-      'Per-project metering',
-    ],
-    cta: { label: 'Choose Business', to: '/billing' },
-  },
-];
-
-const PRICING_FAQ: FaqItem[] = [
-  {
-    question: 'Is the Free plan really free?',
-    answer:
-      'Yes. The Free tier runs entirely self-hosted with no paid provider and no credit card. It backs up one project daily with 7-day retention to your own storage VPS as standard encrypted Restic repositories.',
-  },
-  {
-    question: 'How does yearly billing work?',
-    answer:
-      'Pay yearly on Pro or Business and you get two months free — you pay for ten months and use twelve. You can switch between monthly and yearly at any time from the billing page.',
-  },
-  {
-    question: 'What counts as a project?',
-    answer:
-      'A project is one Docker Compose stack Dockstash backs up (its volumes, databases, and config). Free covers one, Pro covers ten, and Business is unlimited across as many VPS agents as you run.',
-  },
-  {
-    question: 'What happens to my backups if I downgrade or cancel?',
-    answer:
-      'Your backups stay on your own storage VPS as standard Restic repositories you can restore from with the restic CLI alone. There is no vendor lock-in and no data held hostage behind a paywall.',
-  },
-];
+const PRICING_FAQ_KEYS = ['freeReally', 'yearly', 'project', 'downgrade'] as const;
 
 export const Pricing = () => {
-  const { locale } = useMarketingRoute();
+  const { t, locale } = useMarketingT();
   const href = (path: string) => localeHref(path, locale);
+  const [period, setPeriod] = useState<BillingPeriod>('monthly');
+
+  const tiers: Tier[] = [
+    {
+      name: t('pricing.tiers.free.name'),
+      price: { monthly: PLAN_FACTS.freePrice, yearly: PLAN_FACTS.freePrice },
+      cadence: {
+        monthly: t('pricing.tiers.free.cadence'),
+        yearly: t('pricing.tiers.free.cadence'),
+      },
+      tagline: t('pricing.tiers.free.tagline'),
+      features: [
+        t('pricing.tiers.free.features.projects', PLAN_FACTS),
+        t('pricing.tiers.free.features.retention', PLAN_FACTS),
+        t('pricing.tiers.free.features.daily'),
+        t('pricing.tiers.free.features.community'),
+        t('pricing.tiers.free.features.selfHost'),
+        t('pricing.tiers.free.features.restic'),
+      ],
+      cta: { label: t('shared.startFree'), to: '/register' },
+    },
+    {
+      name: t('pricing.tiers.pro.name'),
+      popular: true,
+      price: { monthly: PLAN_FACTS.proMonthly, yearly: PLAN_FACTS.proYearly },
+      cadence: {
+        monthly: t('pricing.tiers.pro.cadenceMonthly'),
+        yearly: t('pricing.tiers.pro.cadenceYearly'),
+      },
+      yearly: t('pricing.tiers.pro.yearlyNote', PLAN_FACTS),
+      tagline: t('pricing.tiers.pro.tagline'),
+      features: [
+        t('pricing.tiers.pro.features.projects', PLAN_FACTS),
+        t('pricing.tiers.pro.features.retention', PLAN_FACTS),
+        t('pricing.tiers.pro.features.hourly'),
+        t('pricing.tiers.pro.features.schedules'),
+        t('pricing.tiers.pro.features.alerts'),
+        t('pricing.tiers.pro.features.drills'),
+      ],
+      cta: { label: t('pricing.tiers.pro.cta'), to: '/billing?tab=plans' },
+    },
+    {
+      name: t('pricing.tiers.business.name'),
+      price: { monthly: PLAN_FACTS.bizMonthly, yearly: PLAN_FACTS.bizYearly },
+      cadence: {
+        monthly: t('pricing.tiers.business.cadenceMonthly'),
+        yearly: t('pricing.tiers.business.cadenceYearly'),
+      },
+      yearly: t('pricing.tiers.business.yearlyNote', PLAN_FACTS),
+      tagline: t('pricing.tiers.business.tagline'),
+      features: [
+        t('pricing.tiers.business.features.projects'),
+        t('pricing.tiers.business.features.retention', PLAN_FACTS),
+        t('pricing.tiers.business.features.cron'),
+        t('pricing.tiers.business.features.priority'),
+        t('pricing.tiers.business.features.fleet'),
+        t('pricing.tiers.business.features.metering'),
+      ],
+      cta: { label: t('pricing.tiers.business.cta'), to: '/billing?tab=plans' },
+    },
+  ];
+
+  const pricingFaq: FaqItem[] = PRICING_FAQ_KEYS.map((key) => ({
+    question: t(`pricing.faq.${key}.question`),
+    answer: t(`pricing.faq.${key}.answer`, PLAN_FACTS),
+  }));
+
+  const periods: { value: BillingPeriod; label: string }[] = [
+    { value: 'monthly', label: t('pricing.billing.monthly') },
+    { value: 'yearly', label: t('pricing.billing.yearly') },
+  ];
 
   const jsonLd = schema.graph(
     schema.softwareApplication([
@@ -112,17 +137,17 @@ export const Pricing = () => {
       { name: 'Business', price: '29' },
     ]),
     schema.breadcrumbList([
-      { name: 'Home', path: localeHref('/', locale) },
-      { name: 'Pricing', path: localeHref('/pricing', locale) },
+      { name: t('shared.home'), path: localeHref('/', locale) },
+      { name: t('pricing.breadcrumb'), path: localeHref('/pricing', locale) },
     ]),
-    schema.faqPage(PRICING_FAQ),
+    schema.faqPage(pricingFaq),
   );
 
   return (
     <>
       <Seo
-        title="Pricing — free self-host, Pro, and Business"
-        description="Dockstash pricing: a free self-hosted tier for one project, Pro for teams (10 projects, hourly backups, alerts), and Business for agencies (unlimited, multi-VPS). Two months free yearly."
+        title={t('pricing.seo.title')}
+        description={t('pricing.seo.description')}
         basePath="/pricing"
         locale={locale}
         jsonLd={jsonLd}
@@ -130,42 +155,78 @@ export const Pricing = () => {
 
       <Container>
         <Breadcrumbs
-          crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Pricing' }]}
+          crumbs={[
+            { label: t('shared.home'), basePath: '/' },
+            { label: t('pricing.breadcrumb') },
+          ]}
           locale={locale}
         />
       </Container>
 
       <section className={sectionClass}>
         <Container>
-          <Eyebrow>Pricing</Eyebrow>
-          <h1 className={h1Class}>Simple pricing for verified Docker backups</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
-            {ANSWER}
-          </p>
+          <Eyebrow>{t('pricing.eyebrow')}</Eyebrow>
+          <h1 className={h1Class}>{t('pricing.title')}</h1>
+          <p className={answerClass}>{t('pricing.answer', PLAN_FACTS)}</p>
         </Container>
       </section>
 
       <Reveal as="section" className={sectionClass}>
         <Container>
-          <div className="grid gap-5 lg:grid-cols-3">
-            {TIERS.map((tier, i) => (
+          <div className="mb-8 text-center">
+            <div
+              role="radiogroup"
+              aria-label={t('pricing.billing.label')}
+              className="inline-flex rounded-lg border bg-muted/50 p-0.5"
+            >
+              {periods.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={period === option.value}
+                  onClick={() => setPeriod(option.value)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    period === option.value
+                      ? 'bg-background shadow-xs'
+                      : 'text-muted-foreground',
+                  )}
+                >
+                  {option.label}
+                  {option.value === 'yearly' && (
+                    <Badge variant="outline" className="ms-1.5 text-xs">
+                      {t('pricing.billing.badge')}
+                    </Badge>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {tiers.map((tier, i) => (
               <Reveal
                 key={tier.name}
                 className={cn(
                   cardClass,
                   'flex flex-col',
-                  tier.cta.primary && 'border-primary ring-1 ring-primary/40',
+                  tier.popular && 'border-primary ring-1 ring-primary',
                 )}
                 index={i}
               >
+                {tier.popular && (
+                  <Badge className="mb-2 self-start">{t('pricing.mostPopular')}</Badge>
+                )}
                 <h3 className="text-lg font-semibold tracking-tight">
                   {tier.name}
                 </h3>
                 <p className="mt-1">
                   <strong className="text-3xl font-bold tracking-tight">
-                    {tier.price}
+                    {tier.price[period]}
                   </strong>{' '}
-                  <span className="text-muted-foreground">{tier.cadence}</span>
+                  <span className="text-muted-foreground">
+                    {tier.cadence[period]}
+                  </span>
                 </p>
                 {tier.yearly ? (
                   <p className="mt-1 text-[13px] text-muted-foreground">
@@ -176,9 +237,10 @@ export const Pricing = () => {
                 <ul className="my-4 space-y-2 text-sm">
                   {tier.features.map((feature) => (
                     <li key={feature} className="flex gap-2">
-                      <span aria-hidden="true" className="text-primary">
-                        ✓
-                      </span>
+                      <CheckIcon
+                        aria-hidden="true"
+                        className="mt-0.5 size-4 shrink-0"
+                      />
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -186,7 +248,7 @@ export const Pricing = () => {
                 <Button
                   asChild
                   className="mt-auto w-full"
-                  variant={tier.cta.primary ? 'default' : 'outline'}
+                  variant={tier.popular ? 'default' : 'outline'}
                 >
                   <Link
                     to={
@@ -202,12 +264,12 @@ export const Pricing = () => {
             ))}
           </div>
           <p className="mt-5 text-muted-foreground">
-            Yearly billing on Pro and Business gives you two months free.
+            {t('pricing.footnote')}
           </p>
         </Container>
       </Reveal>
 
-      <FaqSection faqs={PRICING_FAQ} />
+      <FaqSection faqs={pricingFaq} />
     </>
   );
 };

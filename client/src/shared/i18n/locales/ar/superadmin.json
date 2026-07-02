@@ -1,0 +1,128 @@
+{
+  "title": "المشرف الأعلى",
+  "tabs": {
+    "overview": "نظرة عامة",
+    "users": "المستخدمون",
+    "billing": "الفوترة",
+    "audit": "سجل التدقيق",
+    "system": "النظام"
+  },
+  "loading": "جارٍ التحميل…",
+  "errorPrefix": "خطأ!",
+  "empty": "لا توجد بيانات بعد.",
+  "overview": {
+    "usersTotal": "إجمالي المستخدمين",
+    "usersNew7d": "جدد (7 أيام)",
+    "usersNew30d": "جدد (30 يومًا)",
+    "verifiedPct": "مؤكَّدون",
+    "projects": "المشاريع",
+    "projectsPaused": "مشاريع متوقفة مؤقتًا",
+    "backupsWithSuccess": "مشاريع لديها نسخ احتياطية",
+    "snapshots": "اللقطات",
+    "repoBytes": "حجم المستودع بالبايت",
+    "subscriptionsTitle": "الاشتراكات حسب الخطة",
+    "subscriptionsEmpty": "لا توجد اشتراكات بعد."
+  },
+  "users": {
+    "searchLabel": "البحث عن مستخدمين",
+    "searchPlaceholder": "ابحث بالبريد الإلكتروني أو الاسم",
+    "searchButton": "بحث",
+    "columns": {
+      "email": "البريد الإلكتروني",
+      "role": "الدور",
+      "verified": "التأكيد",
+      "legalHold": "الحجز القانوني",
+      "deletion": "الحذف",
+      "created": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    },
+    "verifiedYes": "مؤكَّد",
+    "verifiedNo": "غير مؤكَّد",
+    "deletionNone": "—",
+    "actions": {
+      "menu": "فتح إجراءات المستخدم",
+      "changeRole": "تغيير الدور",
+      "forceVerify": "تأكيد البريد إجباريًا",
+      "legalHoldOn": "تفعيل الحجز القانوني",
+      "legalHoldOff": "رفع الحجز القانوني",
+      "scheduleDeletion": "جدولة الحذف"
+    },
+    "dialogs": {
+      "roleTitle": "تغيير الدور",
+      "roleDescription": "اختر الدور الجديد لـ {{email}}.",
+      "roleLabel": "الدور",
+      "verifyTitle": "تأكيد البريد إجباريًا",
+      "verifyDescription": "هل تريد وضع علامة مؤكَّد على {{email}} دون رابط تأكيد؟",
+      "holdOnTitle": "تفعيل الحجز القانوني",
+      "holdOnDescription": "ستُحمى بيانات {{email}} من الحذف والتنظيف.",
+      "holdOffTitle": "رفع الحجز القانوني",
+      "holdOffDescription": "تصبح بيانات {{email}} قابلة للحذف مجددًا.",
+      "deleteTitle": "جدولة حذف الحساب",
+      "deleteDescription": "سيُمسح حساب {{email}} وجميع نسخه الاحتياطية بعد فترة السماح.",
+      "confirm": "تأكيد",
+      "cancel": "إلغاء"
+    },
+    "empty": "لا يوجد مستخدمون مطابقون."
+  },
+  "billing": {
+    "customersTitle": "العملاء",
+    "columns": {
+      "email": "البريد الإلكتروني",
+      "provider": "المزوِّد",
+      "customerId": "معرِّف العميل",
+      "created": "تاريخ الإنشاء",
+      "subscriptions": "الاشتراكات"
+    },
+    "subscription": "{{plan}} ({{status}})",
+    "noSubscriptions": "لا شيء",
+    "empty": "لا يوجد عملاء بعد."
+  },
+  "audit": {
+    "filters": {
+      "action": "الإجراء",
+      "actionAll": "جميع الإجراءات",
+      "actor": "معرِّف المستخدم المنفِّذ",
+      "from": "من",
+      "to": "إلى",
+      "apply": "تطبيق عوامل التصفية"
+    },
+    "columns": {
+      "action": "الإجراء",
+      "actor": "المنفِّذ",
+      "target": "الهدف",
+      "ip": "عنوان IP",
+      "date": "التاريخ"
+    },
+    "empty": "لا توجد إدخالات تدقيق."
+  },
+  "system": {
+    "healthTitle": "الحالة الصحية",
+    "db": "MongoDB",
+    "redis": "Redis",
+    "statusOk": "يعمل بشكل طبيعي",
+    "statusDegraded": "أداء متدهور",
+    "up": "يعمل",
+    "down": "متوقف",
+    "notConfigured": "غير مُهيأ",
+    "schedulerTitle": "المجدوِل",
+    "schedules": "الجداول",
+    "enabled": "مفعَّل",
+    "challengesTitle": "تحديات تسجيل الدخول الأخيرة",
+    "challengeColumns": {
+      "user": "المستخدم",
+      "ip": "عنوان IP",
+      "attempts": "المحاولات",
+      "status": "الحالة",
+      "created": "تاريخ الإنشاء"
+    },
+    "challengeConsumed": "مُستخدَم",
+    "challengePending": "قيد الانتظار",
+    "eventsTitle": "الأحداث الأمنية",
+    "empty": "لم يُسجَّل شيء بعد."
+  },
+  "pagination": {
+    "previous": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {{page}} من {{pages}}"
+  }
+}

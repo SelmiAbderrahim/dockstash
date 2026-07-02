@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src/server.ts --format cjs --target node20 --clean",
+    "build": "tsup",
     "start": "node dist/server.cjs",
     "lint": "eslint . --ext .ts",
     "test": "vitest",

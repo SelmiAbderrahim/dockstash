@@ -2,12 +2,17 @@ import { apiClient } from '@shared/api/client';
 import type {
   AuthResponse,
   LoginRequest,
+  LoginResponse,
   MessageResponse,
+  OtpVerifyRequest,
   RegisterRequest,
 } from './types';
 
-export const loginRequest = (body: LoginRequest): Promise<AuthResponse> =>
-  apiClient<AuthResponse>('/auth/login', { method: 'POST', body });
+export const loginRequest = (body: LoginRequest): Promise<LoginResponse> =>
+  apiClient<LoginResponse>('/auth/login', { method: 'POST', body });
+
+export const verifyLoginOtpRequest = (body: OtpVerifyRequest): Promise<AuthResponse> =>
+  apiClient<AuthResponse>('/auth/otp/verify', { method: 'POST', body });
 
 export const registerRequest = (body: RegisterRequest): Promise<AuthResponse> =>
   apiClient<AuthResponse>('/auth/signup', { method: 'POST', body });

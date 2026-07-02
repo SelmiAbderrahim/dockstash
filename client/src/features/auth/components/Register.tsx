@@ -8,6 +8,7 @@ import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Alert, AlertDescription } from '@shared/ui/alert';
+import { PageMeta } from '@shared/seo';
 import {
   Card,
   CardContent,
@@ -66,6 +67,10 @@ export const Register = () => {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <PageMeta
+        title="Create your account"
+        description="Create a free Dockstash account and start backing up your Docker projects with encrypted, verified snapshots."
+      />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Create your account</CardTitle>

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Seo, schema } from '@shared/seo';
+import { Seo, SsrNotFound, schema } from '@shared/seo';
 import { Button } from '@shared/ui/button';
 import {
   Card,
@@ -17,6 +17,7 @@ import {
   Eyebrow,
   FaqSection,
   LastUpdated,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -39,6 +40,7 @@ export const VsPage = () => {
           locale={locale}
           noindex
         />
+        <SsrNotFound />
         <section className={sectionClass}>
           <Container>
             <h1 className={h1Class}>Comparison not found</h1>
@@ -61,6 +63,11 @@ export const VsPage = () => {
   const basePath = `/vs/${competitor.slug}`;
 
   const jsonLd = schema.graph(
+    schema.webPage(
+      `Dockstash vs ${competitor.name}`,
+      `Head-to-head comparison of Dockstash and ${competitor.name} for Docker backups.`,
+      localeHref(basePath, locale),
+    ),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Alternatives', path: localeHref('/alternatives', locale) },
@@ -76,9 +83,10 @@ export const VsPage = () => {
     <>
       <Seo
         title={`Dockstash vs ${competitor.name} (2026)`}
-        description={`Dockstash vs ${competitor.name}, head-to-head: consistent Docker database dumps, Compose detection, and restore-drill verification versus ${competitor.category.toLowerCase()}. See who each is for.`}
+        description={`Dockstash vs ${competitor.name}, head-to-head: consistent Docker database dumps, Compose detection, and restore-drill verification. See who each is for.`}
         basePath={basePath}
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 
@@ -96,7 +104,7 @@ export const VsPage = () => {
       <section className={sectionClass}>
         <Container>
           <h1 className={h1Class}>Dockstash vs {competitor.name}</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {competitor.positioning}
           </p>
         </Container>

@@ -48,6 +48,11 @@ export const fr: DictionaryShape = {
       resent: 'Si ce compte doit être vérifié, un nouveau lien est en route.',
       tokenInvalid: 'Ce lien de vérification est invalide ou a expiré.',
     },
+    otp: {
+      sent: 'Un code de vérification a été envoyé à votre adresse e-mail.',
+      invalid: 'Ce code de vérification est invalide ou a expiré.',
+      tooManyAttempts: 'Trop de codes incorrects. Veuillez vous reconnecter pour recevoir un nouveau code.',
+    },
   },
   billing: {
     checkout: {
@@ -74,7 +79,6 @@ export const fr: DictionaryShape = {
       projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
       selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
       notOwner: 'Vous n’êtes pas propriétaire d’un ou plusieurs de ces projets.',
-      trialAlreadyClaimed: 'Un essai a déjà été utilisé pour ce compte.',
     },
   },
   email: {
@@ -150,6 +154,12 @@ export const fr: DictionaryShape = {
         'Dernière sauvegarde réussie : {{lastGoodAt}}\n\n' +
         'Ouvrez le tableau de bord : {{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: 'Votre code de connexion Dockstash',
+      body:
+        'Votre code de vérification de connexion est : {{code}}\n\n' +
+        'Il expire dans {{minutes}} minutes. Si vous n\'avez pas tenté de vous connecter, changez immédiatement votre mot de passe.\n',
+    },
     neverRun: 'jamais',
   },
   audit: {
@@ -173,6 +183,9 @@ export const fr: DictionaryShape = {
       resticFailed: 'Échec de la sauvegarde Restic : {{message}}',
       backupFailed: 'Échec de la sauvegarde : {{message}}',
       noSpace: 'Espace disque insuffisant (libre={{free}} octets).',
+      runnerUnavailable: 'La liste des instantanés est indisponible : l’exécuteur de sauvegarde n’est pas configuré.',
+      snapshotsFailed: 'Impossible de lister les instantanés : {{message}}',
+      restoreFailed: 'Échec de la restauration : {{message}}',
     },
     success: {
       backupComplete: 'Sauvegarde terminée avec succès.',
@@ -224,6 +237,13 @@ export const fr: DictionaryShape = {
       selfBackupComplete: 'Sauvegarde interne terminée avec succès.',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured: 'Le stockage n’est pas configuré. Ajoutez d’abord la connexion à votre VPS de stockage.',
+      connectionFailed: 'Échec du test de connexion au stockage : {{message}}',
+      hostKeyNotPinned: 'La clé d’hôte du stockage n’a pas encore été vérifiée. Lancez d’abord un test de connexion.',
+    },
+  },
   agents: {
     error: {
       notFound: 'Agent introuvable.',
@@ -242,6 +262,17 @@ export const fr: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: 'Les comptes superadministrateur ne peuvent pas être modifiés ni supprimés.',
+    },
+    success: {
+      roleChanged: 'Rôle de l\'utilisateur mis à jour.',
+      userVerified: 'E-mail de l\'utilisateur marqué comme vérifié.',
+      legalHoldUpdated: 'Conservation légale mise à jour.',
+      deletionScheduled: 'Suppression du compte planifiée.',
     },
   },
   security: {

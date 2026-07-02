@@ -1,0 +1,449 @@
+{
+  "layout": {
+    "nav": {
+      "alternatives": "Alternativen",
+      "guides": "Anleitungen",
+      "security": "Sicherheit",
+      "pricing": "Preise"
+    },
+    "navPrimaryLabel": "Hauptnavigation",
+    "navMobileLabel": "Mobil",
+    "menu": "Menü",
+    "login": "Anmelden",
+    "getStarted": "Loslegen",
+    "footer": {
+      "tagline": "Verifizierte Ein-Klick-Backups für jedes Docker-Projekt.",
+      "product": "Produkt",
+      "compare": "Vergleich",
+      "guides": "Anleitungen",
+      "legal": "Rechtliches",
+      "links": {
+        "pricing": "Preise",
+        "security": "Sicherheit",
+        "faq": "FAQ",
+        "allAlternatives": "Alle Alternativen",
+        "backrestAlternative": "Backrest-Alternative",
+        "selfHostedVsCloud": "Self-Hosted vs. Cloud",
+        "allGuides": "Alle Anleitungen",
+        "backupPostgres": "Postgres sichern",
+        "backupWordpress": "WordPress sichern",
+        "privacy": "Datenschutzerklärung",
+        "terms": "Nutzungsbedingungen"
+      },
+      "copyright": "© 2026 Dockstash"
+    }
+  },
+  "shared": {
+    "home": "Startseite",
+    "startFree": "Kostenlos starten",
+    "capability": "Funktion",
+    "faqTitle": {
+      "pre": "Häufig gestellte",
+      "accent": "Fragen"
+    },
+    "lastUpdated": "Zuletzt aktualisiert: {{date}}"
+  },
+  "home": {
+    "seo": {
+      "title": "Docker-Backup, das wirklich wiederherstellt — ein Klick für jedes Projekt",
+      "description": "Dockstash erkennt und sichert Ihre Docker-Volumes, Datenbanken und Konfiguration automatisch in verschlüsselte Off-Site-Restic-Snapshots — mit Ein-Klick-Restore und automatisierter Restore-Drill-Verifizierung."
+    },
+    "hero": {
+      "eyebrow": "Docker-bewusstes Backup & Restore",
+      "title": {
+        "pre": "Sichern Sie Ihr",
+        "accent": "gesamtes",
+        "post": "Docker-Projekt"
+      },
+      "sub": "Ein Klick erkennt Ihre Volumes, Datenbanken und Konfiguration — und beweist, dass sich das Backup wiederherstellen lässt. Keine Backup-Konfiguration nötig.",
+      "secondaryCta": "So funktioniert es",
+      "check": {
+        "dumps": "Konsistente Datenbank-Dumps",
+        "snapshots": "Verschlüsselte Restic-Snapshots",
+        "drills": "Verifizierte Restore-Drills"
+      },
+      "supportedLabel": "Unterstützte Datenbanken",
+      "backsUp": "Sichert:"
+    },
+    "answer": "Dockstash macht das Backup jedes Docker-Projekts zu einem einzigen Klick. Es erkennt Volumes, Datenbanken und Konfiguration automatisch, dumpt jede Datenbank konsistent aus ihrem laufenden Container und speichert verschlüsselte Restic-Snapshots off-site — mit automatisierten Restore-Drills, die beweisen, dass das Backup funktioniert.",
+    "pain": {
+      "title": {
+        "pre": "Die meisten selbstgebauten Docker-Backups sind",
+        "accent": "kaputt"
+      },
+      "sub": "Der Fehler bleibt unsichtbar — bis zu dem Tag, an dem Sie die Wiederherstellung brauchen.",
+      "cards": {
+        "liveFiles": {
+          "title": "Kopien laufender Datenbank-Dateien",
+          "body": "Das Sichern eines laufenden Postgres-/MySQL-Datenverzeichnisses erfasst zerrissene Schreibvorgänge. Es sieht gut aus — bis der Restore scheitert."
+        },
+        "silent": {
+          "title": "Stilles Scheitern",
+          "body": "Cron-Jobs bleiben stehen und niemand merkt es — bis zum Ernstfall. Kein Alarm, kein Heartbeat, kein Beweis."
+        },
+        "fragile": {
+          "title": "Fragile Skripte",
+          "body": "Handgestricktes restic + cron + pg_dump zerbricht beim nächsten Versions-Update und hat keinerlei Restore-Verifizierung."
+        }
+      }
+    },
+    "stats": {
+      "engines": "Datenbank-Engines, nativ gedumpt",
+      "encryption": "GCM-Verschlüsselung der Secrets im Ruhezustand",
+      "restic": "Standard-Restic — Wiederherstellung auch ohne uns",
+      "oneClick": "Klick vom Scan zum verifizierten Backup"
+    },
+    "features": {
+      "title": {
+        "pre": "Starke Werkzeuge",
+        "mid": "für",
+        "accent": "volles Vertrauen"
+      },
+      "sub": "Alles, was Sie brauchen, um ein Docker-Projekt korrekt zu sichern, die Daten auf eigenem Storage zu behalten und zu wissen, dass der Restore funktioniert.",
+      "cards": {
+        "detection": {
+          "title": "Compose-bewusste Erkennung",
+          "body": "Liest Ihren Docker-Compose-Stack und erkennt Datenbanken, Volumes und Reverse-Proxy-Konfiguration — ohne dass Sie eine Backup-Konfiguration schreiben."
+        },
+        "dumps": {
+          "title": "Konsistente Datenbank-Dumps",
+          "body": "Führt den nativen Dump jeder Engine im laufenden Container aus. Nie eine zerrissene Live-Datei-Kopie, die am Restore-Tag scheitert."
+        },
+        "drills": {
+          "title": "Verifizierte Restore-Drills",
+          "body": "Stellt den neuesten Snapshot an einem Scratch-Ort wieder her und vergleicht ihn mit der Quelle. Beweis statt Hoffnung."
+        },
+        "storage": {
+          "title": "Ihr Storage, kein Lock-in",
+          "body": "Standardmäßige verschlüsselte Restic-Repositories auf Ihrem eigenen VPS über SSH. Sie können auch ohne Dockstash wiederherstellen."
+        },
+        "encryption": {
+          "title": "Ende-zu-Ende verschlüsselt",
+          "body": "AES-256-GCM-Secrets im Ruhezustand, SSH-Host-Key-Pinning auf dem Backup-Kanal, Restic-Verschlüsselung im Repository."
+        },
+        "alerts": {
+          "title": "Heartbeats & Alarme",
+          "body": "Der stille Tod eines Cron-Jobs ist der klassische Backup-Fehler. Dockstash alarmiert Sie, wenn ein Backup ausbleibt."
+        }
+      }
+    },
+    "showcase": {
+      "title": {
+        "pre": "Verifizierte Snapshots in",
+        "accent": "Sekunden"
+      },
+      "body": "Dockstash liest Ihren Compose-Stack, führt für jede Engine den korrekten konsistenten Dump aus, speichert einen verschlüsselten Off-Site-Restic-Snapshot — und beweist die Wiederherstellbarkeit mit einem automatisierten Drill.",
+      "compareLink": "Im Vergleich zu Backrest und Eigenbau-Skripten",
+      "drillPassed": "Drill bestanden"
+    },
+    "steps": {
+      "title": {
+        "pre": "Drei Schritte zum",
+        "accent": "Vertrauen"
+      },
+      "sub": "Wir haben Backups vereinfacht, damit Sie sich auf Ihre Anwendung konzentrieren können.",
+      "items": {
+        "scan": {
+          "title": "Scannen",
+          "body": "Richten Sie Dockstash auf ein Compose-Projekt. Es erkennt Datenbanken, Volumes und Reverse-Proxy-Konfiguration und schlägt einen Plan vor, den Sie bestätigen."
+        },
+        "backUp": {
+          "title": "Sichern",
+          "body": "Jede Datenbank wird konsistent aus ihrem Container gedumpt, dann snapshottet Restic Dump und Dateien off-site — verschlüsselt."
+        },
+        "verify": {
+          "title": "Verifizieren",
+          "body": "Automatisierte Restore-Drills stellen an einem Scratch-Ort wieder her und vergleichen mit der Quelle — Sie wissen, dass es funktioniert, bevor Sie es brauchen."
+        }
+      }
+    },
+    "compare": {
+      "eyebrow": "Vergleich",
+      "title": {
+        "pre": "Docker-bewusst — oder bloße",
+        "accent": "Datei-Kopien?"
+      },
+      "diyColumn": "Eigenbau-Skripte",
+      "rows": {
+        "dumps": {
+          "header": "Konsistente DB-Dumps",
+          "dockstash": "Ja",
+          "backrest": "Nein — nur Dateiebene",
+          "diy": "Eigenbau je Engine"
+        },
+        "drills": {
+          "header": "Restore-Drill-Verifizierung",
+          "dockstash": "Ja, automatisiert",
+          "backrest": "Nein",
+          "diy": "Nein"
+        },
+        "compose": {
+          "header": "Docker-Compose-Unterstützung",
+          "dockstash": "Ja, nativ",
+          "backrest": "Nein — manuelle Pfade",
+          "diy": "Manuell"
+        }
+      },
+      "cta": "Alle Alternativen vergleichen"
+    },
+    "faq": {
+      "dbBackup": {
+        "question": "Wie sichert Dockstash eine Docker-Datenbank?",
+        "answer": "Dockstash führt den nativen Dump der Datenbank im laufenden Container aus (pg_dumpall, mysqldump --single-transaction oder mongodump --oplog) und speichert den Dump als verschlüsselten Restic-Snapshot. Es kopiert nie laufende Datenbank-Dateien von der Platte, denn eine halb geschriebene Datendatei lässt sich nicht wiederherstellen."
+      },
+      "storage": {
+        "question": "Wo werden meine Backups gespeichert?",
+        "answer": "Auf Ihrem eigenen Storage-VPS über SSH, als standardmäßige verschlüsselte Restic-Repositories. Dockstash hält Ihre Daten nie. Der Free-Tarif läuft komplett self-hosted ohne bezahlten Anbieter."
+      },
+      "restoreProof": {
+        "question": "Woher weiß ich, dass sich ein Backup wirklich wiederherstellen lässt?",
+        "answer": "Dockstash führt automatisierte Restore-Drills aus: Es stellt den neuesten Snapshot an einem Scratch-Ort wieder her, vergleicht ihn mit der Quelle und zeigt den Drill-Status pro Projekt an. Ein ungetestetes Backup gilt als kein Backup."
+      },
+      "config": {
+        "question": "Muss ich eine Backup-Konfiguration schreiben?",
+        "answer": "Nein. Dockstash scannt Ihr Docker-Compose-Projekt, erkennt Datenbanken, Volumes und Reverse-Proxy-Konfiguration und schlägt einen Plan vor, den Sie per Checkbox bestätigen. Ein Klick sichert alles."
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "Bereit, Ihren Backups zu",
+        "accent": "vertrauen?"
+      },
+      "body": "Sichern Sie Ihr erstes Docker-Projekt in Minuten. Zum Start kostenlos und vollständig self-hosted — keine Karte, Ihr Storage, Ihre Schlüssel.",
+      "seePricing": "Preise ansehen"
+    }
+  },
+  "pricing": {
+    "seo": {
+      "title": "Preise — kostenloses Self-Hosting, Pro und Business",
+      "description": "Dockstash-Preise: kostenloser Self-Hosting-Tarif für ein Projekt, Pro für Teams, Business für Agenturen. Zwei Monate geschenkt bei Jahresabrechnung."
+    },
+    "breadcrumb": "Preise",
+    "eyebrow": "Preise",
+    "title": "Einfache Preise für verifizierte Docker-Backups",
+    "answer": "Dockstash hat drei Tarife. Free ({{freePrice}}) hostet ein Projekt selbst, mit {{freeRetentionDays}} Tagen Aufbewahrung und täglichen Backups. Pro ({{proMonthly}}/Monat) ergänzt {{proProjects}} Projekte, {{proRetentionDays}} Tage Aufbewahrung, stündliche Zeitpläne und E-Mail-Alarme. Business ({{bizMonthly}}/Monat) bietet unbegrenzte Projekte, {{bizRetentionDays}} Tage Aufbewahrung, beliebige Cron-Ausdrücke, Priority-Support und Multi-VPS. Die Jahresabrechnung schenkt Ihnen zwei Monate — {{proYearly}}/Jahr für Pro und {{bizYearly}}/Jahr für Business.",
+    "billing": {
+      "label": "Abrechnungszeitraum",
+      "monthly": "Monatlich",
+      "yearly": "Jährlich",
+      "badge": "2 Monate geschenkt"
+    },
+    "mostPopular": "Am beliebtesten",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "cadence": "für immer",
+        "tagline": "Hosten Sie ein Projekt selbst — vollständig auf Ihrem eigenen Storage.",
+        "features": {
+          "projects": "{{freeProjects}} Projekt",
+          "retention": "{{freeRetentionDays}} Tage Aufbewahrung",
+          "daily": "Tägliche Backups",
+          "community": "Community-Support",
+          "selfHost": "Self-Hosting als Standard — kein bezahlter Anbieter",
+          "restic": "Standard-Restic-Repos auf Ihrem Storage-VPS"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "cadenceMonthly": "pro Monat",
+        "cadenceYearly": "pro Jahr",
+        "yearlyNote": "oder {{proYearly}}/Jahr — zwei Monate geschenkt",
+        "tagline": "Für Teams, die Docker Compose produktiv betreiben.",
+        "features": {
+          "projects": "{{proProjects}} Projekte",
+          "retention": "{{proRetentionDays}} Tage Aufbewahrung",
+          "hourly": "Stündliche Backups",
+          "schedules": "Eigene Zeitpläne",
+          "alerts": "E-Mail-Alarme + Dead-Man's-Switch-Heartbeat",
+          "drills": "Automatisierte Restore-Drill-Verifizierung"
+        },
+        "cta": "Pro wählen"
+      },
+      "business": {
+        "name": "Business",
+        "cadenceMonthly": "pro Monat",
+        "cadenceYearly": "pro Jahr",
+        "yearlyNote": "oder {{bizYearly}}/Jahr — zwei Monate geschenkt",
+        "tagline": "Für Agenturen mit vielen Kunden-Servern.",
+        "features": {
+          "projects": "Unbegrenzte Projekte",
+          "retention": "{{bizRetentionDays}} Tage Aufbewahrung",
+          "cron": "Beliebiger Cron-Zeitplan",
+          "priority": "Priority-Support",
+          "fleet": "Multi-VPS-Flottenansicht",
+          "metering": "Verbrauchsmessung pro Projekt"
+        },
+        "cta": "Business wählen"
+      }
+    },
+    "footnote": "Die Jahresabrechnung bei Pro und Business schenkt Ihnen zwei Monate.",
+    "faq": {
+      "freeReally": {
+        "question": "Ist der Free-Tarif wirklich kostenlos?",
+        "answer": "Ja. Der Free-Tarif läuft komplett self-hosted, ohne bezahlten Anbieter und ohne Kreditkarte. Er sichert ein Projekt täglich mit {{freeRetentionDays}} Tagen Aufbewahrung auf Ihren eigenen Storage-VPS — als standardmäßige verschlüsselte Restic-Repositories."
+      },
+      "yearly": {
+        "question": "Wie funktioniert die Jahresabrechnung?",
+        "answer": "Zahlen Sie Pro oder Business jährlich und erhalten Sie zwei Monate geschenkt — Sie zahlen zehn Monate und nutzen zwölf. Zwischen monatlich und jährlich wechseln Sie jederzeit auf der Abrechnungsseite."
+      },
+      "project": {
+        "question": "Was zählt als Projekt?",
+        "answer": "Ein Projekt ist ein Docker-Compose-Stack, den Dockstash sichert (seine Volumes, Datenbanken und Konfiguration). Free deckt eines ab, Pro zehn, und Business ist unbegrenzt — über beliebig viele VPS-Agenten hinweg."
+      },
+      "downgrade": {
+        "question": "Was passiert mit meinen Backups bei Downgrade oder Kündigung?",
+        "answer": "Ihre Backups bleiben auf Ihrem eigenen Storage-VPS als Standard-Restic-Repositories, die Sie allein mit der restic-CLI wiederherstellen können. Kein Vendor-Lock-in, keine Daten hinter einer Paywall."
+      }
+    }
+  },
+  "security": {
+    "seo": {
+      "title": "Sicherheit — wie Dockstash Ihre Daten schützt",
+      "description": "So sichert Dockstash Backups: AES-256-GCM-Secrets im Ruhezustand, SSH-Host-Key-Pinning, verschlüsselte Restic-Repositories, Restores mit getippter Bestätigung, Restore-Drill-Verifizierung und kein Lock-in."
+    },
+    "breadcrumb": "Sicherheit",
+    "eyebrow": "Sicherheit",
+    "title": "Sicherheit, die Sie überprüfen können",
+    "answer": "Dockstash ist dafür gebaut, Ihre sensibelsten Zugangsdaten sicher zu verwahren. Secrets werden im Ruhezustand mit AES-256-GCM verschlüsselt, der SSH-Backup-Kanal pinnt den Host-Key des Storage, und jedes Restic-Repository ist mit Ihrem eigenen Schlüssel verschlüsselt. Destruktive Restores erfordern eine getippte Bestätigung, und Restore-Drills beweisen, dass sich Ihre Daten wiederherstellen lassen.",
+    "cardsTitle": "So bleiben Ihre Daten sicher",
+    "cards": {
+      "secrets": {
+        "title": "AES-256-GCM-Secrets im Ruhezustand",
+        "body": "Ihr Restic-Passwort und Ihre SSH-Schlüssel werden nie im Klartext gespeichert. Sie sind im Ruhezustand mit einem AES-256-GCM-Master-Key verschlüsselt, mit Wiederherstellungscodes im Treuhand-Verfahren für die Schlüsselrotation."
+      },
+      "pinning": {
+        "title": "SSH-Host-Key-Pinning",
+        "body": "Der Backup-Kanal zu Ihrem Storage-VPS pinnt den Host-Key — ein Man-in-the-Middle kann Ihre verschlüsselten Snapshots nicht unbemerkt abfangen oder umleiten."
+      },
+      "repos": {
+        "title": "Verschlüsselte Restic-Repositories",
+        "body": "Jedes Repository ist ein Standard-Restic-Repo, verschlüsselt mit Ihrem Schlüssel. Daten werden verschlüsselt und dedupliziert, bevor sie Ihren Produktions-VPS überhaupt verlassen."
+      },
+      "typedConfirm": {
+        "title": "Destruktiver Restore mit getippter Bestätigung",
+        "body": "Ein Restore, der Live-Daten überschreibt, verlangt, dass Sie den Projektnamen zur Bestätigung eintippen. Standard ist die Wiederherstellung an einen neuen Ort, mit Datenbank-Staging vor jedem Überschreiben."
+      },
+      "drills": {
+        "title": "Restore-Drill-Verifizierung",
+        "body": "Dockstash stellt den neuesten Snapshot planmäßig an einem Scratch-Ort wieder her und vergleicht ihn mit der Quelle — Sie erfahren von einem kaputten Backup, bevor Sie es brauchen."
+      },
+      "lockIn": {
+        "title": "Ihr Storage, kein Lock-in",
+        "body": "Backups liegen auf Ihrem eigenen Storage-VPS als Standard-Restic-Repos. Falls Sie je gehen: Wiederherstellung allein mit der restic-CLI — Dockstash fügt keine proprietäre Schicht hinzu."
+      }
+    },
+    "readFaq": "FAQ lesen",
+    "faq": {
+      "secrets": {
+        "question": "Wo werden mein SSH-Schlüssel und mein Restic-Passwort gespeichert?",
+        "answer": "Im Ruhezustand mit AES-256-GCM und einem Master-Key verschlüsselt, nie im Klartext. Im Self-Hosting-Tarif liegen sie auf Ihrem eigenen Server. Wiederherstellungscodes im Treuhand-Verfahren erlauben die Rotation des Master-Keys ohne Zugriffsverlust."
+      },
+      "holdData": {
+        "question": "Hält Dockstash jemals meine Backup-Daten?",
+        "answer": "Nein. Im Free-/Self-Hosting-Tarif läuft die gesamte Pipeline auf Ihrer Infrastruktur und Backups landen auf Ihrem Storage-VPS. Dockstash orchestriert das Backup; Ihre Daten speichert es nie auf unseren Servern."
+      },
+      "destructive": {
+        "question": "Wie verhindert Dockstash einen versehentlichen destruktiven Restore?",
+        "answer": "Restores gehen standardmäßig an einen neuen Ort, Datenbanken werden vor jedem Überschreiben gestaged, und ein Restore, der Live-Daten überschreiben würde, verlangt den eingetippten Projektnamen zur Bestätigung. Es gibt keinen Ein-Klick-Weg, die Produktion zu zerstören."
+      },
+      "disappear": {
+        "question": "Was passiert mit meinen verschlüsselten Backups, wenn Dockstash verschwindet?",
+        "answer": "Sie bleiben auf Ihrem Storage-VPS als standardmäßige, verschlüsselte Restic-Repositories. Richten Sie die restic-CLI mit Ihrem Schlüssel auf das Repo und stellen Sie ohne jeden Anbieter wieder her. Null Lock-in."
+      }
+    },
+    "keepReading": "Weiterlesen",
+    "links": {
+      "faq": {
+        "title": "FAQ",
+        "description": "Häufige Fragen zu Backups, Storage und Restores."
+      },
+      "guides": {
+        "title": "Backup-Anleitungen",
+        "description": "Anleitungen je Engine für Datenbank-Backups unter Docker."
+      },
+      "pricing": {
+        "title": "Preise",
+        "description": "Kostenloser Self-Hosting-Tarif, Pro für Teams, Business für Agenturen."
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "Backups, die Sie",
+        "accent": "beweisen können"
+      }
+    }
+  },
+  "faq": {
+    "seo": {
+      "title": "Dockstash-FAQ — Fragen zum Docker-Backup",
+      "description": "Antworten auf häufige Fragen zu Dockstash: wie es Docker-Datenbanken sichert, wo Backups liegen, Sicherheit, Preise, Restore-Verifizierung und Vermeidung von Lock-in."
+    },
+    "breadcrumb": "FAQ",
+    "eyebrow": "FAQ",
+    "title": "Häufig gestellte Fragen",
+    "answer": "Dockstash ist ein selbst hostbarer, Docker-bewusster Backup-Orchestrator. Er erkennt Ihren Compose-Stack automatisch, dumpt jede Datenbank auf die korrekte Weise aus ihrem laufenden Container, speichert verschlüsselte Restic-Snapshots auf Ihrem eigenen Storage-VPS und testet die Wiederherstellung per Drill. Hier die häufigsten Fragen.",
+    "items": {
+      "what": {
+        "question": "Was macht Dockstash eigentlich?",
+        "answer": "Es läuft auf Ihrem Produktions-VPS, scannt Ihre Docker-Compose-Projekte und erkennt jede sicherbare Schicht — Volumes, Datenbanken, compose/.env und Reverse-Proxy-Konfiguration. Es dumpt Datenbanken konsistent aus dem laufenden Container und speichert verschlüsselte Restic-Snapshots off-site über SSH, mit automatisierter Restore-Drill-Verifizierung."
+      },
+      "whyNotBackrest": {
+        "question": "Warum nicht einfach Backrest verwenden?",
+        "answer": "Backrest ist eine solide generische restic-Oberfläche, aber es weiß nicht, dass Ihre Datenbank ein pg_dumpall statt einer Dateikopie braucht, es erkennt Ihren Compose-Stack nicht, und es testet keine Restores. Dockstash versteht Docker-Projekte und verifiziert die Wiederherstellung."
+      },
+      "whyNotDiy": {
+        "question": "Warum nicht mein eigenes restic-+-cron-Skript schreiben?",
+        "answer": "Können Sie — und dann warten Sie es, hoffen, dass die Dumps über Versions-Updates konsistent bleiben, und merken, wenn cron still stehen bleibt. Dockstash ist dieses Skript: gehärtet, alarmiert, verifiziert und auf einen Klick reduziert."
+      },
+      "safe": {
+        "question": "Sind meine Daten bei Dockstash sicher?",
+        "answer": "Im Free-/Self-Hosting-Tarif läuft alles auf Ihren eigenen Servern und Backups landen auf Ihrem Storage-VPS — wir halten Ihre Daten nie. Secrets sind im Ruhezustand AES-256-GCM-verschlüsselt und Restic-Repositories mit Ihrem eigenen Schlüssel."
+      },
+      "shutdown": {
+        "question": "Was passiert, wenn Dockstash den Betrieb einstellt?",
+        "answer": "Ihre Repositories sind Standard-Restic. Richten Sie die restic-CLI auf Ihren Storage-VPS und stellen Sie ohne uns wieder her. Konfigurations-Export/-Import ist enthalten — null Lock-in."
+      },
+      "restoreProof": {
+        "question": "Woher weiß ich, dass sich meine Backups wirklich wiederherstellen lassen?",
+        "answer": "Dockstash führt automatisierte Restore-Drills aus: Es stellt den neuesten Snapshot an einem Scratch-Ort wieder her, vergleicht ihn mit der Quelle und zeigt den Drill-Status pro Projekt. Ein ungetestetes Backup gilt als kein Backup."
+      },
+      "engines": {
+        "question": "Welche Datenbanken unterstützt Dockstash?",
+        "answer": "Docker-bewusste Adapter decken PostgreSQL, MySQL, MariaDB, MongoDB, Redis, Valkey, SQLite, ClickHouse, Elasticsearch, RabbitMQ, MinIO, InfluxDB und Neo4j ab — jede wird auf die korrekte, konsistente Weise ihrer Engine gedumpt."
+      },
+      "config": {
+        "question": "Muss ich eine Backup-Konfigurationsdatei schreiben?",
+        "answer": "Nein. Dockstash scannt Ihr Compose-Projekt, erkennt Datenbanken, Volumes und Reverse-Proxy-Konfiguration und schlägt einen Plan vor, den Sie per Checkbox bestätigen. Ein Klick sichert alles — kein YAML zu verfassen."
+      },
+      "storage": {
+        "question": "Wo werden meine Backups gespeichert?",
+        "answer": "Auf Ihrem eigenen Storage-VPS über SSH, als standardmäßige verschlüsselte Restic-Repositories. Der Free-Tarif läuft komplett self-hosted ohne bezahlten Anbieter — nichts läuft über Dritte."
+      },
+      "cost": {
+        "question": "Was kostet Dockstash?",
+        "answer": "Der Free-Tarif kostet {{freePrice}} für ein self-hosted Projekt. Pro ergänzt {{proProjects}} Projekte, stündliche Backups und E-Mail-Alarme; Business bietet unbegrenzte Projekte mit Priority-Support und Multi-VPS. Die Jahresabrechnung schenkt Ihnen zwei Monate."
+      }
+    },
+    "keepReading": "Weiterlesen",
+    "links": {
+      "security": {
+        "title": "Sicherheit",
+        "description": "Wie Dockstash Ihre Secrets, Ihren Kanal und Ihre Repos schützt."
+      },
+      "pricing": {
+        "title": "Preise",
+        "description": "Kostenloser Self-Hosting-Tarif, Pro für Teams, Business für Agenturen."
+      },
+      "guides": {
+        "title": "Backup-Anleitungen",
+        "description": "Anleitungen je Engine für Datenbank-Backups unter Docker."
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "Noch neugierig?",
+        "accent": "Probieren Sie es"
+      }
+    }
+  }
+}

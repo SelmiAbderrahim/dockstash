@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Seo, schema } from '@shared/seo';
+import { Seo, SsrNotFound, schema } from '@shared/seo';
 import { Button } from '@shared/ui/button';
 import {
   Table,
@@ -24,6 +24,7 @@ import {
   FaqSection,
   LastUpdated,
   LinkCard,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -48,6 +49,7 @@ export const UseCasePage = () => {
           locale={locale}
           noindex
         />
+        <SsrNotFound />
         <section className={sectionClass}>
           <Container>
             <h1 className={h1Class}>Backup guide not found</h1>
@@ -77,6 +79,7 @@ export const UseCasePage = () => {
       description: `Back up ${app.appName} in Docker completely — its database, data volumes, and config — stored encrypted off-site with a verified restore.`,
       path: localeHref(basePath, locale),
       dateModified: lastModified,
+      inLanguage: locale,
     }),
     schema.howTo(
       `How to back up ${app.appName} in Docker`,
@@ -97,9 +100,10 @@ export const UseCasePage = () => {
     <>
       <Seo
         title={`How to back up ${app.appName} in Docker (2026)`}
-        description={`Back up ${app.appName} in Docker completely: a consistent dump of its database, the data volumes that hold files, and the compose/.env config — stored encrypted off-site with a verified restore.`}
+        description={`Back up ${app.appName} in Docker completely: database dump, data volumes, and config — stored encrypted off-site with a verified restore.`}
         basePath={basePath}
         locale={locale}
+        localized={false}
         type="article"
         dateModified={lastModified}
         jsonLd={jsonLd}
@@ -121,7 +125,7 @@ export const UseCasePage = () => {
           <h1 className={h1Class}>
             How to back up {app.appName} in Docker (2026)
           </h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {buildUseCaseIntro(app)}
           </p>
         </Container>

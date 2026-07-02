@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../app.js';
+import { env } from '../../config/env.js';
+import { contactFormRecipient } from './communication.service.js';
 import * as mailgunShim from './mailers/mailgun.js';
 
 const app = createApp();
@@ -44,5 +46,34 @@ describe('communication module', () => {
       });
     expect(res.status).toBe(200);
     expect(res.body.message).toMatch(/envoyé/i);
+  });
+});
+
+describe('contactFormRecipient', () => {
+  it('prefers CONTACT_RECIPIENT when set', () => {
+    const prev = env.CONTACT_RECIPIENT;
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = 'ops@dockstash.com';
+    expect(contactFormRecipient()).toBe('ops@dockstash.com');
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = prev;
+  });
+
+  it('falls back to the placeholder and warns when Resend is configured', () => {
+    const prevRecipient = env.CONTACT_RECIPIENT;
+    const prevResend = env.RESEND_API_KEY;
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = undefined;
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = 're_key';
+    expect(contactFormRecipient()).toBe('you@example.com');
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = prevRecipient;
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = prevResend;
+  });
+
+  it('falls back silently when email is not configured at all', () => {
+    const prevRecipient = env.CONTACT_RECIPIENT;
+    const prevResend = env.RESEND_API_KEY;
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = undefined;
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = undefined;
+    expect(contactFormRecipient()).toBe('you@example.com');
+    (env as { CONTACT_RECIPIENT?: string }).CONTACT_RECIPIENT = prevRecipient;
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = prevResend;
   });
 });

@@ -16,11 +16,12 @@ import {
   isEmailAlertsAllowed,
   classifyCron,
   clampRetentionDays,
+  clampRetentionPolicy,
   resolveEntitlements,
 } from './entitlements.service.js';
-import { getUsageForUser } from './billing.service.js';
+import { getBillingOverviewForUser, getUsageForUser } from './billing.service.js';
 import { PricingTier } from './pricing-tier.model.js';
-import { Subscription } from './subscription.model.js';
+import { Subscription, findEffectiveSubscription } from './subscription.model.js';
 import { seedPricingTiers } from './pricing-tier.seed.js';
 import { getPlanForProductId, getProductIdForPlan } from './polar-config.js';
 import {
@@ -31,8 +32,6 @@ import {
   handleDowngrade,
   handleRefund,
   selectProjectsToKeep,
-  assertTrialAvailable,
-  recordTrialClaim,
 } from './lifecycle.service.js';
 import { Customer } from './customer.model.js';
 import { Order } from './order.model.js';
@@ -369,8 +368,9 @@ describe('lifecycle: dunning + grace', () => {
       { userId: user._id },
       { $set: { status: 'past_due', graceEndsAt: past } },
     );
-    const paused = await expireGraceIfNeeded(String(user._id));
-    expect(paused).toBeGreaterThanOrEqual(1);
+    const result = await expireGraceIfNeeded(String(user._id));
+    expect(result.expired).toBe(true);
+    expect(result.paused).toBeGreaterThanOrEqual(1);
     const sub = await Subscription.findOne({ userId: user._id }).lean();
     expect(sub?.status).toBe('canceled');
     expect(sub?.planSlug).toBe('free');
@@ -463,7 +463,7 @@ describe('lifecycle: downgrade over cap (no delete)', () => {
   });
 });
 
-describe('lifecycle: refund + trial guard', () => {
+describe('lifecycle: refund', () => {
   it('handleRefund revokes subscription + pauses projects', async () => {
     const user = await createOwner();
     await seedActiveSub(String(user._id), 'pro');
@@ -492,16 +492,119 @@ describe('lifecycle: refund + trial guard', () => {
     expect(paused).toBe(2);
   });
 
-  it('assertTrialAvailable rejects a second trial for the same email', async () => {
-    const email = 'trial@example.com';
-    const user = await createOwner(email);
-    await recordTrialClaim(email, 'polar', 'polar_cust_1', String(user._id));
-    await expect(
-      assertTrialAvailable(email, 'polar'),
-    ).rejects.toMatchObject({ status: 409, details: { reason: 'trialAlreadyClaimed' } });
+});
+
+describe('effective subscription selection (status priority)', () => {
+  it('an older active row beats a newer canceled row', async () => {
+    const user = await createOwner('prio@example.com');
+    const customer = await Customer.create({
+      userId: user._id,
+      provider: 'polar',
+      providerCustomerId: 'pc_prio',
+      email: 'prio@example.com',
+    });
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_old_active',
+      productId: 'prod_pro',
+      planSlug: 'pro',
+      status: 'active',
+      cancelAtPeriodEnd: false,
+    });
+    // Newer canceled row (e.g. an old plan the user canceled after
+    // re-subscribing) must NOT shadow the active one.
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_new_canceled',
+      productId: 'prod_business',
+      planSlug: 'business',
+      status: 'canceled',
+      cancelAtPeriodEnd: false,
+    });
+    const effective = await findEffectiveSubscription(String(user._id), 'polar');
+    expect(effective?.providerSubscriptionId).toBe('sub_old_active');
+    const resolved = await resolveEntitlements(String(user._id));
+    expect(resolved.slug).toBe('pro');
+    expect(resolved.status).toBe('active');
   });
 
-  it('assertTrialAvailable allows first-time claim', async () => {
-    await expect(assertTrialAvailable('new@example.com', 'polar')).resolves.toBeUndefined();
+  it('ties on priority resolve to the newest row; incomplete never entitles', async () => {
+    const user = await createOwner('prio2@example.com');
+    const customer = await Customer.create({
+      userId: user._id,
+      provider: 'polar',
+      providerCustomerId: 'pc_prio2',
+      email: 'prio2@example.com',
+    });
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_c1',
+      productId: 'prod_pro',
+      planSlug: 'pro',
+      status: 'canceled',
+      cancelAtPeriodEnd: false,
+      createdAt: new Date('2030-01-01T00:00:00Z'),
+    });
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_c2',
+      productId: 'prod_pro',
+      planSlug: 'pro',
+      status: 'canceled',
+      cancelAtPeriodEnd: false,
+      createdAt: new Date('2031-01-01T00:00:00Z'),
+    });
+    const effective = await findEffectiveSubscription(String(user._id), 'polar');
+    expect(effective?.providerSubscriptionId).toBe('sub_c2');
+
+    // An incomplete row (checkout started, unpaid) resolves to free.
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_inc',
+      productId: 'prod_pro',
+      planSlug: 'pro',
+      status: 'incomplete',
+      cancelAtPeriodEnd: false,
+    });
+    const resolved = await resolveEntitlements(String(user._id));
+    expect(resolved.status).toBe('incomplete');
+    expect(resolved.slug).toBe('free');
+    const overview = await getBillingOverviewForUser(String(user._id));
+    expect(overview.status).toBe('incomplete');
+    expect(overview.slug).toBe('free');
+  });
+});
+
+describe('clampRetentionPolicy', () => {
+  it('narrows a wide policy to the free-tier ceiling (7 days)', async () => {
+    const user = await createOwner('clamp-free@example.com');
+    // No subscription → free tier (7 days retention).
+    const clamped = await clampRetentionPolicy(String(user._id), {
+      keepDaily: 30,
+      keepWeekly: 10,
+      keepMonthly: 12,
+    });
+    expect(clamped).toEqual({ keepDaily: 7, keepWeekly: 1, keepMonthly: 1 });
+  });
+
+  it('leaves a policy within the business ceiling untouched', async () => {
+    const user = await createOwner('clamp-biz@example.com');
+    await seedActiveSub(String(user._id), 'business');
+    const clamped = await clampRetentionPolicy(String(user._id), {
+      keepDaily: 5,
+      keepWeekly: 3,
+      keepMonthly: 2,
+    });
+    expect(clamped).toEqual({ keepDaily: 5, keepWeekly: 3, keepMonthly: 2 });
   });
 });

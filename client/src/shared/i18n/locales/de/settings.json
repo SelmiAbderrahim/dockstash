@@ -5,7 +5,8 @@
     "aria": "Einstellungsbereiche",
     "storage": "Speicher",
     "retention": "Aufbewahrung",
-    "password": "Verschlüsselungspasswort"
+    "password": "Verschlüsselungspasswort",
+    "recovery": "Wiederherstellung"
   },
   "actions": {
     "save": "Speichern",
@@ -38,5 +39,32 @@
     "mismatch": "Passwörter stimmen nicht überein.",
     "escrow": "Ich habe das Passwort sicher gespeichert.",
     "saved": "Passwort gespeichert."
+  },
+  "recovery": {
+    "export": {
+      "title": "Konfiguration exportieren",
+      "description": "Laden Sie einen JSON-Export Ihrer Projekte, Ihres Speichers und Ihrer Einstellungen herunter.",
+      "action": "Export herunterladen",
+      "working": "Exportiert…",
+      "done": "Export heruntergeladen."
+    },
+    "codes": {
+      "title": "Wiederherstellungscodes",
+      "description": "Erzeugen Sie Einmal-Codes, um den Zugriff auf Ihre verschlüsselten Repositories zurückzuerlangen.",
+      "action": "Wiederherstellungscodes erzeugen",
+      "working": "Erzeugt…",
+      "warning": "Speichern Sie diese Codes jetzt. Sie werden nie wieder angezeigt.",
+      "copy": "Alle kopieren",
+      "copied": "Kopiert."
+    },
+    "selfBackup": {
+      "title": "Selbst-Backup",
+      "description": "Sichern Sie die Dockstash-Konfiguration selbst auf Ihren Speicher.",
+      "action": "Selbst-Backup starten",
+      "working": "Startet…",
+      "triggered": "Selbst-Backup gestartet.",
+      "runs": "Letzte Läufe",
+      "empty": "Noch keine Selbst-Backups."
+    }
   }
 }

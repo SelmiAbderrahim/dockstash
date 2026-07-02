@@ -8,25 +8,56 @@ import {
   resendVerificationRequest,
   resetPasswordRequest,
   verifyEmailRequest,
+  verifyLoginOtpRequest,
 } from '../api';
-import type { AuthUser, LoginRequest, RegisterRequest } from '../types';
+import type { AuthUser, LoginRequest, OtpVerifyRequest, RegisterRequest } from '../types';
 
-export const loginUser = createAsyncThunk<boolean, LoginRequest, { rejectValue: string }>(
+export type LoginResult =
+  | { otpRequired: true; challengeId: string }
+  | { otpRequired: false; emailVerified: boolean; role: string };
+
+export const loginUser = createAsyncThunk<LoginResult, LoginRequest, { rejectValue: string }>(
   'auth/login',
   async (body, { rejectWithValue }) => {
     try {
       const data = await loginRequest(body);
+      if ('otpRequired' in data) {
+        // No cookies yet — the session starts only after the OTP verifies.
+        return { otpRequired: true, challengeId: data.challengeId };
+      }
       saveCookie('token', data.token, { path: '/' });
       saveCookie('user', data.user, { path: '/' });
-      return data.user.emailVerified ?? false;
+      return {
+        otpRequired: false,
+        emailVerified: data.user.emailVerified ?? false,
+        role: data.user.role ?? '',
+      };
     } catch (err) {
       return rejectWithValue(messageFromError(err, 'Login failed.'));
     }
   },
 );
 
+export const verifyLoginOtp = createAsyncThunk<
+  { emailVerified: boolean; role: string },
+  OtpVerifyRequest,
+  { rejectValue: string }
+>('auth/verifyLoginOtp', async (body, { rejectWithValue }) => {
+  try {
+    const data = await verifyLoginOtpRequest(body);
+    saveCookie('token', data.token, { path: '/' });
+    saveCookie('user', data.user, { path: '/' });
+    return {
+      emailVerified: data.user.emailVerified ?? false,
+      role: data.user.role ?? '',
+    };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Verification failed.'));
+  }
+});
+
 export const registerUser = createAsyncThunk<
-  { email: string; emailVerified: boolean },
+  { email: string; emailVerified: boolean; role: string },
   RegisterRequest,
   { rejectValue: string }
 >('auth/register', async (body, { rejectWithValue }) => {
@@ -34,7 +65,11 @@ export const registerUser = createAsyncThunk<
     const data = await registerRequest(body);
     saveCookie('token', data.token, { path: '/' });
     saveCookie('user', data.user, { path: '/' });
-    return { email: data.user.email, emailVerified: data.user.emailVerified ?? false };
+    return {
+      email: data.user.email,
+      emailVerified: data.user.emailVerified ?? false,
+      role: data.user.role ?? '',
+    };
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Registration failed.'));
   }

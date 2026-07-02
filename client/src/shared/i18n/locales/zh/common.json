@@ -10,5 +10,52 @@
     "running": "运行中…",
     "done": "已完成",
     "failed": "失败"
+  },
+  "fleet": {
+    "heading": "集群",
+    "lede": "所有已连接的 VPS 代理及其备份占用情况。",
+    "loading": "正在加载集群…",
+    "register": "注册代理",
+    "locked": {
+      "title": "多 VPS 集群是 Business 套餐功能",
+      "body": "升级到 Business 套餐即可在更多服务器上注册代理，并在一个页面查看整个集群。",
+      "cta": "查看套餐"
+    },
+    "empty": {
+      "title": "还没有代理",
+      "hint": "在另一台 VPS 上注册代理后即可在此看到。"
+    },
+    "errors": {
+      "load": "无法加载集群。",
+      "register": "无法注册代理。"
+    },
+    "table": {
+      "aria": "集群",
+      "name": "名称",
+      "host": "主机",
+      "status": "状态",
+      "lastSeen": "最近在线",
+      "projects": "项目",
+      "size": "大小",
+      "snapshots": "快照"
+    },
+    "status": {
+      "online": "在线",
+      "offline": "离线"
+    },
+    "never": "从未",
+    "dialog": {
+      "title": "注册代理",
+      "description": "将一台 VPS 加入你的集群。代理使用下方生成的 API 密钥进行认证。",
+      "name": "名称",
+      "host": "主机",
+      "port": "端口",
+      "submit": "注册",
+      "submitting": "注册中…",
+      "cancel": "取消",
+      "keyWarning": "此 API 密钥仅显示一次，之后无法再次获取。请立即复制。",
+      "copy": "复制",
+      "done": "完成"
+    }
   }
 }

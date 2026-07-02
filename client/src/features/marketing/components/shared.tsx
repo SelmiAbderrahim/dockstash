@@ -1,18 +1,24 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CheckIcon, ChevronDownIcon } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared/ui/table';
 import type { SupportedLocale } from '@shared/i18n';
 import type { FaqItem, ComparisonRow } from '../types';
-import { localeHref } from '../useMarketingRoute';
+import { localeHref, useMarketingRoute } from '../useMarketingRoute';
+
+/**
+ * Fixed-language marketing `t`, pinned to the URL locale (never the ambient
+ * `i18n.language` — a `lang` cookie may disagree with the URL prefix, which
+ * would desync SSR HTML from the client render and break hydration).
+ * Marketing shared components always render inside the router, so the
+ * locale is always resolvable from the pathname.
+ */
+export const useMarketingT = () => {
+  const { locale } = useMarketingRoute();
+  const { t } = useTranslation('marketing', { lng: locale });
+  return { t, locale };
+};
 
 // ── Shared layout primitives (marketing feature only) ───────────────────────
 // Reusable Tailwind class strings and small wrappers so the marketing pages
@@ -35,7 +41,7 @@ export const h2Class =
 
 /** Answer-first extract block (AEO target). */
 export const answerClass =
-  'max-w-[720px] rounded-lg border bg-muted/50 p-5 text-lg leading-relaxed';
+  'max-w-[720px] rounded-lg border bg-muted/50 p-5 text-base leading-relaxed sm:text-lg';
 
 /** Flat card surface, matching the shadcn Card visual language. */
 export const cardClass =
@@ -204,12 +210,13 @@ export const Breadcrumbs = ({
  * for crawlers and answer engines even while visually collapsed.
  */
 export const FaqSection = ({ faqs }: { faqs: FaqItem[] }) => {
+  const { t } = useMarketingT();
   if (faqs.length === 0) return null;
   return (
     <section className={sectionClass}>
       <Container className="max-w-3xl">
         <h2 className={cn(h2Class, 'text-center')}>
-          Frequently asked <Serif>questions</Serif>
+          {t('shared.faqTitle.pre')} <Serif>{t('shared.faqTitle.accent')}</Serif>
         </h2>
         <div className="mt-8 divide-y rounded-xl border bg-card px-5 shadow-xs">
           {faqs.map((faq) => (
@@ -230,47 +237,145 @@ export const FaqSection = ({ faqs }: { faqs: FaqItem[] }) => {
   );
 };
 
+/**
+ * Faux-terminal chrome around a code sample: hollow traffic-light dots and a
+ * mono title bar. Pure presentational — SSR-safe, no browser APIs.
+ */
+export const TerminalFrame = ({
+  title,
+  children,
+  className,
+}: {
+  title: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) => (
+  <figure
+    className={cn('overflow-hidden rounded-xl border bg-card shadow-xs', className)}
+  >
+    <figcaption className="flex items-center gap-2 border-b bg-muted/50 px-4 py-2.5">
+      <span aria-hidden="true" className="flex gap-1.5">
+        <span className="size-2.5 rounded-full border" />
+        <span className="size-2.5 rounded-full border" />
+        <span className="size-2.5 rounded-full border" />
+      </span>
+      <span className="ms-2 font-mono text-xs text-muted-foreground">{title}</span>
+    </figcaption>
+    {children}
+  </figure>
+);
+
+export interface ResponsiveTableColumn {
+  key: string;
+  label: ReactNode;
+  /**
+   * Plain-text form of `label` for the stacked-card `data-label` pseudo
+   * heading. Falls back to `label` itself when it is a string.
+   */
+  labelText?: string;
+}
+
+export interface ResponsiveTableRow {
+  key: string;
+  /** First cell of the row — rendered as a row header (`<th scope="row">`). */
+  header: ReactNode;
+  /** Value cells, matching `columns[1..]` in order. */
+  cells: ReactNode[];
+}
+
+const columnLabelText = (column: ResponsiveTableColumn): string | undefined =>
+  column.labelText ??
+  (typeof column.label === 'string' ? column.label : undefined);
+
+/**
+ * Comparison table that reflows into stacked cards below the `sm` breakpoint —
+ * a single DOM source, so SSR HTML carries both layouts. Uses a raw `<table>`
+ * (not the shadcn Table) because its overflow wrapper fights `max-sm:block`.
+ * Explicit ARIA roles are set since `display: block` drops the implicit ones.
+ */
+export const ResponsiveTable = ({
+  columns,
+  rows,
+  className,
+}: {
+  columns: ResponsiveTableColumn[];
+  rows: ResponsiveTableRow[];
+  className?: string;
+}) => (
+  <table
+    role="table"
+    className={cn(
+      'w-full caption-bottom rounded-xl border text-sm max-sm:block max-sm:rounded-none max-sm:border-0',
+      className,
+    )}
+  >
+    <thead role="rowgroup" className="max-sm:hidden">
+      <tr role="row">
+        {columns.map((column) => (
+          <th
+            key={column.key}
+            role="columnheader"
+            scope="col"
+            className="border-b bg-muted/50 p-3 text-start align-top font-medium"
+          >
+            {column.label}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody role="rowgroup" className="max-sm:block max-sm:space-y-4">
+      {rows.map((row) => (
+        <tr
+          key={row.key}
+          role="row"
+          className="border-b last:border-0 max-sm:block max-sm:rounded-xl max-sm:border max-sm:bg-card max-sm:p-4 max-sm:shadow-xs"
+        >
+          <th
+            scope="row"
+            role="rowheader"
+            className="p-3 text-start align-top font-medium max-sm:block max-sm:border-0 max-sm:p-0 max-sm:pb-2 max-sm:text-base max-sm:font-semibold"
+          >
+            {row.header}
+          </th>
+          {columns.slice(1).map((column, cellIndex) => (
+            <td
+              key={column.key}
+              role="cell"
+              data-label={columnLabelText(column)}
+              className="p-3 text-start align-top max-sm:block max-sm:border-0 max-sm:p-0 max-sm:pt-2 max-sm:before:block max-sm:before:text-xs max-sm:before:font-medium max-sm:before:uppercase max-sm:before:tracking-wide max-sm:before:text-muted-foreground max-sm:before:content-[attr(data-label)]"
+            >
+              {row.cells[cellIndex]}
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
 export const ComparisonTable = ({
   rows,
   competitorName,
 }: {
   rows: ComparisonRow[];
   competitorName: string;
-}) => (
-  <Table className="border">
-    <TableHeader>
-      <TableRow>
-        <TableHead scope="col" className="text-start align-top">
-          Capability
-        </TableHead>
-        <TableHead scope="col" className="text-start align-top">
-          Dockstash
-        </TableHead>
-        <TableHead scope="col" className="text-start align-top">
-          {competitorName}
-        </TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {rows.map((row) => (
-        <TableRow key={row.feature}>
-          <TableHead
-            scope="row"
-            className="whitespace-normal text-start align-top font-medium"
-          >
-            {row.feature}
-          </TableHead>
-          <TableCell className="whitespace-normal align-top">
-            {row.dockstash}
-          </TableCell>
-          <TableCell className="whitespace-normal align-top">
-            {row.competitor}
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-);
+}) => {
+  const { t } = useMarketingT();
+  return (
+    <ResponsiveTable
+      columns={[
+        { key: 'feature', label: t('shared.capability') },
+        { key: 'dockstash', label: 'Dockstash' },
+        { key: 'competitor', label: competitorName },
+      ]}
+      rows={rows.map((row) => ({
+        key: row.feature,
+        header: row.feature,
+        cells: [row.dockstash, row.competitor],
+      }))}
+    />
+  );
+};
 
 export const CodeBlock = ({ children }: { children: string }) => (
   <code className={codeClass}>{children}</code>
@@ -322,6 +427,7 @@ export const LegalSections = ({ sections }: { sections: LegalSectionDef[] }) => 
 
 /** Visible "Last updated" recency signal (AEO). `iso` = "2026-07". */
 export const LastUpdated = ({ iso }: { iso: string }) => {
+  const { t } = useMarketingT();
   const [year, month] = iso.split('-');
   const monthName = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -329,7 +435,7 @@ export const LastUpdated = ({ iso }: { iso: string }) => {
   ][Number(month) - 1] ?? month;
   return (
     <p className="mt-4 text-sm text-muted-foreground">
-      Last updated: {monthName} {year}
+      {t('shared.lastUpdated', { date: `${monthName} ${year}` })}
     </p>
   );
 };

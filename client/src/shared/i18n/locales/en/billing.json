@@ -17,7 +17,8 @@
     "past_due": "Past due",
     "canceled": "Canceled",
     "revoked": "Revoked",
-    "none": "None"
+    "none": "None",
+    "incomplete": "Awaiting payment"
   },
   "grid": {
     "title": "Pricing",
@@ -57,7 +58,8 @@
     "tabsLabel": "Billing sections",
     "tab": {
       "overview": "Overview",
-      "usage": "Usage"
+      "usage": "Usage",
+      "plans": "Plans"
     },
     "loading": "Loading…",
     "empty": "Nothing to show."
@@ -81,11 +83,15 @@
       "colSize": "Size",
       "colLastRun": "Last run",
       "never": "Never"
-    }
+    },
+    "retry": "Retry"
   },
   "selection": {
     "title": "Pick which projects stay active",
     "help": "Your plan allows up to {{cap}} active project(s). The rest will be paused (never deleted).",
     "submit": "Save selection"
+  },
+  "plans": {
+    "portal": "Manage billing"
   }
 }

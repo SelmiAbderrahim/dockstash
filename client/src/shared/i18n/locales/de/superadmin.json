@@ -1,0 +1,128 @@
+{
+  "title": "Superadmin",
+  "tabs": {
+    "overview": "Übersicht",
+    "users": "Benutzer",
+    "billing": "Abrechnung",
+    "audit": "Audit",
+    "system": "System"
+  },
+  "loading": "Wird geladen…",
+  "errorPrefix": "Fehler!",
+  "empty": "Noch keine Daten.",
+  "overview": {
+    "usersTotal": "Benutzer insgesamt",
+    "usersNew7d": "Neu (7 Tage)",
+    "usersNew30d": "Neu (30 Tage)",
+    "verifiedPct": "Bestätigt",
+    "projects": "Projekte",
+    "projectsPaused": "Pausierte Projekte",
+    "backupsWithSuccess": "Projekte mit Backups",
+    "snapshots": "Snapshots",
+    "repoBytes": "Repository-Bytes",
+    "subscriptionsTitle": "Abonnements nach Tarif",
+    "subscriptionsEmpty": "Noch keine Abonnements."
+  },
+  "users": {
+    "searchLabel": "Benutzer suchen",
+    "searchPlaceholder": "Nach E-Mail oder Name suchen",
+    "searchButton": "Suchen",
+    "columns": {
+      "email": "E-Mail",
+      "role": "Rolle",
+      "verified": "Bestätigt",
+      "legalHold": "Legal Hold",
+      "deletion": "Löschung",
+      "created": "Erstellt",
+      "actions": "Aktionen"
+    },
+    "verifiedYes": "Bestätigt",
+    "verifiedNo": "Nicht bestätigt",
+    "deletionNone": "—",
+    "actions": {
+      "menu": "Benutzeraktionen öffnen",
+      "changeRole": "Rolle ändern",
+      "forceVerify": "E-Mail zwangsweise bestätigen",
+      "legalHoldOn": "Legal Hold aktivieren",
+      "legalHoldOff": "Legal Hold aufheben",
+      "scheduleDeletion": "Löschung planen"
+    },
+    "dialogs": {
+      "roleTitle": "Rolle ändern",
+      "roleDescription": "Wählen Sie die neue Rolle für {{email}}.",
+      "roleLabel": "Rolle",
+      "verifyTitle": "E-Mail zwangsweise bestätigen",
+      "verifyDescription": "{{email}} ohne Bestätigungslink als bestätigt markieren?",
+      "holdOnTitle": "Legal Hold aktivieren",
+      "holdOnDescription": "Daten von {{email}} werden vor Löschung und Bereinigung geschützt.",
+      "holdOffTitle": "Legal Hold aufheben",
+      "holdOffDescription": "Daten von {{email}} können wieder gelöscht werden.",
+      "deleteTitle": "Kontolöschung planen",
+      "deleteDescription": "Das Konto von {{email}} und alle zugehörigen Backups werden nach Ablauf der Karenzzeit endgültig entfernt.",
+      "confirm": "Bestätigen",
+      "cancel": "Abbrechen"
+    },
+    "empty": "Keine passenden Benutzer."
+  },
+  "billing": {
+    "customersTitle": "Kunden",
+    "columns": {
+      "email": "E-Mail",
+      "provider": "Anbieter",
+      "customerId": "Kunden-ID",
+      "created": "Erstellt",
+      "subscriptions": "Abonnements"
+    },
+    "subscription": "{{plan}} ({{status}})",
+    "noSubscriptions": "Keine",
+    "empty": "Noch keine Kunden."
+  },
+  "audit": {
+    "filters": {
+      "action": "Aktion",
+      "actionAll": "Alle Aktionen",
+      "actor": "Akteur-Benutzer-ID",
+      "from": "Von",
+      "to": "Bis",
+      "apply": "Filter anwenden"
+    },
+    "columns": {
+      "action": "Aktion",
+      "actor": "Akteur",
+      "target": "Ziel",
+      "ip": "IP",
+      "date": "Datum"
+    },
+    "empty": "Keine Audit-Einträge."
+  },
+  "system": {
+    "healthTitle": "Systemzustand",
+    "db": "MongoDB",
+    "redis": "Redis",
+    "statusOk": "Betriebsbereit",
+    "statusDegraded": "Beeinträchtigt",
+    "up": "Online",
+    "down": "Offline",
+    "notConfigured": "Nicht konfiguriert",
+    "schedulerTitle": "Scheduler",
+    "schedules": "Zeitpläne",
+    "enabled": "Aktiviert",
+    "challengesTitle": "Aktuelle Anmelde-Challenges",
+    "challengeColumns": {
+      "user": "Benutzer",
+      "ip": "IP",
+      "attempts": "Versuche",
+      "status": "Status",
+      "created": "Erstellt"
+    },
+    "challengeConsumed": "Verwendet",
+    "challengePending": "Ausstehend",
+    "eventsTitle": "Sicherheitsereignisse",
+    "empty": "Noch nichts aufgezeichnet."
+  },
+  "pagination": {
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pageOf": "Seite {{page}} von {{pages}}"
+  }
+}

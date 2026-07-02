@@ -4,6 +4,7 @@ export {
   deliverPasswordResetEmail,
   deliverVerificationEmail,
   deliverPasswordChangedEmail,
+  deliverLoginOtpEmail,
   deliverWelcomeEmail,
   deliverPaymentReceiptEmail,
   deliverDunningEmail,

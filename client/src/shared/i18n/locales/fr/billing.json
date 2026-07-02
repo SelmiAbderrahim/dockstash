@@ -17,7 +17,8 @@
     "past_due": "En retard",
     "canceled": "Annulé",
     "revoked": "Révoqué",
-    "none": "Aucun"
+    "none": "Aucun",
+    "incomplete": "En attente de paiement"
   },
   "grid": {
     "title": "Tarifs",
@@ -57,7 +58,8 @@
     "tabsLabel": "Sections de facturation",
     "tab": {
       "overview": "Vue d’ensemble",
-      "usage": "Utilisation"
+      "usage": "Utilisation",
+      "plans": "Forfaits"
     },
     "loading": "Chargement…",
     "empty": "Rien à afficher."
@@ -81,11 +83,15 @@
       "colSize": "Taille",
       "colLastRun": "Dernière exécution",
       "never": "Jamais"
-    }
+    },
+    "retry": "Réessayer"
   },
   "selection": {
     "title": "Choisissez les projets à garder actifs",
     "help": "Votre offre permet jusqu’à {{cap}} projet(s) actif(s). Les autres seront mis en pause (jamais supprimés).",
     "submit": "Enregistrer"
+  },
+  "plans": {
+    "portal": "Gérer la facturation"
   }
 }

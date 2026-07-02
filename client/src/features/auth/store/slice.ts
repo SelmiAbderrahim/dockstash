@@ -9,11 +9,14 @@ import {
   requestPasswordReset,
   resendVerification,
   verifyEmail,
+  verifyLoginOtp,
 } from './thunks';
 
 const initialState: AuthState = {
   authenticated: loadCookie<string>('token') !== null,
   emailVerified: loadCookie<AuthUser>('user')?.emailVerified ?? false,
+  role: loadCookie<AuthUser>('user')?.role ?? '',
+  otpChallengeId: '',
   pendingVerificationEmail: '',
   error: '',
   message: '',
@@ -29,12 +32,25 @@ const authSlice = createSlice({
     clearMessage(state) {
       state.message = '';
     },
+    cancelOtp(state) {
+      state.otpChallengeId = '';
+      state.error = '';
+    },
   },
   extraReducers: (builder) => {
     builder
       .addCase(loginUser.fulfilled, (state, action) => {
+        if (action.payload.otpRequired) {
+          // Password accepted, session pending the emailed code.
+          state.otpChallengeId = action.payload.challengeId;
+          state.error = '';
+          state.message = '';
+          return;
+        }
         state.authenticated = true;
-        state.emailVerified = action.payload;
+        state.emailVerified = action.payload.emailVerified;
+        state.role = action.payload.role;
+        state.otpChallengeId = '';
         state.error = '';
         state.message = '';
       })
@@ -42,9 +58,22 @@ const authSlice = createSlice({
         state.authenticated = false;
         state.error = action.payload ?? 'Login failed.';
       })
+      .addCase(verifyLoginOtp.fulfilled, (state, action) => {
+        state.authenticated = true;
+        state.emailVerified = action.payload.emailVerified;
+        state.role = action.payload.role;
+        state.otpChallengeId = '';
+        state.error = '';
+        state.message = '';
+      })
+      .addCase(verifyLoginOtp.rejected, (state, action) => {
+        // Keep the challenge so the user can retry the code.
+        state.error = action.payload ?? 'Verification failed.';
+      })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.authenticated = true;
         state.emailVerified = action.payload.emailVerified;
+        state.role = action.payload.role;
         state.pendingVerificationEmail = action.payload.email;
         state.error = '';
         state.message = '';
@@ -55,6 +84,8 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state, action) => {
         state.authenticated = false;
         state.emailVerified = false;
+        state.role = '';
+        state.otpChallengeId = '';
         state.pendingVerificationEmail = '';
         state.error = action.payload;
         state.message = '';
@@ -89,5 +120,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearMessage } = authSlice.actions;
+export const { clearError, clearMessage, cancelOtp } = authSlice.actions;
 export const authReducer = authSlice.reducer;

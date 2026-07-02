@@ -12,5 +12,6 @@
   "emailAlreadyRegistered": "هذا البريد الإلكتروني مسجل بالفعل.",
   "passwordTooShort": "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
   "emailRequired": "يرجى إدخال البريد الإلكتروني",
-  "passwordRequired": "يرجى إدخال كلمة المرور"
+  "passwordRequired": "يرجى إدخال كلمة المرور",
+  "otpCodeInvalid": "أدخل الرمز المكوَّن من 6 أرقام."
 }

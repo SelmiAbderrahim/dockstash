@@ -4,28 +4,15 @@ import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
-import type { ResticRunnerExt } from './modules/scheduler/index.js';
-
-/**
- * Placeholder restic runner. The concrete child_process wrapper lands with the
- * live-log spawn work in a follow-up prompt; until then, a job that actually
- * fires will fail through the retry+alert path, which is the correct behaviour
- * — we do NOT silently succeed backup requests without restic wired.
- */
-function placeholderResticRunner(): ResticRunnerExt {
-  const notWired = async (): Promise<never> => {
-    throw new Error('restic runner not wired');
-  };
-  return {
-    init: notWired,
-    backup: notWired,
-    snapshots: notWired,
-    check: notWired,
-    restore: notWired,
-    unlock: notWired,
-    forget: notWired,
-  };
-}
+import { registerBillingCrons, unregisterBillingCrons } from './modules/billing/index.js';
+import {
+  configureSnapshotsController,
+  makeDispatchDepsFor,
+  makeProductionSnapshotLister,
+  makeResticRunnerFor,
+  placeholderResticRunner,
+} from './modules/backups/index.js';
+import { wireRecoveryController } from './boot/recovery.js';
 
 function main(): void {
   const app = createApp();
@@ -38,14 +25,28 @@ function main(): void {
     cors: { origin: env.CLIENT_URL, credentials: true },
   });
 
-  connectDb().catch((err) => {
-    logger.error({ err }, 'mongo connection unavailable');
-  });
+  connectDb()
+    .then(() => {
+      registerBillingCrons();
+    })
+    .catch((err) => {
+      logger.error({ err }, 'mongo connection unavailable');
+    });
 
+  // `RESTIC_RUNNER=process` (set by compose) spawns the real restic binary;
+  // the default keeps the loud placeholder so nothing silently "succeeds".
+  const useRealRunner = env.RESTIC_RUNNER === 'process';
+  if (useRealRunner) {
+    configureSnapshotsController(makeProductionSnapshotLister());
+    wireRecoveryController();
+  }
   let scheduler: SchedulerRuntime | null = null;
   startScheduler({
     io,
-    resticRunnerFor: () => placeholderResticRunner(),
+    resticRunnerFor: useRealRunner
+      ? makeResticRunnerFor
+      : () => placeholderResticRunner(),
+    ...(useRealRunner ? { dispatchDepsFor: () => makeDispatchDepsFor() } : {}),
   })
     .then((rt) => {
       scheduler = rt;
@@ -56,6 +57,7 @@ function main(): void {
 
   const shutdown = (signal: NodeJS.Signals): void => {
     logger.info({ signal }, 'shutting down');
+    unregisterBillingCrons();
     const closeScheduler = scheduler ? scheduler.shutdown() : Promise.resolve();
     void closeScheduler.finally(() => {
       io.close();

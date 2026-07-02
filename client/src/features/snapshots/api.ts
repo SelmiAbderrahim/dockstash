@@ -6,7 +6,7 @@ interface SnapshotsResp {
 }
 
 interface EnqueueResp {
-  jobId: string;
+  job: { id: string; kind: string };
 }
 
 export const listSnapshotsRequest = (projectId: string) =>
@@ -25,4 +25,4 @@ export const restoreRequest = (opts: RestoreOptions) =>
       overwrite: opts.overwrite,
       targetPath: opts.targetPath,
     },
-  }).then((r) => r.jobId);
+  }).then((r) => r.job.id);

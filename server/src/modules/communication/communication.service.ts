@@ -6,8 +6,20 @@ import {
   type SupportedLocale,
 } from '../../shared/i18n/index.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 
-const CONTACT_FORM_RECIPIENT = 'you@example.com';
+const CONTACT_FORM_FALLBACK = 'you@example.com';
+
+/** Contact-form recipient: `CONTACT_RECIPIENT` env, with a loud fallback. */
+export function contactFormRecipient(): string {
+  if (env.CONTACT_RECIPIENT) return env.CONTACT_RECIPIENT;
+  if (env.RESEND_API_KEY) {
+    logger.warn(
+      'CONTACT_RECIPIENT is unset — contact-form mail goes to the placeholder address',
+    );
+  }
+  return CONTACT_FORM_FALLBACK;
+}
 
 function normalizedClientUrl(): string {
   return env.CLIENT_URL.replace(/\/$/, '');
@@ -16,7 +28,7 @@ function normalizedClientUrl(): string {
 export async function deliverContactForm(input: ContactFormInput): Promise<void> {
   await sendEmail({
     from: `${input.firstName} ${input.lastName} <${input.email}>`,
-    to: CONTACT_FORM_RECIPIENT,
+    to: contactFormRecipient(),
     subject: input.subject,
     text: input.message,
   });
@@ -54,6 +66,18 @@ export async function deliverPasswordChangedEmail(
     to: email,
     subject: translate(locale, 'email.passwordChanged.subject'),
     text: translate(locale, 'email.passwordChanged.body'),
+  });
+}
+
+export async function deliverLoginOtpEmail(
+  email: string,
+  code: string,
+  locale: SupportedLocale = DEFAULT_LOCALE,
+): Promise<void> {
+  await sendEmail({
+    to: email,
+    subject: translate(locale, 'email.loginOtp.subject'),
+    text: translate(locale, 'email.loginOtp.body', { code, minutes: 10 }),
   });
 }
 

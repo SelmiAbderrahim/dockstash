@@ -11,6 +11,10 @@ const FINGERPRINT_SHAPE = /^sha256:[A-Za-z0-9+/=_-]+$/;
 export interface SshTransportOptions {
   host: string;
   user: string;
+  /** SSH port. Defaults to 22, which keeps the legacy `sftp:` URL form. */
+  port?: number;
+  /** Repo root on the storage VPS. Defaults to `/backups`. */
+  basePath?: string;
   /** Pinned peer host-key fingerprint. Format: `sha256:BASE64`. */
   pinnedFingerprint: string;
   t?: Translator;
@@ -24,6 +28,8 @@ export interface SshTransportOptions {
 export class PinnedSshTransport implements SshTransport {
   readonly host: string;
   readonly user: string;
+  readonly port: number;
+  readonly basePath: string;
   readonly pinnedFingerprint: string;
   private readonly t: Translator;
 
@@ -35,12 +41,20 @@ export class PinnedSshTransport implements SshTransport {
     }
     this.host = opts.host;
     this.user = opts.user;
+    this.port = opts.port ?? 22;
+    this.basePath = opts.basePath ?? '/backups';
     this.pinnedFingerprint = opts.pinnedFingerprint;
     this.t = opts.t ?? identityT;
   }
 
   repoUrl(project: { id: string; owner: string }): string {
-    return `sftp:${this.user}@${this.host}:/backups/${project.owner}/${project.id}`;
+    const path = `${this.basePath}/${project.owner}/${project.id}`;
+    if (this.port !== 22) {
+      // restic requires the URL form for a non-default port; the double slash
+      // keeps the path absolute.
+      return `sftp://${this.user}@${this.host}:${this.port}/${path}`;
+    }
+    return `sftp:${this.user}@${this.host}:${path}`;
   }
 
   verifyHostKey(observed: { fingerprint: string }): void {

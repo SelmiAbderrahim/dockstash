@@ -32,6 +32,8 @@ const makeStore = (authenticated: boolean) =>
       auth: {
         authenticated,
         emailVerified: authenticated,
+        role: '',
+        otpChallengeId: '',
         pendingVerificationEmail: '',
         error: '',
         message: '',

@@ -1,13 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
 import {
+  exportConfig,
   fetchRetention,
+  fetchSelfBackupRuns,
   fetchStorage,
+  generateRecoveryCodes,
   savePassword,
   saveRetention,
   saveStorage,
   testStorage,
+  triggerSelfBackup,
 } from './thunks';
-import type { RetentionPolicy, StorageConfig } from '../types';
+import type { RecoveryCodesResult, RetentionPolicy, SelfBackupRun, StorageConfig } from '../types';
 
 export type LoadState = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -20,6 +24,12 @@ export interface SettingsState {
   retentionStatus: LoadState;
   retentionSaveStatus: LoadState;
   passwordSaveStatus: LoadState;
+  exportStatus: LoadState;
+  recoveryCodes: RecoveryCodesResult | null;
+  recoveryCodesStatus: LoadState;
+  selfBackupTriggerStatus: LoadState;
+  selfBackupRuns: SelfBackupRun[];
+  selfBackupRunsStatus: LoadState;
   error: string | null;
 }
 
@@ -32,6 +42,12 @@ const initialState: SettingsState = {
   retentionStatus: 'idle',
   retentionSaveStatus: 'idle',
   passwordSaveStatus: 'idle',
+  exportStatus: 'idle',
+  recoveryCodes: null,
+  recoveryCodesStatus: 'idle',
+  selfBackupTriggerStatus: 'idle',
+  selfBackupRuns: [],
+  selfBackupRunsStatus: 'idle',
   error: null,
 };
 
@@ -115,6 +131,48 @@ const slice = createSlice({
       .addCase(savePassword.rejected, (state, action) => {
         state.passwordSaveStatus = 'failed';
         state.error = action.payload ?? 'Could not save password.';
+      })
+      .addCase(exportConfig.pending, (state) => {
+        state.exportStatus = 'loading';
+      })
+      .addCase(exportConfig.fulfilled, (state) => {
+        state.exportStatus = 'succeeded';
+      })
+      .addCase(exportConfig.rejected, (state, action) => {
+        state.exportStatus = 'failed';
+        state.error = action.payload ?? 'Could not export configuration.';
+      })
+      .addCase(generateRecoveryCodes.pending, (state) => {
+        state.recoveryCodesStatus = 'loading';
+      })
+      .addCase(generateRecoveryCodes.fulfilled, (state, action) => {
+        state.recoveryCodesStatus = 'succeeded';
+        state.recoveryCodes = action.payload;
+      })
+      .addCase(generateRecoveryCodes.rejected, (state, action) => {
+        state.recoveryCodesStatus = 'failed';
+        state.error = action.payload ?? 'Could not generate recovery codes.';
+      })
+      .addCase(triggerSelfBackup.pending, (state) => {
+        state.selfBackupTriggerStatus = 'loading';
+      })
+      .addCase(triggerSelfBackup.fulfilled, (state) => {
+        state.selfBackupTriggerStatus = 'succeeded';
+      })
+      .addCase(triggerSelfBackup.rejected, (state, action) => {
+        state.selfBackupTriggerStatus = 'failed';
+        state.error = action.payload ?? 'Could not trigger self-backup.';
+      })
+      .addCase(fetchSelfBackupRuns.pending, (state) => {
+        state.selfBackupRunsStatus = 'loading';
+      })
+      .addCase(fetchSelfBackupRuns.fulfilled, (state, action) => {
+        state.selfBackupRunsStatus = 'succeeded';
+        state.selfBackupRuns = action.payload;
+      })
+      .addCase(fetchSelfBackupRuns.rejected, (state, action) => {
+        state.selfBackupRunsStatus = 'failed';
+        state.error = action.payload ?? 'Could not load self-backup runs.';
       });
   },
 });

@@ -44,6 +44,12 @@ const baseState = (over: Partial<SettingsState> = {}): SettingsState => ({
   retentionStatus: 'idle',
   retentionSaveStatus: 'idle',
   passwordSaveStatus: 'idle',
+  exportStatus: 'idle',
+  recoveryCodes: null,
+  recoveryCodesStatus: 'idle',
+  selfBackupTriggerStatus: 'idle',
+  selfBackupRuns: [],
+  selfBackupRunsStatus: 'idle',
   error: null,
   ...over,
 });

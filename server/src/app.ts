@@ -24,6 +24,10 @@ import { seoRouter } from './modules/seo/index.js';
 import { recoveryRouter } from './modules/recovery/index.js';
 import { agentsRouter } from './modules/agents/index.js';
 import { legalRouter } from './modules/legal/index.js';
+import { settingsRouter } from './modules/settings/index.js';
+import { superadminRouter } from './modules/superadmin/index.js';
+import { requireRole } from './shared/middleware/require-role.js';
+import { ROLE_SUPERADMIN } from './modules/users/index.js';
 
 export function createApp(): Express {
   const app = express();
@@ -93,6 +97,10 @@ export function createApp(): Express {
   app.use('/api/scheduler', verified, schedulerRouter);
   app.use('/api/recovery', verified, recoveryRouter);
   app.use('/api/agents', verified, agentsRouter);
+  app.use('/api/settings', verified, settingsRouter);
+  // Superadmin console — the seeder creates the account verified, so the
+  // uniform requireVerified product gate applies here too.
+  app.use('/api/superadmin', verified, requireRole(ROLE_SUPERADMIN), superadminRouter);
 
   app.use(notFound);
   app.use(errorHandler);

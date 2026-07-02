@@ -5,7 +5,8 @@
     "aria": "Secciones de ajustes",
     "storage": "Almacenamiento",
     "retention": "Retención",
-    "password": "Contraseña de cifrado"
+    "password": "Contraseña de cifrado",
+    "recovery": "Recuperación"
   },
   "actions": {
     "save": "Guardar",
@@ -38,5 +39,32 @@
     "mismatch": "Las contraseñas no coinciden.",
     "escrow": "He guardado la contraseña en lugar seguro.",
     "saved": "Contraseña guardada."
+  },
+  "recovery": {
+    "export": {
+      "title": "Exportar configuración",
+      "description": "Descarga una exportación JSON de tus proyectos, almacenamiento y ajustes.",
+      "action": "Descargar exportación",
+      "working": "Exportando…",
+      "done": "Exportación descargada."
+    },
+    "codes": {
+      "title": "Códigos de recuperación",
+      "description": "Genera códigos de recuperación de un solo uso para recuperar el acceso a tus repositorios cifrados.",
+      "action": "Generar códigos de recuperación",
+      "working": "Generando…",
+      "warning": "Guarda estos códigos ahora. No volverán a mostrarse nunca.",
+      "copy": "Copiar todo",
+      "copied": "Copiado."
+    },
+    "selfBackup": {
+      "title": "Auto-respaldo",
+      "description": "Respalda la propia configuración de Dockstash en tu almacenamiento.",
+      "action": "Ejecutar auto-respaldo",
+      "working": "Iniciando…",
+      "triggered": "Auto-respaldo iniciado.",
+      "runs": "Ejecuciones recientes",
+      "empty": "Aún no hay auto-respaldos."
+    }
   }
 }

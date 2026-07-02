@@ -5,9 +5,12 @@ export {
   ROLE_CLIENT,
   ROLE_OWNER,
   ROLE_ADMIN,
+  ROLE_SUPERADMIN,
   ROLES,
+  ASSIGNABLE_ROLES,
   getRoleRank,
   type Role,
+  type AssignableRole,
   type UserDocument,
   type UserHydrated,
 } from './users.model.js';

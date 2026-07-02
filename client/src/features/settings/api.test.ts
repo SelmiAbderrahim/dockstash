@@ -8,6 +8,11 @@ import {
   fetchRetentionRequest,
   saveRetentionRequest,
   savePasswordRequest,
+  exportConfigRequest,
+  downloadJsonExport,
+  generateRecoveryCodesRequest,
+  triggerSelfBackupRequest,
+  fetchSelfBackupRunsRequest,
 } from './api';
 
 vi.mock('@shared/api/client', async () => {
@@ -108,5 +113,91 @@ describe('settings api wrappers', () => {
       body: { password: 'secret' },
     });
     expect(result).toEqual({ ok: true });
+  });
+
+  it('exportConfigRequest POSTs to the export endpoint', async () => {
+    apiClient.mockResolvedValue({ version: 1 } as never);
+    const result = await exportConfigRequest();
+    expect(apiClient).toHaveBeenCalledWith('/recovery/export', { method: 'POST', auth: true });
+    expect(result).toEqual({ version: 1 });
+  });
+
+  it('generateRecoveryCodesRequest POSTs and returns the codes payload', async () => {
+    const payload = { message: 'saved once', codes: ['AAAA-1111', 'BBBB-2222'] };
+    apiClient.mockResolvedValue(payload as never);
+    const result = await generateRecoveryCodesRequest();
+    expect(apiClient).toHaveBeenCalledWith('/recovery/recovery-codes', {
+      method: 'POST',
+      auth: true,
+    });
+    expect(result).toBe(payload);
+  });
+
+  it('triggerSelfBackupRequest POSTs to the self-backup endpoint', async () => {
+    apiClient.mockResolvedValue({ triggered: true } as never);
+    const result = await triggerSelfBackupRequest();
+    expect(apiClient).toHaveBeenCalledWith('/recovery/self-backup', {
+      method: 'POST',
+      auth: true,
+    });
+    expect(result).toEqual({ triggered: true });
+  });
+
+  it('fetchSelfBackupRunsRequest unwraps runs', async () => {
+    const runs = [
+      {
+        id: 'r1',
+        repo: 'dockstash-self',
+        status: 'success',
+        startedAt: '2026-07-01T00:00:00.000Z',
+        finishedAt: '2026-07-01T00:01:00.000Z',
+        error: '',
+      },
+    ];
+    apiClient.mockResolvedValue({ runs } as never);
+    const result = await fetchSelfBackupRunsRequest();
+    expect(apiClient).toHaveBeenCalledWith('/recovery/self-backup', { auth: true });
+    expect(result).toBe(runs);
+  });
+});
+
+describe('downloadJsonExport', () => {
+  it('creates a dated JSON blob download and clicks it', async () => {
+    const createObjectURL = vi.fn((_blob: Blob) => 'blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+
+    let clickedDownload = '';
+    let clickedHref = '';
+    const click = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(function (this: HTMLAnchorElement) {
+        clickedDownload = this.download;
+        clickedHref = this.href;
+      });
+
+    downloadJsonExport({ a: 1 }, new Date('2026-07-02T10:20:30.000Z'));
+
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    const blob = createObjectURL.mock.calls[0]?.[0] as unknown as Blob;
+    expect(blob.type).toBe('application/json');
+    // jsdom's Blob has no .text(); read it through FileReader instead.
+    const text = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsText(blob);
+    });
+    expect(text).toBe(JSON.stringify({ a: 1 }, null, 2));
+    expect(clickedDownload).toBe('dockstash-export-2026-07-02.json');
+    expect(clickedHref).toBe('blob:mock-url');
+    // The temporary anchor is removed again after the click.
+    expect(document.body.querySelector('a')).toBeNull();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+
+    // Default `now` covers the current date.
+    downloadJsonExport({ b: 2 });
+    expect(clickedDownload).toMatch(/^dockstash-export-\d{4}-\d{2}-\d{2}\.json$/);
+
+    click.mockRestore();
   });
 });

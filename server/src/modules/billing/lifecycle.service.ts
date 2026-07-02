@@ -3,11 +3,16 @@ import { logger } from '../../config/logger.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { Project } from '../backups/backups.model.js';
-import { Customer } from './customer.model.js';
 import { Order } from './order.model.js';
-import { Subscription, type PlanSlug } from './subscription.model.js';
+import {
+  Subscription,
+  findEffectiveSubscription,
+  PLAN_SLUGS,
+  type PlanSlug,
+} from './subscription.model.js';
 import { ENTITLEMENTS } from './plans.js';
 import { getPlanForProductId } from './polar-config.js';
+import { getPaymentProvider } from './active-provider.js';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
 const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars);
@@ -50,22 +55,58 @@ export async function beginDunning(
 /**
  * Called by cron / on read to demote a `past_due` subscription whose grace
  * has expired. Also pauses over-cap projects when the effective tier's project
- * cap is exceeded (never deletes). Returns the number of projects paused.
+ * cap is exceeded (never deletes). No-op (`expired: false`) when the user's
+ * effective subscription is not an overdue `past_due` row — e.g. they
+ * re-subscribed and an active row now takes priority.
  */
 export async function expireGraceIfNeeded(
   userId: string,
   now: Date = new Date(),
-): Promise<number> {
-  const sub = await Subscription.findOne({ userId }).sort({ createdAt: -1 });
-  if (!sub) return 0;
-  if (sub.status !== 'past_due') return 0;
-  if (!sub.graceEndsAt || sub.graceEndsAt.getTime() > now.getTime()) return 0;
+): Promise<{ expired: boolean; paused: number }> {
+  const sub = await findEffectiveSubscription(userId, getPaymentProvider().name);
+  if (!sub) return { expired: false, paused: 0 };
+  if (sub.status !== 'past_due') return { expired: false, paused: 0 };
+  if (!sub.graceEndsAt || sub.graceEndsAt.getTime() > now.getTime()) {
+    return { expired: false, paused: 0 };
+  }
 
   sub.status = 'canceled';
   sub.planSlug = 'free';
   await sub.save();
   logger.info({ userId }, 'billing.lifecycle: grace expired → free');
-  return applyProjectCap(userId, 'free');
+  const paused = await applyProjectCap(userId, 'free');
+  return { expired: true, paused };
+}
+
+/**
+ * Cron entry point: sweep every `past_due` subscription whose grace window has
+ * lapsed and demote it via `expireGraceIfNeeded`. One failing row never aborts
+ * the sweep.
+ */
+export async function expireAllOverdueGraces(
+  now: Date = new Date(),
+): Promise<{ scanned: number; downgraded: number; paused: number }> {
+  const overdue = await Subscription.find({
+    status: 'past_due',
+    graceEndsAt: { $lte: now },
+  })
+    .select('userId')
+    .lean();
+  let downgraded = 0;
+  let paused = 0;
+  for (const sub of overdue) {
+    try {
+      const result = await expireGraceIfNeeded(String(sub.userId), now);
+      if (result.expired) downgraded += 1;
+      paused += result.paused;
+    } catch (err) {
+      logger.error(
+        { err, userId: String(sub.userId) },
+        'billing.lifecycle: grace-expiry sweep row failed — continuing',
+      );
+    }
+  }
+  return { scanned: overdue.length, downgraded, paused };
 }
 
 /**
@@ -114,6 +155,53 @@ export async function handleDowngrade(
 }
 
 /**
+ * Called when a subscription moves to a bigger product or reactivates
+ * (non-active → active). If every project now fits under the new cap, unpause
+ * them all and clear `selectionRequired`; when the user still exceeds the cap
+ * they must re-select, so the paused set is left untouched. Idempotent — a
+ * no-op when nothing is paused.
+ */
+export async function handleUpgrade(
+  userId: string,
+  newProductId: string | null,
+): Promise<{ unpaused: number; selectionRequired: boolean }> {
+  const target = getPlanForProductId(newProductId);
+  const cap = ENTITLEMENTS[target].projects;
+  const total = await Project.countDocuments({ owner: userId });
+  if (Number.isFinite(cap) && total > cap) {
+    await Subscription.updateMany(
+      { userId },
+      { $set: { selectionRequired: true } },
+    );
+    return { unpaused: 0, selectionRequired: true };
+  }
+  const result = await Project.updateMany(
+    { owner: userId, paused: true },
+    { $set: { paused: false } },
+  );
+  await Subscription.updateMany(
+    { userId },
+    { $set: { selectionRequired: false } },
+  );
+  const unpaused = result.modifiedCount ?? 0;
+  if (unpaused > 0) {
+    logger.info(
+      { userId, unpaused, target },
+      'billing.lifecycle: upgrade reactivated paused projects',
+    );
+  }
+  return { unpaused, selectionRequired: false };
+}
+
+/**
+ * Rank two plan slugs for upgrade/downgrade routing on webhook plan changes.
+ * Positive → upgrade, negative → downgrade, 0 → lateral (e.g. monthly↔yearly).
+ */
+export function comparePlans(next: PlanSlug, prior: PlanSlug): number {
+  return PLAN_SLUGS.indexOf(next) - PLAN_SLUGS.indexOf(prior);
+}
+
+/**
  * `order.refunded` → revoke entitlement to Free. Never deletes projects.
  */
 export async function handleRefund(providerOrderId: string): Promise<boolean> {
@@ -151,7 +239,10 @@ export async function selectProjectsToKeep(
   deps: SelectProjectDeps = {},
 ): Promise<{ active: number; paused: number }> {
   const t = deps.t ?? identityT;
-  const sub = await Subscription.findOne({ userId }).sort({ createdAt: -1 });
+  const sub = await findEffectiveSubscription(
+    userId,
+    getPaymentProvider().name,
+  );
   const slug: PlanSlug = sub?.planSlug ?? 'free';
   const cap = ENTITLEMENTS[slug].projects;
   const capped = Number.isFinite(cap) ? cap : Number.MAX_SAFE_INTEGER;
@@ -187,51 +278,3 @@ export async function selectProjectsToKeep(
   };
 }
 
-export interface AssertTrialDeps {
-  t?: Translator;
-}
-
-/**
- * Enforce one-trial-per-email guard. Throws 409 when the email has already
- * claimed a trial. On success, marks the customer row (creating a light
- * record if needed) so the second call fails.
- */
-export async function assertTrialAvailable(
-  email: string,
-  provider: 'polar' | 'stripe',
-  deps: AssertTrialDeps = {},
-): Promise<void> {
-  const t = deps.t ?? identityT;
-  const normalized = email.toLowerCase().trim();
-  const existing = await Customer.findOne({ email: normalized, provider });
-  if (existing?.trialClaimedAt) {
-    throw HttpError.conflict(t('billing.entitlements.trialAlreadyClaimed'), {
-      reason: 'trialAlreadyClaimed',
-    });
-  }
-}
-
-/**
- * Record that a trial was consumed for a given email + provider.
- */
-export async function recordTrialClaim(
-  email: string,
-  provider: 'polar' | 'stripe',
-  providerCustomerId: string,
-  userId: string,
-  now: Date = new Date(),
-): Promise<void> {
-  const normalized = email.toLowerCase().trim();
-  await Customer.findOneAndUpdate(
-    { provider, providerCustomerId },
-    {
-      $set: { email: normalized, userId },
-      $setOnInsert: { trialClaimedAt: now },
-    },
-    { upsert: true, setDefaultsOnInsert: true, new: true },
-  );
-  await Customer.updateOne(
-    { provider, providerCustomerId, trialClaimedAt: null },
-    { $set: { trialClaimedAt: now } },
-  );
-}

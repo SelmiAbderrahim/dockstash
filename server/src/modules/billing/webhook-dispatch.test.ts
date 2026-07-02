@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Request, Response } from 'express';
+import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import {
   clearCollections,
   startMemoryMongo,
@@ -7,6 +9,7 @@ import {
 } from '../../shared/testing/mongo.js';
 import { hashPassword } from '../auth/index.js';
 import { User } from '../users/index.js';
+import { Project } from '../backups/backups.model.js';
 import { __setPaymentProviderForTests } from './active-provider.js';
 import { Customer } from './customer.model.js';
 import { Subscription } from './subscription.model.js';
@@ -240,6 +243,8 @@ describe('billing / ingest error paths', () => {
       rawBody: raw,
       headers,
     });
+    // First failure is below the retry cap → 500 so the provider retries.
+    expect(result.statusCode).toBe(500);
     expect(result.body.status).toBe('failed');
     expect(fakeDoc.retryCount).toBe(1);
     createSpy.mockRestore();
@@ -262,8 +267,117 @@ describe('billing / ingest error paths', () => {
       rawBody: raw,
       headers,
     });
+    expect(result.statusCode).toBe(500);
     expect(result.body.status).toBe('failed');
     expect(result.body.error).toBe('plain-string-failure');
+  });
+
+  it('re-dispatches a failed duplicate and succeeds → 200 processed', async () => {
+    const user = await createBuyer('redis@example.com');
+    const parse = () =>
+      subEvent('evt_redispatch', { externalCustomerId: String(user._id) }, 'updated', {
+        providerCustomerId: 'cust_x',
+        email: 'redis@example.com',
+      });
+    const boom = vi.spyOn(Subscription, 'findOneAndUpdate').mockImplementationOnce(() => {
+      throw new Error('transient');
+    });
+    const first = await ingestWebhook({
+      provider: provider({ parseEvent: parse }),
+      rawBody: raw,
+      headers,
+    });
+    boom.mockRestore();
+    expect(first.statusCode).toBe(500);
+    // Provider retries the same eventId → duplicate row is failed+below cap →
+    // re-dispatch runs for real this time.
+    const second = await ingestWebhook({
+      provider: provider({ parseEvent: parse }),
+      rawBody: raw,
+      headers,
+    });
+    expect(second.statusCode).toBe(200);
+    expect(second.body.status).toBe('processed');
+    const row = await WebhookEvent.findOne({ eventId: 'evt_redispatch' });
+    expect(row?.status).toBe('processed');
+    expect(row?.error).toBeNull();
+  });
+
+  it('failed duplicate below cap that fails again → 500; at cap → 200 and no dispatch', async () => {
+    const user = await createBuyer('cap@example.com');
+    const parse = () =>
+      subEvent('evt_cap', { externalCustomerId: String(user._id) }, 'updated', {
+        providerCustomerId: 'cust_x',
+        email: 'cap@example.com',
+      });
+    await WebhookEvent.create({
+      provider: 'polar',
+      eventId: 'evt_cap',
+      type: 'subscription.updated',
+      status: 'failed',
+      retryCount: 3,
+      payloadHash: 'h',
+      error: 'earlier failure',
+    });
+    const boom = vi.spyOn(Subscription, 'findOneAndUpdate').mockImplementation(() => {
+      throw new Error('still broken');
+    });
+    const belowCap = await ingestWebhook({
+      provider: provider({ parseEvent: parse }),
+      rawBody: raw,
+      headers,
+    });
+    expect(belowCap.statusCode).toBe(500);
+    expect(
+      (await WebhookEvent.findOne({ eventId: 'evt_cap' }))?.retryCount,
+    ).toBe(4);
+    // retryCount 4 → this attempt bumps to 5 == MAX → exhausted → ack 200.
+    const atCap = await ingestWebhook({
+      provider: provider({ parseEvent: parse }),
+      rawBody: raw,
+      headers,
+    });
+    expect(atCap.statusCode).toBe(200);
+    expect(atCap.body.status).toBe('failed');
+    // Exhausted row: further duplicates never re-dispatch.
+    const afterCap = await ingestWebhook({
+      provider: provider({ parseEvent: parse }),
+      rawBody: raw,
+      headers,
+    });
+    expect(afterCap.statusCode).toBe(200);
+    expect(afterCap.body.status).toBe('failed');
+    expect(
+      (await WebhookEvent.findOne({ eventId: 'evt_cap' }))?.retryCount,
+    ).toBe(5);
+    boom.mockRestore();
+  });
+
+  it('duplicate of a pending row is acked without double-dispatch', async () => {
+    await WebhookEvent.create({
+      provider: 'polar',
+      eventId: 'evt_pending',
+      type: 'x',
+      status: 'pending',
+      retryCount: 0,
+      payloadHash: 'h',
+    });
+    const dispatchSpy = vi.spyOn(Subscription, 'findOneAndUpdate');
+    const result = await ingestWebhook({
+      provider: provider({
+        parseEvent: () => ({
+          eventId: 'evt_pending',
+          type: 'x',
+          timestamp: '0',
+          payload: { kind: 'unknown', rawType: 'x' },
+        }),
+      }),
+      rawBody: raw,
+      headers,
+    });
+    expect(result.statusCode).toBe(200);
+    expect(result.body.status).toBe('pending');
+    expect(dispatchSpy).not.toHaveBeenCalled();
   });
 });
 
@@ -429,5 +543,163 @@ describe('billing / dispatch registry branches', () => {
     // refund revoked the subscription
     const healed = await Subscription.findById(sub._id);
     expect(healed?.status).toBe('revoked');
+  });
+
+  it('active event on a plan change to a bigger product triggers the upgrade sweep', async () => {
+    const prevBiz = env.POLAR_BUSINESS_PRODUCT_ID;
+    (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+      'prod_biz';
+    try {
+      const user = await createBuyer('upg@example.com');
+      const customer = await Customer.create({
+        userId: user._id,
+        provider: 'polar',
+        providerCustomerId: 'cust_x',
+        email: 'upg@example.com',
+      });
+      await Subscription.create({
+        userId: user._id,
+        customerId: customer._id,
+        provider: 'polar',
+        providerSubscriptionId: 'sub_x',
+        productId: 'prod_free',
+        planSlug: 'free',
+        status: 'active',
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: null,
+        selectionRequired: true,
+      });
+      await Project.create({
+        owner: user._id,
+        name: 'paused-by-downgrade',
+        path: '/var/www/pbd',
+        plan: { paths: ['/var/www/pbd'], databases: [], configs: [] },
+        repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
+        lastStatus: 'idle',
+        paused: true,
+      });
+      const res = await dispatchEvent(
+        'polar',
+        subEvent('evt_upg', { externalCustomerId: String(user._id), productId: 'prod_biz' }, 'active', {
+          providerCustomerId: 'cust_x',
+          email: 'upg@example.com',
+        }),
+      );
+      expect(res.status).toBe('processed');
+      const sub = await Subscription.findOne({ providerSubscriptionId: 'sub_x' });
+      expect(sub?.planSlug).toBe('business');
+      expect(sub?.selectionRequired).toBe(false);
+      expect(await Project.countDocuments({ owner: user._id, paused: true })).toBe(0);
+    } finally {
+      (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+        prevBiz;
+    }
+  });
+
+  it('recovery to active on the same plan reactivates dunning-paused projects', async () => {
+    const user = await createBuyer('recov@example.com');
+    const customer = await Customer.create({
+      userId: user._id,
+      provider: 'polar',
+      providerCustomerId: 'cust_x',
+      email: 'recov@example.com',
+    });
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_x',
+      productId: 'prod_x',
+      planSlug: 'free',
+      status: 'past_due',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      graceEndsAt: new Date(),
+    });
+    await Project.create({
+      owner: user._id,
+      name: 'paused-by-dunning',
+      path: '/var/www/pbdun',
+      plan: { paths: ['/var/www/pbdun'], databases: [], configs: [] },
+      repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
+      lastStatus: 'idle',
+      paused: true,
+    });
+    const res = await dispatchEvent(
+      'polar',
+      subEvent('evt_recov', { externalCustomerId: String(user._id) }, 'active', {
+        providerCustomerId: 'cust_x',
+        email: 'recov@example.com',
+      }),
+    );
+    expect(res.status).toBe('processed');
+    const sub = await Subscription.findOne({ providerSubscriptionId: 'sub_x' });
+    expect(sub?.status).toBe('active');
+    expect(sub?.graceEndsAt).toBeNull();
+    expect(await Project.countDocuments({ owner: user._id, paused: true })).toBe(0);
+  });
+
+  it('incomplete persists as incomplete, keeps the grace clock, and runs no sweeps', async () => {
+    const user = await createBuyer('inc@example.com');
+    const customer = await Customer.create({
+      userId: user._id,
+      provider: 'polar',
+      providerCustomerId: 'cust_x',
+      email: 'inc@example.com',
+    });
+    const grace = new Date(Date.now() + 86400 * 1000);
+    await Subscription.create({
+      userId: user._id,
+      customerId: customer._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_x',
+      productId: 'prod_x',
+      planSlug: 'pro',
+      status: 'past_due',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      graceEndsAt: grace,
+    });
+    const res = await dispatchEvent(
+      'polar',
+      subEvent('evt_inc', { externalCustomerId: String(user._id), status: 'incomplete' }, 'updated', {
+        providerCustomerId: 'cust_x',
+        email: 'inc@example.com',
+      }),
+    );
+    expect(res.status).toBe('processed');
+    const sub = await Subscription.findOne({ providerSubscriptionId: 'sub_x' });
+    expect(sub?.status).toBe('incomplete');
+    // Grace clock untouched — incomplete never clears or starts dunning.
+    expect(sub?.graceEndsAt?.getTime()).toBe(grace.getTime());
+  });
+
+  it('order event with no resolvable user is skipped with a warning', async () => {
+    const warnSpy = vi.spyOn(logger, 'warn');
+    const event: ParsedEvent = {
+      eventId: 'evt_orphan',
+      type: 'order.paid',
+      timestamp: '0',
+      payload: {
+        kind: 'order',
+        action: 'paid',
+        order: {
+          providerOrderId: 'ord_orphan',
+          providerCustomerId: 'cust_ghost',
+          providerSubscriptionId: undefined,
+          externalCustomerId: undefined,
+          amount: 500,
+          currency: 'usd',
+          status: 'paid',
+        },
+      },
+    };
+    const res = await dispatchEvent('polar', event);
+    expect(res).toEqual({ status: 'skipped', reason: 'no customer link' });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ providerOrderId: 'ord_orphan' }),
+      expect.stringContaining('no resolvable user'),
+    );
+    warnSpy.mockRestore();
   });
 });

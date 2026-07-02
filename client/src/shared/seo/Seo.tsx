@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { isRtl, type SupportedLocale } from '@shared/i18n';
+import { DEFAULT_LOCALE, isRtl, type SupportedLocale } from '@shared/i18n';
 import {
   SITE_NAME,
   DEFAULT_OG_IMAGE,
@@ -17,6 +17,15 @@ export interface SeoProps {
   basePath: string;
   /** Active locale — drives canonical, hreflang self-ref, html lang/dir. */
   locale: SupportedLocale;
+  /**
+   * Whether the page content is actually translated per locale. Default true.
+   * When false (programmatic English-only pages served under locale prefixes),
+   * the canonical points at the un-prefixed English URL, no hreflang
+   * alternates are emitted, og:locale is 'en' (no alternates), and the html
+   * lang stays 'en' — so locale-prefixed duplicates consolidate onto the
+   * English URL instead of competing as thin near-duplicates.
+   */
+  localized?: boolean;
   /** Absolute OG image URL. Defaults to the site image. */
   image?: string;
   type?: 'website' | 'article';
@@ -41,6 +50,7 @@ export const Seo = ({
   description,
   basePath,
   locale,
+  localized = true,
   image = DEFAULT_OG_IMAGE,
   type = 'website',
   noindex = false,
@@ -48,18 +58,24 @@ export const Seo = ({
   dateModified,
   jsonLd,
 }: SeoProps) => {
-  const canonical = canonicalFor(basePath, locale);
-  const alternates = hreflangAlternates(basePath);
+  // Untranslated pages are English regardless of the URL prefix: canonical is
+  // the un-prefixed English URL, and the document language is 'en'.
+  const contentLocale: SupportedLocale = localized ? locale : DEFAULT_LOCALE;
+  const canonical = canonicalFor(basePath, contentLocale);
+  const alternates = localized ? hreflangAlternates(basePath) : [];
   // og:locale:alternate — real hreflang locales other than the active one and
   // x-default, so social crawlers surface the localized variants.
   const ogAlternateLocales = alternates
-    .filter((alt) => alt.hrefLang !== 'x-default' && alt.hrefLang !== locale)
+    .filter((alt) => alt.hrefLang !== 'x-default' && alt.hrefLang !== contentLocale)
     .map((alt) => alt.hrefLang);
   const jsonLdDocs = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
     <Helmet
-      htmlAttributes={{ lang: locale, dir: isRtl(locale) ? 'rtl' : 'ltr' }}
+      htmlAttributes={{
+        lang: contentLocale,
+        dir: isRtl(contentLocale) ? 'rtl' : 'ltr',
+      }}
       titleTemplate={`%s · ${SITE_NAME}`}
       defaultTitle={SITE_NAME}
     >
@@ -89,7 +105,10 @@ export const Seo = ({
       <meta property="og:description" content={description} />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={image} />
-      <meta property="og:locale" content={locale} />
+      {/* All OG artwork is authored at the standard 1200×630 (scripts/optimize-og-image.mjs enforces it for the default). */}
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:locale" content={contentLocale} />
       {ogAlternateLocales.map((alt) => (
         <meta key={alt} property="og:locale:alternate" content={alt} />
       ))}

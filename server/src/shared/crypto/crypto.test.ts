@@ -478,3 +478,42 @@ describe('decodeMasterKey extra branches', () => {
     expect(decodeMasterKey(raw.slice(0, 3))).toBeNull();
   });
 });
+
+describe('env schema — empty-string preprocess branches', () => {
+  it("maps '' to undefined for superadmin and contact vars", () => {
+    const result = envSchema.safeParse({
+      ...baseEnv,
+      SUPERADMIN_EMAIL: '',
+      SUPERADMIN_PASSWORD: '',
+      CONTACT_RECIPIENT: '',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.SUPERADMIN_EMAIL).toBeUndefined();
+      expect(result.data.SUPERADMIN_PASSWORD).toBeUndefined();
+      expect(result.data.CONTACT_RECIPIENT).toBeUndefined();
+    }
+  });
+
+  it('accepts real values for superadmin and contact vars', () => {
+    const result = envSchema.safeParse({
+      ...baseEnv,
+      SUPERADMIN_EMAIL: 'Admin@Example.com',
+      SUPERADMIN_PASSWORD: 'a-very-long-password',
+      CONTACT_RECIPIENT: 'ops@dockstash.com',
+      RESTIC_RUNNER: 'process',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.SUPERADMIN_EMAIL).toBe('admin@example.com');
+      expect(result.data.CONTACT_RECIPIENT).toBe('ops@dockstash.com');
+      expect(result.data.RESTIC_RUNNER).toBe('process');
+      expect(result.data.RESTIC_BINARY).toBe('restic');
+    }
+  });
+
+  it('rejects an invalid CONTACT_RECIPIENT email', () => {
+    const result = envSchema.safeParse({ ...baseEnv, CONTACT_RECIPIENT: 'not-an-email' });
+    expect(result.success).toBe(false);
+  });
+});

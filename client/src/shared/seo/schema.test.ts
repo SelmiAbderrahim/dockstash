@@ -56,6 +56,21 @@ describe('seo/schema JSON-LD builders', () => {
       dateModified: '2026-02-02',
     });
     expect(over.dateModified).toBe('2026-02-02');
+    expect(def.inLanguage).toBe('en');
+    const fr = schema.article({
+      headline: 'H',
+      description: 'D',
+      path: '/fr/g',
+      inLanguage: 'fr',
+    });
+    expect(fr.inLanguage).toBe('fr');
+  });
+
+  it('webPage links to the site-wide WebSite entity', () => {
+    const doc = schema.webPage('Privacy Policy', 'How we handle data.', '/privacy');
+    expect(doc.name).toBe('Privacy Policy');
+    expect(doc.url).toContain('/privacy');
+    expect((doc.isPartOf as { '@id': string })['@id']).toContain('#website');
   });
 
   it('howTo numbers its steps', () => {

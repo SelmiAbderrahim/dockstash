@@ -15,6 +15,9 @@ export interface AuthUser {
 export interface AuthState {
   authenticated: boolean;
   emailVerified: boolean;
+  role: string;
+  /** Non-empty while a superadmin login is waiting on its emailed OTP code. */
+  otpChallengeId: string;
   pendingVerificationEmail: string;
   error: string;
   message: string;
@@ -35,6 +38,20 @@ export interface RegisterRequest {
 export interface AuthResponse {
   token: string;
   user: AuthUser;
+}
+
+/** Login answered with an OTP challenge instead of a token (superadmin from an unknown device/IP). */
+export interface OtpChallengeResponse {
+  otpRequired: true;
+  challengeId: string;
+  message?: string;
+}
+
+export type LoginResponse = AuthResponse | OtpChallengeResponse;
+
+export interface OtpVerifyRequest {
+  challengeId: string;
+  code: string;
 }
 
 export interface MessageResponse {

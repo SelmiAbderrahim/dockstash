@@ -48,6 +48,11 @@ export const zh: DictionaryShape = {
       resent: '如果该账户需要验证，新的链接正在发送中。',
       tokenInvalid: '该验证链接无效或已过期。',
     },
+    otp: {
+      sent: '验证码已发送到您的邮箱。',
+      invalid: '该验证码无效或已过期。',
+      tooManyAttempts: '错误验证码次数过多。请重新登录以获取新验证码。',
+    },
   },
   billing: {
     checkout: {
@@ -74,7 +79,6 @@ export const zh: DictionaryShape = {
       projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
       selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
       notOwner: '您不是其中一个或多个项目的所有者。',
-      trialAlreadyClaimed: '该账户已经使用过试用。',
     },
   },
   email: {
@@ -150,6 +154,12 @@ export const zh: DictionaryShape = {
         '最近一次成功备份：{{lastGoodAt}}\n\n' +
         '打开仪表板：{{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: '您的 Dockstash 登录验证码',
+      body:
+        '您的登录验证码是：{{code}}\n\n' +
+        '它将在 {{minutes}} 分钟后过期。如果您没有尝试登录，请立即修改密码。\n',
+    },
     neverRun: '从未',
   },
   audit: {
@@ -173,6 +183,9 @@ export const zh: DictionaryShape = {
       resticFailed: 'Restic 备份失败：{{message}}',
       backupFailed: '备份失败：{{message}}',
       noSpace: '磁盘空间不足（剩余={{free}} 字节）。',
+      runnerUnavailable: '快照列表不可用：备份运行器尚未配置。',
+      snapshotsFailed: '无法列出快照：{{message}}',
+      restoreFailed: '恢复失败：{{message}}',
     },
     success: {
       backupComplete: '备份已成功完成。',
@@ -224,6 +237,13 @@ export const zh: DictionaryShape = {
       selfBackupComplete: '自备份成功完成。',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured: '存储尚未配置。请先添加您的存储 VPS 连接。',
+      connectionFailed: '存储连接测试失败：{{message}}',
+      hostKeyNotPinned: '存储主机密钥尚未验证。请先运行连接测试。',
+    },
+  },
   agents: {
     error: {
       notFound: '未找到代理。',
@@ -242,6 +262,17 @@ export const zh: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: '超级管理员账户不能被修改或删除。',
+    },
+    success: {
+      roleChanged: '用户角色已更新。',
+      userVerified: '用户邮箱已标记为已验证。',
+      legalHoldUpdated: '法律保留状态已更新。',
+      deletionScheduled: '账户删除已排期。',
     },
   },
   security: {

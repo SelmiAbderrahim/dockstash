@@ -1,91 +1,60 @@
 import { Link } from 'react-router-dom';
+import { ArrowRightIcon } from 'lucide-react';
 import { Seo, schema } from '@shared/seo';
 import { Button } from '@shared/ui/button';
 import { cn } from '@shared/lib/utils';
-import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { localeHref } from '../useMarketingRoute';
 import {
   Breadcrumbs,
   Container,
   Eyebrow,
   FaqSection,
+  InvertedBand,
+  LinkCard,
+  Serif,
+  answerClass,
   cardClass,
   h1Class,
   h2Class,
   sectionClass,
+  useMarketingT,
 } from './shared';
 import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
-const ANSWER =
-  'Dockstash is built to hold your most sensitive credentials safely. Secrets are encrypted at rest with AES-256-GCM, the SSH backup channel pins the storage host key, and every Restic repository is encrypted with your own key. Destructive restores require a typed confirmation, and restore drills prove your data recovers.';
+const CARD_KEYS = [
+  'secrets',
+  'pinning',
+  'repos',
+  'typedConfirm',
+  'drills',
+  'lockIn',
+] as const;
 
-const CARDS = [
-  {
-    title: 'AES-256-GCM secrets at rest',
-    body: 'Your Restic password and SSH keys are never stored in plaintext. They are encrypted at rest with an AES-256-GCM master key, with recovery-code escrow for key rotation.',
-  },
-  {
-    title: 'SSH host-key pinning',
-    body: 'The backup channel to your storage VPS pins the host key, so a man-in-the-middle cannot silently intercept or redirect your encrypted snapshots.',
-  },
-  {
-    title: 'Encrypted Restic repositories',
-    body: 'Every repository is a standard Restic repo encrypted with your key. Data is encrypted and deduplicated before it ever leaves your production VPS.',
-  },
-  {
-    title: 'Typed-confirm destructive restore',
-    body: 'A restore that overwrites live data requires you to type the project name to confirm. The default is restore-to-new-location, with database staging before any overwrite.',
-  },
-  {
-    title: 'Restore-drill verification',
-    body: 'Dockstash restores the latest snapshot to a scratch location and diffs it against the source on a schedule, so you find out a backup is broken before you need it.',
-  },
-  {
-    title: 'Your storage, no lock-in',
-    body: 'Backups live on your own storage VPS as standard Restic repos. If you ever leave, restore with the restic CLI alone — Dockstash adds no proprietary layer.',
-  },
-];
-
-const SECURITY_FAQ: FaqItem[] = [
-  {
-    question: 'Where are my SSH key and Restic password stored?',
-    answer:
-      'Encrypted at rest with AES-256-GCM using a master key, never in plaintext. On the self-hosted tier they live on your own server. Recovery-code escrow lets you rotate the master key without losing access.',
-  },
-  {
-    question: 'Does Dockstash ever hold my backup data?',
-    answer:
-      'No. On the Free/self-host tier the entire pipeline runs on your infrastructure and backups land on your storage VPS. Dockstash orchestrates the backup; it never stores your data on our servers.',
-  },
-  {
-    question: 'How does Dockstash prevent an accidental destructive restore?',
-    answer:
-      'Restores default to a new location, databases are staged before any overwrite, and a restore that would overwrite live data requires you to type the project name to confirm. There is no one-click way to clobber production.',
-  },
-  {
-    question: 'What happens to my encrypted backups if Dockstash disappears?',
-    answer:
-      'They stay on your storage VPS as standard, encrypted Restic repositories. Point the restic CLI at the repo with your key and restore with no vendor involved. There is zero lock-in.',
-  },
-];
+const SECURITY_FAQ_KEYS = ['secrets', 'holdData', 'destructive', 'disappear'] as const;
 
 export const Security = () => {
-  const { locale } = useMarketingRoute();
+  const { t, locale } = useMarketingT();
   const href = (path: string) => localeHref(path, locale);
+
+  const securityFaq: FaqItem[] = SECURITY_FAQ_KEYS.map((key) => ({
+    question: t(`security.faq.${key}.question`),
+    answer: t(`security.faq.${key}.answer`),
+  }));
 
   const jsonLd = schema.graph(
     schema.breadcrumbList([
-      { name: 'Home', path: localeHref('/', locale) },
-      { name: 'Security', path: localeHref('/security', locale) },
+      { name: t('shared.home'), path: localeHref('/', locale) },
+      { name: t('security.breadcrumb'), path: localeHref('/security', locale) },
     ]),
-    schema.faqPage(SECURITY_FAQ),
+    schema.faqPage(securityFaq),
   );
 
   return (
     <>
       <Seo
-        title="Security — how Dockstash protects your data"
-        description="How Dockstash secures backups: AES-256-GCM secrets at rest, SSH host-key pinning, encrypted Restic repositories, typed-confirm restores, restore-drill verification, and no lock-in."
+        title={t('security.seo.title')}
+        description={t('security.seo.description')}
         basePath="/security"
         locale={locale}
         jsonLd={jsonLd}
@@ -93,46 +62,90 @@ export const Security = () => {
 
       <Container>
         <Breadcrumbs
-          crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Security' }]}
+          crumbs={[
+            { label: t('shared.home'), basePath: '/' },
+            { label: t('security.breadcrumb') },
+          ]}
           locale={locale}
         />
       </Container>
 
       <section className={sectionClass}>
         <Container>
-          <Eyebrow>Security</Eyebrow>
-          <h1 className={h1Class}>Security you can verify</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
-            {ANSWER}
-          </p>
+          <Eyebrow>{t('security.eyebrow')}</Eyebrow>
+          <h1 className={h1Class}>{t('security.title')}</h1>
+          <p className={answerClass}>{t('security.answer')}</p>
         </Container>
       </section>
 
       <Reveal as="section" className={sectionClass}>
         <Container>
-          <h2 className={h2Class}>How your data stays safe</h2>
+          <h2 className={h2Class}>{t('security.cardsTitle')}</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {CARDS.map((card, i) => (
-              <Reveal key={card.title} className={cn(cardClass, 'space-y-2')} index={i}>
+            {CARD_KEYS.map((key, i) => (
+              <Reveal key={key} className={cn(cardClass, 'space-y-2')} index={i}>
                 <h3 className="text-lg font-semibold tracking-tight">
-                  {card.title}
+                  {t(`security.cards.${key}.title`)}
                 </h3>
-                <p className="text-muted-foreground">{card.body}</p>
+                <p className="text-muted-foreground">
+                  {t(`security.cards.${key}.body`)}
+                </p>
               </Reveal>
             ))}
           </div>
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild>
-              <Link to="/register">Start free</Link>
+              <Link to="/register">{t('shared.startFree')}</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to={href('/faq')}>Read the FAQ</Link>
+              <Link to={href('/faq')}>{t('security.readFaq')}</Link>
             </Button>
           </div>
         </Container>
       </Reveal>
 
-      <FaqSection faqs={SECURITY_FAQ} />
+      <FaqSection faqs={securityFaq} />
+
+      {/* Related content — keep the crawl path flowing */}
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <h2 className={h2Class}>{t('security.keepReading')}</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <LinkCard
+              to={href('/faq')}
+              title={t('security.links.faq.title')}
+              description={t('security.links.faq.description')}
+            />
+            <LinkCard
+              to={href('/guides')}
+              title={t('security.links.guides.title')}
+              description={t('security.links.guides.description')}
+            />
+            <LinkCard
+              to={href('/pricing')}
+              title={t('security.links.pricing.title')}
+              description={t('security.links.pricing.description')}
+            />
+          </div>
+        </Container>
+      </Reveal>
+
+      {/* Closing CTA — inverted band */}
+      <InvertedBand className="text-center">
+        <Container className="max-w-2xl">
+          <h2 className={h2Class}>
+            {t('security.cta.title.pre')} <Serif>{t('security.cta.title.accent')}</Serif>
+          </h2>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg">
+              <Link to="/register">
+                {t('shared.startFree')}
+                <ArrowRightIcon aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        </Container>
+      </InvertedBand>
     </>
   );
 };

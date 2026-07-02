@@ -1,23 +1,19 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { BillingState } from '../types';
 import {
-  cancelSubscription,
   changePlan,
-  createCustomer,
-  fetchCustomer,
   loadOverview,
   loadPricingTiers,
   loadUsage,
+  openPortal,
   selectProjectsToKeep,
   startCheckout,
-  updateBilling,
-  updateSubscription,
 } from './thunks';
 
 const initialState: BillingState = {
-  customer: {},
   message: '',
   error: '',
+  usageError: '',
   tiers: [],
   overview: null,
   usage: null,
@@ -37,37 +33,6 @@ const billingSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(createCustomer.fulfilled, (state, action) => {
-        state.message = action.payload;
-      })
-      .addCase(fetchCustomer.fulfilled, (state, action) => {
-        state.customer = action.payload;
-      })
-      .addCase(cancelSubscription.fulfilled, (state, action) => {
-        state.message = action.payload;
-      })
-      .addCase(updateSubscription.fulfilled, (state, action) => {
-        state.message = action.payload;
-      })
-      .addCase(updateBilling.fulfilled, (state, action) => {
-        state.message = action.payload;
-      })
-      .addCase(createCustomer.rejected, (state, action) => {
-        state.error = action.payload ?? 'Billing error.';
-      })
-      .addCase(fetchCustomer.rejected, (state, action) => {
-        state.error = action.payload ?? 'Billing error.';
-      })
-      .addCase(cancelSubscription.rejected, (state, action) => {
-        state.error = action.payload ?? 'Billing error.';
-      })
-      .addCase(updateSubscription.rejected, (state, action) => {
-        state.error = action.payload ?? 'Billing error.';
-      })
-      .addCase(updateBilling.rejected, (state, action) => {
-        state.error = action.payload ?? 'Billing error.';
-      })
-      // Prompt-07 lifecycle.
       .addCase(loadPricingTiers.pending, (state) => {
         state.loadingTiers = true;
         state.error = '';
@@ -93,17 +58,23 @@ const billingSlice = createSlice({
       })
       .addCase(loadUsage.pending, (state) => {
         state.loadingUsage = true;
+        state.usageError = '';
       })
       .addCase(loadUsage.fulfilled, (state, action) => {
         state.loadingUsage = false;
         state.usage = action.payload;
       })
+      // Usage failures surface inside the usage tab (with a retry action)
+      // rather than the page-level error alert.
       .addCase(loadUsage.rejected, (state, action) => {
         state.loadingUsage = false;
-        state.error = action.payload ?? 'Could not load usage.';
+        state.usageError = action.payload ?? 'Could not load usage.';
       })
       .addCase(startCheckout.rejected, (state, action) => {
         state.error = action.payload ?? 'Could not start checkout.';
+      })
+      .addCase(openPortal.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not open the billing portal.';
       })
       .addCase(changePlan.fulfilled, (state) => {
         state.message = 'Plan updated.';

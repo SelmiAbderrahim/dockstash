@@ -1,8 +1,10 @@
 import { logger } from '../../config/logger.js';
-import { NodeCronScheduler } from '../scheduler/scheduler.cron.node.js';
 import { Subscription } from './subscription.model.js';
 import type { IPaymentProvider, NormalizedSubscription } from './payment-provider.js';
 import { getPaymentProvider } from './active-provider.js';
+import { toPersistedStatus } from './status-map.js';
+import { getPlanForProductId } from './polar-config.js';
+import { comparePlans, handleDowngrade, handleUpgrade } from './lifecycle.service.js';
 
 export interface ReconciliationSummary {
   polled: number;
@@ -10,24 +12,9 @@ export interface ReconciliationSummary {
   errors: number;
 }
 
-function toPersistedStatus(status: NormalizedSubscription['status']): 'active' | 'past_due' | 'canceled' | 'revoked' {
-  switch (status) {
-    case 'active':
-    case 'trialing':
-    case 'incomplete':
-      return 'active';
-    case 'past_due':
-      return 'past_due';
-    case 'revoked':
-      return 'revoked';
-    case 'canceled':
-    default:
-      return 'canceled';
-  }
-}
-
 interface LocalSubShape {
   status: string;
+  productId?: string | null;
   cancelAtPeriodEnd?: boolean | null;
   currentPeriodEnd?: Date | null;
 }
@@ -38,6 +25,7 @@ function subscriptionsDiffer(
 ): boolean {
   const targetStatus = toPersistedStatus(remote.status);
   if (local.status !== targetStatus) return true;
+  if (local.productId !== remote.productId) return true;
   if (Boolean(local.cancelAtPeriodEnd) !== remote.cancelAtPeriodEnd) return true;
   const localMs = local.currentPeriodEnd ? new Date(local.currentPeriodEnd).getTime() : null;
   const remoteMs = remote.currentPeriodEnd ? remote.currentPeriodEnd.getTime() : null;
@@ -76,10 +64,28 @@ export async function reconcileSubscriptions(
       });
       if (!local) continue;
       if (!subscriptionsDiffer(local, norm)) continue;
+      const priorSlug = local.planSlug;
+      const priorStatus = local.status;
+      const nextSlug = getPlanForProductId(norm.productId);
       local.status = toPersistedStatus(norm.status);
+      local.productId = norm.productId;
+      local.planSlug = nextSlug;
       local.cancelAtPeriodEnd = norm.cancelAtPeriodEnd;
       local.currentPeriodEnd = norm.currentPeriodEnd;
       await local.save();
+      // Mirror the webhook side effects so a healed plan change also heals
+      // the paused-project set (settled payment only).
+      if (local.status === 'active') {
+        if (priorSlug !== nextSlug) {
+          if (comparePlans(nextSlug, priorSlug) < 0) {
+            await handleDowngrade(String(local.userId), norm.productId);
+          } else {
+            await handleUpgrade(String(local.userId), norm.productId);
+          }
+        } else if (priorStatus !== 'active') {
+          await handleUpgrade(String(local.userId), norm.productId);
+        }
+      }
       healed += 1;
     } catch (err) {
       errors += 1;
@@ -90,24 +96,4 @@ export async function reconcileSubscriptions(
     }
   }
   return { polled: remote.length, healed, errors };
-}
-
-const RECONCILE_CRON_ID = 'billing.reconcile';
-const RECONCILE_CRON_EXPR = '*/15 * * * *'; // every 15 min
-let sharedScheduler: NodeCronScheduler | null = null;
-
-function scheduler(): NodeCronScheduler {
-  if (!sharedScheduler) sharedScheduler = new NodeCronScheduler();
-  return sharedScheduler;
-}
-
-export function registerReconciliationCron(): void {
-  scheduler().register(RECONCILE_CRON_ID, RECONCILE_CRON_EXPR, async () => {
-    const summary = await reconcileSubscriptions();
-    logger.info({ ...summary }, 'billing.reconcile: run complete');
-  });
-}
-
-export function unregisterReconciliationCron(): void {
-  scheduler().unregister(RECONCILE_CRON_ID);
 }

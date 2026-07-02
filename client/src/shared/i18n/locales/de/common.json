@@ -10,5 +10,52 @@
     "running": "Läuft…",
     "done": "Fertig",
     "failed": "Fehlgeschlagen"
+  },
+  "fleet": {
+    "heading": "Flotte",
+    "lede": "Alle verbundenen VPS-Agenten und ihr Backup-Volumen.",
+    "loading": "Flotte wird geladen…",
+    "register": "Agent registrieren",
+    "locked": {
+      "title": "Die Multi-VPS-Flotte ist eine Business-Funktion",
+      "body": "Wechseln Sie zum Business-Tarif, um Agenten auf weiteren Servern zu registrieren und Ihre gesamte Flotte an einem Ort zu sehen.",
+      "cta": "Tarife ansehen"
+    },
+    "empty": {
+      "title": "Noch keine Agenten",
+      "hint": "Registrieren Sie einen Agenten auf einem weiteren VPS, um ihn hier zu sehen."
+    },
+    "errors": {
+      "load": "Flotte konnte nicht geladen werden.",
+      "register": "Agent konnte nicht registriert werden."
+    },
+    "table": {
+      "aria": "Flotte",
+      "name": "Name",
+      "host": "Host",
+      "status": "Status",
+      "lastSeen": "Zuletzt gesehen",
+      "projects": "Projekte",
+      "size": "Größe",
+      "snapshots": "Snapshots"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "never": "Nie",
+    "dialog": {
+      "title": "Agent registrieren",
+      "description": "Fügen Sie Ihrer Flotte einen VPS hinzu. Der Agent authentifiziert sich mit dem unten erzeugten API-Schlüssel.",
+      "name": "Name",
+      "host": "Host",
+      "port": "Port",
+      "submit": "Registrieren",
+      "submitting": "Registrierung…",
+      "cancel": "Abbrechen",
+      "keyWarning": "Dieser API-Schlüssel wird nur einmal angezeigt und kann nie wieder abgerufen werden. Kopieren Sie ihn jetzt.",
+      "copy": "Kopieren",
+      "done": "Fertig"
+    }
   }
 }

@@ -3,11 +3,9 @@ export { webhookHandler } from './webhook/handler.js';
 export { getPaymentProvider, __setPaymentProviderForTests } from './active-provider.js';
 export { ingestWebhook } from './webhook/ingest.js';
 export { dispatchEvent, payloadHashOf } from './webhook/registry.js';
-export {
-  reconcileSubscriptions,
-  registerReconciliationCron,
-  unregisterReconciliationCron,
-} from './reconcile.js';
+export { reconcileSubscriptions } from './reconcile.js';
+export { registerBillingCrons, unregisterBillingCrons } from './billing.cron.js';
+export { toPersistedStatus } from './status-map.js';
 export type {
   IPaymentProvider,
   CreateCheckoutInput,
@@ -33,8 +31,10 @@ export {
 } from './customer.model.js';
 export {
   Subscription,
+  findEffectiveSubscription,
   PLAN_SLUGS,
   SUBSCRIPTION_STATUSES,
+  STATUS_PRIORITY,
   type PlanSlug,
   type SubscriptionDocument,
   type SubscriptionHydrated,
@@ -100,18 +100,21 @@ export {
   assertProjectCap,
   assertScheduleAllowed,
   clampRetentionDays,
+  clampRetentionPolicy,
   classifyCron,
   type ResolvedEntitlements,
+  type RetentionPolicyShape,
 } from './entitlements.service.js';
 export {
   beginDunning,
   expireGraceIfNeeded,
+  expireAllOverdueGraces,
   applyProjectCap,
   handleDowngrade,
+  handleUpgrade,
+  comparePlans,
   handleRefund,
   selectProjectsToKeep,
-  assertTrialAvailable,
-  recordTrialClaim,
   GRACE_WINDOW_MS,
 } from './lifecycle.service.js';
 export {

@@ -48,6 +48,11 @@ export const es: DictionaryShape = {
       resent: 'Si esa cuenta necesita verificación, un nuevo enlace está en camino.',
       tokenInvalid: 'Ese enlace de verificación no es válido o ha expirado.',
     },
+    otp: {
+      sent: 'Se ha enviado un código de verificación a tu correo electrónico.',
+      invalid: 'Ese código de verificación no es válido o ha caducado.',
+      tooManyAttempts: 'Demasiados códigos incorrectos. Inicia sesión de nuevo para obtener un código nuevo.',
+    },
   },
   billing: {
     checkout: {
@@ -74,7 +79,6 @@ export const es: DictionaryShape = {
       projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
       selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
       notOwner: 'No eres propietario de uno o más de esos proyectos.',
-      trialAlreadyClaimed: 'Ya se ha utilizado una prueba para esta cuenta.',
     },
   },
   email: {
@@ -150,6 +154,12 @@ export const es: DictionaryShape = {
         'Última copia de seguridad correcta: {{lastGoodAt}}\n\n' +
         'Abre el panel: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: 'Tu código de inicio de sesión de Dockstash',
+      body:
+        'Tu código de verificación de inicio de sesión es: {{code}}\n\n' +
+        'Caduca en {{minutes}} minutos. Si no intentaste iniciar sesión, cambia tu contraseña de inmediato.\n',
+    },
     neverRun: 'nunca',
   },
   audit: {
@@ -173,6 +183,9 @@ export const es: DictionaryShape = {
       resticFailed: 'Fallo de la copia Restic: {{message}}',
       backupFailed: 'La copia de seguridad falló: {{message}}',
       noSpace: 'Espacio en disco insuficiente (libre={{free}} bytes).',
+      runnerUnavailable: 'El listado de instantáneas no está disponible: el ejecutor de copias no está configurado.',
+      snapshotsFailed: 'No se pudieron listar las instantáneas: {{message}}',
+      restoreFailed: 'La restauración falló: {{message}}',
     },
     success: {
       backupComplete: 'Copia de seguridad completada con éxito.',
@@ -224,6 +237,13 @@ export const es: DictionaryShape = {
       selfBackupComplete: 'Copia interna completada correctamente.',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured: 'El almacenamiento no está configurado. Añade primero la conexión de tu VPS de almacenamiento.',
+      connectionFailed: 'La prueba de conexión al almacenamiento falló: {{message}}',
+      hostKeyNotPinned: 'La clave de host del almacenamiento aún no se ha verificado. Ejecuta primero una prueba de conexión.',
+    },
+  },
   agents: {
     error: {
       notFound: 'Agente no encontrado.',
@@ -242,6 +262,17 @@ export const es: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: 'Las cuentas de superadministrador no se pueden modificar ni eliminar.',
+    },
+    success: {
+      roleChanged: 'Rol de usuario actualizado.',
+      userVerified: 'Correo del usuario marcado como verificado.',
+      legalHoldUpdated: 'Retención legal actualizada.',
+      deletionScheduled: 'Eliminación de la cuenta programada.',
     },
   },
   security: {

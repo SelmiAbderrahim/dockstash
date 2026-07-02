@@ -11,7 +11,7 @@ interface ScanResp {
   plan: ProjectPlan;
 }
 interface EnqueueResp {
-  jobId: string;
+  job: { id: string; kind: string };
 }
 interface SchedulesResp {
   schedules: Schedule[];
@@ -45,7 +45,7 @@ export const runBackupNowRequest = (projectId: string) =>
     method: 'POST',
     auth: true,
     body: { projectId, kind: 'backup' },
-  }).then((r) => r.jobId);
+  }).then((r) => r.job.id);
 
 export const listSchedulesRequest = () =>
   apiClient<SchedulesResp>('/scheduler/schedules', { auth: true }).then((r) => r.schedules);

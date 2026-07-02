@@ -40,6 +40,13 @@ export const verifyEmailParamsSchema = z.object({
 
 export type VerifyEmailParams = z.infer<typeof verifyEmailParamsSchema>;
 
+export const otpVerifySchema = z.object({
+  challengeId: z.string().min(1),
+  code: z.string().regex(/^\d{6}$/),
+});
+
+export type OtpVerifyInput = z.infer<typeof otpVerifySchema>;
+
 export const resendVerificationSchema = z.object({
   email: z.string().email().toLowerCase(),
 });

@@ -8,6 +8,7 @@ import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Alert, AlertDescription } from '@shared/ui/alert';
+import { PageMeta } from '@shared/seo';
 import {
   Card,
   CardContent,
@@ -59,6 +60,10 @@ export const ForgotPassword = () => {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
+      <PageMeta
+        title="Reset your password"
+        description="Request a password reset link for your Dockstash account. We will email you instructions to choose a new password."
+      />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Reset your password</CardTitle>

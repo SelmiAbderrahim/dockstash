@@ -29,7 +29,7 @@ export class StripeProvider implements IPaymentProvider {
   public readonly name = 'stripe' as const;
 
   isConfigured(): boolean {
-    return Boolean(env.STRIPE_SECRET_KEY);
+    return env.PAYMENT_PROVIDER === 'stripe' && Boolean(env.STRIPE_SECRET_KEY);
   }
 
   async createCheckout(_input: CreateCheckoutInput): Promise<CreateCheckoutResult> {

@@ -10,5 +10,52 @@
     "running": "Running…",
     "done": "Completed",
     "failed": "Failed"
+  },
+  "fleet": {
+    "heading": "Fleet",
+    "lede": "All connected VPS agents and their backup footprint.",
+    "loading": "Loading fleet…",
+    "register": "Register agent",
+    "locked": {
+      "title": "Multi-VPS fleet is a Business feature",
+      "body": "Upgrade to the Business plan to register agents on additional servers and see your whole fleet in one place.",
+      "cta": "View plans"
+    },
+    "empty": {
+      "title": "No agents yet",
+      "hint": "Register an agent on another VPS to see it here."
+    },
+    "errors": {
+      "load": "Could not load the fleet.",
+      "register": "Could not register the agent."
+    },
+    "table": {
+      "aria": "Fleet",
+      "name": "Name",
+      "host": "Host",
+      "status": "Status",
+      "lastSeen": "Last seen",
+      "projects": "Projects",
+      "size": "Size",
+      "snapshots": "Snapshots"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "never": "Never",
+    "dialog": {
+      "title": "Register agent",
+      "description": "Add a VPS to your fleet. The agent authenticates with the API key generated below.",
+      "name": "Name",
+      "host": "Host",
+      "port": "Port",
+      "submit": "Register",
+      "submitting": "Registering…",
+      "cancel": "Cancel",
+      "keyWarning": "This API key is shown once and can never be retrieved again. Copy it now.",
+      "copy": "Copy",
+      "done": "Done"
+    }
   }
 }

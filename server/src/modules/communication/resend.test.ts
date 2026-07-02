@@ -10,6 +10,7 @@ import {
   deliverPasswordResetEmail,
   deliverVerificationEmail,
   deliverPasswordChangedEmail,
+  deliverLoginOtpEmail,
   deliverWelcomeEmail,
   deliverPaymentReceiptEmail,
   deliverDunningEmail,
@@ -204,6 +205,23 @@ describe('communication.service localized senders', () => {
     await withResendConfigured(async () => {
       await deliverPasswordChangedEmail('u@x', 'zh');
       expect(seen[0]?.subject).toContain('密码');
+    });
+  });
+
+  it('deliverLoginOtpEmail interpolates the code and TTL in the caller locale', async () => {
+    await withResendConfigured(async () => {
+      await deliverLoginOtpEmail('u@x', '123456', 'fr');
+      expect(seen[0]?.subject).toBe('Votre code de connexion Dockstash');
+      expect(seen[0]?.text).toContain('123456');
+      expect(seen[0]?.text).toContain('10 minutes');
+    });
+  });
+
+  it('deliverLoginOtpEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
+    await withResendConfigured(async () => {
+      await deliverLoginOtpEmail('u@x', '654321');
+      expect(seen[0]?.subject).toBe('Your Dockstash sign-in code');
+      expect(seen[0]?.text).toContain('654321');
     });
   });
 

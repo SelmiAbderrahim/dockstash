@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
@@ -27,6 +27,10 @@ vi.mock('../store/thunks', async () => {
     saveRetention: make(actual.saveRetention),
     savePassword: make(actual.savePassword),
     testStorage: make(actual.testStorage),
+    exportConfig: make(actual.exportConfig),
+    generateRecoveryCodes: make(actual.generateRecoveryCodes),
+    triggerSelfBackup: make(actual.triggerSelfBackup),
+    fetchSelfBackupRuns: make(actual.fetchSelfBackupRuns),
   };
 });
 
@@ -46,6 +50,12 @@ const baseState = (over: Partial<SettingsState> = {}): SettingsState => ({
   retentionStatus: 'succeeded',
   retentionSaveStatus: 'idle',
   passwordSaveStatus: 'idle',
+  exportStatus: 'idle',
+  recoveryCodes: null,
+  recoveryCodesStatus: 'idle',
+  selfBackupTriggerStatus: 'idle',
+  selfBackupRuns: [],
+  selfBackupRunsStatus: 'succeeded',
   error: null,
   ...over,
 });
@@ -72,7 +82,7 @@ describe('SettingsScreen shell', () => {
     renderScreen();
     expect(mocked.fetchStorage).toHaveBeenCalled();
     expect(mocked.fetchRetention).toHaveBeenCalled();
-    expect(screen.getAllByRole('tab')).toHaveLength(3);
+    expect(screen.getAllByRole('tab')).toHaveLength(4);
   });
 
   it('switches tabs through the tablist', async () => {
@@ -254,5 +264,156 @@ describe('SettingsScreen — Password tab', () => {
     renderScreen({ passwordSaveStatus: 'failed' }, entry);
     // The static escrow warning Alert is also role=alert; match the save error.
     expect(screen.getByText('Could not save settings.')).toBeInTheDocument();
+  });
+});
+
+describe('SettingsScreen — Recovery tab', () => {
+  const entry = '/settings?tab=recovery';
+  const runs = [
+    {
+      id: 'r1',
+      repo: 'ssh:self/repo',
+      status: 'success',
+      startedAt: '2026-07-01T00:00:00.000Z',
+      finishedAt: '2026-07-01T00:01:00.000Z',
+      error: '',
+    },
+    {
+      id: 'r2',
+      repo: 'ssh:self/repo',
+      status: 'failed',
+      startedAt: null,
+      finishedAt: null,
+      error: 'ssh timeout',
+    },
+    {
+      id: 'r3',
+      repo: 'ssh:self/repo',
+      status: 'running',
+      startedAt: '2026-07-02T00:00:00.000Z',
+      finishedAt: null,
+      error: '',
+    },
+  ];
+
+  it('fetches self-backup runs on mount and renders the three sections', () => {
+    renderScreen({}, entry);
+    expect(mocked.fetchSelfBackupRuns).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Export configuration')).toBeInTheDocument();
+    expect(screen.getByText('Recovery codes')).toBeInTheDocument();
+    expect(screen.getByText('Self-backup')).toBeInTheDocument();
+  });
+
+  it('dispatches exportConfig from the download button', () => {
+    renderScreen({}, entry);
+    fireEvent.click(screen.getByRole('button', { name: /Download export/ }));
+    expect(mocked.exportConfig).toHaveBeenCalled();
+  });
+
+  it('disables the export button while exporting', () => {
+    renderScreen({ exportStatus: 'loading' }, entry);
+    expect(screen.getByRole('button', { name: /Exporting…/ })).toBeDisabled();
+  });
+
+  it('shows the export success notice', () => {
+    renderScreen({ exportStatus: 'succeeded' }, entry);
+    expect(screen.getByText('Export downloaded.')).toBeInTheDocument();
+  });
+
+  it('dispatches generateRecoveryCodes from the generate button', () => {
+    renderScreen({}, entry);
+    fireEvent.click(screen.getByRole('button', { name: /Generate recovery codes/ }));
+    expect(mocked.generateRecoveryCodes).toHaveBeenCalled();
+  });
+
+  it('disables the generate button while codes are generating', () => {
+    renderScreen({ recoveryCodesStatus: 'loading' }, entry);
+    expect(screen.getByRole('button', { name: /Generating…/ })).toBeDisabled();
+  });
+
+  it('displays generated codes once, with warning and copy-all', async () => {
+    const user = userEvent.setup();
+    renderScreen(
+      {
+        recoveryCodesStatus: 'succeeded',
+        recoveryCodes: { message: 'Escrow enabled.', codes: ['AAAA-1111', 'BBBB-2222'] },
+      },
+      entry,
+    );
+    expect(screen.getByText(/never be shown again/)).toBeInTheDocument();
+    expect(screen.getByText('Escrow enabled.')).toBeInTheDocument();
+    expect(screen.getByText('AAAA-1111')).toBeInTheDocument();
+    expect(screen.getByText('BBBB-2222')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Copy all/ }));
+    expect(await screen.findByText('Copied.')).toBeInTheDocument();
+    await expect(navigator.clipboard.readText()).resolves.toBe('AAAA-1111\nBBBB-2222');
+  });
+
+  it('triggers a self-backup and refreshes the runs list', async () => {
+    renderScreen({}, entry);
+    fireEvent.click(screen.getByRole('button', { name: /Run self-backup/ }));
+    expect(mocked.triggerSelfBackup).toHaveBeenCalled();
+    // Once on mount, once after the trigger resolves.
+    await waitFor(() => expect(mocked.fetchSelfBackupRuns).toHaveBeenCalledTimes(2));
+  });
+
+  it('disables the trigger button while the trigger is in flight', () => {
+    renderScreen({ selfBackupTriggerStatus: 'loading' }, entry);
+    expect(screen.getByRole('button', { name: /Triggering…/ })).toBeDisabled();
+  });
+
+  it('shows the triggered confirmation', () => {
+    renderScreen({ selfBackupTriggerStatus: 'succeeded' }, entry);
+    expect(screen.getByText('Self-backup triggered.')).toBeInTheDocument();
+  });
+
+  it('renders inline errors for every failed action', () => {
+    renderScreen(
+      {
+        exportStatus: 'failed',
+        recoveryCodesStatus: 'failed',
+        selfBackupTriggerStatus: 'failed',
+        selfBackupRunsStatus: 'failed',
+        error: 'boom',
+      },
+      entry,
+    );
+    expect(screen.getAllByText('boom')).toHaveLength(4);
+  });
+
+  it('falls back to generic errors when no message is present', () => {
+    renderScreen(
+      {
+        exportStatus: 'failed',
+        recoveryCodesStatus: 'failed',
+        selfBackupTriggerStatus: 'failed',
+        selfBackupRunsStatus: 'failed',
+        error: null,
+      },
+      entry,
+    );
+    expect(screen.getAllByText('Could not save settings.')).toHaveLength(3);
+    expect(screen.getByText('Could not load settings.')).toBeInTheDocument();
+  });
+
+  it('shows a loading indicator while runs load', () => {
+    renderScreen({ selfBackupRunsStatus: 'loading' }, entry);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
+  it('shows an empty message when there are no runs', () => {
+    renderScreen({ selfBackupRuns: [], selfBackupRunsStatus: 'succeeded' }, entry);
+    expect(screen.getByText('No self-backup runs yet.')).toBeInTheDocument();
+  });
+
+  it('renders the recent runs with status badges, times, and errors', () => {
+    renderScreen({ selfBackupRuns: runs, selfBackupRunsStatus: 'succeeded' }, entry);
+    expect(screen.getByText('success')).toBeInTheDocument();
+    expect(screen.getByText('failed')).toBeInTheDocument();
+    expect(screen.getByText('running')).toBeInTheDocument();
+    expect(screen.getByText('ssh timeout')).toBeInTheDocument();
+    // Missing timestamps render as em-dash placeholders.
+    expect(screen.getByText('— – —')).toBeInTheDocument();
   });
 });

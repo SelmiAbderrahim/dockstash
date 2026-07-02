@@ -15,7 +15,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY tsconfig.json tsconfig.node.json vite.config.ts index.html server.js ./
+COPY tsconfig.json tsconfig.node.json vite.config.ts index.html server.js app-paths.mjs app-paths.d.mts ./
 COPY public ./public
 COPY src ./src
 
@@ -36,7 +36,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js ./
+COPY server.js app-paths.mjs ./
 COPY --from=build /app/dist ./dist
 
 EXPOSE 3000

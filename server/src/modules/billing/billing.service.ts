@@ -2,7 +2,10 @@ import { HttpError } from '../../shared/utils/http-error.js';
 import { findUserById } from '../users/index.js';
 import { Project } from '../backups/backups.model.js';
 import { Customer } from './customer.model.js';
-import { Subscription } from './subscription.model.js';
+import {
+  findEffectiveSubscription,
+  type SubscriptionStatusName,
+} from './subscription.model.js';
 import { getPaymentProvider } from './active-provider.js';
 import { PricingTier } from './pricing-tier.model.js';
 import { seedPricingTiers } from './pricing-tier.seed.js';
@@ -55,7 +58,7 @@ export async function changePlanForUser(
   if (!provider.isConfigured()) {
     throw HttpError.internal('billing.error.notConfigured');
   }
-  const sub = await Subscription.findOne({ userId, provider: provider.name });
+  const sub = await findEffectiveSubscription(userId, provider.name);
   if (!sub) {
     throw HttpError.notFound('billing.error.noSubscription');
   }
@@ -120,7 +123,7 @@ export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
 
 export interface BillingOverviewResponse {
   slug: string;
-  status: 'active' | 'past_due' | 'canceled' | 'revoked' | 'none';
+  status: SubscriptionStatusName | 'none';
   currentPeriodEnd: string | null;
   graceEndsAt: string | null;
   cancelAtPeriodEnd: boolean;
@@ -133,9 +136,7 @@ export async function getBillingOverviewForUser(
   const resolved = await resolveEntitlements(userId);
   const provider = getPaymentProvider();
   const sub = provider.isConfigured()
-    ? await Subscription.findOne({ userId, provider: provider.name })
-        .sort({ createdAt: -1 })
-        .lean()
+    ? await findEffectiveSubscription(userId, provider.name)
     : null;
   return {
     slug: resolved.slug,

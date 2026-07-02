@@ -431,3 +431,33 @@ describe('backups.verify: defensive guards', () => {
     expect(results[0]?.detail).toMatch(/factory string blew up/);
   });
 });
+
+describe('runRestore: alert transport explosion is swallowed', () => {
+  beforeAll(() => startMemoryMongo());
+  afterAll(() => stopMemoryMongo());
+  beforeEach(() => clearCollections());
+
+  it('still rejects with the restore failure, not the alert failure', async () => {
+    const { runRestore } = await import('./backups.restore.service.js');
+    const id = await seedUser('restore-defensive@test.com');
+    const projectId = await seedProject(id);
+    await expect(
+      runRestore(
+        projectId,
+        id,
+        { snapshotId: 's1', overwrite: true },
+        {
+          resticRunner: {
+            ...makeRestic(),
+            restore: async () => {
+              throw new Error('restic restore blew up');
+            },
+          },
+        },
+      ),
+    ).rejects.toMatchObject({ status: 500 });
+    const row = await Project.findById(projectId);
+    expect(row?.lastRestoreStatus).toBe('fail');
+    expect(row?.lastRestoreDetail).toContain('restic restore blew up');
+  });
+});

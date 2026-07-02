@@ -115,7 +115,7 @@ export const remove: RequestHandler = asyncHandler(async (req, res) => {
 });
 
 function actionForKind(kind: string): AuditAction {
-  return kind === 'drill' ? 'backup.restore' : 'backup.run';
+  return kind === 'drill' || kind === 'restore' ? 'backup.restore' : 'backup.run';
 }
 
 export const enqueue: RequestHandler = asyncHandler(async (req, res) => {
@@ -133,7 +133,16 @@ export const enqueue: RequestHandler = asyncHandler(async (req, res) => {
     targetType: 'project',
     targetId: job.data.projectId,
     ip: extractIp(req),
-    metadata: { jobId: job.id, kind: job.data.kind },
+    metadata: {
+      jobId: job.id,
+      kind: job.data.kind,
+      ...(job.data.payload
+        ? {
+            snapshotId: job.data.payload.snapshotId,
+            overwrite: job.data.payload.overwrite,
+          }
+        : {}),
+    },
   });
   res.status(202).json({ job: { id: job.id, kind: job.data.kind } });
 });

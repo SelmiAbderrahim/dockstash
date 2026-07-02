@@ -7,6 +7,7 @@ import type {
   NormalizedSubscriptionStatus,
   ParsedEvent,
 } from '../payment-provider.js';
+import { toPersistedStatus } from '../status-map.js';
 import type { PaymentProviderName } from '../customer.model.js';
 import { Customer } from '../customer.model.js';
 import { Subscription } from '../subscription.model.js';
@@ -15,7 +16,9 @@ import { User } from '../../users/index.js';
 import { getPlanForProductId } from '../polar-config.js';
 import {
   beginDunning,
+  comparePlans,
   handleDowngrade,
+  handleUpgrade,
   handleRefund,
   GRACE_WINDOW_MS,
 } from '../lifecycle.service.js';
@@ -29,22 +32,6 @@ export interface DispatchResult {
 
 export function payloadHashOf(rawBody: Buffer): string {
   return createHash('sha256').update(rawBody).digest('hex');
-}
-
-function toPersistedStatus(status: NormalizedSubscriptionStatus): 'active' | 'past_due' | 'canceled' | 'revoked' {
-  switch (status) {
-    case 'active':
-    case 'trialing':
-    case 'incomplete':
-      return 'active';
-    case 'past_due':
-      return 'past_due';
-    case 'revoked':
-      return 'revoked';
-    case 'canceled':
-    default:
-      return 'canceled';
-  }
 }
 
 async function resolveUserId(
@@ -128,9 +115,22 @@ async function upsertSubscription(
   );
   await User.updateOne({ _id: userId }, { $set: { subscription: updated._id } });
 
-  // Lifecycle: downgrade → pause over-cap projects, never delete.
-  if (priorSub && priorSub.planSlug !== planSlug && status === 'active') {
-    await handleDowngrade(userId, norm.productId);
+  // Lifecycle side effects only run once payment is settled (`active`);
+  // `incomplete` rows must not pause/unpause anything.
+  if (status === 'active') {
+    if (priorSub && priorSub.planSlug !== planSlug) {
+      // Plan changed: smaller tier pauses over-cap projects (never deletes);
+      // bigger tier reactivates what fits.
+      if (comparePlans(planSlug, priorSub.planSlug) < 0) {
+        await handleDowngrade(userId, norm.productId);
+      } else {
+        await handleUpgrade(userId, norm.productId);
+      }
+    } else if (priorSub && priorSub.status !== 'active') {
+      // Same plan recovering (e.g. past_due → active after payment fix):
+      // idempotently reactivate anything paused by dunning/grace expiry.
+      await handleUpgrade(userId, norm.productId);
+    }
   }
   if (status === 'past_due' && !priorSub?.graceEndsAt) {
     await beginDunning(norm.providerSubscriptionId).catch(() => {
@@ -222,6 +222,14 @@ export async function dispatchEvent(
       .select('userId')
       .lean();
     if (!existing) {
+      logger.warn(
+        {
+          provider,
+          providerOrderId: norm.providerOrderId,
+          providerCustomerId: norm.providerCustomerId,
+        },
+        'billing.webhook: order event with no resolvable user — dropped',
+      );
       return { status: 'skipped', reason: 'no customer link' };
     }
     await upsertOrder(provider, String(existing.userId), norm);

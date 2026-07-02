@@ -17,6 +17,7 @@ locales/{en,ar,fr,de,es,ru,zh}/
   billing.json
   email.json
   language.json
+  marketing.json            # public marketing surface (Home, Pricing, Security, FAQ, layout, shared)
 ```
 
 ## Namespaces & key style
@@ -55,3 +56,22 @@ Called on init and on every `languageChanged` event.
 2. Extend `NAMESPACES` in `locales.ts` and the `RESOURCES` map in `resources.ts`.
 3. Use `useTranslation('name')` inside the feature.
 4. The parity test in `shared/i18n/i18n.test.ts` will pass once every locale has the same key set.
+
+## Marketing namespace (URL-locale, fixed-language `t`)
+
+The `marketing` namespace backs the SSR'd marketing surface. Its language comes
+from the **URL locale prefix**, never the ambient `i18n.language` (a `lang`
+cookie may disagree with the URL and would cause an SSR/client hydration
+mismatch). Consumers pin the language:
+
+```ts
+const { locale } = useMarketingRoute();
+const { t } = useTranslation('marketing', { lng: locale });
+```
+
+Top-level sections: `layout`, `shared`, `home`, `pricing`, `security`, `faq`.
+Serif-accent headlines are split into `title.pre` / `title.accent` (/ `title.post`)
+keys so the `<Serif>` wrapper stays in JSX — every segment must be non-empty in
+every locale. Prices and plan limits are interpolated (`{{proMonthly}}`, …) from
+`PLAN_FACTS` in `features/marketing/components/Pricing.tsx` so figures cannot
+drift between locales.

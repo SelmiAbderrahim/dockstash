@@ -15,13 +15,15 @@ beforeEach(() => {
   initI18n({ initialLocale: 'en' });
 });
 
-const makeStore = (authenticated: boolean) =>
+const makeStore = (authenticated: boolean, role = '') =>
   configureStore({
     reducer: { auth: authReducer },
     preloadedState: {
       auth: {
         authenticated,
         emailVerified: authenticated,
+        role,
+        otpChallengeId: '',
         pendingVerificationEmail: '',
         error: '',
         message: '',
@@ -29,9 +31,9 @@ const makeStore = (authenticated: boolean) =>
     },
   });
 
-const renderHeader = (authenticated: boolean) =>
+const renderHeader = (authenticated: boolean, role = '') =>
   render(
-    <Provider store={makeStore(authenticated)}>
+    <Provider store={makeStore(authenticated, role)}>
       <I18nextProvider i18n={i18n}>
         <ThemeProvider>
           <TooltipProvider>
@@ -61,5 +63,19 @@ describe('Header mobile menu', () => {
     await user.click(screen.getByRole('button', { name: /open menu/i }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('link', { name: 'Login' })).toBeInTheDocument();
+  });
+
+  it('shows the Superadmin link only for a superadmin', () => {
+    const { unmount } = renderHeader(true, 'Superadmin');
+    expect(screen.getAllByRole('link', { name: 'Superadmin' }).length).toBeGreaterThan(0);
+    unmount();
+
+    renderHeader(true, 'Member');
+    expect(screen.queryByRole('link', { name: 'Superadmin' })).not.toBeInTheDocument();
+  });
+
+  it('shows no Superadmin link for anonymous visitors', () => {
+    renderHeader(false);
+    expect(screen.queryByRole('link', { name: 'Superadmin' })).not.toBeInTheDocument();
   });
 });

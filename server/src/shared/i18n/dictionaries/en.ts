@@ -46,6 +46,11 @@ export const en = {
       resent: 'If that account needs verification, a new link is on its way.',
       tokenInvalid: 'That verification link is invalid or has expired.',
     },
+    otp: {
+      sent: 'A verification code has been sent to your email.',
+      invalid: 'That verification code is invalid or has expired.',
+      tooManyAttempts: 'Too many incorrect codes. Please sign in again to get a new code.',
+    },
   },
   billing: {
     checkout: {
@@ -72,7 +77,6 @@ export const en = {
       projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
       selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
       notOwner: 'You do not own one or more of those projects.',
-      trialAlreadyClaimed: 'A trial has already been used for this account.',
     },
   },
   email: {
@@ -148,6 +152,12 @@ export const en = {
         'Last successful backup: {{lastGoodAt}}\n\n' +
         'Open the dashboard: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: 'Your Dockstash sign-in code',
+      body:
+        'Your sign-in verification code is: {{code}}\n\n' +
+        'It expires in {{minutes}} minutes. If you did not try to sign in, change your password immediately.\n',
+    },
     neverRun: 'never',
   },
   audit: {
@@ -171,6 +181,9 @@ export const en = {
       resticFailed: 'Restic backup failed: {{message}}',
       backupFailed: 'Backup failed: {{message}}',
       noSpace: 'Insufficient disk space (free={{free}} bytes).',
+      runnerUnavailable: 'Snapshot listing is unavailable: the backup runner is not configured.',
+      snapshotsFailed: 'Could not list snapshots: {{message}}',
+      restoreFailed: 'Restore failed: {{message}}',
     },
     success: {
       backupComplete: 'Backup completed successfully.',
@@ -222,6 +235,15 @@ export const en = {
       selfBackupComplete: 'Self-backup completed successfully.',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured:
+        'Storage is not configured. Add your storage VPS connection first.',
+      connectionFailed: 'Storage connection test failed: {{message}}',
+      hostKeyNotPinned:
+        'Storage host key has not been verified yet. Run a connection test first.',
+    },
+  },
   agents: {
     error: {
       notFound: 'Agent not found.',
@@ -240,6 +262,17 @@ export const en = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: 'Superadmin accounts cannot be modified or deleted.',
+    },
+    success: {
+      roleChanged: 'User role updated.',
+      userVerified: 'User email marked as verified.',
+      legalHoldUpdated: 'Legal hold updated.',
+      deletionScheduled: 'Account deletion scheduled.',
     },
   },
   security: {

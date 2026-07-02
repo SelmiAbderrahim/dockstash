@@ -83,3 +83,48 @@ export {
   resetVerifyController,
   type VerifyControllerDeps,
 } from './backups.verify.controller.js';
+export {
+  ProcessResticRunner,
+  TmpfsKeyMaterializer,
+  type KeyMaterializer,
+  type ProcessResticRunnerOptions,
+  type ResticSnapshotDetail,
+  type SpawnImpl,
+  type SpawnedChild,
+} from './backups.restic-runner.js';
+export {
+  HttpDockerClient,
+  demuxDockerStream,
+  parseDockerHost,
+  type DockerRequestFn,
+  type DockerStreamRequestFn,
+  type HttpDockerClientOptions,
+} from './backups.docker-client.js';
+export {
+  makeArtifactDbDiff,
+  makeHashFileDiff,
+  makeStatfsDiskProbe,
+  makeTmpScratch,
+} from './backups.diff.js';
+export {
+  makeDispatchDepsFor,
+  makeResticRunnerFor,
+  placeholderResticRunner,
+  resolveProjectRunner,
+  type DispatchDepsOverrides,
+  type RunnerBuilder,
+} from './backups.runner-factory.js';
+export {
+  configureSnapshotsController,
+  resetSnapshotsController,
+  makeProductionSnapshotLister,
+  listProjectSnapshots,
+  type SnapshotsControllerDeps,
+} from './backups.snapshots.controller.js';
+export { serializeSnapshot, type PublicSnapshot } from './backups.serialize.js';
+export {
+  runRestore,
+  type RestoreOptions,
+  type RunRestoreDeps,
+  type RunRestoreResult,
+} from './backups.restore.service.js';

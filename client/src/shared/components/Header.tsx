@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@shared/hooks/redux';
-import { selectAuthenticated } from '@features/auth';
+import { selectAuthenticated, selectUserRole } from '@features/auth';
 import { BrandLogo } from '@shared/brand';
 import { Button } from '@shared/ui/button';
 import {
@@ -25,9 +25,12 @@ const AUTHED_LINKS: NavLink[] = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/projects', label: 'Projects' },
   { to: '/snapshots', label: 'Snapshots' },
+  { to: '/fleet', label: 'Fleet' },
   { to: '/settings', label: 'Settings' },
   { to: '/logout', label: 'Logout' },
 ];
+
+const SUPERADMIN_LINK: NavLink = { to: '/superadmin', label: 'Superadmin' };
 
 const ANON_LINKS: NavLink[] = [
   { to: '/', label: 'Home' },
@@ -37,9 +40,12 @@ const ANON_LINKS: NavLink[] = [
 
 export const Header = () => {
   const authenticated = useAppSelector(selectAuthenticated);
+  const role = useAppSelector(selectUserRole);
   const { t } = useTranslation('common');
   const [open, setOpen] = useState(false);
-  const links = authenticated ? AUTHED_LINKS : ANON_LINKS;
+  const authedLinks =
+    role === 'Superadmin' ? [SUPERADMIN_LINK, ...AUTHED_LINKS] : AUTHED_LINKS;
+  const links = authenticated ? authedLinks : ANON_LINKS;
 
   return (
     <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur">

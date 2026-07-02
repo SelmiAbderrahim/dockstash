@@ -98,6 +98,14 @@ const projectSchema = new mongoose.Schema(
       default: null,
     },
     lastDrillDetail: { type: String, default: '' },
+    // One-shot restore stamps (user-triggered `restore` jobs).
+    lastRestoreAt: { type: Date, default: null },
+    lastRestoreStatus: {
+      type: String,
+      enum: [...VERIFY_STATUSES, null] as unknown as (VerifyStatus | null)[],
+      default: null,
+    },
+    lastRestoreDetail: { type: String, default: '' },
     // Lifecycle (prompt 07). A `paused` project is read-only: no new backups
     // run, but existing snapshots are retained. Set on downgrade-over-cap and
     // during lapse; cleared when the user reactivates or picks the project as

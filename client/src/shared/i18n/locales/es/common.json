@@ -10,5 +10,52 @@
     "running": "En ejecución…",
     "done": "Completado",
     "failed": "Fallido"
+  },
+  "fleet": {
+    "heading": "Flota",
+    "lede": "Todos los agentes VPS conectados y su huella de copias de seguridad.",
+    "loading": "Cargando la flota…",
+    "register": "Registrar agente",
+    "locked": {
+      "title": "La flota multi-VPS es una función del plan Business",
+      "body": "Actualiza al plan Business para registrar agentes en más servidores y ver toda tu flota en un solo lugar.",
+      "cta": "Ver planes"
+    },
+    "empty": {
+      "title": "Aún no hay agentes",
+      "hint": "Registra un agente en otro VPS para verlo aquí."
+    },
+    "errors": {
+      "load": "No se pudo cargar la flota.",
+      "register": "No se pudo registrar el agente."
+    },
+    "table": {
+      "aria": "Flota",
+      "name": "Nombre",
+      "host": "Host",
+      "status": "Estado",
+      "lastSeen": "Última conexión",
+      "projects": "Proyectos",
+      "size": "Tamaño",
+      "snapshots": "Instantáneas"
+    },
+    "status": {
+      "online": "En línea",
+      "offline": "Desconectado"
+    },
+    "never": "Nunca",
+    "dialog": {
+      "title": "Registrar agente",
+      "description": "Añade un VPS a tu flota. El agente se autentica con la clave API generada abajo.",
+      "name": "Nombre",
+      "host": "Host",
+      "port": "Puerto",
+      "submit": "Registrar",
+      "submitting": "Registrando…",
+      "cancel": "Cancelar",
+      "keyWarning": "Esta clave API se muestra una sola vez y no podrá recuperarse nunca. Cópiala ahora.",
+      "copy": "Copiar",
+      "done": "Hecho"
+    }
   }
 }

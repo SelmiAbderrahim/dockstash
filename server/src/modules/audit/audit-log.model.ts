@@ -5,10 +5,18 @@ export const AUDIT_ACTIONS = [
   'backup.restore',
   'backup.delete',
   'plan.change',
+  'auth.otp.challenge',
+  'auth.otp.success',
+  'auth.otp.failure',
+  'auth.newDevice',
+  'superadmin.role.change',
+  'superadmin.user.verify',
+  'superadmin.user.legalHold',
+  'superadmin.user.delete',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-export const AUDIT_TARGET_TYPES = ['project', 'subscription'] as const;
+export const AUDIT_TARGET_TYPES = ['project', 'subscription', 'user'] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 const auditLogSchema = new mongoose.Schema(

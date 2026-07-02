@@ -7,6 +7,10 @@ import {
   fetchRetention,
   saveRetention,
   savePassword,
+  exportConfig,
+  generateRecoveryCodes,
+  triggerSelfBackup,
+  fetchSelfBackupRuns,
 } from './thunks';
 
 const initial = () => settingsReducer(undefined, { type: 'unknown' });
@@ -107,6 +111,75 @@ describe('settings slice', () => {
     expect(s.error).toBe('e');
     s = settingsReducer(initial(), { type: savePassword.rejected.type, payload: undefined });
     expect(s.error).toBe('Could not save password.');
+  });
+
+  it('exportConfig lifecycle', () => {
+    let s = settingsReducer(initial(), { type: exportConfig.pending.type });
+    expect(s.exportStatus).toBe('loading');
+    s = settingsReducer(s, { type: exportConfig.fulfilled.type, payload: true });
+    expect(s.exportStatus).toBe('succeeded');
+    s = settingsReducer(initial(), { type: exportConfig.rejected.type, payload: 'e' });
+    expect(s.exportStatus).toBe('failed');
+    expect(s.error).toBe('e');
+    s = settingsReducer(initial(), { type: exportConfig.rejected.type, payload: undefined });
+    expect(s.error).toBe('Could not export configuration.');
+  });
+
+  it('generateRecoveryCodes lifecycle', () => {
+    let s = settingsReducer(initial(), { type: generateRecoveryCodes.pending.type });
+    expect(s.recoveryCodesStatus).toBe('loading');
+    s = settingsReducer(s, {
+      type: generateRecoveryCodes.fulfilled.type,
+      payload: { message: 'saved once', codes: ['AAAA-1111'] },
+    });
+    expect(s.recoveryCodesStatus).toBe('succeeded');
+    expect(s.recoveryCodes?.codes).toEqual(['AAAA-1111']);
+    s = settingsReducer(initial(), { type: generateRecoveryCodes.rejected.type, payload: 'e' });
+    expect(s.recoveryCodesStatus).toBe('failed');
+    expect(s.error).toBe('e');
+    s = settingsReducer(initial(), {
+      type: generateRecoveryCodes.rejected.type,
+      payload: undefined,
+    });
+    expect(s.error).toBe('Could not generate recovery codes.');
+  });
+
+  it('triggerSelfBackup lifecycle', () => {
+    let s = settingsReducer(initial(), { type: triggerSelfBackup.pending.type });
+    expect(s.selfBackupTriggerStatus).toBe('loading');
+    s = settingsReducer(s, { type: triggerSelfBackup.fulfilled.type, payload: true });
+    expect(s.selfBackupTriggerStatus).toBe('succeeded');
+    s = settingsReducer(initial(), { type: triggerSelfBackup.rejected.type, payload: 'e' });
+    expect(s.selfBackupTriggerStatus).toBe('failed');
+    expect(s.error).toBe('e');
+    s = settingsReducer(initial(), { type: triggerSelfBackup.rejected.type, payload: undefined });
+    expect(s.error).toBe('Could not trigger self-backup.');
+  });
+
+  it('fetchSelfBackupRuns lifecycle', () => {
+    let s = settingsReducer(initial(), { type: fetchSelfBackupRuns.pending.type });
+    expect(s.selfBackupRunsStatus).toBe('loading');
+    const runs = [
+      {
+        id: 'r1',
+        repo: 'dockstash-self',
+        status: 'success',
+        startedAt: null,
+        finishedAt: null,
+        error: '',
+      },
+    ];
+    s = settingsReducer(s, { type: fetchSelfBackupRuns.fulfilled.type, payload: runs });
+    expect(s.selfBackupRunsStatus).toBe('succeeded');
+    expect(s.selfBackupRuns).toEqual(runs);
+    s = settingsReducer(initial(), { type: fetchSelfBackupRuns.rejected.type, payload: 'e' });
+    expect(s.selfBackupRunsStatus).toBe('failed');
+    expect(s.error).toBe('e');
+    s = settingsReducer(initial(), {
+      type: fetchSelfBackupRuns.rejected.type,
+      payload: undefined,
+    });
+    expect(s.error).toBe('Could not load self-backup runs.');
   });
 
   it('clearError and resetSaveStatuses reducers', () => {

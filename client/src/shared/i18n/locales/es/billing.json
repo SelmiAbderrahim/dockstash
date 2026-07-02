@@ -17,7 +17,8 @@
     "past_due": "Vencido",
     "canceled": "Cancelado",
     "revoked": "Revocado",
-    "none": "Ninguno"
+    "none": "Ninguno",
+    "incomplete": "Pago pendiente"
   },
   "grid": {
     "title": "Precios",
@@ -57,7 +58,8 @@
     "tabsLabel": "Secciones de facturación",
     "tab": {
       "overview": "Resumen",
-      "usage": "Uso"
+      "usage": "Uso",
+      "plans": "Planes"
     },
     "loading": "Cargando…",
     "empty": "Nada que mostrar."
@@ -81,11 +83,15 @@
       "colSize": "Tamaño",
       "colLastRun": "Última ejecución",
       "never": "Nunca"
-    }
+    },
+    "retry": "Reintentar"
   },
   "selection": {
     "title": "Elige qué proyectos quedan activos",
     "help": "Tu plan permite hasta {{cap}} proyecto(s) activo(s). El resto se pausarán (nunca se eliminan).",
     "submit": "Guardar selección"
+  },
+  "plans": {
+    "portal": "Gestionar facturación"
   }
 }

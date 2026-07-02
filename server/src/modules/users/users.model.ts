@@ -5,15 +5,23 @@ export const ROLE_MEMBER = 'Member';
 export const ROLE_CLIENT = 'Client';
 export const ROLE_OWNER = 'Owner';
 export const ROLE_ADMIN = 'Admin';
+export const ROLE_SUPERADMIN = 'Superadmin';
 
-export const ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN] as const;
+export const ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN, ROLE_SUPERADMIN] as const;
 export type Role = (typeof ROLES)[number];
+
+// Roles the superadmin management API may assign. Superadmin itself is
+// excluded on purpose: the only path to a Superadmin account is the
+// env-driven seeder, never a role change through the API.
+export const ASSIGNABLE_ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN] as const;
+export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 const ROLE_RANK: Record<Role, number> = {
   [ROLE_MEMBER]: 1,
   [ROLE_CLIENT]: 2,
   [ROLE_OWNER]: 3,
   [ROLE_ADMIN]: 4,
+  [ROLE_SUPERADMIN]: 5,
 };
 
 export function getRoleRank(role: string | undefined): number {

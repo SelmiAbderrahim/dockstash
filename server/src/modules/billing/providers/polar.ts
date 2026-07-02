@@ -181,7 +181,9 @@ export class PolarProvider implements IPaymentProvider {
   }
 
   isConfigured(): boolean {
-    return Boolean(env.POLAR_ACCESS_TOKEN);
+    // Both the opt-in flag AND the credential are required: a token left in
+    // the environment with PAYMENT_PROVIDER=none must not activate billing.
+    return env.PAYMENT_PROVIDER === 'polar' && Boolean(env.POLAR_ACCESS_TOKEN);
   }
 
   private client(): PolarRestClient {

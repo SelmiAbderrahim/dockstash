@@ -13,6 +13,7 @@ import type {
   DiskSpaceProbe,
 } from '../backups/backups.boundaries.js';
 import type { ComposeService } from '../backups/backups.adapters.js';
+import { runRestore } from '../backups/backups.restore.service.js';
 import { runPrune } from './scheduler.prune.service.js';
 import type {
   AlertHook,
@@ -45,7 +46,7 @@ export interface DispatchDeps {
  */
 export async function dispatchJob(job: Job, deps: DispatchDeps): Promise<void> {
   const t = deps.t ?? identityT;
-  const { projectId, owner, kind, retention } = job.data;
+  const { projectId, owner, kind, retention, payload } = job.data;
   switch (kind) {
     case 'backup': {
       if (!deps.dockerClient) {
@@ -82,6 +83,16 @@ export async function dispatchJob(job: Job, deps: DispatchDeps): Promise<void> {
         throw new Error('dispatchJob: prune requires retention policy');
       }
       await runPrune(projectId, owner, retention, {
+        t,
+        resticRunner: deps.resticRunner,
+      });
+      return;
+    }
+    case 'restore': {
+      if (!payload) {
+        throw new Error('dispatchJob: restore requires a restore payload');
+      }
+      await runRestore(projectId, owner, payload, {
         t,
         resticRunner: deps.resticRunner,
       });

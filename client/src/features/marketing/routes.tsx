@@ -13,6 +13,7 @@ import { Security } from './components/Security';
 import { Faq } from './components/Faq';
 import { Privacy } from './components/Privacy';
 import { Terms } from './components/Terms';
+import { NotFoundPage } from './components/NotFoundPage';
 import { MARKETING_LOCALE_PREFIXES } from './useMarketingRoute';
 
 /**
@@ -38,6 +39,9 @@ const pages: RouteObject[] = [
   { path: 'faq', element: <Faq /> },
   { path: 'privacy', element: <Privacy /> },
   { path: 'terms', element: <Terms /> },
+  // Catch-all: SSR's a real 404 for unknown public URLs. Static app-shell
+  // paths (/login, /settings, …) outrank the splat in the browser router.
+  { path: '*', element: <NotFoundPage /> },
 ];
 
 export const marketingRoutes: RouteObject[] = [

@@ -1,14 +1,19 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
 import {
+  downloadJsonExport,
+  exportConfigRequest,
   fetchRetentionRequest,
+  fetchSelfBackupRunsRequest,
   fetchStorageRequest,
+  generateRecoveryCodesRequest,
   savePasswordRequest,
   saveRetentionRequest,
   saveStorageRequest,
   testStorageRequest,
+  triggerSelfBackupRequest,
 } from '../api';
-import type { RetentionPolicy, StorageConfig } from '../types';
+import type { RecoveryCodesResult, RetentionPolicy, SelfBackupRun, StorageConfig } from '../types';
 
 export const fetchStorage = createAsyncThunk<StorageConfig, void, { rejectValue: string }>(
   'settings/fetchStorage',
@@ -76,6 +81,54 @@ export const savePassword = createAsyncThunk<boolean, string, { rejectValue: str
       return true;
     } catch (err) {
       return rejectWithValue(messageFromError(err, 'Could not save password.'));
+    }
+  },
+);
+
+export const exportConfig = createAsyncThunk<boolean, void, { rejectValue: string }>(
+  'settings/exportConfig',
+  async (_, { rejectWithValue }) => {
+    try {
+      const envelope = await exportConfigRequest();
+      downloadJsonExport(envelope);
+      return true;
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not export configuration.'));
+    }
+  },
+);
+
+export const generateRecoveryCodes = createAsyncThunk<
+  RecoveryCodesResult,
+  void,
+  { rejectValue: string }
+>('settings/generateRecoveryCodes', async (_, { rejectWithValue }) => {
+  try {
+    return await generateRecoveryCodesRequest();
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not generate recovery codes.'));
+  }
+});
+
+export const triggerSelfBackup = createAsyncThunk<boolean, void, { rejectValue: string }>(
+  'settings/triggerSelfBackup',
+  async (_, { rejectWithValue }) => {
+    try {
+      await triggerSelfBackupRequest();
+      return true;
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not trigger self-backup.'));
+    }
+  },
+);
+
+export const fetchSelfBackupRuns = createAsyncThunk<SelfBackupRun[], void, { rejectValue: string }>(
+  'settings/fetchSelfBackupRuns',
+  async (_, { rejectWithValue }) => {
+    try {
+      return await fetchSelfBackupRunsRequest();
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not load self-backup runs.'));
     }
   },
 );

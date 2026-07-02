@@ -9,6 +9,7 @@ import {
   performPasswordReset,
   resendVerification,
   verifyEmail,
+  verifyLoginOtp,
 } from './thunks';
 import { loadCookie } from '@shared/utils/cookies';
 import type { AuthUser } from '../types';
@@ -16,6 +17,7 @@ import * as api from '../api';
 
 vi.mock('../api', () => ({
   loginRequest: vi.fn(),
+  verifyLoginOtpRequest: vi.fn(),
   registerRequest: vi.fn(),
   forgotPasswordRequest: vi.fn(),
   resetPasswordRequest: vi.fn(),
@@ -39,27 +41,72 @@ beforeEach(() => {
 });
 
 describe('auth thunks', () => {
-  it('loginUser stores cookies and resolves emailVerified', async () => {
+  it('loginUser stores cookies and resolves emailVerified + role', async () => {
     mocked.loginRequest.mockResolvedValue({
       token: 'JWT abc',
-      user: { id: '1', email: 'a@b.co', emailVerified: true },
+      user: { id: '1', email: 'a@b.co', emailVerified: true, role: 'Member' },
     });
     const store = makeStore();
     const result = await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
     expect(loginUser.fulfilled.match(result)).toBe(true);
-    expect(result.payload).toBe(true);
+    expect(result.payload).toEqual({ otpRequired: false, emailVerified: true, role: 'Member' });
     expect(loadCookie<string>('token')).toBe('JWT abc');
     expect(loadCookie<AuthUser>('user')?.email).toBe('a@b.co');
   });
 
-  it('loginUser defaults emailVerified to false when the field is missing', async () => {
+  it('loginUser defaults emailVerified and role when the fields are missing', async () => {
     mocked.loginRequest.mockResolvedValue({
       token: 'JWT abc',
       user: { id: '1', email: 'a@b.co' },
     });
     const store = makeStore();
     const result = await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
-    expect(result.payload).toBe(false);
+    expect(result.payload).toEqual({ otpRequired: false, emailVerified: false, role: '' });
+  });
+
+  it('loginUser returns the OTP challenge and writes no cookies', async () => {
+    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
+    const store = makeStore();
+    const result = await store.dispatch(loginUser({ email: 'root@b.co', password: 'pw' }));
+    expect(result.payload).toEqual({ otpRequired: true, challengeId: 'ch1' });
+    expect(loadCookie<string>('token')).toBeNull();
+    expect(loadCookie<AuthUser>('user')).toBeNull();
+  });
+
+  it('verifyLoginOtp stores cookies and returns emailVerified + role', async () => {
+    mocked.verifyLoginOtpRequest.mockResolvedValue({
+      token: 'JWT xyz',
+      user: { id: '9', email: 'root@b.co', emailVerified: true, role: 'Superadmin' },
+    });
+    const store = makeStore();
+    const result = await store.dispatch(
+      verifyLoginOtp({ challengeId: 'ch1', code: '123456' }),
+    );
+    expect(verifyLoginOtp.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toEqual({ emailVerified: true, role: 'Superadmin' });
+    expect(loadCookie<string>('token')).toBe('JWT xyz');
+  });
+
+  it('verifyLoginOtp defaults emailVerified and role when absent', async () => {
+    mocked.verifyLoginOtpRequest.mockResolvedValue({
+      token: 'JWT xyz',
+      user: { id: '9', email: 'root@b.co' },
+    });
+    const store = makeStore();
+    const result = await store.dispatch(
+      verifyLoginOtp({ challengeId: 'ch1', code: '123456' }),
+    );
+    expect(result.payload).toEqual({ emailVerified: false, role: '' });
+  });
+
+  it('verifyLoginOtp rejects with a message on failure', async () => {
+    mocked.verifyLoginOtpRequest.mockRejectedValue(new Error('bad code'));
+    const store = makeStore();
+    const result = await store.dispatch(
+      verifyLoginOtp({ challengeId: 'ch1', code: '000000' }),
+    );
+    expect(verifyLoginOtp.rejected.match(result)).toBe(true);
+    expect(typeof result.payload).toBe('string');
   });
 
   it('loginUser rejects with a message on failure', async () => {
@@ -70,21 +117,21 @@ describe('auth thunks', () => {
     expect(typeof result.payload).toBe('string');
   });
 
-  it('registerUser returns email + emailVerified and stores cookies', async () => {
+  it('registerUser returns email + emailVerified + role and stores cookies', async () => {
     mocked.registerRequest.mockResolvedValue({
       token: 'JWT r',
-      user: { id: '2', email: 'new@b.co', emailVerified: false },
+      user: { id: '2', email: 'new@b.co', emailVerified: false, role: 'Member' },
     });
     const store = makeStore();
     const result = await store.dispatch(
       registerUser({ email: 'new@b.co', firstName: 'N', lastName: 'U', password: 'pw' }),
     );
     expect(registerUser.fulfilled.match(result)).toBe(true);
-    expect(result.payload).toEqual({ email: 'new@b.co', emailVerified: false });
+    expect(result.payload).toEqual({ email: 'new@b.co', emailVerified: false, role: 'Member' });
     expect(loadCookie<string>('token')).toBe('JWT r');
   });
 
-  it('registerUser defaults emailVerified to false when absent', async () => {
+  it('registerUser defaults emailVerified and role when absent', async () => {
     mocked.registerRequest.mockResolvedValue({
       token: 'JWT r',
       user: { id: '2', email: 'new@b.co' },
@@ -93,7 +140,7 @@ describe('auth thunks', () => {
     const result = await store.dispatch(
       registerUser({ email: 'new@b.co', firstName: 'N', lastName: 'U', password: 'pw' }),
     );
-    expect(result.payload).toEqual({ email: 'new@b.co', emailVerified: false });
+    expect(result.payload).toEqual({ email: 'new@b.co', emailVerified: false, role: '' });
   });
 
   it('registerUser rejects with a message on failure', async () => {

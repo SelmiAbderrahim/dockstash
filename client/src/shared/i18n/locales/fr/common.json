@@ -10,5 +10,52 @@
     "running": "En cours…",
     "done": "Terminé",
     "failed": "Échec"
+  },
+  "fleet": {
+    "heading": "Flotte",
+    "lede": "Tous les agents VPS connectés et leur empreinte de sauvegarde.",
+    "loading": "Chargement de la flotte…",
+    "register": "Enregistrer un agent",
+    "locked": {
+      "title": "La flotte multi-VPS est une fonctionnalité Business",
+      "body": "Passez à l'offre Business pour enregistrer des agents sur d'autres serveurs et voir toute votre flotte au même endroit.",
+      "cta": "Voir les offres"
+    },
+    "empty": {
+      "title": "Aucun agent pour l'instant",
+      "hint": "Enregistrez un agent sur un autre VPS pour le voir ici."
+    },
+    "errors": {
+      "load": "Impossible de charger la flotte.",
+      "register": "Impossible d'enregistrer l'agent."
+    },
+    "table": {
+      "aria": "Flotte",
+      "name": "Nom",
+      "host": "Hôte",
+      "status": "Statut",
+      "lastSeen": "Dernière activité",
+      "projects": "Projets",
+      "size": "Taille",
+      "snapshots": "Instantanés"
+    },
+    "status": {
+      "online": "En ligne",
+      "offline": "Hors ligne"
+    },
+    "never": "Jamais",
+    "dialog": {
+      "title": "Enregistrer un agent",
+      "description": "Ajoutez un VPS à votre flotte. L'agent s'authentifie avec la clé API générée ci-dessous.",
+      "name": "Nom",
+      "host": "Hôte",
+      "port": "Port",
+      "submit": "Enregistrer",
+      "submitting": "Enregistrement…",
+      "cancel": "Annuler",
+      "keyWarning": "Cette clé API n'est affichée qu'une seule fois et ne pourra jamais être récupérée. Copiez-la maintenant.",
+      "copy": "Copier",
+      "done": "Terminé"
+    }
   }
 }

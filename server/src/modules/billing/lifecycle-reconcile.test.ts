@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { NodeCronScheduler } from '../scheduler/scheduler.cron.node.js';
+import { env } from '../../config/env.js';
 import {
   clearCollections,
   startMemoryMongo,
@@ -14,16 +14,14 @@ import { __setPaymentProviderForTests } from './active-provider.js';
 import {
   applyProjectCap,
   beginDunning,
+  expireAllOverdueGraces,
   expireGraceIfNeeded,
   GRACE_WINDOW_MS,
   handleRefund,
+  handleUpgrade,
   selectProjectsToKeep,
 } from './lifecycle.service.js';
-import {
-  reconcileSubscriptions,
-  registerReconciliationCron,
-  unregisterReconciliationCron,
-} from './reconcile.js';
+import { reconcileSubscriptions } from './reconcile.js';
 import type { IPaymentProvider, NormalizedSubscription } from './payment-provider.js';
 
 async function owner(email = 'own@example.com') {
@@ -91,8 +89,9 @@ describe('lifecycle / guard branches', () => {
   it('expireGraceIfNeeded short-circuits for missing / non-past_due / still-in-grace subs', async () => {
     const u = await owner('exp@example.com');
     const c = await customerFor(String(u._id), 'exp');
+    const noop = { expired: false, paused: 0 };
     // no sub at all
-    expect(await expireGraceIfNeeded(String(u._id))).toBe(0);
+    expect(await expireGraceIfNeeded(String(u._id))).toEqual(noop);
     // active sub
     const active = await Subscription.create({
       userId: u._id,
@@ -105,12 +104,131 @@ describe('lifecycle / guard branches', () => {
       cancelAtPeriodEnd: false,
       currentPeriodEnd: null,
     });
-    expect(await expireGraceIfNeeded(String(u._id))).toBe(0);
+    expect(await expireGraceIfNeeded(String(u._id))).toEqual(noop);
     // past_due but still within grace
     active.status = 'past_due';
     active.graceEndsAt = new Date(Date.now() + GRACE_WINDOW_MS);
     await active.save();
-    expect(await expireGraceIfNeeded(String(u._id))).toBe(0);
+    expect(await expireGraceIfNeeded(String(u._id))).toEqual(noop);
+  });
+
+  it('expireAllOverdueGraces sweeps overdue rows and survives a failing row', async () => {
+    const u1 = await owner('sweep1@example.com');
+    const u2 = await owner('sweep2@example.com');
+    const c1 = await customerFor(String(u1._id), 'sw1');
+    const c2 = await customerFor(String(u2._id), 'sw2');
+    const past = new Date(Date.now() - 1000);
+    await Subscription.create({
+      userId: u1._id,
+      customerId: c1._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_sw1',
+      productId: 'p',
+      planSlug: 'pro',
+      status: 'past_due',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      graceEndsAt: past,
+    });
+    await Subscription.create({
+      userId: u2._id,
+      customerId: c2._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_sw2',
+      productId: 'p',
+      planSlug: 'pro',
+      status: 'past_due',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      graceEndsAt: past,
+    });
+    // over-cap projects for u1: free cap = 1 → one project gets paused
+    await project(String(u1._id), 'sw1a');
+    await project(String(u1._id), 'sw1b');
+    const summary = await expireAllOverdueGraces();
+    expect(summary).toEqual({ scanned: 2, downgraded: 2, paused: 1 });
+    expect(
+      (await Subscription.findOne({ providerSubscriptionId: 'sub_sw1' }))?.status,
+    ).toBe('canceled');
+
+    // failing row: make the sweep hit an error for one user, keep going
+    await clearCollections();
+    const u3 = await owner('sweep3@example.com');
+    const c3 = await customerFor(String(u3._id), 'sw3');
+    await Subscription.create({
+      userId: u3._id,
+      customerId: c3._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_sw3',
+      productId: 'p',
+      planSlug: 'pro',
+      status: 'past_due',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      graceEndsAt: past,
+    });
+    const spy = vi
+      .spyOn(Subscription, 'find')
+      .mockReturnValueOnce({
+        select: () => ({
+          lean: async () => [{ userId: u3._id }],
+        }),
+      } as never)
+      .mockImplementationOnce(() => {
+        throw new Error('db down');
+      });
+    const failed = await expireAllOverdueGraces();
+    expect(failed).toEqual({ scanned: 1, downgraded: 0, paused: 0 });
+    spy.mockRestore();
+  });
+
+  it('handleUpgrade unpauses everything under the new cap and requires selection when still over', async () => {
+    const u = await owner('up@example.com');
+    const c = await customerFor(String(u._id), 'up');
+    const sub = await Subscription.create({
+      userId: u._id,
+      customerId: c._id,
+      provider: 'polar',
+      providerSubscriptionId: 'sub_up',
+      productId: 'p',
+      planSlug: 'free',
+      status: 'active',
+      cancelAtPeriodEnd: false,
+      currentPeriodEnd: null,
+      selectionRequired: true,
+    });
+    await project(String(u._id), 'up-a', true);
+    await project(String(u._id), 'up-b', true);
+    // Unknown product id → free tier (cap 1) → 2 projects still over cap.
+    const still = await handleUpgrade(String(u._id), null);
+    expect(still).toEqual({ unpaused: 0, selectionRequired: true });
+    expect(
+      (await Project.find({ owner: u._id, paused: true })).length,
+    ).toBe(2);
+
+    // Business (unlimited) → everything reactivates, selection cleared.
+    const prev = env.POLAR_BUSINESS_PRODUCT_ID;
+    (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+      'prod_biz';
+    try {
+      const res = await handleUpgrade(String(u._id), 'prod_biz');
+      expect(res).toEqual({ unpaused: 2, selectionRequired: false });
+      expect(await Project.countDocuments({ owner: u._id, paused: true })).toBe(0);
+      expect((await Subscription.findById(sub._id))?.selectionRequired).toBe(false);
+      // Idempotent: nothing paused → no-op.
+      const again = await handleUpgrade(String(u._id), 'prod_biz');
+      expect(again).toEqual({ unpaused: 0, selectionRequired: false });
+      // Defensive: a driver result without modifiedCount coerces to 0.
+      const spy = vi
+        .spyOn(Project, 'updateMany')
+        .mockResolvedValueOnce({ acknowledged: true, modifiedCount: undefined } as never);
+      const coerced = await handleUpgrade(String(u._id), 'prod_biz');
+      expect(coerced).toEqual({ unpaused: 0, selectionRequired: false });
+      spy.mockRestore();
+    } finally {
+      (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+        prev;
+    }
   });
 
   it('applyProjectCap returns 0 when no projects exceed the cap', async () => {
@@ -246,8 +364,9 @@ describe('reconcile / status mapping + diff branches', () => {
     }
     await local('s_status', {}); // status differ (→revoked)
     await local('s_cancel', { currentPeriodEnd: dateP }); // cancel differ (remote trialing→active)
-    await local('s_period', { currentPeriodEnd: dateP }); // period differ (remote incomplete→active)
+    await local('s_period', { currentPeriodEnd: dateP }); // status+period differ (remote incomplete)
     await local('s_nodiff', {}); // identical → no heal
+    await local('s_perioddiff', { currentPeriodEnd: dateP }); // only period differs
     await local('s_canceled', {}); // → canceled
     await local('s_pastdue', {}); // → past_due
 
@@ -267,50 +386,91 @@ describe('reconcile / status mapping + diff branches', () => {
       remote('s_cancel', { status: 'trialing', cancelAtPeriodEnd: true, currentPeriodEnd: dateP }),
       remote('s_period', { status: 'incomplete', currentPeriodEnd: dateP2 }),
       remote('s_nodiff', {}),
+      remote('s_perioddiff', { currentPeriodEnd: dateP2 }),
       remote('s_canceled', { status: 'canceled' }),
       remote('s_pastdue', { status: 'past_due' }),
       remote('s_ghost', {}), // no local row → skipped
     ];
     const summary = await reconcileSubscriptions(reconcileProvider(remotes));
-    expect(summary.polled).toBe(7);
-    expect(summary.healed).toBe(5); // all but s_nodiff
+    expect(summary.polled).toBe(8);
+    expect(summary.healed).toBe(6); // all but s_nodiff
     expect(summary.errors).toBe(0);
     expect((await Subscription.findOne({ providerSubscriptionId: 's_status' }))?.status).toBe('revoked');
+    // `incomplete` persists as `incomplete` — never as entitled `active`.
+    expect((await Subscription.findOne({ providerSubscriptionId: 's_period' }))?.status).toBe('incomplete');
     expect((await Subscription.findOne({ providerSubscriptionId: 's_canceled' }))?.status).toBe('canceled');
     expect((await Subscription.findOne({ providerSubscriptionId: 's_pastdue' }))?.status).toBe('past_due');
     expect(await Subscription.countDocuments({ providerSubscriptionId: 's_ghost' })).toBe(0);
   });
-});
 
-describe('reconcile / cron registration', () => {
-  beforeAll(async () => {
-    await startMemoryMongo();
-  });
-  afterAll(async () => {
-    await stopMemoryMongo();
-  });
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('registers a job whose callback runs a reconciliation pass', async () => {
-    let captured: (() => Promise<void>) | null = null;
-    const registerSpy = vi
-      .spyOn(NodeCronScheduler.prototype, 'register')
-      .mockImplementation((_id, _expr, run) => {
-        captured = run;
+  it('heals productId drift and mirrors upgrade/downgrade side effects', async () => {
+    const prevPro = env.POLAR_PRO_PRODUCT_ID;
+    const prevBiz = env.POLAR_BUSINESS_PRODUCT_ID;
+    (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = 'prod_pro';
+    (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+      'prod_biz';
+    try {
+      const u = await owner('drift@example.com');
+      const customer = await Customer.create({
+        userId: u._id,
+        provider: 'polar',
+        providerCustomerId: 'cust_drift',
+        email: 'drift@example.com',
       });
-    const unregisterSpy = vi
-      .spyOn(NodeCronScheduler.prototype, 'unregister')
-      .mockImplementation(() => undefined);
+      async function localSub(id: string, over: Partial<Record<string, unknown>>) {
+        return Subscription.create({
+          userId: u._id,
+          customerId: customer._id,
+          provider: 'polar',
+          providerSubscriptionId: id,
+          productId: 'prod_pro',
+          planSlug: 'pro',
+          status: 'active',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+          ...over,
+        });
+      }
+      // Upgrade drift: local pro, remote business → heal + reactivate paused.
+      await localSub('s_up', {});
+      await project(String(u._id), 'drift-paused', true);
+      // Downgrade drift on a second row exercises the downgrade branch.
+      await localSub('s_down', { productId: 'prod_biz', planSlug: 'business' });
+      // Recovery drift: same product, local past_due, remote active.
+      await localSub('s_recover', { status: 'past_due' });
 
-    registerReconciliationCron();
-    expect(registerSpy).toHaveBeenCalledOnce();
-    expect(captured).toBeTypeOf('function');
-    // Invoke the scheduled callback directly (provider unconfigured → noop).
-    await captured!();
-
-    unregisterReconciliationCron();
-    expect(unregisterSpy).toHaveBeenCalledOnce();
+      function remote(id: string, productId: string): NormalizedSubscription {
+        return {
+          providerSubscriptionId: id,
+          providerCustomerId: 'cust_drift',
+          productId,
+          status: 'active',
+          cancelAtPeriodEnd: false,
+          currentPeriodEnd: null,
+        };
+      }
+      const summary = await reconcileSubscriptions(
+        reconcileProvider([
+          remote('s_up', 'prod_biz'),
+          remote('s_down', 'prod_pro'),
+          remote('s_recover', 'prod_pro'),
+        ]),
+      );
+      expect(summary.healed).toBe(3);
+      const up = await Subscription.findOne({ providerSubscriptionId: 's_up' });
+      expect(up?.planSlug).toBe('business');
+      expect(up?.productId).toBe('prod_biz');
+      const down = await Subscription.findOne({ providerSubscriptionId: 's_down' });
+      expect(down?.planSlug).toBe('pro');
+      expect(
+        (await Subscription.findOne({ providerSubscriptionId: 's_recover' }))?.status,
+      ).toBe('active');
+      // Upgrade side effect reactivated the paused project.
+      expect(await Project.countDocuments({ owner: u._id, paused: true })).toBe(0);
+    } finally {
+      (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = prevPro;
+      (env as { POLAR_BUSINESS_PRODUCT_ID?: string }).POLAR_BUSINESS_PRODUCT_ID =
+        prevBiz;
+    }
   });
 });

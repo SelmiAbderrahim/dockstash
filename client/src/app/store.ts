@@ -2,17 +2,21 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { authReducer } from '@features/auth';
 import { billingReducer } from '@features/billing';
 import { dashboardReducer } from '@features/dashboard';
+import { fleetReducer } from '@features/fleet';
 import { projectsReducer } from '@features/projects';
 import { snapshotsReducer } from '@features/snapshots';
 import { settingsReducer } from '@features/settings';
+import { superadminReducer } from '@features/superadmin';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   billing: billingReducer,
   dashboard: dashboardReducer,
+  fleet: fleetReducer,
   projects: projectsReducer,
   snapshots: snapshotsReducer,
   settings: settingsReducer,
+  superadmin: superadminReducer,
 });
 
 // Derived from the reducer (not the store) so there is no store→type cycle.

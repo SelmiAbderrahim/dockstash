@@ -19,7 +19,7 @@ describe('snapshots api wrappers', () => {
   });
 
   it('restoreRequest posts the enqueue body and unwraps jobId', async () => {
-    apiClient.mockResolvedValue({ jobId: 'job-9' } as never);
+    apiClient.mockResolvedValue({ job: { id: 'job-9', kind: 'restore' } } as never);
     const result = await restoreRequest({
       projectId: 'p1',
       snapshotId: 's1',

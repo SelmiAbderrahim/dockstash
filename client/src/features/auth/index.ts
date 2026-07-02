@@ -2,9 +2,12 @@ export { authReducer } from './store/slice';
 export { authRoutes } from './routes';
 export { RequireAuth } from './components/RequireAuth';
 export { RequireVerified } from './components/RequireVerified';
+export { RequireRole } from './components/RequireRole';
 export {
   selectAuthenticated,
   selectEmailVerified,
+  selectUserRole,
+  selectOtpChallengeId,
   selectPendingVerificationEmail,
   selectAuthError,
   selectAuthMessage,

@@ -12,5 +12,6 @@
   "emailAlreadyRegistered": "Этот email уже зарегистрирован.",
   "passwordTooShort": "Пароль должен содержать не менее 8 символов.",
   "emailRequired": "Введите email",
-  "passwordRequired": "Введите пароль"
+  "passwordRequired": "Введите пароль",
+  "otpCodeInvalid": "Введите 6-значный код."
 }

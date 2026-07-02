@@ -1,15 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import * as client from '@shared/api/client';
 import {
-  createCustomerRequest,
-  fetchCustomerRequest,
-  cancelSubscriptionRequest,
-  updateSubscriptionRequest,
-  updateBillingRequest,
   fetchPricingTiers,
   fetchBillingOverview,
   fetchUsage,
   createCheckout,
+  openPortalRequest,
   changePlan,
   selectProjectsToKeep,
 } from './api';
@@ -23,43 +19,6 @@ beforeEach(() => {
 });
 
 describe('billing api wrappers', () => {
-  it('createCustomerRequest posts token, plan, lastFour', async () => {
-    await createCustomerRequest('tok', 'gold', '4242');
-    expect(apiClient).toHaveBeenCalledWith('/pay/customer', {
-      method: 'POST',
-      auth: true,
-      body: { stripeToken: 'tok', plan: 'gold', lastFour: '4242' },
-    });
-  });
-
-  it('fetchCustomerRequest gets the authed customer', async () => {
-    await fetchCustomerRequest();
-    expect(apiClient).toHaveBeenCalledWith('/pay/customer', { auth: true });
-  });
-
-  it('cancelSubscriptionRequest gets the authed customer', async () => {
-    await cancelSubscriptionRequest();
-    expect(apiClient).toHaveBeenCalledWith('/pay/customer', { auth: true });
-  });
-
-  it('updateSubscriptionRequest puts the new plan', async () => {
-    await updateSubscriptionRequest('silver');
-    expect(apiClient).toHaveBeenCalledWith('/pay/subscription', {
-      method: 'PUT',
-      auth: true,
-      body: { newPlan: 'silver' },
-    });
-  });
-
-  it('updateBillingRequest puts the stripe token', async () => {
-    await updateBillingRequest('tok');
-    expect(apiClient).toHaveBeenCalledWith('/pay/customer', {
-      method: 'PUT',
-      auth: true,
-      body: { stripeToken: 'tok' },
-    });
-  });
-
   it('fetchPricingTiers gets public tiers', async () => {
     await fetchPricingTiers();
     expect(apiClient).toHaveBeenCalledWith('/billing/pricing-tiers');
@@ -91,6 +50,11 @@ describe('billing api wrappers', () => {
       auth: true,
       body: { productId: 'prod_1', successUrl: 'https://s', cancelUrl: undefined },
     });
+  });
+
+  it('openPortalRequest gets the authed portal session', async () => {
+    await openPortalRequest();
+    expect(apiClient).toHaveBeenCalledWith('/billing/portal', { auth: true });
   });
 
   it('changePlan posts the productId', async () => {

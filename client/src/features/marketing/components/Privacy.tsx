@@ -340,6 +340,11 @@ export const Privacy = () => {
   const { locale } = useMarketingRoute();
 
   const jsonLd = schema.graph(
+    schema.webPage(
+      'Privacy Policy',
+      'How Dockstash collects, uses, and protects your data.',
+      localeHref('/privacy', locale),
+    ),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Privacy Policy', path: localeHref('/privacy', locale) },
@@ -353,6 +358,7 @@ export const Privacy = () => {
         description="What Dockstash collects and why: account and project configuration only, secrets encrypted with AES-256-GCM, backups on your own storage, no analytics cookies, and no data sales."
         basePath="/privacy"
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 

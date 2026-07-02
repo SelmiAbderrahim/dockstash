@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/server.ts'],
+  entry: ['src/server.ts', 'src/seed-superadmin.ts'],
   format: ['cjs'],
   target: 'node20',
   outDir: 'dist',

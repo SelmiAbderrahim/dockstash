@@ -12,5 +12,6 @@
   "emailAlreadyRegistered": "该邮箱已被注册。",
   "passwordTooShort": "密码至少需要 8 个字符。",
   "emailRequired": "请输入邮箱",
-  "passwordRequired": "请输入密码"
+  "passwordRequired": "请输入密码",
+  "otpCodeInvalid": "请输入 6 位验证码。"
 }

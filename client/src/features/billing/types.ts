@@ -1,44 +1,12 @@
-export interface SubscriptionPlan {
-  id: string;
-  amount: number;
-}
+// Plans, Usage, Overview, Selection (prompt 07 / Polar).
 
-export interface SubscriptionData {
-  plan: SubscriptionPlan;
-  current_period_end: number;
-  cancel_at_period_end: boolean;
-}
-
-export interface SubscriptionsCollection {
-  total_count: number;
-  data: SubscriptionData[];
-}
-
-export interface PaymentSource {
-  last4: string;
-}
-
-export interface PaymentSourcesCollection {
-  total_count: number;
-  data: PaymentSource[];
-}
-
-export interface Customer {
-  subscriptions?: SubscriptionsCollection;
-  sources?: PaymentSourcesCollection;
-}
-
-export interface MessageResponse {
-  message: string;
-}
-
-export interface FetchCustomerResponse {
-  customer: Customer;
-}
-
-// New (prompt 07) — Plans, Usage, Overview, Selection.
-
-export type BillingStatus = 'active' | 'past_due' | 'canceled' | 'revoked' | 'none';
+export type BillingStatus =
+  | 'active'
+  | 'past_due'
+  | 'incomplete'
+  | 'canceled'
+  | 'revoked'
+  | 'none';
 export type ScheduleFrequency = 'daily' | 'hourly' | 'any-cron';
 
 export interface PricingTier {
@@ -102,15 +70,20 @@ export interface ChangePlanResponse {
   status: string;
 }
 
+export interface PortalResponse {
+  url: string;
+}
+
 export interface SelectProjectsResponse {
   active: number;
   paused: number;
 }
 
 export interface BillingState {
-  customer: Customer;
   message: string;
   error: string;
+  /** Usage-tab-scoped error; rendered inline with a retry action. */
+  usageError: string;
   tiers: PricingTier[];
   overview: BillingOverview | null;
   usage: UsageResponse | null;

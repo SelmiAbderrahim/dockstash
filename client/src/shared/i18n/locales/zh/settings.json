@@ -5,7 +5,8 @@
     "aria": "设置分区",
     "storage": "存储",
     "retention": "保留策略",
-    "password": "加密密码"
+    "password": "加密密码",
+    "recovery": "恢复"
   },
   "actions": {
     "save": "保存",
@@ -38,5 +39,32 @@
     "mismatch": "两次输入不一致。",
     "escrow": "我已妥善保存该密码。",
     "saved": "密码已保存。"
+  },
+  "recovery": {
+    "export": {
+      "title": "导出配置",
+      "description": "下载包含项目、存储和设置的 JSON 导出文件。",
+      "action": "下载导出文件",
+      "working": "正在导出…",
+      "done": "导出已下载。"
+    },
+    "codes": {
+      "title": "恢复代码",
+      "description": "生成一次性恢复代码，用于重新获得加密仓库的访问权限。",
+      "action": "生成恢复代码",
+      "working": "正在生成…",
+      "warning": "请立即保存这些代码。它们不会再次显示。",
+      "copy": "全部复制",
+      "copied": "已复制。"
+    },
+    "selfBackup": {
+      "title": "自我备份",
+      "description": "将 Dockstash 自身的配置备份到您的存储。",
+      "action": "运行自我备份",
+      "working": "正在触发…",
+      "triggered": "自我备份已触发。",
+      "runs": "最近运行",
+      "empty": "暂无自我备份运行记录。"
+    }
   }
 }

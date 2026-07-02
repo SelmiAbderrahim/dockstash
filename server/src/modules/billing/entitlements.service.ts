@@ -2,8 +2,8 @@ import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { getPaymentProvider } from './active-provider.js';
-import { Subscription } from './subscription.model.js';
-import type { PlanSlug } from './subscription.model.js';
+import { findEffectiveSubscription } from './subscription.model.js';
+import type { PlanSlug, SubscriptionStatusName } from './subscription.model.js';
 import {
   ENTITLEMENTS,
   getEntitlements,
@@ -19,7 +19,7 @@ export interface ResolvedEntitlements {
   slug: PlanSlug;
   entitlements: Entitlements;
   selectionRequired: boolean;
-  status: 'active' | 'past_due' | 'canceled' | 'revoked' | 'none';
+  status: SubscriptionStatusName | 'none';
   graceEndsAt: Date | null;
 }
 
@@ -30,7 +30,7 @@ export interface ResolvedEntitlements {
  * - No subscription row → `free`.
  * - `active` → the tier from `planSlug`.
  * - `past_due` within grace (`graceEndsAt > now`) → keep paid entitlements.
- * - `past_due` past grace, `canceled`, `revoked` → `free`.
+ * - `past_due` past grace, `incomplete`, `canceled`, `revoked` → `free`.
  */
 export async function resolveEntitlements(
   userId: string,
@@ -46,9 +46,7 @@ export async function resolveEntitlements(
     };
   }
 
-  const sub = await Subscription.findOne({ userId, provider: provider.name })
-    .sort({ createdAt: -1 })
-    .lean();
+  const sub = await findEffectiveSubscription(userId, provider.name);
 
   if (!sub) {
     return {
@@ -206,6 +204,31 @@ export async function clampRetentionDays(
 ): Promise<number> {
   const resolved = await resolveEntitlements(userId);
   return Math.min(requestedDays, resolved.entitlements.retentionDays);
+}
+
+export interface RetentionPolicyShape {
+  keepDaily: number;
+  keepWeekly: number;
+  keepMonthly: number;
+}
+
+/**
+ * Clamp a restic keep-count retention policy to the tier's retention ceiling
+ * (in days). Never widens; only narrows: daily keeps are capped at the tier's
+ * day count, weekly/monthly keeps at the equivalent number of weeks/months.
+ * The prune job calls this so a downgraded user cannot retain beyond their
+ * tier by keeping an old, wider policy on the schedule.
+ */
+export async function clampRetentionPolicy(
+  userId: string,
+  policy: RetentionPolicyShape,
+): Promise<RetentionPolicyShape> {
+  const tierDays = (await resolveEntitlements(userId)).entitlements.retentionDays;
+  return {
+    keepDaily: Math.min(policy.keepDaily, tierDays),
+    keepWeekly: Math.min(policy.keepWeekly, Math.ceil(tierDays / 7)),
+    keepMonthly: Math.min(policy.keepMonthly, Math.ceil(tierDays / 30)),
+  };
 }
 
 /**

@@ -12,5 +12,6 @@
   "emailAlreadyRegistered": "That email is already registered.",
   "passwordTooShort": "Password must be at least 8 characters.",
   "emailRequired": "Please enter an email",
-  "passwordRequired": "Please enter a password"
+  "passwordRequired": "Please enter a password",
+  "otpCodeInvalid": "Enter the 6-digit code."
 }

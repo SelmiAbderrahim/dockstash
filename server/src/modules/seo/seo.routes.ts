@@ -4,14 +4,16 @@ import {
   ALLOWED_CRAWLERS,
   ALTERNATIVE_PATHS,
   buildUrlEntry,
+  COMPETITOR_SLUGS,
   CORE_PATHS,
   DISALLOWED_PATHS,
   GUIDE_PATHS,
+  GUIDE_SLUGS,
+  SEO_LASTMOD,
+  TRANSLATED_PATHS,
   USECASE_PATHS,
+  USECASE_SLUGS,
 } from './seo.data.js';
-
-// Build-time constant so sitemap output is deterministic (no Date.now()).
-const LASTMOD = '2026-07-01';
 
 /**
  * Canonical public origin for absolute URLs. `CLIENT_URL` is the public web
@@ -50,7 +52,7 @@ function renderRobots(origin: string): string {
 
 function renderSitemapIndex(origin: string): string {
   const entries = CHILD_SITEMAPS.map((path) =>
-    ['  <sitemap>', `    <loc>${origin}${path}</loc>`, `    <lastmod>${LASTMOD}</lastmod>`, '  </sitemap>'].join(
+    ['  <sitemap>', `    <loc>${origin}${path}</loc>`, `    <lastmod>${SEO_LASTMOD}</lastmod>`, '  </sitemap>'].join(
       '\n',
     ),
   );
@@ -64,7 +66,17 @@ function renderSitemapIndex(origin: string): string {
 }
 
 function renderUrlset(origin: string, paths: readonly string[]): string {
-  const entries = paths.map((path) => buildUrlEntry(origin, path, LASTMOD));
+  // hreflang alternates are only advertised for pages that are actually
+  // translated per locale; all programmatic pages (untranslated core paths,
+  // alternatives/vs, guides, use-cases) emit plain <loc> + <lastmod> entries.
+  const entries = paths.map((path) =>
+    buildUrlEntry(
+      origin,
+      path,
+      SEO_LASTMOD,
+      (TRANSLATED_PATHS as readonly string[]).includes(path),
+    ),
+  );
   return [
     XML_HEADER,
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
@@ -74,8 +86,66 @@ function renderUrlset(origin: string, paths: readonly string[]): string {
   ].join('\n');
 }
 
+/** "restic-cron-scripts" → "Restic cron scripts". */
+function humanizeSlug(slug: string): string {
+  const words = slug.replace(/-/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+/**
+ * llms.txt — a markdown site manifest for AI crawlers/assistants
+ * (https://llmstxt.org). Mirrors the sitemap inventory with human titles so
+ * LLMs can navigate and cite the marketing surface without rendering JS.
+ */
+export function renderLlmsTxt(origin: string): string {
+  const lines: string[] = [
+    '# Dockstash',
+    '',
+    '> Dockstash makes backing up any Docker project one click — automatic detection, encrypted off-site Restic snapshots, and one-click restore.',
+    '',
+    'Dockstash is a Docker-aware backup orchestrator: it auto-detects volumes, databases and config, dumps databases consistently (pg_dumpall, mysqldump --single-transaction, mongodump --oplog), and stores encrypted Restic snapshots off-site with automated restore-drill verification.',
+    '',
+    '## Product',
+    `- [Home](${origin}/): What Dockstash does and how verified Docker backups work`,
+    `- [Pricing](${origin}/pricing): Plans, including the free self-host tier`,
+    `- [Security](${origin}/security): Security model, encryption, and restore verification`,
+    `- [FAQ](${origin}/faq): Common questions about backing up Docker projects`,
+    '',
+    '## Guides',
+  ];
+  for (const slug of GUIDE_SLUGS) {
+    lines.push(
+      `- [Back up ${humanizeSlug(slug)} in Docker](${origin}/guides/backup-${slug}-docker)`,
+    );
+  }
+  lines.push('', '## Backup targets');
+  for (const slug of USECASE_SLUGS) {
+    lines.push(
+      `- [Back up ${humanizeSlug(slug)} running in Docker](${origin}/backup/${slug}-docker)`,
+    );
+  }
+  lines.push('', '## Comparisons');
+  lines.push(`- [Dockstash alternatives](${origin}/alternatives)`);
+  for (const slug of COMPETITOR_SLUGS) {
+    lines.push(`- [${humanizeSlug(slug)} alternative](${origin}/alternatives/${slug})`);
+    lines.push(`- [Dockstash vs ${humanizeSlug(slug)}](${origin}/vs/${slug})`);
+  }
+  lines.push(
+    `- [Self-hosted backup vs cloud backup](${origin}/compare/self-hosted-backup-vs-cloud-backup)`,
+  );
+  lines.push('', '## Legal');
+  lines.push(`- [Privacy policy](${origin}/privacy)`);
+  lines.push(`- [Terms of service](${origin}/terms)`);
+  lines.push('');
+  return lines.join('\n');
+}
+
 const robotsHandler: RequestHandler = (_req, res) => {
   res.type('text/plain').send(renderRobots(publicOrigin()));
+};
+
+const llmsHandler: RequestHandler = (_req, res) => {
+  res.type('text/plain; charset=utf-8').send(renderLlmsTxt(publicOrigin()));
 };
 
 const sitemapIndexHandler: RequestHandler = (_req, res) => {
@@ -90,7 +160,15 @@ function urlsetHandler(paths: readonly string[]): RequestHandler {
 
 export const seoRouter: Router = Router();
 
+// Content is deterministic per deploy — safe for shared caches to hold for an
+// hour and revalidate lazily.
+seoRouter.use((_req, res, next) => {
+  res.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=86400');
+  next();
+});
+
 seoRouter.get('/robots.txt', robotsHandler);
+seoRouter.get('/llms.txt', llmsHandler);
 seoRouter.get('/sitemap.xml', sitemapIndexHandler);
 seoRouter.get('/sitemap-core.xml', urlsetHandler(CORE_PATHS));
 seoRouter.get('/sitemap-alternatives.xml', urlsetHandler(ALTERNATIVE_PATHS));

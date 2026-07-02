@@ -1,7 +1,14 @@
 import mongoose, { type InferSchemaType, type HydratedDocument } from 'mongoose';
 
-export const JOB_KINDS = ['backup', 'prune', 'check', 'drill'] as const;
+export const JOB_KINDS = ['backup', 'prune', 'check', 'drill', 'restore'] as const;
 export type JobKind = (typeof JOB_KINDS)[number];
+
+/**
+ * Kinds a cron `Schedule` may carry. `restore` is deliberately excluded —
+ * restores are always explicit one-shot user actions, never recurring jobs.
+ */
+export const SCHEDULABLE_JOB_KINDS = ['backup', 'prune', 'check', 'drill'] as const;
+export type SchedulableJobKind = (typeof SCHEDULABLE_JOB_KINDS)[number];
 
 export const SCHEDULE_STATUSES = [
   'idle',
@@ -35,7 +42,7 @@ const scheduleSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    kind: { type: String, enum: JOB_KINDS, required: true },
+    kind: { type: String, enum: SCHEDULABLE_JOB_KINDS, required: true },
     cron: { type: String, required: true, trim: true },
     retention: { type: retentionSchema, default: () => ({}) },
     enabled: { type: Boolean, default: true },

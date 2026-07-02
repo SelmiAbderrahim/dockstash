@@ -7,12 +7,21 @@ export interface RetentionPolicy {
   keepMonthly: number;
 }
 
+/** One-shot restore parameters carried on ad-hoc `restore` jobs. */
+export interface RestoreJobPayload {
+  snapshotId: string;
+  /** true = restore over the live project path; false = restore to targetPath. */
+  overwrite: boolean;
+  targetPath?: string;
+}
+
 export interface JobData {
   projectId: string;
   owner: string;
   kind: JobKind;
   retention?: RetentionPolicy;
   scheduleId?: string;
+  payload?: RestoreJobPayload;
 }
 
 export interface Job {

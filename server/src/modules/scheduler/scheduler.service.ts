@@ -10,6 +10,7 @@ import { Schedule, type ScheduleHydrated, type JobKind } from './scheduler.model
 import type {
   EntitlementChecker,
   Job,
+  RestoreJobPayload,
   RetentionPolicy,
   SchedulerQueue,
 } from './scheduler.boundaries.js';
@@ -115,6 +116,7 @@ export async function enqueueNow(
   let kind: JobKind;
   let retention: RetentionPolicy | undefined;
   let scheduleId: string | undefined;
+  let payload: RestoreJobPayload | undefined;
 
   if ('scheduleId' in input) {
     const schedule = await loadOwnedSchedule(input.scheduleId, userId, { t });
@@ -133,6 +135,13 @@ export async function enqueueNow(
     projectId = input.projectId;
     kind = input.kind;
     retention = input.retention;
+    if (kind === 'restore' && input.snapshotId && input.overwrite !== undefined) {
+      payload = {
+        snapshotId: input.snapshotId,
+        overwrite: input.overwrite,
+        targetPath: input.targetPath,
+      };
+    }
   }
 
   const allowed = await deps.entitlements.canEnqueue(userId, kind);
@@ -144,6 +153,7 @@ export async function enqueueNow(
     kind,
     retention,
     scheduleId,
+    payload,
   });
 
   if (scheduleId) {

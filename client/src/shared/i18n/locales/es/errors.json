@@ -12,5 +12,6 @@
   "emailAlreadyRegistered": "Ese correo ya está registrado.",
   "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
   "emailRequired": "Introduce un correo",
-  "passwordRequired": "Introduce una contraseña"
+  "passwordRequired": "Introduce una contraseña",
+  "otpCodeInvalid": "Introduce el código de 6 dígitos."
 }

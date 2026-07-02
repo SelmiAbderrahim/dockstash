@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { authReducer, clearError, clearMessage } from './slice';
+import { authReducer, cancelOtp, clearError, clearMessage } from './slice';
 import {
   loginUser,
   logoutUser,
@@ -8,12 +8,15 @@ import {
   requestPasswordReset,
   resendVerification,
   verifyEmail,
+  verifyLoginOtp,
 } from './thunks';
 import type { AuthState } from '../types';
 
 const base = (over: Partial<AuthState> = {}): AuthState => ({
   authenticated: false,
   emailVerified: false,
+  role: '',
+  otpChallengeId: '',
   pendingVerificationEmail: '',
   error: '',
   message: '',
@@ -46,10 +49,63 @@ describe('auth slice', () => {
     expect(authReducer(base({ message: 'x' }), clearMessage()).message).toBe('');
   });
 
-  it('loginUser.fulfilled authenticates and carries emailVerified', () => {
-    const state = authReducer(base(), { type: loginUser.fulfilled.type, payload: true });
+  it('derives role from the user cookie at module load', async () => {
+    vi.resetModules();
+    document.cookie = `user=${encodeURIComponent(JSON.stringify({ role: 'Superadmin' }))}; path=/`;
+    const fresh = await import('./slice');
+    const state = fresh.authReducer(undefined, { type: 'unknown' });
+    expect(state.role).toBe('Superadmin');
+  });
+
+  it('loginUser.fulfilled authenticates and carries emailVerified + role', () => {
+    const state = authReducer(base(), {
+      type: loginUser.fulfilled.type,
+      payload: { otpRequired: false, emailVerified: true, role: 'Member' },
+    });
     expect(state.authenticated).toBe(true);
     expect(state.emailVerified).toBe(true);
+    expect(state.role).toBe('Member');
+    expect(state.otpChallengeId).toBe('');
+  });
+
+  it('loginUser.fulfilled with an OTP challenge stays unauthenticated', () => {
+    const state = authReducer(base(), {
+      type: loginUser.fulfilled.type,
+      payload: { otpRequired: true, challengeId: 'ch1' },
+    });
+    expect(state.authenticated).toBe(false);
+    expect(state.otpChallengeId).toBe('ch1');
+  });
+
+  it('verifyLoginOtp.fulfilled authenticates and clears the challenge', () => {
+    const state = authReducer(base({ otpChallengeId: 'ch1' }), {
+      type: verifyLoginOtp.fulfilled.type,
+      payload: { emailVerified: true, role: 'Superadmin' },
+    });
+    expect(state.authenticated).toBe(true);
+    expect(state.role).toBe('Superadmin');
+    expect(state.otpChallengeId).toBe('');
+  });
+
+  it('verifyLoginOtp.rejected keeps the challenge for retry', () => {
+    const withPayload = authReducer(base({ otpChallengeId: 'ch1' }), {
+      type: verifyLoginOtp.rejected.type,
+      payload: 'bad',
+    });
+    expect(withPayload.error).toBe('bad');
+    expect(withPayload.otpChallengeId).toBe('ch1');
+    expect(
+      authReducer(base({ otpChallengeId: 'ch1' }), {
+        type: verifyLoginOtp.rejected.type,
+        payload: undefined,
+      }).error,
+    ).toBe('Verification failed.');
+  });
+
+  it('cancelOtp clears the challenge and error', () => {
+    const state = authReducer(base({ otpChallengeId: 'ch1', error: 'x' }), cancelOtp());
+    expect(state.otpChallengeId).toBe('');
+    expect(state.error).toBe('');
   });
 
   it('loginUser.rejected records the error (payload and fallback)', () => {
@@ -64,10 +120,11 @@ describe('auth slice', () => {
   it('registerUser.fulfilled stores the pending email and stays unverified', () => {
     const state = authReducer(base(), {
       type: registerUser.fulfilled.type,
-      payload: { email: 'a@b.co', emailVerified: false },
+      payload: { email: 'a@b.co', emailVerified: false, role: 'Member' },
     });
     expect(state.authenticated).toBe(true);
     expect(state.emailVerified).toBe(false);
+    expect(state.role).toBe('Member');
     expect(state.pendingVerificationEmail).toBe('a@b.co');
   });
 
@@ -82,11 +139,19 @@ describe('auth slice', () => {
 
   it('logoutUser.fulfilled clears session state', () => {
     const state = authReducer(
-      base({ authenticated: true, emailVerified: true, pendingVerificationEmail: 'a@b.co' }),
+      base({
+        authenticated: true,
+        emailVerified: true,
+        role: 'Superadmin',
+        otpChallengeId: 'ch1',
+        pendingVerificationEmail: 'a@b.co',
+      }),
       { type: logoutUser.fulfilled.type, payload: 'bye' },
     );
     expect(state.authenticated).toBe(false);
     expect(state.emailVerified).toBe(false);
+    expect(state.role).toBe('');
+    expect(state.otpChallengeId).toBe('');
     expect(state.pendingVerificationEmail).toBe('');
     expect(state.error).toBe('bye');
   });

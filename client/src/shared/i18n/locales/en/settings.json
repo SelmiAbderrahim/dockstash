@@ -5,7 +5,8 @@
     "aria": "Settings sections",
     "storage": "Storage",
     "retention": "Retention",
-    "password": "Encryption password"
+    "password": "Encryption password",
+    "recovery": "Recovery"
   },
   "actions": {
     "save": "Save",
@@ -38,5 +39,32 @@
     "mismatch": "Passwords do not match.",
     "escrow": "I have saved this password somewhere safe.",
     "saved": "Password saved."
+  },
+  "recovery": {
+    "export": {
+      "title": "Export configuration",
+      "description": "Download a JSON export of your projects, storage, and settings.",
+      "action": "Download export",
+      "working": "Exporting…",
+      "done": "Export downloaded."
+    },
+    "codes": {
+      "title": "Recovery codes",
+      "description": "Generate one-time recovery codes to regain access to your encrypted repositories.",
+      "action": "Generate recovery codes",
+      "working": "Generating…",
+      "warning": "Save these codes now. They will never be shown again.",
+      "copy": "Copy all",
+      "copied": "Copied."
+    },
+    "selfBackup": {
+      "title": "Self-backup",
+      "description": "Back up the Dockstash configuration itself to your storage.",
+      "action": "Run self-backup",
+      "working": "Triggering…",
+      "triggered": "Self-backup triggered.",
+      "runs": "Recent runs",
+      "empty": "No self-backup runs yet."
+    }
   }
 }

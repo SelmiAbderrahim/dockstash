@@ -39,6 +39,19 @@ export const envSchema = z.object({
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
 
+  // Superadmin bootstrap — optional. Free / self-host boots without these;
+  // the entrypoint seeder skips with a warning when either is unset. The
+  // compose file passes `${VAR:-}` which yields an empty string, so map ''
+  // back to undefined before validating.
+  SUPERADMIN_EMAIL: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().email().toLowerCase().optional(),
+  ),
+  SUPERADMIN_PASSWORD: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(12).optional(),
+  ),
+
   // Alerting — optional with a sane default (see IDEA.md).
   ALERT_HEARTBEAT_HOURS: z.coerce.number().int().positive().default(24),
 
@@ -51,6 +64,23 @@ export const envSchema = z.object({
   // Optional failure-alert webhook. When set, `sendFailureAlert` POSTs the
   // alert payload here in addition to the Resend email (per IDEA.md §7).
   ALERT_WEBHOOK_URL: z.string().url().optional(),
+
+  // ------------------------------------------------------------------
+  // Restic execution. `placeholder` (default) keeps the throwing runner —
+  // tests and bare-metal dev boot unchanged; compose sets `process` to spawn
+  // the real binary. DOCKER_HOST points at the socket proxy for dump execs.
+  // ------------------------------------------------------------------
+  RESTIC_RUNNER: z.enum(['placeholder', 'process']).default('placeholder'),
+  RESTIC_BINARY: z.string().min(1).default('restic'),
+  RESTIC_CACHE_DIR: z.string().min(1).default('/tmp/restic-cache'),
+  DOCKER_HOST: z.string().optional(),
+
+  // Contact-form recipient. Optional — communication.service falls back to a
+  // placeholder and logs a warning when unset while email is configured.
+  CONTACT_RECIPIENT: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().email().optional(),
+  ),
 
   // ------------------------------------------------------------------
   // Security (prompt 11): rate-limit knobs + CSRF cookie name + legal

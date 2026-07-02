@@ -8,12 +8,14 @@ import {
   resetPassword,
   signup,
   verifyEmail,
+  verifyOtp,
 } from './auth.controller.js';
 
 export const authRouter: Router = Router();
 
 authRouter.post('/signup', signup);
 authRouter.post('/login', login);
+authRouter.post('/otp/verify', verifyOtp);
 authRouter.post('/refresh', requireAuth, refresh);
 authRouter.post('/forgot-password', forgotPassword);
 authRouter.post('/reset-password/:token', resetPassword);

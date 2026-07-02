@@ -4,10 +4,12 @@ import { authRoutes } from '@features/auth';
 import { billingRoutes } from '@features/billing';
 import { dashboardRoutes } from '@features/dashboard';
 import { adminRoutes } from '@features/admin';
+import { fleetRoutes } from '@features/fleet';
 import { marketingRoutes } from '@features/marketing';
 import { projectsRoutes } from '@features/projects';
 import { snapshotsRoutes } from '@features/snapshots';
 import { settingsRoutes } from '@features/settings';
+import { superadminRoutes } from '@features/superadmin';
 
 /**
  * Authenticated SPA shell. A pathless parent so its children resolve to
@@ -21,9 +23,11 @@ export const appShellRoutes: RouteObject[] = [
       ...billingRoutes,
       ...dashboardRoutes,
       ...adminRoutes,
+      ...fleetRoutes,
       ...projectsRoutes,
       ...snapshotsRoutes,
       ...settingsRoutes,
+      ...superadminRoutes,
     ],
   },
 ];

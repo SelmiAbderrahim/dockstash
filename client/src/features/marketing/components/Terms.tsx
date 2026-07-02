@@ -312,6 +312,11 @@ export const Terms = () => {
   const { locale } = useMarketingRoute();
 
   const jsonLd = schema.graph(
+    schema.webPage(
+      'Terms of Service',
+      'The terms that govern your use of Dockstash.',
+      localeHref('/terms', locale),
+    ),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Terms of Service', path: localeHref('/terms', locale) },
@@ -322,9 +327,10 @@ export const Terms = () => {
     <>
       <Seo
         title="Terms of Service — Dockstash"
-        description="The terms that govern Dockstash: you own your data and backups, billing via Polar with cancel-anytime, a 30-day deletion grace period, and clear responsibilities for keys and restore verification."
+        description="The terms that govern Dockstash: you own your data and backups, cancel-anytime billing, and a 30-day deletion grace period."
         basePath="/terms"
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 

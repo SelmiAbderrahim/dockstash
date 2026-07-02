@@ -2,10 +2,18 @@ import type { RequestHandler } from 'express';
 import passport from 'passport';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { HttpError } from '../../shared/utils/http-error.js';
-import { findUserById, toPublicUser } from '../users/index.js';
+import { extractIp } from '../audit/index.js';
+import { ROLE_SUPERADMIN, findUserById, toPublicUser } from '../users/index.js';
+import {
+  computeFingerprint,
+  createLoginChallenge,
+  isTrustedDevice,
+  verifyLoginChallenge,
+} from './login-otp.service.js';
 import {
   forgotPasswordSchema,
   loginSchema,
+  otpVerifySchema,
   registerSchema,
   resendVerificationSchema,
   resetPasswordParamsSchema,
@@ -69,19 +77,51 @@ export const login: RequestHandler = (req, res, next) => {
         return;
       }
       findUserById(user.id)
-        .then((hydrated) => {
+        .then(async (hydrated) => {
           /* c8 ignore start -- the user was just authenticated; it cannot vanish mid-request */
           if (!hydrated) {
             next(HttpError.unauthorized('errors.userNotFound'));
             return;
           }
           /* c8 ignore stop */
+          // Superadmin accounts get a second factor from unknown devices:
+          // known device/IP → normal login; unknown → email-OTP challenge,
+          // no token issued until the code is verified.
+          if (hydrated.role === ROLE_SUPERADMIN) {
+            const ip = extractIp(req);
+            const userAgent = req.headers['user-agent'];
+            const fingerprint = computeFingerprint(ip, userAgent);
+            const trusted = await isTrustedDevice(hydrated._id.toString(), fingerprint);
+            if (!trusted) {
+              const { challengeId } = await createLoginChallenge(hydrated, {
+                ip,
+                userAgent,
+                locale: req.language,
+              });
+              res.status(200).json({
+                otpRequired: true,
+                challengeId,
+                message: req.t('auth.otp.sent'),
+              });
+              return;
+            }
+          }
           res.status(200).json(issueLoginResponse(hydrated));
         })
         .catch(next);
     },
   )(req, res, next);
 };
+
+export const verifyOtp: RequestHandler = asyncHandler(async (req, res) => {
+  const { challengeId, code } = otpVerifySchema.parse(req.body);
+  const user = await verifyLoginChallenge(challengeId, code, {
+    ip: extractIp(req),
+    userAgent: req.headers['user-agent'],
+  });
+  // Identical response shape to a normal login.
+  res.status(200).json(issueLoginResponse(user));
+});
 
 export const forgotPassword: RequestHandler = asyncHandler(async (req, res) => {
   const { email } = forgotPasswordSchema.parse(req.body);

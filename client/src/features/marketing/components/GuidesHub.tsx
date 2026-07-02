@@ -12,6 +12,7 @@ import {
   Eyebrow,
   FaqSection,
   LinkCard,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -69,6 +70,7 @@ export const GuidesHub = () => {
         description="Step-by-step guides to back up any database or app in Docker — PostgreSQL, MySQL, MongoDB, Redis, and app stacks like WordPress and n8n — with consistent dumps and verified restores."
         basePath="/guides"
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 
@@ -83,7 +85,7 @@ export const GuidesHub = () => {
         <Container>
           <Eyebrow>Guides</Eyebrow>
           <h1 className={h1Class}>Docker backup guides</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {ANSWER}
           </p>
         </Container>

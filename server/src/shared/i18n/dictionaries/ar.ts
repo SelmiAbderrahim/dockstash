@@ -48,6 +48,11 @@ export const ar: DictionaryShape = {
       resent: 'إذا كان هذا الحساب بحاجة إلى تأكيد، فإن رابطًا جديدًا في طريقه إليك.',
       tokenInvalid: 'رابط التأكيد غير صالح أو منتهي الصلاحية.',
     },
+    otp: {
+      sent: 'تم إرسال رمز التحقق إلى بريدك الإلكتروني.',
+      invalid: 'رمز التحقق غير صالح أو انتهت صلاحيته.',
+      tooManyAttempts: 'عدد كبير جدًا من الرموز الخاطئة. يرجى تسجيل الدخول مرة أخرى للحصول على رمز جديد.',
+    },
   },
   billing: {
     checkout: {
@@ -74,7 +79,6 @@ export const ar: DictionaryShape = {
       projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
       selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
       notOwner: 'أنت لا تملك واحداً أو أكثر من تلك المشاريع.',
-      trialAlreadyClaimed: 'تم استخدام نسخة تجريبية بالفعل لهذا الحساب.',
     },
   },
   email: {
@@ -150,6 +154,12 @@ export const ar: DictionaryShape = {
         'آخر نسخة احتياطية ناجحة: {{lastGoodAt}}\n\n' +
         'افتح لوحة التحكم: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: 'رمز تسجيل الدخول إلى Dockstash',
+      body:
+        'رمز التحقق لتسجيل الدخول هو: {{code}}\n\n' +
+        'تنتهي صلاحيته خلال {{minutes}} دقائق. إذا لم تحاول تسجيل الدخول، فغيّر كلمة المرور فورًا.\n',
+    },
     neverRun: 'أبداً',
   },
   audit: {
@@ -173,6 +183,9 @@ export const ar: DictionaryShape = {
       resticFailed: 'فشل النسخ الاحتياطي لـ Restic: {{message}}',
       backupFailed: 'فشل النسخ الاحتياطي: {{message}}',
       noSpace: 'مساحة القرص غير كافية (المتاح={{free}} بايت).',
+      runnerUnavailable: 'قائمة اللقطات غير متاحة: مشغّل النسخ الاحتياطي غير مُهيأ.',
+      snapshotsFailed: 'تعذّر سرد اللقطات: {{message}}',
+      restoreFailed: 'فشلت الاستعادة: {{message}}',
     },
     success: {
       backupComplete: 'اكتمل النسخ الاحتياطي بنجاح.',
@@ -224,6 +237,13 @@ export const ar: DictionaryShape = {
       selfBackupComplete: 'اكتمل النسخ الاحتياطي الذاتي بنجاح.',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured: 'التخزين غير مُهيأ. أضف اتصال خادم التخزين الخاص بك أولاً.',
+      connectionFailed: 'فشل اختبار الاتصال بالتخزين: {{message}}',
+      hostKeyNotPinned: 'لم يتم التحقق من مفتاح مضيف التخزين بعد. شغّل اختبار الاتصال أولاً.',
+    },
+  },
   agents: {
     error: {
       notFound: 'لم يتم العثور على الوكيل.',
@@ -242,6 +262,17 @@ export const ar: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: 'لا يمكن تعديل حسابات المشرف الأعلى أو حذفها.',
+    },
+    success: {
+      roleChanged: 'تم تحديث دور المستخدم.',
+      userVerified: 'تم وضع علامة على بريد المستخدم كمُتحقق منه.',
+      legalHoldUpdated: 'تم تحديث الحجز القانوني.',
+      deletionScheduled: 'تمت جدولة حذف الحساب.',
     },
   },
   security: {

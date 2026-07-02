@@ -1,4 +1,4 @@
-import { execSync, spawn } from 'node:child_process';
+import { execSync } from 'node:child_process';
 import { promises as fs, createReadStream } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -18,6 +18,7 @@ import type {
   ResticRunner,
   ScratchWorkspace,
 } from './backups.boundaries.js';
+import { ProcessResticRunner } from './backups.restic-runner.js';
 
 function hasRestic(): boolean {
   try {
@@ -38,67 +39,6 @@ async function seedUser(email = 'restic@test.com'): Promise<string> {
     emailVerified: true,
   });
   return u._id.toString();
-}
-
-/** A minimal ResticRunner backed by the real `restic` binary over a local repo. */
-function makeRealRunner(repo: string, password: string): ResticRunner {
-  const runRestic = (args: string[], stdin?: NodeJS.ReadableStream): Promise<void> =>
-    new Promise((resolve, reject) => {
-      const child = spawn('restic', ['-r', repo, ...args], {
-        env: { ...process.env, RESTIC_PASSWORD: password },
-        stdio: [stdin ? 'pipe' : 'ignore', 'pipe', 'pipe'],
-      });
-      let stderr = '';
-      child.stderr?.on('data', (b) => {
-        stderr += b.toString();
-      });
-      child.stdout?.on('data', () => {});
-      child.on('error', reject);
-      child.on('close', (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`restic ${args.join(' ')} exit ${code}: ${stderr}`));
-      });
-      if (stdin && child.stdin) stdin.pipe(child.stdin);
-    });
-
-  const listSnapshots = (): Promise<Array<{ id: string; time: string }>> =>
-    new Promise((resolve, reject) => {
-      const child = spawn('restic', ['-r', repo, 'snapshots', '--json'], {
-        env: { ...process.env, RESTIC_PASSWORD: password },
-      });
-      let out = '';
-      let err = '';
-      child.stdout.on('data', (b) => (out += b.toString()));
-      child.stderr.on('data', (b) => (err += b.toString()));
-      child.on('error', reject);
-      child.on('close', (code) => {
-        if (code !== 0) return reject(new Error(`snapshots exit ${code}: ${err}`));
-        try {
-          const arr = JSON.parse(out) as Array<{ id: string; time: string }>;
-          resolve(arr.map((s) => ({ id: s.id, time: s.time })));
-        } catch (parseErr) {
-          reject(parseErr);
-        }
-      });
-    });
-
-  return {
-    async init() {
-      await runRestic(['init']);
-    },
-    async backup(args, opts) {
-      await runRestic(args, opts?.stdin);
-    },
-    async snapshots() {
-      return listSnapshots();
-    },
-    async check(args) {
-      await runRestic(args);
-    },
-    async restore(args) {
-      await runRestic(args);
-    },
-  };
 }
 
 async function hashFile(p: string): Promise<string> {
@@ -192,7 +132,7 @@ describe.skipIf(!RESTIC_AVAILABLE)('backups: real restic integration', () => {
     await fs.mkdir(sourcePath, { recursive: true });
     await fs.writeFile(path.join(sourcePath, 'a.txt'), 'alpha content');
     await fs.writeFile(path.join(sourcePath, 'b.txt'), 'beta content');
-    runner = makeRealRunner(repoPath, password);
+    runner = new ProcessResticRunner({ repoUrl: repoPath, password });
     await runner.init();
     await runner.backup(['backup', sourcePath]);
   });

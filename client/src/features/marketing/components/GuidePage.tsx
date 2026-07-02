@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Seo, schema } from '@shared/seo';
+import { Seo, SsrNotFound, schema } from '@shared/seo';
 import { Button } from '@shared/ui/button';
 import {
   Table,
@@ -23,6 +23,7 @@ import {
   FaqSection,
   LastUpdated,
   LinkCard,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -51,6 +52,7 @@ export const GuidePage = () => {
           locale={locale}
           noindex
         />
+        <SsrNotFound />
         <section className={sectionClass}>
           <Container>
             <h1 className={h1Class}>Guide not found</h1>
@@ -99,6 +101,7 @@ export const GuidePage = () => {
       description: `The correct, consistent way to back up ${guide.serviceName} in Docker — dump from the running container, encrypted off-site Restic snapshots, and a verified restore.`,
       path: localeHref(basePath, locale),
       dateModified: lastModified,
+      inLanguage: locale,
     }),
     schema.howTo(
       `How to back up a ${guide.serviceName} Docker container`,
@@ -116,9 +119,10 @@ export const GuidePage = () => {
     <>
       <Seo
         title={`Back up a ${guide.serviceName} Docker container (2026)`}
-        description={`How to back up ${guide.serviceName} in Docker the correct way: a consistent dump with ${guide.dumpCmd.split(' ')[0]} from the running container, encrypted off-site Restic snapshots, and a verified restore.`}
+        description={`How to back up ${guide.serviceName} in Docker: a consistent dump from the running container, encrypted off-site Restic snapshots, and a verified restore.`}
         basePath={basePath}
         locale={locale}
+        localized={false}
         type="article"
         dateModified={lastModified}
         jsonLd={jsonLd}
@@ -140,7 +144,7 @@ export const GuidePage = () => {
           <h1 className={h1Class}>
             How to back up a {guide.serviceName} Docker container (2026)
           </h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {guideIntro(guide)}
           </p>
         </Container>

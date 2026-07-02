@@ -48,6 +48,11 @@ export const de: DictionaryShape = {
       resent: 'Falls dieses Konto eine Bestätigung benötigt, ist ein neuer Link unterwegs.',
       tokenInvalid: 'Dieser Bestätigungslink ist ungültig oder abgelaufen.',
     },
+    otp: {
+      sent: 'Ein Bestätigungscode wurde an Ihre E-Mail gesendet.',
+      invalid: 'Dieser Bestätigungscode ist ungültig oder abgelaufen.',
+      tooManyAttempts: 'Zu viele falsche Codes. Bitte melden Sie sich erneut an, um einen neuen Code zu erhalten.',
+    },
   },
   billing: {
     checkout: {
@@ -74,7 +79,6 @@ export const de: DictionaryShape = {
       projectPaused: 'Dieses Projekt ist pausiert. Reaktivieren Sie es oder upgraden Sie, um Backups auszuführen.',
       selectionInvalid: 'Wählen Sie zwischen einem und {{cap}} Projekten aus, die aktiv bleiben sollen.',
       notOwner: 'Sie sind nicht der Eigentümer eines oder mehrerer dieser Projekte.',
-      trialAlreadyClaimed: 'Eine Testphase wurde für dieses Konto bereits verwendet.',
     },
   },
   email: {
@@ -150,6 +154,12 @@ export const de: DictionaryShape = {
         'Letztes erfolgreiches Backup: {{lastGoodAt}}\n\n' +
         'Dashboard öffnen: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    loginOtp: {
+      subject: 'Ihr Dockstash-Anmeldecode',
+      body:
+        'Ihr Anmelde-Bestätigungscode lautet: {{code}}\n\n' +
+        'Er läuft in {{minutes}} Minuten ab. Falls Sie sich nicht anmelden wollten, ändern Sie sofort Ihr Passwort.\n',
+    },
     neverRun: 'nie',
   },
   audit: {
@@ -173,6 +183,9 @@ export const de: DictionaryShape = {
       resticFailed: 'Restic-Backup fehlgeschlagen: {{message}}',
       backupFailed: 'Backup fehlgeschlagen: {{message}}',
       noSpace: 'Nicht genügend Speicherplatz (frei={{free}} Bytes).',
+      runnerUnavailable: 'Snapshot-Liste nicht verfügbar: der Backup-Runner ist nicht konfiguriert.',
+      snapshotsFailed: 'Snapshots konnten nicht aufgelistet werden: {{message}}',
+      restoreFailed: 'Wiederherstellung fehlgeschlagen: {{message}}',
     },
     success: {
       backupComplete: 'Backup erfolgreich abgeschlossen.',
@@ -224,6 +237,13 @@ export const de: DictionaryShape = {
       selfBackupComplete: 'Selbst-Backup erfolgreich abgeschlossen.',
     },
   },
+  settings: {
+    error: {
+      storageNotConfigured: 'Der Speicher ist nicht konfiguriert. Fügen Sie zuerst die Verbindung zu Ihrem Speicher-VPS hinzu.',
+      connectionFailed: 'Speicher-Verbindungstest fehlgeschlagen: {{message}}',
+      hostKeyNotPinned: 'Der Host-Schlüssel des Speichers wurde noch nicht verifiziert. Führen Sie zuerst einen Verbindungstest aus.',
+    },
+  },
   agents: {
     error: {
       notFound: 'Agent nicht gefunden.',
@@ -242,6 +262,17 @@ export const de: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
+    },
+  },
+  superadmin: {
+    error: {
+      cannotModifySuperadmin: 'Superadmin-Konten können nicht geändert oder gelöscht werden.',
+    },
+    success: {
+      roleChanged: 'Benutzerrolle aktualisiert.',
+      userVerified: 'Benutzer-E-Mail als bestätigt markiert.',
+      legalHoldUpdated: 'Legal Hold aktualisiert.',
+      deletionScheduled: 'Kontolöschung geplant.',
     },
   },
   security: {

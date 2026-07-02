@@ -14,9 +14,11 @@ import {
   TableRow,
 } from '@shared/ui/table';
 import { useTabParam } from '../hooks/useTabParam';
+import { PricingGrid } from './PricingGrid';
 import {
   loadOverview,
   loadUsage,
+  openPortal,
   selectProjectsToKeep as selectProjectsThunk,
 } from '../store/thunks';
 import {
@@ -26,9 +28,10 @@ import {
   selectLoadingOverview,
   selectLoadingUsage,
   selectUsage,
+  selectUsageError,
 } from '../store/selectors';
 
-const TABS = ['overview', 'usage'] as const;
+const TABS = ['overview', 'usage', 'plans'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Human-readable byte size (metering). 0 → "0 B". */
@@ -49,6 +52,7 @@ export const BillingPage = () => {
   const loadingOverview = useAppSelector(selectLoadingOverview);
   const loadingUsage = useAppSelector(selectLoadingUsage);
   const error = useAppSelector(selectBillingError);
+  const usageError = useAppSelector(selectUsageError);
   const message = useAppSelector(selectBillingMessage);
   const [keepIds, setKeepIds] = useState<string[]>([]);
 
@@ -59,6 +63,14 @@ export const BillingPage = () => {
 
   const toggleKeep = (id: string) => {
     setKeepIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const onOpenPortal = () => {
+    void dispatch(openPortal()).then((result) => {
+      if (openPortal.fulfilled.match(result)) {
+        window.location.href = result.payload.url;
+      }
+    });
   };
 
   const submitSelection = () => {
@@ -243,9 +255,39 @@ export const BillingPage = () => {
                 </Card>
               ) : null}
             </div>
+          ) : usageError ? (
+            <Alert variant="destructive">
+              <AlertDescription className="flex flex-col items-start gap-3">
+                <span>{usageError}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void dispatch(loadUsage())}
+                >
+                  {t('usage.retry')}
+                </Button>
+              </AlertDescription>
+            </Alert>
           ) : (
             <p className="py-6 text-muted-foreground">{t('page.empty')}</p>
           )}
+        </TabsContent>
+
+        <TabsContent value="plans">
+          <div className="flex flex-col gap-6 pt-2">
+            <PricingGrid />
+            {overview && overview.status !== 'none' ? (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit self-center"
+                onClick={onOpenPortal}
+              >
+                {t('plans.portal')}
+              </Button>
+            ) : null}
+          </div>
         </TabsContent>
       </Tabs>
     </main>

@@ -2,6 +2,8 @@ import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { loadOwnedProject } from '../backups/backups.service.js';
+import { clampRetentionPolicy } from '../billing/index.js';
+import type { RetentionPolicyShape } from '../billing/index.js';
 import type { ResticRunnerExt, RetentionPolicy } from './scheduler.boundaries.js';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
@@ -28,6 +30,11 @@ export function pruneArgs(retention: RetentionPolicy): string[] {
 export interface RunPruneDeps {
   t?: Translator;
   resticRunner: ResticRunnerExt;
+  /** Tier clamp, injectable for tests. Defaults to billing's policy clamp. */
+  clampPolicy?: (
+    userId: string,
+    policy: RetentionPolicyShape,
+  ) => Promise<RetentionPolicyShape>;
 }
 
 export interface RunPruneResult {
@@ -49,8 +56,12 @@ export async function runPrune(
   if (project.legalHold) {
     return { ok: true, detail: t('security.legalHold.pruneSkipped') };
   }
+  // Tier ceiling beats the stored schedule policy: a downgraded user must not
+  // keep retaining on their old, wider policy.
+  const clamp = deps.clampPolicy ?? clampRetentionPolicy;
+  const effective = await clamp(userId, retention);
   try {
-    await deps.resticRunner.forget(pruneArgs(retention));
+    await deps.resticRunner.forget(pruneArgs(effective));
     return { ok: true, detail: t('scheduler.success.prunePassed') };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
@@ -15,6 +15,10 @@ vi.mock('../api', () => ({
   fetchBillingOverview: vi.fn(),
   fetchUsage: vi.fn(),
   selectProjectsToKeep: vi.fn(),
+  fetchPricingTiers: vi.fn(),
+  createCheckout: vi.fn(),
+  changePlan: vi.fn(),
+  openPortalRequest: vi.fn(),
 }));
 
 const mockedApi = vi.mocked(api);
@@ -102,11 +106,27 @@ const renderPage = (entry = '/billing') =>
     </Provider>,
   );
 
+const originalLocation = window.location;
+
 beforeEach(() => {
   initI18n({ initialLocale: 'en' });
   vi.clearAllMocks();
   mockedApi.fetchUsage.mockResolvedValue(usageEmpty);
   mockedApi.fetchBillingOverview.mockResolvedValue(bareOverview);
+  mockedApi.fetchPricingTiers.mockResolvedValue({ tiers: [] });
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    writable: true,
+    value: { origin: 'http://localhost', href: '' },
+  });
+});
+
+afterEach(() => {
+  Object.defineProperty(window, 'location', {
+    configurable: true,
+    writable: true,
+    value: originalLocation,
+  });
 });
 
 describe('BillingPage — overview tab', () => {
@@ -180,10 +200,15 @@ describe('BillingPage — usage tab', () => {
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
   });
 
-  it('shows the usage empty state when usage fails to load', async () => {
-    mockedApi.fetchUsage.mockRejectedValue(new Error('usage boom'));
+  it('shows an inline error with a retry action when usage fails to load', async () => {
+    mockedApi.fetchUsage.mockRejectedValueOnce(new Error('usage boom'));
+    mockedApi.fetchUsage.mockResolvedValueOnce(usageEmpty);
     renderPage('/billing?tab=usage');
-    expect(await screen.findByText(/nothing to show/i)).toBeInTheDocument();
+    expect(await screen.findByText('usage boom')).toBeInTheDocument();
+    // Retry re-dispatches loadUsage and recovers.
+    fireEvent.click(screen.getByRole('button', { name: /retry/i }));
+    expect(await screen.findByText(/no active projects yet/i)).toBeInTheDocument();
+    expect(mockedApi.fetchUsage).toHaveBeenCalledTimes(2);
   });
 
   it('toggles project selection and submits the kept projects', async () => {
@@ -219,5 +244,35 @@ describe('BillingPage — usage tab', () => {
     // interaction it expects (fireEvent.click does not activate it).
     await userEvent.click(screen.getByRole('tab', { name: /usage/i }));
     expect(await screen.findByText(/no active projects yet/i)).toBeInTheDocument();
+  });
+});
+
+describe('BillingPage — plans tab', () => {
+  it('renders the pricing grid and hides the portal button with no subscription', async () => {
+    renderPage('/billing?tab=plans');
+    // Empty tiers → grid empty state; overview status "none" → no portal button.
+    expect(await screen.findByText(/no plans available/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /manage billing/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the portal button for subscribers and redirects on click', async () => {
+    mockedApi.fetchBillingOverview.mockResolvedValue(fullOverview);
+    mockedApi.openPortalRequest.mockResolvedValue({ url: 'https://portal.example' });
+    renderPage('/billing?tab=plans');
+    const portal = await screen.findByRole('button', { name: /manage billing/i });
+    fireEvent.click(portal);
+    await waitFor(() => expect(window.location.href).toBe('https://portal.example'));
+    expect(mockedApi.openPortalRequest).toHaveBeenCalledOnce();
+  });
+
+  it('surfaces a page-level error when the portal call fails', async () => {
+    mockedApi.fetchBillingOverview.mockResolvedValue(fullOverview);
+    mockedApi.openPortalRequest.mockRejectedValue(new Error('portal down'));
+    renderPage('/billing?tab=plans');
+    fireEvent.click(await screen.findByRole('button', { name: /manage billing/i }));
+    expect(await screen.findByText('portal down')).toBeInTheDocument();
+    expect(window.location.href).toBe('');
   });
 });

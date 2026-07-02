@@ -199,3 +199,25 @@ describe('polar / __getRawCustomerMapper', () => {
     expect(__getRawCustomerMapper({ id: 'c2', email: 'x@y.z' }).externalId).toBeUndefined();
   });
 });
+
+describe('polar / isConfigured flag gating', () => {
+  type EnvMutable = Record<string, string | undefined>;
+  afterEach(() => {
+    (env as unknown as EnvMutable).POLAR_ACCESS_TOKEN = undefined;
+    (env as unknown as EnvMutable).PAYMENT_PROVIDER = 'polar';
+  });
+
+  it('requires PAYMENT_PROVIDER=polar AND a token', () => {
+    const p = provider();
+    (env as unknown as EnvMutable).PAYMENT_PROVIDER = 'polar';
+    (env as unknown as EnvMutable).POLAR_ACCESS_TOKEN = 'polar_pat_x';
+    expect(p.isConfigured()).toBe(true);
+    // Token alone is not enough — the operator must opt in via the flag.
+    (env as unknown as EnvMutable).PAYMENT_PROVIDER = 'none';
+    expect(p.isConfigured()).toBe(false);
+    // Flag alone is not enough either.
+    (env as unknown as EnvMutable).PAYMENT_PROVIDER = 'polar';
+    (env as unknown as EnvMutable).POLAR_ACCESS_TOKEN = undefined;
+    expect(p.isConfigured()).toBe(false);
+  });
+});

@@ -1,0 +1,449 @@
+{
+  "layout": {
+    "nav": {
+      "alternatives": "替代方案",
+      "guides": "指南",
+      "security": "安全",
+      "pricing": "定价"
+    },
+    "navPrimaryLabel": "主导航",
+    "navMobileLabel": "移动端",
+    "menu": "菜单",
+    "login": "登录",
+    "getStarted": "开始使用",
+    "footer": {
+      "tagline": "为任何 Docker 项目提供一键式、经验证的备份。",
+      "product": "产品",
+      "compare": "对比",
+      "guides": "指南",
+      "legal": "法律",
+      "links": {
+        "pricing": "定价",
+        "security": "安全",
+        "faq": "常见问题",
+        "allAlternatives": "全部替代方案",
+        "backrestAlternative": "Backrest 替代方案",
+        "selfHostedVsCloud": "自托管与云备份对比",
+        "allGuides": "全部指南",
+        "backupPostgres": "备份 Postgres",
+        "backupWordpress": "备份 WordPress",
+        "privacy": "隐私政策",
+        "terms": "服务条款"
+      },
+      "copyright": "© 2026 Dockstash"
+    }
+  },
+  "shared": {
+    "home": "首页",
+    "startFree": "免费开始",
+    "capability": "能力",
+    "faqTitle": {
+      "pre": "常见",
+      "accent": "问题"
+    },
+    "lastUpdated": "最后更新：{{date}}"
+  },
+  "home": {
+    "seo": {
+      "title": "真正能恢复的 Docker 备份——任何项目一键完成",
+      "description": "Dockstash 自动检测并备份您的 Docker 卷、数据库和配置，存入加密的异地 Restic 快照——支持一键恢复和自动化恢复演练验证。"
+    },
+    "hero": {
+      "eyebrow": "理解 Docker 的备份与恢复",
+      "title": {
+        "pre": "一键备份",
+        "accent": "整个",
+        "post": "Docker 项目"
+      },
+      "sub": "一次点击即可检测您的卷、数据库和配置——并证明备份可以恢复。无需编写任何备份配置。",
+      "secondaryCta": "了解工作原理",
+      "check": {
+        "dumps": "一致性数据库转储",
+        "snapshots": "加密的 Restic 快照",
+        "drills": "经验证的恢复演练"
+      },
+      "supportedLabel": "支持的数据库",
+      "backsUp": "可备份："
+    },
+    "answer": "Dockstash 让任何 Docker 项目的备份变成一次点击。它自动检测您的卷、数据库和配置，从运行中的容器一致地转储每个数据库，并将加密的 Restic 快照存储到异地——还有自动化恢复演练证明备份确实有效。",
+    "pain": {
+      "title": {
+        "pre": "大多数自制 Docker 备份都是",
+        "accent": "坏的"
+      },
+      "sub": "故障始终不可见——直到您需要恢复的那一天。",
+      "cards": {
+        "liveFiles": {
+          "title": "复制运行中的数据库文件",
+          "body": "备份正在运行的 Postgres/MySQL 数据目录会捕获撕裂写入。看上去一切正常，直到恢复失败。"
+        },
+        "silent": {
+          "title": "无声的失败",
+          "body": "定时任务悄悄停止，无人察觉——直到需要恢复的那天。没有告警、没有心跳、没有证明。"
+        },
+        "fragile": {
+          "title": "脆弱的脚本",
+          "body": "手工拼装的 restic + cron + pg_dump 在版本升级时崩溃，且没有任何恢复验证。"
+        }
+      }
+    },
+    "stats": {
+      "engines": "种数据库引擎，原生方式转储",
+      "encryption": "GCM 加密保护静态密钥",
+      "restic": "标准 Restic——没有我们也能恢复",
+      "oneClick": "次点击，从扫描到经验证的备份"
+    },
+    "features": {
+      "title": {
+        "pre": "强大工具",
+        "mid": "带来",
+        "accent": "十足信心"
+      },
+      "sub": "正确备份 Docker 项目所需的一切：数据留在您掌控的存储上，并确认恢复真的有效。",
+      "cards": {
+        "detection": {
+          "title": "识别 Compose 的自动检测",
+          "body": "读取您的 Docker Compose 栈，自动检测数据库、卷和反向代理配置——无需编写备份配置。"
+        },
+        "dumps": {
+          "title": "一致性数据库转储",
+          "body": "在运行中的容器内执行每个引擎的原生转储。绝不做在恢复日失效的撕裂式活动文件拷贝。"
+        },
+        "drills": {
+          "title": "经验证的恢复演练",
+          "body": "将最新快照恢复到临时位置并与源数据比对。要证据，不要侥幸。"
+        },
+        "storage": {
+          "title": "您的存储，零锁定",
+          "body": "标准加密 Restic 仓库存放在您自己的 VPS 上，通过 SSH 传输。没有 Dockstash 也能恢复。"
+        },
+        "encryption": {
+          "title": "端到端加密",
+          "body": "静态密钥采用 AES-256-GCM 加密，备份通道使用 SSH 主机密钥固定，仓库内使用 Restic 加密。"
+        },
+        "alerts": {
+          "title": "心跳与告警",
+          "body": "定时任务无声死亡是最经典的备份故障。备份一旦停止执行，Dockstash 立即提醒您。"
+        }
+      }
+    },
+    "showcase": {
+      "title": {
+        "pre": "数秒内获得",
+        "accent": "经验证的快照"
+      },
+      "body": "Dockstash 读取您的 Compose 栈，为每个引擎执行正确的一致性转储，存储加密的异地 Restic 快照——然后通过自动化演练证明它可以恢复。",
+      "compareLink": "与 Backrest 和自制脚本的对比",
+      "drillPassed": "演练通过"
+    },
+    "steps": {
+      "title": {
+        "pre": "三步获得",
+        "accent": "信心"
+      },
+      "sub": "我们简化了备份流程，让您专注于交付应用。",
+      "items": {
+        "scan": {
+          "title": "扫描",
+          "body": "将 Dockstash 指向一个 Compose 项目。它会检测数据库、卷和反向代理配置，并提出一份由您确认的方案。"
+        },
+        "backUp": {
+          "title": "备份",
+          "body": "每个数据库都从其容器中一致地转储，随后 Restic 将转储与文件加密快照到异地。"
+        },
+        "verify": {
+          "title": "验证",
+          "body": "自动化恢复演练将备份恢复到临时位置并与源数据比对，让您在需要之前就知道它有效。"
+        }
+      }
+    },
+    "compare": {
+      "eyebrow": "对比",
+      "title": {
+        "pre": "理解 Docker，还是仅仅",
+        "accent": "复制文件？"
+      },
+      "diyColumn": "自制脚本",
+      "rows": {
+        "dumps": {
+          "header": "一致性数据库转储",
+          "dockstash": "是",
+          "backrest": "否——仅文件级",
+          "diy": "每个引擎手工处理"
+        },
+        "drills": {
+          "header": "恢复演练验证",
+          "dockstash": "是，全自动",
+          "backrest": "否",
+          "diy": "否"
+        },
+        "compose": {
+          "header": "Docker Compose 感知",
+          "dockstash": "是，原生支持",
+          "backrest": "否——手动路径",
+          "diy": "手动"
+        }
+      },
+      "cta": "对比全部替代方案"
+    },
+    "faq": {
+      "dbBackup": {
+        "question": "Dockstash 如何备份 Docker 数据库？",
+        "answer": "Dockstash 在运行中的容器内执行数据库的原生转储（pg_dumpall、mysqldump --single-transaction 或 mongodump --oplog），然后将转储存为加密的 Restic 快照。它从不直接复制运行中的数据库文件，因为写到一半的数据文件无法恢复。"
+      },
+      "storage": {
+        "question": "我的备份存放在哪里？",
+        "answer": "通过 SSH 存放在您自己的存储 VPS 上，形式是标准的加密 Restic 仓库。Dockstash 从不持有您的数据。Free 版完全自托管运行，无需任何付费服务商。"
+      },
+      "restoreProof": {
+        "question": "我怎么知道备份真的能恢复？",
+        "answer": "Dockstash 执行自动化恢复演练：将最新快照恢复到临时位置、与源数据比对，并按项目展示演练状态。未经测试的备份等同于没有备份。"
+      },
+      "config": {
+        "question": "我需要编写备份配置吗？",
+        "answer": "不需要。Dockstash 扫描您的 Docker Compose 项目，检测数据库、卷和反向代理配置，并提出一份您用复选框确认的方案。一键即可全部备份。"
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "准备好信任您的",
+        "accent": "备份了吗？"
+      },
+      "body": "几分钟内备份您的第一个 Docker 项目。起步免费且完全自托管——无需银行卡，您的存储，您的密钥。",
+      "seePricing": "查看定价"
+    }
+  },
+  "pricing": {
+    "seo": {
+      "title": "定价——免费自托管、Pro 与 Business",
+      "description": "Dockstash 定价：单项目免费自托管版，团队适用的 Pro 版，代理机构适用的 Business 版。年付立省两个月。"
+    },
+    "breadcrumb": "定价",
+    "eyebrow": "定价",
+    "title": "为经验证的 Docker 备份提供简单定价",
+    "answer": "Dockstash 提供三种方案。Free（{{freePrice}}）自托管一个项目，保留 {{freeRetentionDays}} 天，每日备份。Pro（{{proMonthly}}/月）增加至 {{proProjects}} 个项目、保留 {{proRetentionDays}} 天、每小时计划和邮件告警。Business（{{bizMonthly}}/月）提供无限项目、保留 {{bizRetentionDays}} 天、任意 cron、优先支持和多 VPS。年付立省两个月——Pro 为 {{proYearly}}/年，Business 为 {{bizYearly}}/年。",
+    "billing": {
+      "label": "计费周期",
+      "monthly": "月付",
+      "yearly": "年付",
+      "badge": "省 2 个月"
+    },
+    "mostPopular": "最受欢迎",
+    "tiers": {
+      "free": {
+        "name": "Free",
+        "cadence": "永久",
+        "tagline": "自托管一个项目，完全使用您自己的存储。",
+        "features": {
+          "projects": "{{freeProjects}} 个项目",
+          "retention": "保留 {{freeRetentionDays}} 天",
+          "daily": "每日备份",
+          "community": "社区支持",
+          "selfHost": "默认自托管——无付费服务商",
+          "restic": "标准 Restic 仓库，存于您的存储 VPS"
+        }
+      },
+      "pro": {
+        "name": "Pro",
+        "cadenceMonthly": "每月",
+        "cadenceYearly": "每年",
+        "yearlyNote": "或 {{proYearly}}/年——立省两个月",
+        "tagline": "适用于在生产环境运行 Docker Compose 的团队。",
+        "features": {
+          "projects": "{{proProjects}} 个项目",
+          "retention": "保留 {{proRetentionDays}} 天",
+          "hourly": "每小时备份",
+          "schedules": "自定义计划",
+          "alerts": "邮件告警 + 失联开关心跳",
+          "drills": "自动化恢复演练验证"
+        },
+        "cta": "选择 Pro"
+      },
+      "business": {
+        "name": "Business",
+        "cadenceMonthly": "每月",
+        "cadenceYearly": "每年",
+        "yearlyNote": "或 {{bizYearly}}/年——立省两个月",
+        "tagline": "适用于管理大量客户服务器的代理机构。",
+        "features": {
+          "projects": "无限项目",
+          "retention": "保留 {{bizRetentionDays}} 天",
+          "cron": "任意 cron 计划",
+          "priority": "优先支持",
+          "fleet": "多 VPS 舰队视图",
+          "metering": "按项目计量"
+        },
+        "cta": "选择 Business"
+      }
+    },
+    "footnote": "Pro 和 Business 年付均立省两个月。",
+    "faq": {
+      "freeReally": {
+        "question": "Free 版真的免费吗？",
+        "answer": "是的。Free 版完全自托管运行，无付费服务商，也无需信用卡。它每天备份一个项目，保留 {{freeRetentionDays}} 天，存放到您自己的存储 VPS，形式是标准的加密 Restic 仓库。"
+      },
+      "yearly": {
+        "question": "年付如何计费？",
+        "answer": "在 Pro 或 Business 上选择年付即可省下两个月——支付十个月，使用十二个月。您可以随时在账单页面切换月付与年付。"
+      },
+      "project": {
+        "question": "什么算一个项目？",
+        "answer": "一个项目就是 Dockstash 备份的一个 Docker Compose 栈（它的卷、数据库和配置）。Free 覆盖一个，Pro 覆盖十个，Business 不限数量，可跨任意数量的 VPS 代理。"
+      },
+      "downgrade": {
+        "question": "降级或取消后我的备份会怎样？",
+        "answer": "您的备份仍以标准 Restic 仓库的形式留在您自己的存储 VPS 上，仅凭 restic CLI 即可恢复。没有供应商锁定，也没有被付费墙扣押的数据。"
+      }
+    }
+  },
+  "security": {
+    "seo": {
+      "title": "安全——Dockstash 如何保护您的数据",
+      "description": "Dockstash 的备份安全机制：AES-256-GCM 静态加密、SSH 主机密钥固定、加密 Restic 仓库、输入确认的破坏性恢复、恢复演练验证以及零锁定。"
+    },
+    "breadcrumb": "安全",
+    "eyebrow": "安全",
+    "title": "可以验证的安全",
+    "answer": "Dockstash 为安全保管您最敏感的凭据而构建。密钥在静态时以 AES-256-GCM 加密，SSH 备份通道固定存储主机密钥，每个 Restic 仓库都用您自己的密钥加密。破坏性恢复需要输入确认，恢复演练则证明您的数据能够找回。",
+    "cardsTitle": "您的数据如何保持安全",
+    "cards": {
+      "secrets": {
+        "title": "AES-256-GCM 静态密钥加密",
+        "body": "您的 Restic 密码和 SSH 密钥从不以明文存储。它们以 AES-256-GCM 主密钥静态加密，并托管恢复码以支持密钥轮换。"
+      },
+      "pinning": {
+        "title": "SSH 主机密钥固定",
+        "body": "通往存储 VPS 的备份通道固定了主机密钥，中间人无法悄悄拦截或改道您的加密快照。"
+      },
+      "repos": {
+        "title": "加密的 Restic 仓库",
+        "body": "每个仓库都是用您的密钥加密的标准 Restic 仓库。数据在离开生产 VPS 之前就已加密并去重。"
+      },
+      "typedConfirm": {
+        "title": "输入确认的破坏性恢复",
+        "body": "覆盖线上数据的恢复要求您输入项目名称确认。默认行为是恢复到新位置，任何覆盖前都会先暂存数据库。"
+      },
+      "drills": {
+        "title": "恢复演练验证",
+        "body": "Dockstash 按计划将最新快照恢复到临时位置并与源数据比对，让您在需要之前就发现坏掉的备份。"
+      },
+      "lockIn": {
+        "title": "您的存储，零锁定",
+        "body": "备份以标准 Restic 仓库的形式存放在您自己的存储 VPS 上。哪怕有一天离开，也只需 restic CLI 即可恢复——Dockstash 不添加任何私有层。"
+      }
+    },
+    "readFaq": "阅读常见问题",
+    "faq": {
+      "secrets": {
+        "question": "我的 SSH 密钥和 Restic 密码存放在哪里？",
+        "answer": "以 AES-256-GCM 主密钥静态加密，从不以明文存储。在自托管版中，它们保存在您自己的服务器上。托管的恢复码支持在不丢失访问权限的情况下轮换主密钥。"
+      },
+      "holdData": {
+        "question": "Dockstash 会持有我的备份数据吗？",
+        "answer": "不会。在 Free/自托管版中，整条流水线都运行在您的基础设施上，备份落在您的存储 VPS 上。Dockstash 只负责编排备份，绝不在我们的服务器上存储您的数据。"
+      },
+      "destructive": {
+        "question": "Dockstash 如何防止误操作的破坏性恢复？",
+        "answer": "恢复默认写入新位置，任何覆盖前数据库都会先暂存，而覆盖线上数据的恢复要求输入项目名称确认。不存在一键摧毁生产环境的途径。"
+      },
+      "disappear": {
+        "question": "如果 Dockstash 消失了，我的加密备份怎么办？",
+        "answer": "它们仍以标准加密 Restic 仓库的形式留在您的存储 VPS 上。用您的密钥将 restic CLI 指向仓库即可恢复，无需任何供应商参与。零锁定。"
+      }
+    },
+    "keepReading": "继续阅读",
+    "links": {
+      "faq": {
+        "title": "常见问题",
+        "description": "关于备份、存储与恢复的常见问题。"
+      },
+      "guides": {
+        "title": "备份指南",
+        "description": "在 Docker 中备份各数据库引擎的分步指南。"
+      },
+      "pricing": {
+        "title": "定价",
+        "description": "免费自托管版、团队 Pro 版、代理机构 Business 版。"
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "让备份",
+        "accent": "有据可证"
+      }
+    }
+  },
+  "faq": {
+    "seo": {
+      "title": "Dockstash 常见问题——Docker 备份疑问解答",
+      "description": "关于 Dockstash 的常见问题解答：如何备份 Docker 数据库、备份存放位置、安全、定价、恢复验证以及如何避免锁定。"
+    },
+    "breadcrumb": "常见问题",
+    "eyebrow": "常见问题",
+    "title": "常见问题",
+    "answer": "Dockstash 是一款可自托管、理解 Docker 的备份编排器。它自动检测您的 Compose 栈，从运行中的容器以正确方式转储每个数据库，将加密 Restic 快照存放到您自己的存储 VPS，并通过演练测试恢复。以下是我们最常听到的问题。",
+    "items": {
+      "what": {
+        "question": "Dockstash 到底做什么？",
+        "answer": "它运行在您的生产 VPS 上，扫描 Docker Compose 项目，并检测每个可备份的层——卷、数据库、compose/.env 和反向代理配置。它从运行中的容器一致地转储数据库，然后通过 SSH 将加密 Restic 快照存储到异地，并进行自动化恢复演练验证。"
+      },
+      "whyNotBackrest": {
+        "question": "为什么不直接用 Backrest？",
+        "answer": "Backrest 是一个不错的通用 restic 界面，但它不知道您的数据库需要 pg_dumpall 而不是文件拷贝，不会检测您的 Compose 栈，也不会演练测试恢复。Dockstash 理解 Docker 项目并验证可恢复性。"
+      },
+      "whyNotDiy": {
+        "question": "为什么不自己写个 restic + cron 脚本？",
+        "answer": "可以——然后您要维护它、祈祷数据库转储在版本升级后依旧一致、并在 cron 悄悄停摆时及时发现。Dockstash 就是那个脚本：加固过、有告警、经验证，并且浓缩为一次点击。"
+      },
+      "safe": {
+        "question": "我的数据在 Dockstash 上安全吗？",
+        "answer": "在 Free/自托管版中，一切都运行在您自己的服务器上，备份落在您的存储 VPS 上——我们从不持有您的数据。密钥以 AES-256-GCM 静态加密，Restic 仓库用您自己的密钥加密。"
+      },
+      "shutdown": {
+        "question": "如果 Dockstash 停止运营会怎样？",
+        "answer": "您的仓库是标准 Restic。将 restic CLI 指向您的存储 VPS，无需我们即可恢复。配置导出/导入已内置，锁定为零。"
+      },
+      "restoreProof": {
+        "question": "我怎么知道我的备份真的能恢复？",
+        "answer": "Dockstash 执行自动化恢复演练：将最新快照恢复到临时位置、与源数据比对，并按项目展示演练状态。未经测试的备份等同于没有备份。"
+      },
+      "engines": {
+        "question": "Dockstash 支持哪些数据库？",
+        "answer": "理解 Docker 的适配器覆盖 PostgreSQL、MySQL、MariaDB、MongoDB、Redis、Valkey、SQLite、ClickHouse、Elasticsearch、RabbitMQ、MinIO、InfluxDB 和 Neo4j——每一种都以其引擎正确且一致的方式转储。"
+      },
+      "config": {
+        "question": "我需要编写备份配置文件吗？",
+        "answer": "不需要。Dockstash 扫描您的 Compose 项目，检测数据库、卷和反向代理配置，并提出一份您用复选框确认的方案。一键备份全部——无需编写 YAML。"
+      },
+      "storage": {
+        "question": "我的备份存放在哪里？",
+        "answer": "通过 SSH 存放在您自己的存储 VPS 上，形式是标准的加密 Restic 仓库。Free 版完全自托管运行、无付费服务商，数据不经过任何第三方。"
+      },
+      "cost": {
+        "question": "Dockstash 多少钱？",
+        "answer": "Free 版为 {{freePrice}}，可自托管一个项目。Pro 增加至 {{proProjects}} 个项目、每小时备份和邮件告警；Business 提供无限项目、优先支持和多 VPS。年付立省两个月。"
+      }
+    },
+    "keepReading": "继续阅读",
+    "links": {
+      "security": {
+        "title": "安全",
+        "description": "Dockstash 如何保护您的密钥、通道与仓库。"
+      },
+      "pricing": {
+        "title": "定价",
+        "description": "免费自托管版、团队 Pro 版、代理机构 Business 版。"
+      },
+      "guides": {
+        "title": "备份指南",
+        "description": "在 Docker 中备份各数据库引擎的分步指南。"
+      }
+    },
+    "cta": {
+      "title": {
+        "pre": "还想了解更多？",
+        "accent": "试试看"
+      }
+    }
+  }
+}

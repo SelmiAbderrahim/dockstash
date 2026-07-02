@@ -7,14 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@shared/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared/ui/table';
 import { getCompetitor } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import {
@@ -22,6 +14,8 @@ import {
   Container,
   Eyebrow,
   FaqSection,
+  ResponsiveTable,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -119,6 +113,7 @@ export const CompareCategoryPage = () => {
         description="Self-hosted backup vs cloud backup SaaS compared on data sovereignty, cost, control, and restore. When to keep backups on your own storage, and when a managed cloud service fits."
         basePath={BASE_PATH}
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 
@@ -136,9 +131,7 @@ export const CompareCategoryPage = () => {
       <section className={sectionClass}>
         <Container>
           <h1 className={h1Class}>Self-hosted backup vs cloud backup</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
-            {ANSWER}
-          </p>
+          <p className={answerClass}>{ANSWER}</p>
         </Container>
       </section>
 
@@ -146,39 +139,18 @@ export const CompareCategoryPage = () => {
         <Container>
           <Eyebrow>Head to head</Eyebrow>
           <h2 className={h2Class}>Side by side</h2>
-          <Table className="border">
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col" className="text-start align-top">
-                  Dimension
-                </TableHead>
-                <TableHead scope="col" className="text-start align-top">
-                  Self-hosted (Dockstash)
-                </TableHead>
-                <TableHead scope="col" className="text-start align-top">
-                  Cloud backup SaaS
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ROWS.map((row) => (
-                <TableRow key={row.feature}>
-                  <TableHead
-                    scope="row"
-                    className="whitespace-normal text-start align-top font-medium"
-                  >
-                    {row.feature}
-                  </TableHead>
-                  <TableCell className="whitespace-normal align-top">
-                    {row.dockstash}
-                  </TableCell>
-                  <TableCell className="whitespace-normal align-top">
-                    {row.competitor}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <ResponsiveTable
+            columns={[
+              { key: 'dimension', label: 'Dimension' },
+              { key: 'self-hosted', label: 'Self-hosted (Dockstash)' },
+              { key: 'cloud', label: 'Cloud backup SaaS' },
+            ]}
+            rows={ROWS.map((row) => ({
+              key: row.feature,
+              header: row.feature,
+              cells: [row.dockstash, row.competitor],
+            }))}
+          />
         </Container>
       </Reveal>
 

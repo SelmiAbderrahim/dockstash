@@ -1,4 +1,5 @@
-import { LayoutDashboard, Users, CreditCard, Settings } from 'lucide-react';
+import { Construction, LayoutDashboard, Users, CreditCard, Settings } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert';
 import {
   Card,
   CardContent,
@@ -57,6 +58,14 @@ const sections: AdminSection[] = [
 
 export const AdminDashboard = () => (
   <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
+    <Alert>
+      <Construction aria-hidden="true" />
+      <AlertTitle>Admin console coming soon</AlertTitle>
+      <AlertDescription>
+        The admin console is under construction. The sections listed below are not yet
+        functional.
+      </AlertDescription>
+    </Alert>
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl">Admin navigation</CardTitle>

@@ -27,12 +27,6 @@ const customerSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    // Trial-abuse guard: set the first time a trial has been offered/consumed
-    // for this customer. A second trial claim MUST be rejected.
-    trialClaimedAt: {
-      type: Date,
-      default: null,
-    },
   },
   { timestamps: true },
 );

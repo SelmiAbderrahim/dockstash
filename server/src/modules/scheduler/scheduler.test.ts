@@ -277,6 +277,32 @@ describe('scheduler: dispatcher (per-kind + prune separation)', () => {
     ]);
   });
 
+  it('prune clamps the policy through an injected tier clamp', async () => {
+    const a = await seedUser('a@t.com');
+    const projectId = await seedProject(a.id);
+    const restic = makeRestic();
+    await runPrune(
+      projectId,
+      a.id,
+      { keepDaily: 30, keepWeekly: 10, keepMonthly: 12 },
+      {
+        resticRunner: restic,
+        clampPolicy: async () => ({ keepDaily: 7, keepWeekly: 1, keepMonthly: 1 }),
+      },
+    );
+    const forgetCall = restic.calls.find((c) => c.name === 'forget');
+    expect(forgetCall?.args).toEqual([
+      'forget',
+      '--prune',
+      '--keep-daily',
+      '7',
+      '--keep-weekly',
+      '1',
+      '--keep-monthly',
+      '1',
+    ]);
+  });
+
   it('prune surfaces a localized error on failure', async () => {
     const a = await seedUser('a@t.com');
     const projectId = await seedProject(a.id);

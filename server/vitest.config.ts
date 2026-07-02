@@ -13,14 +13,26 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
+      // Whitelist app source. Runtime-loaded dep files with tsup sourcemaps
+      // (cjs_shims, ioredis) bypass `exclude` in this provider version but are
+      // reliably dropped by `include`.
+      include: ['src/**'],
       exclude: [
+        // A custom `exclude` REPLACES vitest's defaults — keep the
+        // node_modules guard as belt-and-braces alongside `include`.
+        '**/node_modules/**',
         'src/**/*.d.ts',
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
         'src/server.ts',
+        // Thin CLI seam over the tested seedSuperadmin() — like src/server.ts.
+        'src/seed-superadmin.ts',
         'src/config/logger.ts',
-        // DB bootstrap is an integration seam (like server.ts), not unit source.
-        'src/config/db.ts',
+        // NOTE: src/config/db.ts is intentionally NOT excluded — the v8
+        // all-files scan in vitest 2.1.9 emits a 0% stub for excluded-but-
+        // unimported files while filtering their runtime coverage, which
+        // permanently fails the 100% gate. db.ts is covered directly by
+        // src/config/db.test.ts (mocked mongoose) instead.
         // Build/test tooling config — not application source.
         'tsup.config.ts',
         'vitest.config.ts',

@@ -5,7 +5,8 @@
     "aria": "Sections des paramètres",
     "storage": "Stockage",
     "retention": "Rétention",
-    "password": "Mot de passe de chiffrement"
+    "password": "Mot de passe de chiffrement",
+    "recovery": "Récupération"
   },
   "actions": {
     "save": "Enregistrer",
@@ -38,5 +39,32 @@
     "mismatch": "Les mots de passe ne correspondent pas.",
     "escrow": "J'ai sauvegardé ce mot de passe.",
     "saved": "Mot de passe enregistré."
+  },
+  "recovery": {
+    "export": {
+      "title": "Exporter la configuration",
+      "description": "Téléchargez un export JSON de vos projets, de votre stockage et de vos paramètres.",
+      "action": "Télécharger l'export",
+      "working": "Export en cours…",
+      "done": "Export téléchargé."
+    },
+    "codes": {
+      "title": "Codes de récupération",
+      "description": "Générez des codes de récupération à usage unique pour retrouver l'accès à vos dépôts chiffrés.",
+      "action": "Générer les codes de récupération",
+      "working": "Génération…",
+      "warning": "Enregistrez ces codes maintenant. Ils ne seront plus jamais affichés.",
+      "copy": "Tout copier",
+      "copied": "Copié."
+    },
+    "selfBackup": {
+      "title": "Auto-sauvegarde",
+      "description": "Sauvegardez la configuration de Dockstash elle-même vers votre stockage.",
+      "action": "Lancer l'auto-sauvegarde",
+      "working": "Déclenchement…",
+      "triggered": "Auto-sauvegarde déclenchée.",
+      "runs": "Exécutions récentes",
+      "empty": "Aucune auto-sauvegarde pour l'instant."
+    }
   }
 }

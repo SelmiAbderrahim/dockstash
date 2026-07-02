@@ -8,6 +8,10 @@ import {
   fetchRetention,
   saveRetention,
   savePassword,
+  exportConfig,
+  generateRecoveryCodes,
+  triggerSelfBackup,
+  fetchSelfBackupRuns,
 } from './thunks';
 import * as api from '../api';
 
@@ -18,6 +22,11 @@ vi.mock('../api', () => ({
   fetchRetentionRequest: vi.fn(),
   saveRetentionRequest: vi.fn(),
   savePasswordRequest: vi.fn(),
+  exportConfigRequest: vi.fn(),
+  downloadJsonExport: vi.fn(),
+  generateRecoveryCodesRequest: vi.fn(),
+  triggerSelfBackupRequest: vi.fn(),
+  fetchSelfBackupRunsRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -101,5 +110,67 @@ describe('settings thunks', () => {
     mocked.savePasswordRequest.mockRejectedValue(new Error('x'));
     const bad = await store.dispatch(savePassword('secret'));
     expect(savePassword.rejected.match(bad)).toBe(true);
+  });
+
+  it('exportConfig downloads the envelope and resolves; rejects on failure', async () => {
+    const envelope = { version: 1 };
+    mocked.exportConfigRequest.mockResolvedValue(envelope);
+    const store = makeStore();
+    const ok = await store.dispatch(exportConfig());
+    expect(exportConfig.fulfilled.match(ok)).toBe(true);
+    expect(ok.payload).toBe(true);
+    expect(mocked.downloadJsonExport).toHaveBeenCalledWith(envelope);
+
+    mocked.exportConfigRequest.mockRejectedValue(new Error('x'));
+    const bad = await store.dispatch(exportConfig());
+    expect(exportConfig.rejected.match(bad)).toBe(true);
+    expect(typeof bad.payload).toBe('string');
+  });
+
+  it('generateRecoveryCodes resolves and rejects', async () => {
+    const payload = { message: 'saved once', codes: ['AAAA-1111'] };
+    mocked.generateRecoveryCodesRequest.mockResolvedValue(payload);
+    const store = makeStore();
+    const ok = await store.dispatch(generateRecoveryCodes());
+    expect(generateRecoveryCodes.fulfilled.match(ok)).toBe(true);
+    expect(ok.payload).toBe(payload);
+
+    mocked.generateRecoveryCodesRequest.mockRejectedValue(new Error('x'));
+    const bad = await store.dispatch(generateRecoveryCodes());
+    expect(generateRecoveryCodes.rejected.match(bad)).toBe(true);
+  });
+
+  it('triggerSelfBackup resolves true and rejects', async () => {
+    mocked.triggerSelfBackupRequest.mockResolvedValue({ triggered: true });
+    const store = makeStore();
+    const ok = await store.dispatch(triggerSelfBackup());
+    expect(triggerSelfBackup.fulfilled.match(ok)).toBe(true);
+    expect(ok.payload).toBe(true);
+
+    mocked.triggerSelfBackupRequest.mockRejectedValue(new Error('x'));
+    const bad = await store.dispatch(triggerSelfBackup());
+    expect(triggerSelfBackup.rejected.match(bad)).toBe(true);
+  });
+
+  it('fetchSelfBackupRuns resolves and rejects', async () => {
+    const runs = [
+      {
+        id: 'r1',
+        repo: 'dockstash-self',
+        status: 'success',
+        startedAt: null,
+        finishedAt: null,
+        error: '',
+      },
+    ];
+    mocked.fetchSelfBackupRunsRequest.mockResolvedValue(runs);
+    const store = makeStore();
+    const ok = await store.dispatch(fetchSelfBackupRuns());
+    expect(fetchSelfBackupRuns.fulfilled.match(ok)).toBe(true);
+    expect(ok.payload).toBe(runs);
+
+    mocked.fetchSelfBackupRunsRequest.mockRejectedValue(new Error('x'));
+    const bad = await store.dispatch(fetchSelfBackupRuns());
+    expect(fetchSelfBackupRuns.rejected.match(bad)).toBe(true);
   });
 });

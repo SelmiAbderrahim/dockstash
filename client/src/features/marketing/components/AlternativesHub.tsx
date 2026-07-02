@@ -1,13 +1,5 @@
 import { Link } from 'react-router-dom';
 import { Seo, schema } from '@shared/seo';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared/ui/table';
 import { COMPETITORS } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
 import { Reveal } from '../useReveal';
@@ -17,6 +9,8 @@ import {
   Eyebrow,
   FaqSection,
   LinkCard,
+  ResponsiveTable,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -84,6 +78,7 @@ export const AlternativesHub = () => {
         description="Compare the top Docker backup alternatives — Backrest, SimpleBackups, Duplicati, DIY restic + cron scripts, and provider snapshots — against Dockstash's Docker-aware, verified backups."
         basePath="/alternatives"
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 
@@ -96,10 +91,9 @@ export const AlternativesHub = () => {
 
       <section className={sectionClass}>
         <Container>
+          <Eyebrow>Compare</Eyebrow>
           <h1 className={h1Class}>Dockstash alternatives</h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
-            {ANSWER}
-          </p>
+          <p className={answerClass}>{ANSWER}</p>
         </Container>
       </section>
 
@@ -107,44 +101,30 @@ export const AlternativesHub = () => {
         <Container>
           <Eyebrow>Comparison</Eyebrow>
           <h2 className={h2Class}>At a glance</h2>
-          <Table className="border">
-            <TableHeader>
-              <TableRow>
-                <TableHead scope="col" className="text-start align-top">Tool</TableHead>
-                <TableHead scope="col" className="text-start align-top">Category</TableHead>
-                <TableHead scope="col" className="text-start align-top">Pricing</TableHead>
-                <TableHead scope="col" className="text-start align-top">
-                  Docker-aware
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {COMPETITOR_LIST.map((competitor) => (
-                <TableRow key={competitor.slug}>
-                  <TableHead
-                    scope="row"
-                    className="whitespace-normal text-start align-top font-medium"
-                  >
-                    <Link
-                      to={href(`/alternatives/${competitor.slug}`)}
-                      className="text-primary underline-offset-4 hover:underline"
-                    >
-                      {competitor.name}
-                    </Link>
-                  </TableHead>
-                  <TableCell className="whitespace-normal align-top">
-                    {competitor.category}
-                  </TableCell>
-                  <TableCell className="whitespace-normal align-top">
-                    {competitor.pricing}
-                  </TableCell>
-                  <TableCell className="whitespace-normal align-top">
-                    No — Dockstash is
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <ResponsiveTable
+            columns={[
+              { key: 'tool', label: 'Tool' },
+              { key: 'category', label: 'Category' },
+              { key: 'pricing', label: 'Pricing' },
+              { key: 'docker-aware', label: 'Docker-aware' },
+            ]}
+            rows={COMPETITOR_LIST.map((competitor) => ({
+              key: competitor.slug,
+              header: (
+                <Link
+                  to={href(`/alternatives/${competitor.slug}`)}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {competitor.name}
+                </Link>
+              ),
+              cells: [
+                competitor.category,
+                competitor.pricing,
+                'No — Dockstash is',
+              ],
+            }))}
+          />
         </Container>
       </Reveal>
 
@@ -152,24 +132,31 @@ export const AlternativesHub = () => {
         <Container>
           <h2 className={h2Class}>Compare each alternative</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {COMPETITOR_LIST.map((competitor) => (
-              <LinkCard
-                key={competitor.slug}
-                to={href(`/alternatives/${competitor.slug}`)}
-                title={competitor.name}
-                description={competitor.category}
-              />
+            {[
+              ...COMPETITOR_LIST.map((competitor) => ({
+                to: href(`/alternatives/${competitor.slug}`),
+                title: competitor.name,
+                description: competitor.category,
+              })),
+              {
+                to: href('/vs/backrest'),
+                title: 'Dockstash vs Backrest',
+                description: 'Head-to-head comparison',
+              },
+              {
+                to: href('/compare/self-hosted-backup-vs-cloud-backup'),
+                title: 'Self-hosted vs cloud backup',
+                description: 'Category comparison',
+              },
+            ].map((card, i) => (
+              <Reveal key={card.to} index={i}>
+                <LinkCard
+                  to={card.to}
+                  title={card.title}
+                  description={card.description}
+                />
+              </Reveal>
             ))}
-            <LinkCard
-              to={href('/vs/backrest')}
-              title="Dockstash vs Backrest"
-              description="Head-to-head comparison"
-            />
-            <LinkCard
-              to={href('/compare/self-hosted-backup-vs-cloud-backup')}
-              title="Self-hosted vs cloud backup"
-              description="Category comparison"
-            />
           </div>
         </Container>
       </Reveal>

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { Seo, schema } from '@shared/seo';
+import { Seo, SsrNotFound, schema } from '@shared/seo';
 import { Button } from '@shared/ui/button';
 import { getCompetitor, altIntro } from '@features/marketing/content';
 import { useMarketingRoute, localeHref } from '../useMarketingRoute';
@@ -11,6 +11,7 @@ import {
   Eyebrow,
   FaqSection,
   LastUpdated,
+  answerClass,
   h1Class,
   h2Class,
   sectionClass,
@@ -35,6 +36,7 @@ export const AlternativePage = () => {
           locale={locale}
           noindex
         />
+        <SsrNotFound />
         <section className={sectionClass}>
           <Container>
             <h1 className={h1Class}>Alternative not found</h1>
@@ -75,9 +77,10 @@ export const AlternativePage = () => {
     <>
       <Seo
         title={`The Dockstash alternative to ${competitor.name}`}
-        description={`Honest ${competitor.name} vs Dockstash comparison: where ${competitor.name} wins, where Docker-aware dumps and restore-drill verification make Dockstash the better fit, and how to migrate.`}
+        description={`Honest ${competitor.name} vs Dockstash comparison: where each wins, why Docker-aware dumps and restore drills matter, and how to migrate.`}
         basePath={basePath}
         locale={locale}
+        localized={false}
         jsonLd={jsonLd}
       />
 
@@ -97,7 +100,7 @@ export const AlternativePage = () => {
           <h1 className={h1Class}>
             The Dockstash alternative to {competitor.name}
           </h1>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {altIntro(competitor)}
           </p>
           <p className="mt-3 text-muted-foreground">
@@ -137,7 +140,7 @@ export const AlternativePage = () => {
       <Reveal as="section" className={sectionClass}>
         <Container>
           <h2 className={h2Class}>Who should switch to Dockstash</h2>
-          <p className="max-w-[720px] rounded-lg border border-border bg-muted p-5 text-lg leading-relaxed">
+          <p className={answerClass}>
             {competitor.switchIf}
           </p>
           <p className="mt-4 text-muted-foreground">
