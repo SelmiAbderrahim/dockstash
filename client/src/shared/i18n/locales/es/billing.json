@@ -93,10 +93,17 @@
       "title": "Uso por proyecto",
       "empty": "Aún no hay proyectos activos.",
       "colProject": "Proyecto",
+      "colStatus": "Estado",
       "colSnapshots": "Instantáneas",
       "colSize": "Tamaño",
       "colLastRun": "Última ejecución",
       "never": "Nunca"
+    },
+    "status": {
+      "success": "Correcto",
+      "failed": "Fallido",
+      "running": "En curso",
+      "idle": "Inactivo"
     },
     "retry": "Reintentar"
   },

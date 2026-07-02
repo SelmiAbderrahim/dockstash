@@ -194,10 +194,13 @@ describe('billing / controller + service surface', () => {
     }
   });
 
-  it('getPricingTiersForClient falls back for tiers missing caps/flags and keeps set product ids', async () => {
-    // Insert a raw doc bypassing the schema so caps/flags are absent.
+  it('getPricingTiersForClient falls back for tiers missing caps/flags and passes product ids through when configured', async () => {
+    __setPaymentProviderForTests(mockProvider()); // configured
+    // Raw doc bypassing the schema so caps/flags are absent. Use a non-plan
+    // slug so the idempotent seed (free/pro/business) leaves it untouched and
+    // the fallback branch stays exercised.
     await PricingTier.collection.insertOne({
-      slug: 'pro',
+      slug: 'legacy',
       name: 'Raw',
       priceMonthly: 100,
       priceYearly: 1000,
@@ -207,10 +210,52 @@ describe('billing / controller + service surface', () => {
       active: true,
     });
     const tiers = await getPricingTiersForClient();
-    expect(tiers).toHaveLength(1);
-    expect(tiers[0]?.productIdMonthly).toBe('pm_1');
-    expect(tiers[0]?.caps).toEqual({ projects: 0, retentionDays: 0, frequency: 'daily' });
-    expect(tiers[0]?.flags).toEqual({ schedules: false, emailAlerts: false, multiVps: false });
+    const legacy = tiers.find((t) => t.slug === 'legacy');
+    expect(legacy?.productIdMonthly).toBe('pm_1');
+    expect(legacy?.caps).toEqual({ projects: 0, retentionDays: 0, frequency: 'daily' });
+    expect(legacy?.flags).toEqual({ schedules: false, emailAlerts: false, multiVps: false });
+  });
+
+  it('getPricingTiersForClient reconciles product ids from env into stale (pre-seeded null) rows', async () => {
+    __setPaymentProviderForTests(mockProvider()); // configured
+    const prev = env.POLAR_PRO_PRODUCT_ID;
+    (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = 'prod_env_pro';
+    try {
+      // Simulate a seed performed before the product IDs were configured.
+      await PricingTier.collection.insertOne({
+        slug: 'pro',
+        name: 'Pro',
+        priceMonthly: 900,
+        priceYearly: 9000,
+        productIdMonthly: null,
+        productIdYearly: null,
+        interval: 'month',
+        active: true,
+        caps: { projects: 5, retentionDays: 30, frequency: 'daily' },
+        flags: { schedules: true, emailAlerts: true, multiVps: false },
+      });
+      const tiers = await getPricingTiersForClient();
+      const pro = tiers.find((t) => t.slug === 'pro');
+      expect(pro?.productIdMonthly).toBe('prod_env_pro');
+    } finally {
+      (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = prev;
+    }
+  });
+
+  it('getPricingTiersForClient nulls product ids when the provider is not configured', async () => {
+    __setPaymentProviderForTests(mockProvider({ isConfigured: () => false }));
+    const prev = env.POLAR_PRO_PRODUCT_ID;
+    (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = 'prod_env_pro';
+    try {
+      const tiers = await getPricingTiersForClient();
+      expect(tiers.length).toBeGreaterThan(0);
+      for (const t of tiers) {
+        expect(t.productIdMonthly).toBeNull();
+        expect(t.productIdYearly).toBeNull();
+      }
+    } finally {
+      (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = prev;
+    }
   });
 
   it('GET /overview fails safe to free/none when a paid provider is not configured', async () => {

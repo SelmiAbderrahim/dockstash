@@ -27,6 +27,8 @@ export default defineConfig({
         'src/server.ts',
         // Thin CLI seam over the tested seedSuperadmin() — like src/server.ts.
         'src/seed-superadmin.ts',
+        // Thin CLI seam over the tested seedPricingTiers() — like above.
+        'src/seed-pricing-tiers.ts',
         'src/config/logger.ts',
         // NOTE: src/config/db.ts is intentionally NOT excluded — the v8
         // all-files scan in vitest 2.1.9 emits a 0% stub for excluded-but-

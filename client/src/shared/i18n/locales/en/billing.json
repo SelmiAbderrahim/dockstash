@@ -93,10 +93,17 @@
       "title": "Per-project usage",
       "empty": "No active projects yet.",
       "colProject": "Project",
+      "colStatus": "Status",
       "colSnapshots": "Snapshots",
       "colSize": "Size",
       "colLastRun": "Last run",
       "never": "Never"
+    },
+    "status": {
+      "success": "Success",
+      "failed": "Failed",
+      "running": "Running",
+      "idle": "Idle"
     },
     "retry": "Retry"
   },

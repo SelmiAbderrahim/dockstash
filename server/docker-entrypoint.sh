@@ -4,4 +4,7 @@
 # so a misconfigured Mongo fails the container fast instead of booting broken.
 set -e
 node dist/seed-superadmin.cjs
+# Reconcile pricing-tier product IDs from env (idempotent). Keeps plans
+# purchasable after Polar product IDs are configured post-initial-seed.
+node dist/seed-pricing-tiers.cjs
 exec node dist/server.cjs

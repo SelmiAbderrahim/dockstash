@@ -1,98 +1,42 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CalendarClock, FolderGit2, Mail, Server } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { Alert, AlertDescription } from '@shared/ui/alert';
-import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@shared/ui/card';
-import { Checkbox } from '@shared/ui/checkbox';
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@shared/ui/empty';
-import { Progress } from '@shared/ui/progress';
-import { Skeleton } from '@shared/ui/skeleton';
+import { Card, CardContent } from '@shared/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@shared/ui/table';
 import { useTabParam } from '../hooks/useTabParam';
 import { PricingGrid } from './PricingGrid';
-import {
-  loadOverview,
-  loadUsage,
-  openPortal,
-  selectProjectsToKeep as selectProjectsThunk,
-} from '../store/thunks';
+import { UsageTab } from './UsageTab';
+import { loadOverview, openPortal } from '../store/thunks';
 import {
   selectBillingError,
   selectBillingMessage,
   selectBillingOverview,
   selectLoadingOverview,
-  selectLoadingUsage,
-  selectUsage,
-  selectUsageError,
 } from '../store/selectors';
 
 const TABS = ['overview', 'usage', 'plans'] as const;
 type Tab = (typeof TABS)[number];
-
-/** Human-readable byte size (metering). 0 → "0 B". */
-export function formatBytes(bytes: number): string {
-  if (bytes <= 0) return '0 B';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exp;
-  return `${value.toFixed(exp === 0 ? 0 : 1)} ${units[exp]}`;
-}
 
 export const BillingPage = () => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation('billing');
   const [tab, setTab] = useTabParam<Tab>('overview', TABS);
   const overview = useAppSelector(selectBillingOverview);
-  const usage = useAppSelector(selectUsage);
   const loadingOverview = useAppSelector(selectLoadingOverview);
-  const loadingUsage = useAppSelector(selectLoadingUsage);
   const error = useAppSelector(selectBillingError);
-  const usageError = useAppSelector(selectUsageError);
   const message = useAppSelector(selectBillingMessage);
-  const [keepIds, setKeepIds] = useState<string[]>([]);
 
   useEffect(() => {
     void dispatch(loadOverview());
-    void dispatch(loadUsage());
   }, [dispatch]);
-
-  const toggleKeep = (id: string) => {
-    setKeepIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-  };
 
   const onOpenPortal = () => {
     void dispatch(openPortal()).then((result) => {
       if (openPortal.fulfilled.match(result)) {
         window.location.href = result.payload.url;
       }
-    });
-  };
-
-  const submitSelection = () => {
-    // The submit button is `disabled` whenever `keepIds` is empty, so this
-    // early-return is a defensive guard that cannot be reached through the UI.
-    /* v8 ignore next */
-    if (keepIds.length === 0) return;
-    void dispatch(selectProjectsThunk({ keepIds })).then(() => {
-      void dispatch(loadUsage());
-      setKeepIds([]);
     });
   };
 
@@ -174,209 +118,7 @@ export const BillingPage = () => {
         </TabsContent>
 
         <TabsContent value="usage">
-          {loadingUsage ? (
-            <div role="status" aria-live="polite" className="flex flex-col gap-4 py-2">
-              <span className="sr-only">{t('page.loading')}</span>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-                <Skeleton className="h-24" />
-              </div>
-              <Skeleton className="h-40" />
-            </div>
-          ) : usage ? (
-            <div className="flex flex-col gap-6">
-              <header className="flex flex-col gap-1">
-                <h2 className="text-lg font-semibold tracking-tight">{t('usage.title')}</h2>
-                <p className="text-sm text-muted-foreground">{t('usage.lede')}</p>
-              </header>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Card>
-                  <CardHeader className="gap-1">
-                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
-                      {t('usage.stat.projects')}
-                    </CardDescription>
-                    <CardTitle className="text-2xl">
-                      {usage.projects.used}
-                      <span className="text-base font-normal text-muted-foreground">
-                        {' / '}
-                        {usage.projects.cap ?? t('grid.caps.unlimited')}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                  {usage.projects.cap !== null ? (
-                    <CardContent>
-                      <Progress
-                        value={usage.projects.used}
-                        max={usage.projects.cap}
-                        aria-label={t('usage.quotaLabel')}
-                      />
-                    </CardContent>
-                  ) : null}
-                </Card>
-
-                <Card>
-                  <CardHeader className="gap-1">
-                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
-                      {t('usage.stat.retention')}
-                    </CardDescription>
-                    <CardTitle className="text-2xl">
-                      {t('usage.stat.retentionValue', { days: usage.retentionDays })}
-                    </CardTitle>
-                  </CardHeader>
-                </Card>
-
-                <Card>
-                  <CardHeader className="gap-1">
-                    <CardDescription className="text-xs font-medium uppercase tracking-wide">
-                      {t('usage.stat.frequency')}
-                    </CardDescription>
-                    <CardTitle className="text-2xl">
-                      {t(`grid.frequency.${usage.frequency}`)}
-                    </CardTitle>
-                  </CardHeader>
-                </Card>
-              </div>
-
-              {usage.flags.schedules || usage.flags.emailAlerts || usage.flags.multiVps ? (
-                <div className="flex flex-col gap-2">
-                  <h3 className="text-sm font-medium">{t('usage.features.title')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {usage.flags.schedules ? (
-                      <Badge variant="outline" className="gap-1.5">
-                        <CalendarClock className="size-3.5" />
-                        {t('grid.flag.schedules')}
-                      </Badge>
-                    ) : null}
-                    {usage.flags.emailAlerts ? (
-                      <Badge variant="outline" className="gap-1.5">
-                        <Mail className="size-3.5" />
-                        {t('grid.flag.emailAlerts')}
-                      </Badge>
-                    ) : null}
-                    {usage.flags.multiVps ? (
-                      <Badge variant="outline" className="gap-1.5">
-                        <Server className="size-3.5" />
-                        {t('grid.flag.multiVps')}
-                      </Badge>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-medium">{t('usage.metering.title')}</h3>
-                {usage.metering.length === 0 ? (
-                  <Empty className="border">
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <FolderGit2 />
-                      </EmptyMedia>
-                      <EmptyTitle className="text-base">
-                        {t('usage.metering.empty')}
-                      </EmptyTitle>
-                    </EmptyHeader>
-                  </Empty>
-                ) : (
-                  <Card>
-                    <CardContent className="px-0">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead scope="col">{t('usage.metering.colProject')}</TableHead>
-                            <TableHead scope="col" className="text-end">
-                              {t('usage.metering.colSnapshots')}
-                            </TableHead>
-                            <TableHead scope="col" className="text-end">
-                              {t('usage.metering.colSize')}
-                            </TableHead>
-                            <TableHead scope="col">{t('usage.metering.colLastRun')}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {usage.metering.map((m) => (
-                            <TableRow key={m.id}>
-                              <TableHead scope="row">{m.name}</TableHead>
-                              <TableCell className="text-end tabular-nums">
-                                {m.snapshotCount}
-                              </TableCell>
-                              <TableCell className="text-end tabular-nums">
-                                {formatBytes(m.sizeBytes)}
-                              </TableCell>
-                              <TableCell>
-                                {m.lastRunAt
-                                  ? new Date(m.lastRunAt).toLocaleString()
-                                  : t('usage.metering.never')}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {usage.projects.cap !== null && usage.projects.used > usage.projects.cap ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{t('usage.overCap')}</AlertDescription>
-                </Alert>
-              ) : null}
-
-              {usage.selectionRequired ? (
-                <Card>
-                  <CardContent className="flex flex-col gap-3">
-                    <h2 className="text-lg font-semibold">{t('selection.title')}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      {t('selection.help', { cap: usage.projects.cap ?? '' })}
-                    </p>
-                    <ul className="flex flex-col gap-2">
-                      {[...usage.projects.active, ...usage.projects.paused].map((p) => (
-                        <li key={p.id}>
-                          <label
-                            htmlFor={`keep-${p.id}`}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <Checkbox
-                              id={`keep-${p.id}`}
-                              checked={keepIds.includes(p.id)}
-                              onCheckedChange={() => toggleKeep(p.id)}
-                            />{' '}
-                            {p.name}
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
-                    <Button
-                      type="button"
-                      className="w-fit"
-                      onClick={submitSelection}
-                      disabled={keepIds.length === 0}
-                    >
-                      {t('selection.submit')}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : null}
-            </div>
-          ) : usageError ? (
-            <Alert variant="destructive">
-              <AlertDescription className="flex flex-col items-start gap-3">
-                <span>{usageError}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void dispatch(loadUsage())}
-                >
-                  {t('usage.retry')}
-                </Button>
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <p className="py-6 text-muted-foreground">{t('page.empty')}</p>
-          )}
+          <UsageTab />
         </TabsContent>
 
         <TabsContent value="plans">

@@ -89,13 +89,21 @@ export interface PricingTierClient {
 }
 
 /**
- * Read the persisted tiers, seeding on empty. `projects: Number.MAX_SAFE_INTEGER`
- * is returned to the client as `null` to mean "unlimited".
+ * Read the persisted tiers. `seedPricingTiers` is idempotent and `$set`s the
+ * product IDs (and caps/flags) from live env on every run, so calling it
+ * unconditionally makes env the source of truth — product IDs configured after
+ * the initial seed reconcile into the DB here instead of staying stale forever.
+ * `projects: Number.MAX_SAFE_INTEGER` is returned to the client as `null` to
+ * mean "unlimited".
  */
 export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
-  const count = await PricingTier.countDocuments();
-  if (count === 0) await seedPricingTiers();
+  await seedPricingTiers();
   const tiers = await PricingTier.find({ active: true }).sort({ priceMonthly: 1 }).lean();
+  // When Polar is not fully configured (e.g. missing access token) checkout
+  // would 500 on click. The client's only signal is product-id nullity, so null
+  // the IDs out here to keep every plan honestly disabled ("unavailable")
+  // instead of rendering an enabled button that fails on submit.
+  const configured = getPaymentProvider().isConfigured();
   return tiers.map((t) => {
     const caps = t.caps ?? { projects: 0, retentionDays: 0, frequency: 'daily' };
     const flags = t.flags ?? { schedules: false, emailAlerts: false, multiVps: false };
@@ -104,8 +112,8 @@ export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
       name: t.name,
       priceMonthly: t.priceMonthly,
       priceYearly: t.priceYearly,
-      productIdMonthly: t.productIdMonthly ?? null,
-      productIdYearly: t.productIdYearly ?? null,
+      productIdMonthly: configured ? (t.productIdMonthly ?? null) : null,
+      productIdYearly: configured ? (t.productIdYearly ?? null) : null,
       caps: {
         projects:
           caps.projects >= Number.MAX_SAFE_INTEGER ? null : caps.projects,

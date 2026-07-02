@@ -93,10 +93,17 @@
       "title": "按项目用量",
       "empty": "暂无活跃项目。",
       "colProject": "项目",
+      "colStatus": "状态",
       "colSnapshots": "快照",
       "colSize": "大小",
       "colLastRun": "上次运行",
       "never": "从未"
+    },
+    "status": {
+      "success": "成功",
+      "failed": "失败",
+      "running": "运行中",
+      "idle": "空闲"
     },
     "retry": "重试"
   },

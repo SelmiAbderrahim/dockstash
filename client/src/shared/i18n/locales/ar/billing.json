@@ -93,10 +93,17 @@
       "title": "الاستخدام لكل مشروع",
       "empty": "لا توجد مشاريع نشطة بعد.",
       "colProject": "المشروع",
+      "colStatus": "الحالة",
       "colSnapshots": "اللقطات",
       "colSize": "الحجم",
       "colLastRun": "آخر تشغيل",
       "never": "أبدًا"
+    },
+    "status": {
+      "success": "ناجح",
+      "failed": "فشل",
+      "running": "قيد التشغيل",
+      "idle": "خامل"
     },
     "retry": "إعادة المحاولة"
   },

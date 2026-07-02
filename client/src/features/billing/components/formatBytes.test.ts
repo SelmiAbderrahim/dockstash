@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes } from './BillingPage';
+import { formatBytes } from './UsageTab';
 
 describe('formatBytes (per-project metering)', () => {
   it('renders 0 and negatives as "0 B"', () => {
