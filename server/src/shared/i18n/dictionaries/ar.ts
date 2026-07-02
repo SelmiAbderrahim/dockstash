@@ -248,6 +248,9 @@ export const ar: DictionaryShape = {
     error: {
       notFound: 'لم يتم العثور على الوكيل.',
       notOwner: 'أنت لا تملك هذا الوكيل.',
+      unauthorized: 'فشلت مصادقة الوكيل.',
+      jobNotFound: 'لم يتم العثور على مهمة الوكيل.',
+      drillNotSupported: 'تمارين الاستعادة غير مدعومة بعد على الوكلاء البعيدين.',
     },
   },
   language: {

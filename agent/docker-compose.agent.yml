@@ -1,0 +1,44 @@
+# Dockstash fleet agent — runs standalone on each remote VPS you back up.
+# NOT part of the main Dockstash stack. Set two variables and bring it up:
+#
+#   DOCKSTASH_URL=https://dockstash.com \
+#   DOCKSTASH_AGENT_TOKEN=dsa_<agentId>.<secret> \
+#   docker compose -f docker-compose.agent.yml up -d
+#
+# Same least-privilege posture as the main stack: the agent reaches Docker
+# only through a socket proxy that allows exactly CONTAINERS + EXEC.
+services:
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      POST: 1
+      INFO: 1
+      # everything else stays 0 (deny) — matches the main stack's proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  agent:
+    image: dockstash/agent:latest
+    restart: unless-stopped
+    depends_on:
+      - docker-socket-proxy
+    environment:
+      DOCKSTASH_URL: ${DOCKSTASH_URL}
+      DOCKSTASH_AGENT_TOKEN: ${DOCKSTASH_AGENT_TOKEN}
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+    volumes:
+      # Backup-path root — matches the server-side /var/www/* allowlist.
+      - /var/www:/var/www:ro
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL

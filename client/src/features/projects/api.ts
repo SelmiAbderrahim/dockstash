@@ -40,6 +40,13 @@ export const updatePlanRequest = (projectId: string, plan: ProjectPlan) =>
     body: { plan },
   }).then((r) => r.project);
 
+export const assignProjectAgentRequest = (projectId: string, agentId: string | null) =>
+  apiClient<ProjectResp>(`/backups/${projectId}/agent`, {
+    method: 'PATCH',
+    auth: true,
+    body: { agentId },
+  }).then((r) => r.project);
+
 export const runBackupNowRequest = (projectId: string) =>
   apiClient<EnqueueResp>('/scheduler/enqueue', {
     method: 'POST',

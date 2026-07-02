@@ -116,6 +116,14 @@
         "submit": {
           "title": "Terminer l'enregistrement",
           "body": "Enregistrez l'agent pour générer sa clé API. La clé n'est affichée qu'une seule fois : copiez-la avant de fermer la boîte de dialogue."
+        },
+        "install": {
+          "title": "Installer l'agent",
+          "body": "Copiez cette commande et exécutez-la sur le VPS. Elle démarre l'agent Dockstash avec le jeton intégré."
+        },
+        "online": {
+          "title": "Voyez-le se connecter",
+          "body": "Une fois lancé, l'agent se signale toutes les quelques secondes. Son statut passe à « En ligne » en moins d'une minute."
         }
       }
     },

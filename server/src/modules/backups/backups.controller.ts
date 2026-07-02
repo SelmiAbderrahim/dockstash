@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import {
+  assignAgentSchema,
   createProjectSchema,
   projectIdParamsSchema,
   scanProjectSchema,
@@ -12,9 +13,12 @@ import {
   listProjectsForUser,
   loadOwnedProject,
   scanProjectPath,
+  updateProjectAgent,
   updateProjectPlan,
 } from './backups.service.js';
 import { serializeProject } from './backups.serialize.js';
+import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
+import { extractIp, recordAudit } from '../audit/index.js';
 
 export const scan: RequestHandler = asyncHandler(async (req, res) => {
   const { path: projectPath } = scanProjectSchema.parse(req.body);
@@ -48,5 +52,23 @@ export const patchPlan: RequestHandler = asyncHandler(async (req, res) => {
     { paths: plan.paths, databases: plan.databases.map((d) => ({ ...d, enabled: d.enabled ?? true })), configs: plan.configs },
     { t: req.t },
   );
+  res.status(200).json({ project: serializeProject(project) });
+});
+
+export const patchAgent: RequestHandler = asyncHandler(async (req, res) => {
+  const { projectId } = projectIdParamsSchema.parse(req.params);
+  const { agentId } = assignAgentSchema.parse(req.body);
+  const userId = requireUserId(req.user);
+  // Assignment (and unassignment) is a Business-tier fleet operation.
+  await assertMultiVpsAllowed(userId, { t: req.t });
+  const project = await updateProjectAgent(projectId, userId, agentId, { t: req.t });
+  await recordAudit({
+    actorUserId: userId,
+    action: 'agent.assign',
+    targetType: 'project',
+    targetId: projectId,
+    ip: extractIp(req),
+    metadata: { agentId },
+  });
   res.status(200).json({ project: serializeProject(project) });
 });

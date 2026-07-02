@@ -43,7 +43,9 @@
     },
     "errors": {
       "load": "Flotte konnte nicht geladen werden.",
-      "register": "Agent konnte nicht registriert werden."
+      "register": "Agent konnte nicht registriert werden.",
+      "rotate": "Agent-Schlüssel konnte nicht erneuert werden.",
+      "remove": "Agent konnte nicht entfernt werden."
     },
     "table": {
       "aria": "Flotte",
@@ -53,7 +55,8 @@
       "lastSeen": "Zuletzt gesehen",
       "projects": "Projekte",
       "size": "Größe",
-      "snapshots": "Snapshots"
+      "snapshots": "Snapshots",
+      "actions": "Aktionen"
     },
     "status": {
       "online": "Online",
@@ -73,7 +76,39 @@
       "cancel": "Abbrechen",
       "keyWarning": "Dieser API-Schlüssel wird nur einmal angezeigt und kann nie wieder abgerufen werden. Kopieren Sie ihn jetzt.",
       "copy": "Kopieren",
-      "done": "Fertig"
+      "copied": "Kopiert",
+      "done": "Fertig",
+      "installTitle": "Agent installieren",
+      "installIntro": "Führen Sie dies auf dem hinzuzufügenden Rechner aus. Es startet den Dockstash-Agent-Container mit eingebettetem Token."
+    },
+    "install": {
+      "copy": "Befehl kopieren",
+      "copied": "Kopiert"
+    },
+    "setup": {
+      "title": "Agent-Einrichtung",
+      "description": "Installationsbefehl und Schlüsselverwaltung für diesen Agenten.",
+      "keyPlaceholderNote": "Ersetzen Sie <AGENT_TOKEN> durch das bei der Registrierung erhaltene Token. Das Token kann nicht erneut angezeigt werden — bei Verlust erneuern Sie den Schlüssel unten.",
+      "close": "Schließen"
+    },
+    "actions": {
+      "aria": "Agent-Aktionen",
+      "setup": "Installationsanleitung",
+      "rotate": "Schlüssel erneuern",
+      "remove": "Agent entfernen"
+    },
+    "rotate": {
+      "title": "Agent-Schlüssel erneuern",
+      "description": "Ein neues Token wird generiert und das alte funktioniert sofort nicht mehr. Sie müssen den Agenten mit dem neuen Token aktualisieren.",
+      "confirm": "Schlüssel erneuern",
+      "cancel": "Abbrechen",
+      "rotating": "Wird erneuert…"
+    },
+    "remove": {
+      "title": "Agent entfernen",
+      "description": "„{{name}}\" aus Ihrer Flotte entfernen? Seine Projekte fallen auf lokale Backups zurück und anstehende Aufträge werden abgebrochen.",
+      "confirm": "Entfernen",
+      "cancel": "Abbrechen"
     }
   }
 }

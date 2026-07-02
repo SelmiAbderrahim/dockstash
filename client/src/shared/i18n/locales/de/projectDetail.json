@@ -38,5 +38,15 @@
     "none": "Noch kein Test durchgeführt.",
     "pass": "Verifiziert",
     "fail": "Fehlgeschlagen"
+  },
+  "agent": {
+    "title": "Läuft auf",
+    "description": "Wählen Sie, wo die Backups dieses Projekts ausgeführt werden.",
+    "local": "Dieser Server (lokal)",
+    "offline": "offline",
+    "selectAria": "Backup-Agent",
+    "saving": "Wird gespeichert…",
+    "saved": "Zuweisung gespeichert.",
+    "error": "Agent konnte nicht zugewiesen werden."
   }
 }

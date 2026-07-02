@@ -43,7 +43,9 @@
     },
     "errors": {
       "load": "No se pudo cargar la flota.",
-      "register": "No se pudo registrar el agente."
+      "register": "No se pudo registrar el agente.",
+      "rotate": "No se pudo rotar la clave del agente.",
+      "remove": "No se pudo eliminar el agente."
     },
     "table": {
       "aria": "Flota",
@@ -53,7 +55,8 @@
       "lastSeen": "Última conexión",
       "projects": "Proyectos",
       "size": "Tamaño",
-      "snapshots": "Instantáneas"
+      "snapshots": "Instantáneas",
+      "actions": "Acciones"
     },
     "status": {
       "online": "En línea",
@@ -73,7 +76,39 @@
       "cancel": "Cancelar",
       "keyWarning": "Esta clave API se muestra una sola vez y no podrá recuperarse nunca. Cópiala ahora.",
       "copy": "Copiar",
-      "done": "Hecho"
+      "copied": "Copiado",
+      "done": "Hecho",
+      "installTitle": "Instalar el agente",
+      "installIntro": "Ejecuta esto en la máquina que vas a añadir. Inicia el contenedor del agente Dockstash con el token incluido."
+    },
+    "install": {
+      "copy": "Copiar comando",
+      "copied": "Copiado"
+    },
+    "setup": {
+      "title": "Configuración del agente",
+      "description": "Comando de instalación y gestión de claves para este agente.",
+      "keyPlaceholderNote": "Reemplaza <AGENT_TOKEN> con el token del registro. El token no se puede volver a mostrar — si lo perdiste, rota la clave abajo.",
+      "close": "Cerrar"
+    },
+    "actions": {
+      "aria": "Acciones del agente",
+      "setup": "Instrucciones de instalación",
+      "rotate": "Rotar clave",
+      "remove": "Eliminar agente"
+    },
+    "rotate": {
+      "title": "Rotar la clave del agente",
+      "description": "Se genera un nuevo token y el anterior deja de funcionar de inmediato. Debes actualizar el agente con el nuevo token.",
+      "confirm": "Rotar clave",
+      "cancel": "Cancelar",
+      "rotating": "Rotando…"
+    },
+    "remove": {
+      "title": "Eliminar agente",
+      "description": "¿Eliminar «{{name}}» de tu flota? Sus proyectos vuelven a copias locales y las tareas en cola se cancelan.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
     }
   }
 }

@@ -9,7 +9,11 @@ import { notFound } from './shared/middleware/not-found.js';
 import { requestId } from './shared/middleware/request-id.js';
 import { language } from './shared/middleware/language.js';
 import { securityHeaders } from './shared/middleware/security-headers.js';
-import { createAuthRateLimiter, createWebhookRateLimiter } from './shared/middleware/rate-limit.js';
+import {
+  createAgentRateLimiter,
+  createAuthRateLimiter,
+  createWebhookRateLimiter,
+} from './shared/middleware/rate-limit.js';
 import { issueCsrfToken } from './shared/middleware/csrf.js';
 import { authRouter, requireVerified } from './modules/auth/index.js';
 import { requireAuth } from './shared/middleware/require-auth.js';
@@ -22,7 +26,7 @@ import { auditRouter } from './modules/audit/index.js';
 import { healthRouter, projectHealthRouter } from './modules/health/index.js';
 import { seoRouter } from './modules/seo/index.js';
 import { recoveryRouter } from './modules/recovery/index.js';
-import { agentsRouter } from './modules/agents/index.js';
+import { agentsRouter, agentApiRouter } from './modules/agents/index.js';
 import { legalRouter } from './modules/legal/index.js';
 import { settingsRouter } from './modules/settings/index.js';
 import { superadminRouter } from './modules/superadmin/index.js';
@@ -85,6 +89,10 @@ export function createApp(): Express {
   // rights must not be gated); health/seo/security are public above.
   app.use('/api/legal', legalRouter);
   app.use('/api/communication', communicationRouter);
+  // Fleet-agent machine surface: daemons self-authenticate with their
+  // composite Bearer token (require-agent-auth) — no JWT, no email gate.
+  // Distinct prefix from the user-facing /api/agents router below.
+  app.use('/api/agent', createAgentRateLimiter(), agentApiRouter);
 
   // Product surfaces are hard-gated: an authenticated but unverified user is
   // blocked (403 EMAIL_NOT_VERIFIED) until they confirm their email. `requireAuth`

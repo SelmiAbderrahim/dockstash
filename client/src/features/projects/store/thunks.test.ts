@@ -4,6 +4,7 @@ import { projectsReducer } from './slice';
 import {
   fetchProjects,
   savePlan,
+  assignProjectAgent,
   runBackupNow,
   fetchSchedules,
   saveSchedule,
@@ -16,6 +17,7 @@ vi.mock('../api', () => ({
   scanProjectRequest: vi.fn(),
   createProjectRequest: vi.fn(),
   updatePlanRequest: vi.fn(),
+  assignProjectAgentRequest: vi.fn(),
   runBackupNowRequest: vi.fn(),
   listSchedulesRequest: vi.fn(),
   createScheduleRequest: vi.fn(),
@@ -61,6 +63,26 @@ describe('projects thunks', () => {
     const result = await makeStore().dispatch(savePlan({ projectId: 'p1', plan }));
     expect(savePlan.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('bad');
+  });
+
+  it('assignProjectAgent resolves the updated project', async () => {
+    const updated = { ...project, agentId: 'a1' };
+    mocked.assignProjectAgentRequest.mockResolvedValue(updated);
+    const result = await makeStore().dispatch(
+      assignProjectAgent({ projectId: 'p1', agentId: 'a1' }),
+    );
+    expect(assignProjectAgent.fulfilled.match(result)).toBe(true);
+    expect(mocked.assignProjectAgentRequest).toHaveBeenCalledWith('p1', 'a1');
+    expect(result.payload).toEqual(updated);
+  });
+
+  it('assignProjectAgent rejects with a message on failure', async () => {
+    mocked.assignProjectAgentRequest.mockRejectedValue(new Error('locked'));
+    const result = await makeStore().dispatch(
+      assignProjectAgent({ projectId: 'p1', agentId: 'a1' }),
+    );
+    expect(assignProjectAgent.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('locked');
   });
 
   it('runBackupNow returns projectId + jobId', async () => {

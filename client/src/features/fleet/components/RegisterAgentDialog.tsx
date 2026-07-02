@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
-import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Button } from '@shared/ui/button';
 import {
   Dialog,
@@ -17,6 +15,7 @@ import { Label } from '@shared/ui/label';
 import { registerAgent } from '../store/thunks';
 import { resetRegisterState } from '../store/slice';
 import { selectRegisterError, selectRegisterStatus } from '../store/selectors';
+import { AgentKeyReveal } from './AgentKeyReveal';
 
 interface Props {
   open: boolean;
@@ -37,7 +36,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
   const [name, setName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('');
-  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const canSubmit = name.trim().length > 0 && host.trim().length > 0;
   const saving = registerStatus === 'loading';
@@ -47,7 +46,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
       setName('');
       setHost('');
       setPort('');
-      setApiKey(null);
+      setToken(null);
       dispatch(resetRegisterState());
       onClose();
     }
@@ -64,7 +63,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
       }),
     )
       .unwrap()
-      .then((result) => setApiKey(result.apiKey))
+      .then((result) => setToken(result.token))
       .catch(() => {
         /* surfaced via selectRegisterError */
       });
@@ -78,23 +77,9 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
           <DialogDescription>{t('fleet.dialog.description')}</DialogDescription>
         </DialogHeader>
 
-        {apiKey ? (
-          <div className="flex flex-col gap-4 text-start" data-testid="agent-api-key">
-            <Alert variant="destructive">
-              <AlertDescription>{t('fleet.dialog.keyWarning')}</AlertDescription>
-            </Alert>
-            <div className="flex flex-wrap items-center gap-3 rounded-md border bg-muted/40 p-3">
-              <code className="font-mono text-sm break-all">{apiKey}</code>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void navigator.clipboard?.writeText(apiKey)}
-              >
-                <Copy className="size-4" aria-hidden="true" />
-                {t('fleet.dialog.copy')}
-              </Button>
-            </div>
+        {token ? (
+          <div className="flex flex-col gap-4">
+            <AgentKeyReveal token={token} />
             <DialogFooter>
               <Button type="button" onClick={() => handleOpenChange(false)}>
                 {t('fleet.dialog.done')}

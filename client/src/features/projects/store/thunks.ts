@@ -1,6 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
 import {
+  assignProjectAgentRequest,
   createScheduleRequest,
   listProjectsRequest,
   listSchedulesRequest,
@@ -30,6 +31,18 @@ export const savePlan = createAsyncThunk<
     return await updatePlanRequest(projectId, plan);
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not save plan.'));
+  }
+});
+
+export const assignProjectAgent = createAsyncThunk<
+  Project,
+  { projectId: string; agentId: string | null },
+  { rejectValue: string }
+>('projects/assignAgent', async ({ projectId, agentId }, { rejectWithValue }) => {
+  try {
+    return await assignProjectAgentRequest(projectId, agentId);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not assign the agent.'));
   }
 });
 

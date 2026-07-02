@@ -1,10 +1,12 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { FleetScreen, formatBytes } from './FleetScreen';
+import { guideReducer } from '@features/guide';
 import { fleetReducer, type FleetState } from '../store/slice';
 import * as thunks from '../store/thunks';
 import type { FleetEntry } from '../types';
@@ -23,6 +25,8 @@ vi.mock('../store/thunks', async () => {
   return {
     fetchFleet: make(actual.fetchFleet),
     registerAgent: make(actual.registerAgent),
+    rotateAgentKey: make(actual.rotateAgentKey),
+    deleteAgent: make(actual.deleteAgent),
     lockedReasonFromError: actual.lockedReasonFromError,
   };
 });
@@ -41,6 +45,10 @@ const baseState = (over: Partial<FleetState> = {}): FleetState => ({
   lockedReason: null,
   registerStatus: 'idle',
   registerError: null,
+  rotateStatus: 'idle',
+  rotateError: null,
+  deleteStatus: 'idle',
+  deleteError: null,
   ...over,
 });
 
@@ -67,10 +75,25 @@ const entries: FleetEntry[] = [
   },
 ];
 
-const renderScreen = (fleet: Partial<FleetState> = {}) => {
+interface GuideOver {
+  activeTourId?: string | null;
+  stepIndex?: number;
+}
+
+const guideState = (over: GuideOver = {}) => ({
+  enabled: true,
+  saving: false,
+  error: null,
+  panelOpen: false,
+  activeTourId: null,
+  stepIndex: 0,
+  ...over,
+});
+
+const renderScreen = (fleet: Partial<FleetState> = {}, guide: GuideOver = {}) => {
   const store = configureStore({
-    reducer: { fleet: fleetReducer },
-    preloadedState: { fleet: baseState(fleet) },
+    reducer: { fleet: fleetReducer, guide: guideReducer },
+    preloadedState: { fleet: baseState(fleet), guide: guideState(guide) },
   });
   render(
     <Provider store={store}>
@@ -164,6 +187,25 @@ describe('FleetScreen', () => {
     expect(screen.queryByTestId('fleet-empty')).not.toBeInTheDocument();
   });
 
+  it('auto-opens the register dialog when the guide tour targets a dialog field', () => {
+    // explore-fleet step index 2 is the `agent-name-input` step, which lives
+    // inside the dialog — the screen must open it so the anchor can mount.
+    renderScreen(
+      { status: 'succeeded', items: entries },
+      { activeTourId: 'explore-fleet', stepIndex: 2 },
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('leaves the dialog closed when the guide tour targets an on-page element', () => {
+    // step index 1 is the `fleet-register-button` step — not a dialog anchor.
+    renderScreen(
+      { status: 'succeeded', items: entries },
+      { activeTourId: 'explore-fleet', stepIndex: 1 },
+    );
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('opens the register dialog from the header action', () => {
     renderScreen({ status: 'succeeded', items: entries });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -172,5 +214,115 @@ describe('FleetScreen', () => {
     // Closing via Escape flows back through onClose → setRegisterOpen(false).
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});
+
+describe('FleetScreen background polling', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('polls fetchFleet silently every 30s and clears the interval on unmount', () => {
+    vi.useFakeTimers();
+    const store = configureStore({
+      reducer: { fleet: fleetReducer, guide: guideReducer },
+      preloadedState: {
+        fleet: baseState({ status: 'succeeded', items: entries }),
+        guide: guideState(),
+      },
+    });
+    const { unmount } = render(
+      <Provider store={store}>
+        <I18nextProvider i18n={i18n}>
+          <MemoryRouter initialEntries={['/fleet']}>
+            <FleetScreen />
+          </MemoryRouter>
+        </I18nextProvider>
+      </Provider>,
+    );
+
+    expect(mocked.fetchFleet).toHaveBeenCalledTimes(1);
+    expect(mocked.fetchFleet).toHaveBeenNthCalledWith(1);
+
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(mocked.fetchFleet).toHaveBeenCalledTimes(2);
+    expect(mocked.fetchFleet).toHaveBeenLastCalledWith({ silent: true });
+    // The silent tick must never flash the loading skeleton.
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('table', { name: 'Fleet' })).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(mocked.fetchFleet).toHaveBeenCalledTimes(4);
+
+    unmount();
+
+    // No further ticks are dispatched once unmounted — the interval was cleared.
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(mocked.fetchFleet).toHaveBeenCalledTimes(4);
+  });
+});
+
+describe('FleetScreen row actions', () => {
+  it('shows the three row actions in the dropdown menu', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    expect(await screen.findByRole('menuitem', { name: 'Setup instructions' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Rotate key' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Remove agent' })).toBeInTheDocument();
+  });
+
+  it('opens the setup dialog from the setup action and closes it via onClose', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Setup instructions' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Agent setup')).toBeInTheDocument();
+
+    // Escape flows through AgentSetupDialog's onClose → setSetupAgent(null).
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('opens the setup dialog from the rotate action too (same dialog handles rotation)', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Rotate key' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Agent setup')).toBeInTheDocument();
+  });
+
+  it('confirms removal, dispatching deleteAgent for the selected agent', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove agent' }));
+    expect(
+      screen.getByText(
+        'Remove "web-1" from your fleet? Its projects fall back to local backups and any queued jobs are cancelled.',
+      ),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remove' }));
+    expect(mocked.deleteAgent).toHaveBeenCalledWith('a1');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('cancel on the remove confirmation does not dispatch deleteAgent', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove agent' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(mocked.deleteAgent).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });

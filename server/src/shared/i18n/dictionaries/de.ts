@@ -248,6 +248,9 @@ export const de: DictionaryShape = {
     error: {
       notFound: 'Agent nicht gefunden.',
       notOwner: 'Dieser Agent gehört Ihnen nicht.',
+      unauthorized: 'Agent-Authentifizierung fehlgeschlagen.',
+      jobNotFound: 'Agent-Auftrag nicht gefunden.',
+      drillNotSupported: 'Wiederherstellungsübungen werden auf Remote-Agents noch nicht unterstützt.',
     },
   },
   language: {

@@ -46,6 +46,18 @@ export function createWebhookRateLimiter(overrides: RateLimitOverrides = {}): Re
   });
 }
 
+/**
+ * Fleet-agent machine-surface limiter (`/api/agent`). Sized for one agent per
+ * IP heartbeating every 30s + polling every 10s + batched log posts.
+ */
+export function createAgentRateLimiter(overrides: RateLimitOverrides = {}): RequestHandler {
+  return rateLimit({
+    ...commonOptions,
+    windowMs: overrides.windowMs ?? env.RATE_LIMIT_AGENT_WINDOW_MS,
+    max: overrides.max ?? env.RATE_LIMIT_AGENT_MAX,
+  });
+}
+
 // Back-compat singletons (unused after prompt 11 wiring; kept exported so
 // downstream imports don't break).
 export const authRateLimiter: RequestHandler = createAuthRateLimiter();

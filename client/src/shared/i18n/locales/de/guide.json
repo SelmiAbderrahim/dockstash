@@ -116,6 +116,14 @@
         "submit": {
           "title": "Registrierung abschließen",
           "body": "Registrieren Sie den Agenten, um dessen API-Schlüssel zu erzeugen. Der Schlüssel wird nur einmal angezeigt — kopieren Sie ihn, bevor Sie den Dialog schließen."
+        },
+        "install": {
+          "title": "Agent installieren",
+          "body": "Kopieren Sie diesen Befehl und führen Sie ihn auf dem VPS aus. Er startet den Dockstash-Agenten mit eingebettetem Token."
+        },
+        "online": {
+          "title": "Beim Online-Gehen zusehen",
+          "body": "Sobald der Agent läuft, meldet er sich alle paar Sekunden. Sein Status wechselt hier innerhalb einer Minute auf Online."
         }
       }
     },

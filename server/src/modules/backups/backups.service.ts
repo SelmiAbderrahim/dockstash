@@ -4,6 +4,8 @@ import { encryptSecret, decryptSecret } from '../../shared/crypto/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { assertProjectCap } from '../billing/entitlements.service.js';
 import { sendFailureAlert } from '../alerting/index.js';
+// Cycle-safe: agents.service imports backups.model, never this file.
+import { loadOwnedAgent } from '../agents/agents.service.js';
 import {
   Project,
   type ProjectHydrated,
@@ -105,6 +107,26 @@ export async function updateProjectPlan(
     })),
     configs: plan.configs,
   } as ProjectHydrated['plan'];
+  await project.save();
+  return project;
+}
+
+/**
+ * Assign the project to a fleet agent (or back to local with null). Ownership
+ * of BOTH the project and the agent is enforced; the scheduler's agent-aware
+ * queue reads `project.agent` at enqueue time.
+ */
+export async function updateProjectAgent(
+  projectId: string,
+  userId: string,
+  agentId: string | null,
+  deps: UpdatePlanDeps = {},
+): Promise<ProjectHydrated> {
+  const project = await loadOwnedProject(projectId, userId, deps);
+  if (agentId !== null) {
+    await loadOwnedAgent(agentId, userId, deps);
+  }
+  project.agent = (agentId as unknown) as ProjectHydrated['agent'];
   await project.save();
   return project;
 }

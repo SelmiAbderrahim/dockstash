@@ -2,12 +2,15 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
+import { extractIp, recordAudit } from '../audit/index.js';
 import { registerAgentSchema, agentIdParamsSchema } from './agents.schema.js';
 import {
   computeFleet,
-  heartbeatAgent,
+  deleteAgent,
+  effectiveAgentStatus,
   listAgentsForUser,
   registerAgent,
+  rotateAgentKey,
 } from './agents.service.js';
 import type { AgentHydrated } from './agents.model.js';
 
@@ -18,7 +21,7 @@ function serializeAgent(agent: AgentHydrated) {
     name: agent.name,
     host: agent.host,
     port: agent.port,
-    status: agent.status,
+    status: effectiveAgentStatus(agent),
     lastSeenAt: agent.lastSeenAt ? new Date(agent.lastSeenAt).toISOString() : null,
   };
 }
@@ -27,9 +30,17 @@ export const registerAgentHandler: RequestHandler = asyncHandler(async (req, res
   const userId = requireUserId(req.user);
   await assertMultiVpsAllowed(userId, { t: req.t });
   const input = registerAgentSchema.parse(req.body);
-  const { agent, apiKey } = await registerAgent(userId, input);
-  // apiKey returned once — the agent stores it; we keep only the ciphertext.
-  res.status(201).json({ agent: serializeAgent(agent), apiKey });
+  const { agent, token } = await registerAgent(userId, input);
+  await recordAudit({
+    actorUserId: userId,
+    action: 'agent.register',
+    targetType: 'agent',
+    targetId: String(agent._id),
+    ip: extractIp(req),
+    metadata: { host: agent.host },
+  });
+  // token returned once — the agent stores it; we keep only the HMAC.
+  res.status(201).json({ agent: serializeAgent(agent), token });
 });
 
 export const listAgentsHandler: RequestHandler = asyncHandler(async (req, res) => {
@@ -39,12 +50,36 @@ export const listAgentsHandler: RequestHandler = asyncHandler(async (req, res) =
   res.status(200).json({ agents: agents.map(serializeAgent) });
 });
 
-export const heartbeatAgentHandler: RequestHandler = asyncHandler(async (req, res) => {
+export const rotateAgentKeyHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
   await assertMultiVpsAllowed(userId, { t: req.t });
   const { agentId } = agentIdParamsSchema.parse(req.params);
-  const agent = await heartbeatAgent(agentId, userId, { t: req.t });
-  res.status(200).json({ agent: serializeAgent(agent) });
+  const { agent, token } = await rotateAgentKey(agentId, userId, { t: req.t });
+  await recordAudit({
+    actorUserId: userId,
+    action: 'agent.rotateKey',
+    targetType: 'agent',
+    targetId: agentId,
+    ip: extractIp(req),
+    metadata: {},
+  });
+  res.status(200).json({ agent: serializeAgent(agent), token });
+});
+
+export const deleteAgentHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const userId = requireUserId(req.user);
+  await assertMultiVpsAllowed(userId, { t: req.t });
+  const { agentId } = agentIdParamsSchema.parse(req.params);
+  await deleteAgent(agentId, userId, { t: req.t });
+  await recordAudit({
+    actorUserId: userId,
+    action: 'agent.delete',
+    targetType: 'agent',
+    targetId: agentId,
+    ip: extractIp(req),
+    metadata: {},
+  });
+  res.status(204).end();
 });
 
 export const fleetHandler: RequestHandler = asyncHandler(async (req, res) => {

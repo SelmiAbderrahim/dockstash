@@ -38,5 +38,15 @@
     "none": "No drill has ever run for this project.",
     "pass": "Verified",
     "fail": "Failed"
+  },
+  "agent": {
+    "title": "Runs on",
+    "description": "Choose where this project's backups execute.",
+    "local": "This server (local)",
+    "offline": "offline",
+    "selectAria": "Backup agent",
+    "saving": "Saving…",
+    "saved": "Assignment saved.",
+    "error": "Could not assign the agent."
   }
 }

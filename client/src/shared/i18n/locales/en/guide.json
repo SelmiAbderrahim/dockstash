@@ -116,6 +116,14 @@
         "submit": {
           "title": "Finish registering",
           "body": "Register the agent to generate its API key. The key is shown once, so copy it before closing the dialog."
+        },
+        "install": {
+          "title": "Install the agent",
+          "body": "Copy this command and run it on the VPS. It starts the Dockstash agent with the token baked in."
+        },
+        "online": {
+          "title": "Watch it come online",
+          "body": "Once the agent is running it phones home every few seconds. Its status here flips to Online within a minute."
         }
       }
     },

@@ -9,6 +9,8 @@ export interface PublicProject {
   owner: string;
   name: string;
   path: string;
+  /** Fleet agent this project runs on; null = the local/default server. */
+  agentId: string | null;
   plan: {
     paths: string[];
     databases: Array<{ service: string; type: string; container: string; enabled: boolean }>;
@@ -36,6 +38,7 @@ export function serializeProject(project: ProjectHydrated): PublicProject {
     owner: project.owner.toString(),
     name: project.name,
     path: project.path,
+    agentId: project.agent ? project.agent.toString() : null,
     plan: {
       paths: [...project.plan.paths],
       databases: project.plan.databases.map((d) => ({

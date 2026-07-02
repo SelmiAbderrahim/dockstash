@@ -38,5 +38,15 @@
     "none": "Aún no se ha ejecutado ninguna prueba.",
     "pass": "Verificado",
     "fail": "Falló"
+  },
+  "agent": {
+    "title": "Se ejecuta en",
+    "description": "Elige dónde se ejecutan las copias de este proyecto.",
+    "local": "Este servidor (local)",
+    "offline": "sin conexión",
+    "selectAria": "Agente de copia",
+    "saving": "Guardando…",
+    "saved": "Asignación guardada.",
+    "error": "No se pudo asignar el agente."
   }
 }

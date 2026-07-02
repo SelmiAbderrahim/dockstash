@@ -248,6 +248,9 @@ export const es: DictionaryShape = {
     error: {
       notFound: 'Agente no encontrado.',
       notOwner: 'No eres el propietario de este agente.',
+      unauthorized: 'Error de autenticación del agente.',
+      jobNotFound: 'Tarea del agente no encontrada.',
+      drillNotSupported: 'Los simulacros de restauración aún no son compatibles con agentes remotos.',
     },
   },
   language: {

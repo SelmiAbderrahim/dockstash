@@ -67,3 +67,23 @@ Point a browser at `http://localhost:${WEB_PORT:-3000}`.
 Root `.env` is the single source of truth (see `.claude/rules/environment-variables.md`).
 Compose reads it at compose time and forwards the values to the `api` runtime
 environment and to `web`'s Vite build args. No subdirectory `.env` files.
+
+## The agent container (remote VPSes)
+
+Fleet agents are **not** part of this stack. Each runs standalone on a separate
+VPS via its own `agent/docker-compose.agent.yml` (image `dockstash/agent`, built
+from `agent/Dockerfile`), reaching that host's Docker through its own bundled
+`docker-socket-proxy`. It phones home to `/api/agent/*` with a per-agent Bearer
+token; the main stack never connects out to it.
+
+Its runtime env lives on the remote VPS, not in root `.env`:
+
+| Variable | Purpose |
+|----------|---------|
+| `DOCKSTASH_URL` | This Dockstash server's origin |
+| `DOCKSTASH_AGENT_TOKEN` | One-time `dsa_<agentId>.<secret>` from registration |
+| `DOCKER_HOST` | `tcp://docker-socket-proxy:2375` (bundled proxy) |
+
+Upgrade an agent with `docker compose -f docker-compose.agent.yml pull &&
+docker compose -f docker-compose.agent.yml up -d`. Full setup and security model:
+`docs/fleet-agents.en.md`.

@@ -29,6 +29,7 @@ const mocked = vi.mocked(api);
 const baseProject = (over: Partial<Project> = {}): Project => ({
   id: 'p1',
   owner: 'u1',
+  agentId: null,
   name: 'app',
   path: '/var/www/app',
   plan: { paths: [], databases: [], configs: [] },

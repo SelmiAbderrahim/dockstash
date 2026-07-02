@@ -43,7 +43,9 @@
     },
     "errors": {
       "load": "Impossible de charger la flotte.",
-      "register": "Impossible d'enregistrer l'agent."
+      "register": "Impossible d'enregistrer l'agent.",
+      "rotate": "Impossible de régénérer la clé de l'agent.",
+      "remove": "Impossible de supprimer l'agent."
     },
     "table": {
       "aria": "Flotte",
@@ -53,7 +55,8 @@
       "lastSeen": "Dernière activité",
       "projects": "Projets",
       "size": "Taille",
-      "snapshots": "Instantanés"
+      "snapshots": "Instantanés",
+      "actions": "Actions"
     },
     "status": {
       "online": "En ligne",
@@ -73,7 +76,39 @@
       "cancel": "Annuler",
       "keyWarning": "Cette clé API n'est affichée qu'une seule fois et ne pourra jamais être récupérée. Copiez-la maintenant.",
       "copy": "Copier",
-      "done": "Terminé"
+      "copied": "Copié",
+      "done": "Terminé",
+      "installTitle": "Installer l'agent",
+      "installIntro": "Exécutez ceci sur la machine à ajouter. Cela démarre le conteneur de l'agent Dockstash avec le jeton intégré."
+    },
+    "install": {
+      "copy": "Copier la commande",
+      "copied": "Copié"
+    },
+    "setup": {
+      "title": "Configuration de l'agent",
+      "description": "Commande d'installation et gestion des clés pour cet agent.",
+      "keyPlaceholderNote": "Remplacez <AGENT_TOKEN> par le jeton fourni à l'enregistrement. Le jeton ne peut plus être affiché — si vous l'avez perdu, régénérez la clé ci-dessous.",
+      "close": "Fermer"
+    },
+    "actions": {
+      "aria": "Actions de l'agent",
+      "setup": "Instructions d'installation",
+      "rotate": "Régénérer la clé",
+      "remove": "Supprimer l'agent"
+    },
+    "rotate": {
+      "title": "Régénérer la clé de l'agent",
+      "description": "Un nouveau jeton est généré et l'ancien cesse de fonctionner immédiatement. Vous devez mettre à jour l'agent avec le nouveau jeton.",
+      "confirm": "Régénérer la clé",
+      "cancel": "Annuler",
+      "rotating": "Régénération…"
+    },
+    "remove": {
+      "title": "Supprimer l'agent",
+      "description": "Supprimer « {{name}} » de votre flotte ? Ses projets basculent en sauvegardes locales et les tâches en attente sont annulées.",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
     }
   }
 }

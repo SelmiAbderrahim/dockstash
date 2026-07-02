@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Check, Copy, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { useCopyToClipboard } from '@shared/hooks/useCopyToClipboard';
 import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
@@ -52,6 +53,7 @@ const STEP_ORDER: readonly Step[] = ['storage', 'password', 'confirm'];
  */
 export const SetupWizard = () => {
   const { t } = useTranslation('wizard');
+  const { copy } = useCopyToClipboard();
   const dispatch = useAppDispatch();
   const nav = useNavigate();
   const storageStatus = useAppSelector(selectStorageStatus);
@@ -247,7 +249,7 @@ export const SetupWizard = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => void navigator.clipboard?.writeText(password)}
+                    onClick={() => void copy(password)}
                   >
                     <Copy className="size-4" aria-hidden="true" />
                     {t('actions.copy')}

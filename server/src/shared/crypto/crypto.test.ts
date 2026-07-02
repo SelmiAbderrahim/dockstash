@@ -517,3 +517,52 @@ describe('env schema — empty-string preprocess branches', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('hashApiSecret / verifyApiSecret', () => {
+  beforeEach(() => {
+    __resetKeyRegistryForTests({
+      keys: [
+        { version: 1, key: KEY_V1 },
+        { version: 2, key: KEY_V2 },
+      ],
+      currentVersion: 1,
+    });
+  });
+
+  afterEach(() => {
+    __restoreKeyRegistryForTests();
+  });
+
+  it('is deterministic per (secret, keyVersion) and verifies round-trip', async () => {
+    const { hashApiSecret, verifyApiSecret } = await import('./index.js');
+    const a = hashApiSecret('agent-secret');
+    const b = hashApiSecret('agent-secret');
+    expect(a).toEqual(b);
+    expect(a.keyVersion).toBe(1);
+    expect(verifyApiSecret('agent-secret', a)).toBe(true);
+    expect(verifyApiSecret('other-secret', a)).toBe(false);
+  });
+
+  it('hashes under an explicit keyVersion and verifies against it', async () => {
+    const { hashApiSecret, verifyApiSecret } = await import('./index.js');
+    const rec = hashApiSecret('agent-secret', 2);
+    expect(rec.keyVersion).toBe(2);
+    expect(rec.hash).not.toBe(hashApiSecret('agent-secret', 1).hash);
+    expect(verifyApiSecret('agent-secret', rec)).toBe(true);
+  });
+
+  it('returns false on a truncated stored hash (length guard)', async () => {
+    const { hashApiSecret, verifyApiSecret } = await import('./index.js');
+    const rec = hashApiSecret('agent-secret');
+    const truncated = { ...rec, hash: rec.hash.slice(0, 8) };
+    expect(verifyApiSecret('agent-secret', truncated)).toBe(false);
+  });
+
+  it('throws for an unregistered keyVersion', async () => {
+    const { hashApiSecret, verifyApiSecret } = await import('./index.js');
+    expect(() => hashApiSecret('agent-secret', 9)).toThrow(/keyVersion=9/);
+    expect(() =>
+      verifyApiSecret('agent-secret', { hash: 'AAAA', keyVersion: 9 }),
+    ).toThrow(/keyVersion=9/);
+  });
+});

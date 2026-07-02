@@ -38,5 +38,15 @@
     "none": "Aucun test de restauration.",
     "pass": "Vérifié",
     "fail": "Échec"
+  },
+  "agent": {
+    "title": "Exécuté sur",
+    "description": "Choisissez où s'exécutent les sauvegardes de ce projet.",
+    "local": "Ce serveur (local)",
+    "offline": "hors ligne",
+    "selectAria": "Agent de sauvegarde",
+    "saving": "Enregistrement…",
+    "saved": "Affectation enregistrée.",
+    "error": "Impossible d'affecter l'agent."
   }
 }

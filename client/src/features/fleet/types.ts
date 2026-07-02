@@ -26,10 +26,13 @@ export interface RegisterAgentInput {
   port?: number;
 }
 
-/** The `apiKey` is returned ONCE at registration and never retrievable again. */
+/**
+ * The composite `token` (`dsa_<agentId>.<secret>`) is returned ONCE at
+ * registration / rotation and never retrievable again.
+ */
 export interface RegisterAgentResult {
   agent: Agent;
-  apiKey: string;
+  token: string;
 }
 
 export type FleetLockedReason = 'multiVpsLocked';

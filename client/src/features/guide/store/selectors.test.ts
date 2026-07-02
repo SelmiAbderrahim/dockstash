@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { GuideState } from '../types';
 import {
+  selectActiveStepTarget,
   selectActiveTour,
   selectGuideEnabled,
   selectGuideError,
@@ -34,5 +35,20 @@ describe('guide selectors', () => {
   it('joins the active tour against the registry', () => {
     expect(selectActiveTour(state())).toBeNull();
     expect(selectActiveTour(state({ activeTourId: 'explore-fleet' }))?.id).toBe('explore-fleet');
+  });
+
+  it('resolves the active step target and clamps past the last step', () => {
+    expect(selectActiveStepTarget(state())).toBeNull();
+    expect(selectActiveStepTarget(state({ activeTourId: 'explore-fleet', stepIndex: 0 }))).toBe(
+      'fleet-heading',
+    );
+    expect(selectActiveStepTarget(state({ activeTourId: 'explore-fleet', stepIndex: 2 }))).toBe(
+      'agent-name-input',
+    );
+    // Index past the end clamps to the final step rather than returning null.
+    // The explore-fleet tour ends on the "watch it come online" step.
+    expect(selectActiveStepTarget(state({ activeTourId: 'explore-fleet', stepIndex: 99 }))).toBe(
+      'fleet-table-status',
+    );
   });
 });

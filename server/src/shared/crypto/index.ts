@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import {
   __resetKeyRegistryForTests,
   __restoreKeyRegistryForTests,
@@ -88,6 +88,36 @@ export function reEncryptSecret(
     authTag: authTag.toString('base64'),
     keyVersion: target,
   };
+}
+
+/**
+ * Deterministic, non-reversible hash of an API secret (agent credentials).
+ *
+ * Unlike `encryptSecret` (random IV → non-deterministic ciphertext), the HMAC
+ * is stable per (secret, keyVersion), so verification is a straight
+ * recompute-and-compare. A stolen DB dump alone can never yield a usable
+ * credential. `keyVersion` keeps parity with the master-key rotation runbook.
+ */
+export interface HashedSecret {
+  hash: string;
+  keyVersion: number;
+}
+
+export function hashApiSecret(secret: string, keyVersion?: number): HashedSecret {
+  const version = keyVersion ?? getCurrentKeyVersion();
+  const key = getKey(version);
+  const hash = createHmac('sha256', key).update(secret, 'utf8').digest('base64');
+  return { hash, keyVersion: version };
+}
+
+/** Timing-safe verification of an API secret against its stored hash. */
+export function verifyApiSecret(secret: string, record: HashedSecret): boolean {
+  const expected = Buffer.from(record.hash, 'base64');
+  const actual = createHmac('sha256', getKey(record.keyVersion))
+    .update(secret, 'utf8')
+    .digest();
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual);
 }
 
 /** Test-only: inject a deterministic IV generator for round-trip assertions. */

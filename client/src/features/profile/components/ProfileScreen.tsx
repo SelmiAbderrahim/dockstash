@@ -134,6 +134,10 @@ export const ProfileScreen = () => {
                 className="flex flex-col gap-4"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  // Defensive only: this form renders exclusively inside the
+                  // `{uid && status === 'succeeded'}` branch above, so uid is
+                  // always set here.
+                  /* v8 ignore next */
                   if (!uid) return;
                   void dispatch(saveProfile({ uid, firstName, lastName }));
                 }}

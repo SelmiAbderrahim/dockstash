@@ -12,6 +12,8 @@ export interface Project {
   owner: string;
   name: string;
   path: string;
+  /** Fleet agent this project runs on; null = the local/default server. */
+  agentId: string | null;
   plan: ProjectPlan;
   lastStatus: LastStatus | string;
   lastError: string;

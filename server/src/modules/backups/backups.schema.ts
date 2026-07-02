@@ -45,6 +45,15 @@ export const runCheckSchema = z.object({
 
 export const runDrillSchema = z.object({}).default({});
 
+/** Assign the project to a fleet agent; null = run on the local server. */
+export const assignAgentSchema = z.object({
+  agentId: z
+    .string()
+    .regex(/^[a-f0-9]{24}$/i, 'invalid agent id')
+    .nullable(),
+});
+export type AssignAgentInput = z.infer<typeof assignAgentSchema>;
+
 export type ScanProjectInput = z.infer<typeof scanProjectSchema>;
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type UpdatePlanInput = z.infer<typeof updatePlanSchema>;

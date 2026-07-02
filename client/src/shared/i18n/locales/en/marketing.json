@@ -445,5 +445,59 @@
         "accent": "Try it"
       }
     }
+  },
+  "fleetAgents": {
+    "breadcrumb": "Fleet agents",
+    "eyebrow": "Multi-VPS fleet",
+    "seo": {
+      "title": "Back up every VPS from one dashboard — Dockstash fleet agents",
+      "description": "Install a lightweight agent on each server and manage all your Docker backups from one place. Outbound-only, no inbound ports, least-privilege Docker access."
+    },
+    "hero": {
+      "titleLead": "Back up every server from",
+      "titleAccent": "one dashboard",
+      "subtitle": "Drop a lightweight agent on each VPS. It phones home over HTTPS — no inbound ports, no SSH keys handed out — and runs the same restic-backed backups Dockstash runs on your primary host.",
+      "ctaPrimary": "See pricing",
+      "ctaSecondary": "How it stays secure"
+    },
+    "how": {
+      "heading": "How it works",
+      "register": {
+        "title": "Register the agent",
+        "body": "Add the server in your fleet and copy the one-time token."
+      },
+      "install": {
+        "title": "Run one command",
+        "body": "Paste the docker compose one-liner on the VPS. The agent starts with the token baked in."
+      },
+      "assign": {
+        "title": "Assign projects",
+        "body": "Point any project at the agent. Its backups now run on that host and report back live."
+      }
+    },
+    "install": {
+      "heading": "One command per server",
+      "body": "The agent ships as a Docker image with a bundled least-privilege socket proxy — the same posture as the main stack. No host tooling, no root, no open ports."
+    },
+    "faq": {
+      "heading": "Questions",
+      "multiVps": {
+        "question": "How do I back up multiple VPS servers with one dashboard?",
+        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      },
+      "rootPorts": {
+        "question": "Does the agent need root or inbound ports?",
+        "answer": "No. The agent connects outbound to Dockstash over HTTPS, so no inbound ports are opened. It reaches Docker only through a least-privilege socket proxy limited to container exec."
+      },
+      "auth": {
+        "question": "How is the agent authenticated?",
+        "answer": "Each agent gets a one-time composite token stored server-side only as a keyed HMAC. It authenticates every request with that token, and you can rotate or revoke it instantly."
+      }
+    },
+    "cta": {
+      "heading": "Run one dashboard for your whole fleet",
+      "body": "Multi-VPS fleet view is on the Business plan.",
+      "button": "See pricing"
+    }
   }
 }

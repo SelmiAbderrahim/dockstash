@@ -43,7 +43,9 @@
     },
     "errors": {
       "load": "Could not load the fleet.",
-      "register": "Could not register the agent."
+      "register": "Could not register the agent.",
+      "rotate": "Could not rotate the agent key.",
+      "remove": "Could not remove the agent."
     },
     "table": {
       "aria": "Fleet",
@@ -53,7 +55,8 @@
       "lastSeen": "Last seen",
       "projects": "Projects",
       "size": "Size",
-      "snapshots": "Snapshots"
+      "snapshots": "Snapshots",
+      "actions": "Actions"
     },
     "status": {
       "online": "Online",
@@ -73,7 +76,39 @@
       "cancel": "Cancel",
       "keyWarning": "This API key is shown once and can never be retrieved again. Copy it now.",
       "copy": "Copy",
-      "done": "Done"
+      "copied": "Copied",
+      "done": "Done",
+      "installTitle": "Install the agent",
+      "installIntro": "Run this on the machine you're adding. It starts the Dockstash agent container with the token baked in."
+    },
+    "install": {
+      "copy": "Copy command",
+      "copied": "Copied"
+    },
+    "setup": {
+      "title": "Agent setup",
+      "description": "Install command and key management for this agent.",
+      "keyPlaceholderNote": "Replace <AGENT_TOKEN> with the token from registration. The token can't be shown again — if you lost it, rotate the key below.",
+      "close": "Close"
+    },
+    "actions": {
+      "aria": "Agent actions",
+      "setup": "Setup instructions",
+      "rotate": "Rotate key",
+      "remove": "Remove agent"
+    },
+    "rotate": {
+      "title": "Rotate agent key",
+      "description": "A new token is generated and the old one stops working immediately. You must update the agent with the new token.",
+      "confirm": "Rotate key",
+      "cancel": "Cancel",
+      "rotating": "Rotating…"
+    },
+    "remove": {
+      "title": "Remove agent",
+      "description": "Remove \"{{name}}\" from your fleet? Its projects fall back to local backups and any queued jobs are cancelled.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
     }
   }
 }

@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import { ApiError } from '@shared/api/client';
 import { fleetReducer } from './slice';
-import { fetchFleet, lockedReasonFromError, registerAgent } from './thunks';
+import { deleteAgent, fetchFleet, lockedReasonFromError, registerAgent, rotateAgentKey } from './thunks';
 import * as api from '../api';
 import type { FleetEntry } from '../types';
 
@@ -10,6 +10,8 @@ vi.mock('../api', () => ({
   listAgentsRequest: vi.fn(),
   registerAgentRequest: vi.fn(),
   fetchFleetRequest: vi.fn(),
+  rotateAgentKeyRequest: vi.fn(),
+  deleteAgentRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -103,6 +105,14 @@ describe('fetchFleet', () => {
     expect(fetchFleet.rejected.match(result)).toBe(true);
     expect(result.payload).toEqual({ message: 'boom', lockedReason: null });
   });
+
+  it('passes the silent flag through to the pending/fulfilled meta', async () => {
+    mocked.fetchFleetRequest.mockResolvedValue([entry]);
+    const store = makeStore();
+    const result = await store.dispatch(fetchFleet({ silent: true }));
+    expect(fetchFleet.fulfilled.match(result)).toBe(true);
+    expect(result.meta.arg).toEqual({ silent: true });
+  });
 });
 
 describe('registerAgent', () => {
@@ -116,7 +126,7 @@ describe('registerAgent', () => {
         status: 'offline' as const,
         lastSeenAt: null,
       },
-      apiKey: 'sk-once',
+      token: 'dsa_0123456789abcdef01234567.sk',
     };
     mocked.registerAgentRequest.mockResolvedValue(payload);
     mocked.fetchFleetRequest.mockResolvedValue([entry]);
@@ -140,6 +150,52 @@ describe('registerAgent', () => {
     const result = await store.dispatch(registerAgent({ name: 'w', host: 'h' }));
     expect(registerAgent.rejected.match(result)).toBe(true);
     expect(result.payload).toEqual({ message: 'nope', lockedReason: null });
+    expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('rotateAgentKey', () => {
+  const rotated = {
+    agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null },
+    token: 'dsa_0123456789abcdef01234567.new',
+  };
+
+  it('resolves with the new one-time key payload', async () => {
+    mocked.rotateAgentKeyRequest.mockResolvedValue(rotated);
+    const store = makeStore();
+    const result = await store.dispatch(rotateAgentKey('a1'));
+    expect(rotateAgentKey.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toBe(rotated);
+    expect(mocked.rotateAgentKeyRequest).toHaveBeenCalledWith('a1');
+  });
+
+  it('rejects with a message on failure', async () => {
+    mocked.rotateAgentKeyRequest.mockRejectedValue(new Error('agent offline'));
+    const store = makeStore();
+    const result = await store.dispatch(rotateAgentKey('a1'));
+    expect(rotateAgentKey.rejected.match(result)).toBe(true);
+    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null });
+  });
+});
+
+describe('deleteAgent', () => {
+  it('resolves with the removed agent id and refreshes the fleet silently', async () => {
+    mocked.deleteAgentRequest.mockResolvedValue(undefined);
+    mocked.fetchFleetRequest.mockResolvedValue([entry]);
+    const store = makeStore();
+    const result = await store.dispatch(deleteAgent('a1'));
+    expect(deleteAgent.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toBe('a1');
+    expect(mocked.deleteAgentRequest).toHaveBeenCalledWith('a1');
+    expect(mocked.fetchFleetRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects with a message on failure and does not refresh the fleet', async () => {
+    mocked.deleteAgentRequest.mockRejectedValue(new Error('cannot remove'));
+    const store = makeStore();
+    const result = await store.dispatch(deleteAgent('a1'));
+    expect(deleteAgent.rejected.match(result)).toBe(true);
+    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 });

@@ -25,7 +25,7 @@ const registered = {
     status: 'offline' as const,
     lastSeenAt: null,
   },
-  apiKey: 'dsk_once_abc123',
+  token: 'dsa_0123456789abcdef01234567.abc',
 };
 
 beforeEach(() => {
@@ -51,6 +51,10 @@ const renderDialog = (
         lockedReason: null,
         registerStatus: 'idle',
         registerError: null,
+        rotateStatus: 'idle',
+        rotateError: null,
+        deleteStatus: 'idle',
+        deleteError: null,
         ...fleet,
       } satisfies FleetState,
     },
@@ -114,7 +118,7 @@ describe('RegisterAgentDialog form', () => {
       host: 'vps1.example',
       port: 7443,
     });
-    expect(screen.getByText('dsk_once_abc123')).toBeInTheDocument();
+    expect(screen.getByText('dsa_0123456789abcdef01234567.abc')).toBeInTheDocument();
     expect(screen.getByText(/shown once and can never be retrieved again/)).toBeInTheDocument();
     // Registration refreshes the fleet list behind the key dialog.
     expect(mocked.fetchFleetRequest).toHaveBeenCalledTimes(1);
@@ -181,7 +185,7 @@ describe('RegisterAgentDialog one-time key', () => {
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
     await registerToKey();
     fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
-    expect(writeText).toHaveBeenCalledWith('dsk_once_abc123');
+    expect(writeText).toHaveBeenCalledWith('dsa_0123456789abcdef01234567.abc');
   });
 
   it('tolerates a missing clipboard API', async () => {

@@ -142,6 +142,25 @@ export const GUIDE_TOURS: TourDefinition[] = [
         titleKey: 'tours.exploreFleet.steps.submit.title',
         bodyKey: 'tours.exploreFleet.steps.submit.body',
         placement: 'top',
+        advanceOn: 'click',
+      },
+      {
+        // Lives in the register dialog's SUCCESS view — deliberately NOT a
+        // DIALOG_TOUR_ANCHOR: auto-open would mount the form, not the reveal.
+        // In the happy path (advanced from submit) the anchor is mounted;
+        // a mid-tour resume falls back to the overlay's not-visible notice.
+        route: '/fleet',
+        target: 'agent-install-command',
+        titleKey: 'tours.exploreFleet.steps.install.title',
+        bodyKey: 'tours.exploreFleet.steps.install.body',
+        placement: 'top',
+      },
+      {
+        route: '/fleet',
+        target: 'fleet-table-status',
+        titleKey: 'tours.exploreFleet.steps.online.title',
+        bodyKey: 'tours.exploreFleet.steps.online.body',
+        placement: 'bottom',
       },
     ],
   },

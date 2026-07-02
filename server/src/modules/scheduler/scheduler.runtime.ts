@@ -18,6 +18,13 @@ import type {
 import { reconcileCron } from './scheduler.cron.js';
 import { Schedule } from './scheduler.model.js';
 import type { DispatchDeps } from './scheduler.dispatcher.js';
+import {
+  configureAgentJobEvents,
+  expireStaleAgentJobs,
+  makeAgentAwareQueue,
+  ownerOfAgentJob,
+  sweepOfflineAgents,
+} from '../agents/index.js';
 
 export interface SchedulerRuntime {
   queue: SchedulerQueue;
@@ -45,23 +52,26 @@ export async function startScheduler(
   opts: StartSchedulerOptions,
 ): Promise<SchedulerRuntime> {
   const entitlements = opts.entitlements ?? allowAllEntitlements;
-  const queue = new MemoryQueue();
+  const localQueue = new MemoryQueue();
+  // Jobs for projects assigned to a remote agent are persisted for the agent
+  // to claim; everything else runs on the local in-process worker.
+  const queue = makeAgentAwareQueue(localQueue);
+
+  const jobOwnerIndex = new Map<string, string>();
 
   const logs = attachLogStream({
     io: opts.io,
     ownership: {
-      async ownerOf() {
-        // Owner mapping is populated by the queue when adding jobs — for now
-        // we accept any jobId belonging to the connected user; prompt 07
-        // wires a persistent job/owner index.
-        return null;
+      async ownerOf(jobId) {
+        // Local jobs live in the in-memory index; agent jobs are persistent.
+        return jobOwnerIndex.get(jobId) ?? (await ownerOfAgentJob(jobId));
       },
     },
   });
 
-  const jobOwnerIndex = new Map<string, string>();
+  configureAgentJobEvents({ logs });
 
-  queue.setProcessor(async (job) => {
+  localQueue.setProcessor(async (job) => {
     jobOwnerIndex.set(job.id, job.data.owner);
     const restic = opts.resticRunnerFor(job.data.projectId, job.data.owner);
     const extra = opts.dispatchDepsFor?.(job.data.projectId, job.data.owner) ?? {};
@@ -86,6 +96,17 @@ export async function startScheduler(
       await runHeartbeatSweep();
     } catch (err) {
       logger.error({ err }, 'scheduler: heartbeat sweep failed');
+    }
+  });
+
+  // Fleet maintenance — every 5 minutes: fail leased agent jobs whose lease
+  // expired (agent died mid-run) and flip stale `online` agents to offline.
+  cron.register('__agent_leases__', '*/5 * * * *', async () => {
+    try {
+      await expireStaleAgentJobs();
+      await sweepOfflineAgents();
+    } catch (err) {
+      logger.error({ err }, 'scheduler: agent maintenance sweep failed');
     }
   });
 

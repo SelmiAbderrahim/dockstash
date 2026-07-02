@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Check,
   Clock,
   Copy,
   DatabaseBackup,
@@ -11,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
+import { useCopyToClipboard } from '@shared/hooks/useCopyToClipboard';
 import { useTabParam } from '@shared/hooks/useTabParam';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
@@ -428,7 +430,7 @@ const RecoveryTab = () => {
   const codesStatus = useAppSelector(selectRecoveryCodesStatus);
   const triggerStatus = useAppSelector(selectSelfBackupTriggerStatus);
   const error = useAppSelector(selectSettingsError);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   useEffect(() => {
     void dispatch(fetchSelfBackupRuns());
@@ -466,10 +468,7 @@ const RecoveryTab = () => {
           <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              onClick={() => {
-                setCopied(false);
-                void dispatch(generateRecoveryCodes());
-              }}
+              onClick={() => void dispatch(generateRecoveryCodes())}
               disabled={codesStatus === 'loading'}
             >
               <KeyRound className="size-4" aria-hidden="true" />
@@ -492,13 +491,13 @@ const RecoveryTab = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    void navigator.clipboard
-                      .writeText(recoveryCodes.codes.join('\n'))
-                      .then(() => setCopied(true));
-                  }}
+                  onClick={() => void copy(recoveryCodes.codes.join('\n'))}
                 >
-                  <Copy className="size-4" aria-hidden="true" />
+                  {copied ? (
+                    <Check className="size-4" aria-hidden="true" />
+                  ) : (
+                    <Copy className="size-4" aria-hidden="true" />
+                  )}
                   {t('recovery.codes.copy')}
                 </Button>
                 {copied && <SavedNotice>{t('recovery.codes.copied')}</SavedNotice>}

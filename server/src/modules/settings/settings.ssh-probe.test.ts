@@ -102,6 +102,45 @@ describe('makeProductionSshProbe', () => {
     expect(cap.calls).toHaveLength(1);
   });
 
+  it('constructs with production defaults (real spawn, tmpdir, timeouts)', () => {
+    // Covers the option-default fallbacks; connect() is never called, so the
+    // real `spawn` is never exercised.
+    expect(makeProductionSshProbe()).toHaveProperty('connect');
+  });
+
+  it('rejects when ssh-keygen exits non-zero', async () => {
+    const cap = makeSpawnCapture();
+    const probe = makeProductionSshProbe({ spawnImpl: cap.spawnImpl });
+
+    const result = probe.connect(CONNECT_OPTS);
+
+    await waitForCall(cap, 1);
+    cap.controls[0]!.emitStdout('storage.example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5\n');
+    cap.controls[0]!.close(0);
+
+    await waitForCall(cap, 2);
+    cap.controls[1]!.close(1, 'not a key file');
+
+    await expect(result).rejects.toThrow(/could not derive a fingerprint/);
+  });
+
+  it('rejects when ssh-keygen output has no SHA256 fingerprint', async () => {
+    const cap = makeSpawnCapture();
+    const probe = makeProductionSshProbe({ spawnImpl: cap.spawnImpl });
+
+    const result = probe.connect(CONNECT_OPTS);
+
+    await waitForCall(cap, 1);
+    cap.controls[0]!.emitStdout('storage.example.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5\n');
+    cap.controls[0]!.close(0);
+
+    await waitForCall(cap, 2);
+    cap.controls[1]!.emitStdout('garbage output without a fingerprint\n');
+    cap.controls[1]!.close(0);
+
+    await expect(result).rejects.toThrow(/could not derive a fingerprint/);
+  });
+
   it('rejects when the auth check fails', async () => {
     const cap = makeSpawnCapture();
     const probe = makeProductionSshProbe({ spawnImpl: cap.spawnImpl });

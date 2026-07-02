@@ -1,5 +1,12 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { fetchProjects, fetchSchedules, runBackupNow, savePlan, saveSchedule } from './thunks';
+import {
+  assignProjectAgent,
+  fetchProjects,
+  fetchSchedules,
+  runBackupNow,
+  savePlan,
+  saveSchedule,
+} from './thunks';
 import type { Project, Schedule } from '../types';
 
 export type LoadState = 'idle' | 'loading' | 'succeeded' | 'failed';
@@ -69,6 +76,13 @@ const projectsSlice = createSlice({
       .addCase(savePlan.rejected, (state, action) => {
         state.planSaveStatus = 'failed';
         state.error = action.payload ?? 'Could not save plan.';
+      })
+      .addCase(assignProjectAgent.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((p) => p.id === action.payload.id);
+        if (idx >= 0) state.items[idx] = action.payload;
+      })
+      .addCase(assignProjectAgent.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not assign the agent.';
       })
       .addCase(fetchSchedules.pending, (state) => {
         state.schedulesStatus = 'loading';

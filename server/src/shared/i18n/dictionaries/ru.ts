@@ -248,6 +248,9 @@ export const ru: DictionaryShape = {
     error: {
       notFound: 'Агент не найден.',
       notOwner: 'Вы не владеете этим агентом.',
+      unauthorized: 'Ошибка аутентификации агента.',
+      jobNotFound: 'Задание агента не найдено.',
+      drillNotSupported: 'Тренировочные восстановления пока не поддерживаются на удалённых агентах.',
     },
   },
   language: {

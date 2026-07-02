@@ -248,6 +248,9 @@ export const en = {
     error: {
       notFound: 'Agent not found.',
       notOwner: 'You do not own this agent.',
+      unauthorized: 'Agent authentication failed.',
+      jobNotFound: 'Agent job not found.',
+      drillNotSupported: 'Restore drills are not supported on remote agents yet.',
     },
   },
   language: {

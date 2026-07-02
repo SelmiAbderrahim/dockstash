@@ -116,6 +116,14 @@
         "submit": {
           "title": "Termina el registro",
           "body": "Registra el agente para generar su clave API. La clave se muestra una sola vez, así que cópiala antes de cerrar el diálogo."
+        },
+        "install": {
+          "title": "Instalar el agente",
+          "body": "Copia este comando y ejecútalo en el VPS. Inicia el agente Dockstash con el token incluido."
+        },
+        "online": {
+          "title": "Míralo conectarse",
+          "body": "Una vez en marcha, el agente se comunica cada pocos segundos. Su estado aquí cambia a En línea en menos de un minuto."
         }
       }
     },

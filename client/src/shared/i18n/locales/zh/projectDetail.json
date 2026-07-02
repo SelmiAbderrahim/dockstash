@@ -38,5 +38,15 @@
     "none": "尚未运行演练。",
     "pass": "已验证",
     "fail": "失败"
+  },
+  "agent": {
+    "title": "运行于",
+    "description": "选择此项目的备份在哪里执行。",
+    "local": "此服务器（本地）",
+    "offline": "离线",
+    "selectAria": "备份代理",
+    "saving": "保存中…",
+    "saved": "已保存分配。",
+    "error": "无法分配代理。"
   }
 }

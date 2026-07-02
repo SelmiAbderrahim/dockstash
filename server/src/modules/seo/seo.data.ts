@@ -26,6 +26,7 @@ export const CORE_PATHS: readonly string[] = [
   '/pricing',
   '/alternatives',
   '/guides',
+  '/fleet-agents',
   '/security',
   '/faq',
   '/privacy',

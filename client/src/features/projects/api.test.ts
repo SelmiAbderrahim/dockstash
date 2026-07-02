@@ -5,6 +5,7 @@ import {
   scanProjectRequest,
   createProjectRequest,
   updatePlanRequest,
+  assignProjectAgentRequest,
   runBackupNowRequest,
   listSchedulesRequest,
   createScheduleRequest,
@@ -57,6 +58,28 @@ describe('projects api wrappers', () => {
       body: { plan },
     });
     expect(result).toEqual({ id: 'p3' });
+  });
+
+  it('assignProjectAgentRequest PATCHes the agent path and unwraps project', async () => {
+    apiClient.mockResolvedValue({ project: { id: 'p1', agentId: 'a1' } } as never);
+    const result = await assignProjectAgentRequest('p1', 'a1');
+    expect(apiClient).toHaveBeenCalledWith('/backups/p1/agent', {
+      method: 'PATCH',
+      auth: true,
+      body: { agentId: 'a1' },
+    });
+    expect(result).toEqual({ id: 'p1', agentId: 'a1' });
+  });
+
+  it('assignProjectAgentRequest sends null to unassign back to local', async () => {
+    apiClient.mockResolvedValue({ project: { id: 'p1', agentId: null } } as never);
+    const result = await assignProjectAgentRequest('p1', null);
+    expect(apiClient).toHaveBeenCalledWith('/backups/p1/agent', {
+      method: 'PATCH',
+      auth: true,
+      body: { agentId: null },
+    });
+    expect(result).toEqual({ id: 'p1', agentId: null });
   });
 
   it('runBackupNowRequest enqueues a backup job and unwraps jobId', async () => {

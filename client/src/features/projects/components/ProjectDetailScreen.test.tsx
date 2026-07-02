@@ -19,11 +19,21 @@ vi.mock('../api', () => ({
   updateScheduleRequest: vi.fn(async () => ({})),
 }));
 
+// AgentAssignmentCard self-gates on the fleet: it renders nothing once
+// listAgentsRequest rejects (no agents / entitlement-locked), which keeps
+// this shell's tests focused on the plan/schedule/drill tabs.
+vi.mock('@features/fleet', () => ({
+  listAgentsRequest: vi.fn(async () => {
+    throw new Error('no fleet');
+  }),
+}));
+
 const mocked = vi.mocked(api);
 
 const baseProject = (over: Partial<Project> = {}): Project => ({
   id: 'p1',
   owner: 'u1',
+  agentId: null,
   name: 'app',
   path: '/var/www/app',
   plan: { paths: [], databases: [], configs: [] },

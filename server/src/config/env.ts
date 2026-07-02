@@ -90,6 +90,16 @@ export const envSchema = z.object({
   RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(10),
   RATE_LIMIT_WEBHOOK_WINDOW_MS: z.coerce.number().int().positive().default(60 * 1000),
   RATE_LIMIT_WEBHOOK_MAX: z.coerce.number().int().positive().default(120),
+  // ------------------------------------------------------------------
+  // Fleet agents: machine-surface rate limit + liveness/lease windows.
+  // Sized for one agent per IP: heartbeat ~30s + poll ~10s + log batches.
+  // ------------------------------------------------------------------
+  RATE_LIMIT_AGENT_WINDOW_MS: z.coerce.number().int().positive().default(60 * 1000),
+  RATE_LIMIT_AGENT_MAX: z.coerce.number().int().positive().default(600),
+  // Agent counts as offline when lastSeenAt is older than this (3× heartbeat).
+  AGENT_OFFLINE_AFTER_SECONDS: z.coerce.number().int().positive().default(90),
+  // Leased agent jobs fail when not renewed (log posts renew) within this window.
+  AGENT_JOB_LEASE_SECONDS: z.coerce.number().int().positive().default(900),
   CSRF_COOKIE_NAME: z.string().min(1).default('x-csrf-token'),
   CSRF_HEADER_NAME: z.string().min(1).default('x-csrf-token'),
   // Hours between account-deletion request and the irreversible repo purge.

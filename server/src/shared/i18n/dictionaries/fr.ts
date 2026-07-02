@@ -248,6 +248,9 @@ export const fr: DictionaryShape = {
     error: {
       notFound: 'Agent introuvable.',
       notOwner: 'Vous ne possédez pas cet agent.',
+      unauthorized: "Échec de l'authentification de l'agent.",
+      jobNotFound: "Tâche d'agent introuvable.",
+      drillNotSupported: "Les exercices de restauration ne sont pas encore pris en charge sur les agents distants.",
     },
   },
   language: {

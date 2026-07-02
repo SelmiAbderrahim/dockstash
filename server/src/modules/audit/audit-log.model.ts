@@ -13,10 +13,14 @@ export const AUDIT_ACTIONS = [
   'superadmin.user.verify',
   'superadmin.user.legalHold',
   'superadmin.user.delete',
+  'agent.register',
+  'agent.rotateKey',
+  'agent.delete',
+  'agent.assign',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
-export const AUDIT_TARGET_TYPES = ['project', 'subscription', 'user'] as const;
+export const AUDIT_TARGET_TYPES = ['project', 'subscription', 'user', 'agent'] as const;
 export type AuditTargetType = (typeof AUDIT_TARGET_TYPES)[number];
 
 const auditLogSchema = new mongoose.Schema(

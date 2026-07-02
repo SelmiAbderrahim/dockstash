@@ -21,3 +21,12 @@ export const registerAgentRequest = (input: RegisterAgentInput): Promise<Registe
 
 export const fetchFleetRequest = (): Promise<FleetEntry[]> =>
   apiClient<FleetResp>('/agents/fleet', { auth: true }).then((r) => r.fleet);
+
+export const rotateAgentKeyRequest = (agentId: string): Promise<RegisterAgentResult> =>
+  apiClient<RegisterAgentResult>(`/agents/${agentId}/rotate-key`, {
+    method: 'POST',
+    auth: true,
+  });
+
+export const deleteAgentRequest = (agentId: string): Promise<void> =>
+  apiClient<void>(`/agents/${agentId}`, { method: 'DELETE', auth: true });

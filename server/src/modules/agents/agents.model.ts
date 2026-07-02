@@ -3,13 +3,12 @@ import mongoose, { type InferSchemaType, type HydratedDocument } from 'mongoose'
 export const AGENT_STATUSES = ['online', 'offline'] as const;
 export type AgentStatus = (typeof AGENT_STATUSES)[number];
 
-// Mirrors the crypto EncryptedSecret envelope (see shared/crypto). The agent
-// API key is stored encrypted at rest, never in plaintext.
-const encryptedSecretSchema = new mongoose.Schema(
+// Mirrors the crypto HashedSecret shape (see shared/crypto). The agent API
+// secret is stored as a deterministic HMAC — non-reversible, so a DB dump
+// alone can never yield a usable credential.
+const hashedSecretSchema = new mongoose.Schema(
   {
-    ciphertext: { type: String, required: true },
-    iv: { type: String, required: true },
-    authTag: { type: String, required: true },
+    hash: { type: String, required: true },
     keyVersion: { type: Number, required: true },
   },
   { _id: false },
@@ -26,10 +25,14 @@ const agentSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     host: { type: String, required: true, trim: true },
     port: { type: Number, required: true, default: 22 },
-    // The agent's API key, encrypted at rest.
-    apiKeyEnc: { type: encryptedSecretSchema, required: true },
+    // HMAC of the agent's API secret. The composite token (dsa_<id>.<secret>)
+    // is returned exactly once at registration / rotation.
+    apiKeyHash: { type: hashedSecretSchema, required: true },
     status: { type: String, enum: AGENT_STATUSES, default: 'offline' },
     lastSeenAt: { type: Date, default: null },
+    // Self-reported by the daemon on heartbeat.
+    agentVersion: { type: String, default: '' },
+    hostname: { type: String, default: '' },
   },
   { timestamps: true },
 );

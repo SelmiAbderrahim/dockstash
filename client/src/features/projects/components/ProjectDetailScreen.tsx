@@ -18,6 +18,7 @@ import {
 } from '@shared/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { fetchProjects, fetchSchedules, savePlan, saveSchedule } from '../store/thunks';
+import { AgentAssignmentCard } from './AgentAssignmentCard';
 import {
   selectPlanSaveStatus,
   selectProjectById,
@@ -389,7 +390,8 @@ export const ProjectDetailScreen = () => {
           ))}
         </TabsList>
 
-        <TabsContent value="plan">
+        <TabsContent value="plan" className="flex flex-col gap-6">
+          <AgentAssignmentCard project={project} />
           <PlanEditor project={project} />
         </TabsContent>
         <TabsContent value="schedule">

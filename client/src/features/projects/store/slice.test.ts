@@ -3,6 +3,7 @@ import { projectsReducer, clearActiveJob, resetSaveStatus } from './slice';
 import {
   fetchProjects,
   fetchSchedules,
+  assignProjectAgent,
   runBackupNow,
   savePlan,
   saveSchedule,
@@ -14,6 +15,7 @@ const initial = () => projectsReducer(undefined, { type: 'unknown' });
 const project: Project = {
   id: 'p1',
   owner: 'u1',
+  agentId: null,
   name: 'app',
   path: '/var/www/app',
   plan: { paths: ['/var/www/app'], databases: [], configs: [] },
@@ -108,6 +110,33 @@ describe('projects slice', () => {
     expect(s.error).toBe('plan boom');
     s = projectsReducer(initial(), { type: savePlan.rejected.type });
     expect(s.error).toBe('Could not save plan.');
+  });
+
+  it('assignProjectAgent.fulfilled updates the matching project in place', () => {
+    const seeded = projectsReducer(initial(), {
+      type: fetchProjects.fulfilled.type,
+      payload: [project],
+    });
+    const updated = { ...project, agentId: 'a1' };
+    let s = projectsReducer(seeded, { type: assignProjectAgent.fulfilled.type, payload: updated });
+    expect(s.items[0]?.agentId).toBe('a1');
+
+    // Fulfilled for an unknown project id leaves items untouched.
+    s = projectsReducer(s, {
+      type: assignProjectAgent.fulfilled.type,
+      payload: { ...project, id: 'ghost', agentId: 'a2' },
+    });
+    expect(s.items).toHaveLength(1);
+  });
+
+  it('assignProjectAgent.rejected records the error (payload and fallback)', () => {
+    let s = projectsReducer(initial(), {
+      type: assignProjectAgent.rejected.type,
+      payload: 'locked',
+    });
+    expect(s.error).toBe('locked');
+    s = projectsReducer(initial(), { type: assignProjectAgent.rejected.type });
+    expect(s.error).toBe('Could not assign the agent.');
   });
 
   it('fetchSchedules lifecycle', () => {

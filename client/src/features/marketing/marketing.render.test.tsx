@@ -37,6 +37,7 @@ describe('marketing static pages', () => {
     ['/', 'Back Up Your'],
     ['/pricing', 'Simple pricing'],
     ['/alternatives', 'Dockstash alternatives'],
+    ['/fleet-agents', /one dashboard/i],
     ['/security', 'Security you can verify'],
     ['/faq', 'Frequently asked questions'],
     ['/privacy', 'Privacy Policy'],

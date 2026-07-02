@@ -43,7 +43,9 @@
     },
     "errors": {
       "load": "无法加载集群。",
-      "register": "无法注册代理。"
+      "register": "无法注册代理。",
+      "rotate": "无法轮换代理密钥。",
+      "remove": "无法移除代理。"
     },
     "table": {
       "aria": "集群",
@@ -53,7 +55,8 @@
       "lastSeen": "最近在线",
       "projects": "项目",
       "size": "大小",
-      "snapshots": "快照"
+      "snapshots": "快照",
+      "actions": "操作"
     },
     "status": {
       "online": "在线",
@@ -73,7 +76,39 @@
       "cancel": "取消",
       "keyWarning": "此 API 密钥仅显示一次，之后无法再次获取。请立即复制。",
       "copy": "复制",
-      "done": "完成"
+      "copied": "已复制",
+      "done": "完成",
+      "installTitle": "安装代理",
+      "installIntro": "在要添加的机器上运行此命令。它会启动内置令牌的 Dockstash 代理容器。"
+    },
+    "install": {
+      "copy": "复制命令",
+      "copied": "已复制"
+    },
+    "setup": {
+      "title": "代理设置",
+      "description": "此代理的安装命令与密钥管理。",
+      "keyPlaceholderNote": "将 <AGENT_TOKEN> 替换为注册时的令牌。令牌无法再次显示 — 若已丢失，请在下方轮换密钥。",
+      "close": "关闭"
+    },
+    "actions": {
+      "aria": "代理操作",
+      "setup": "安装说明",
+      "rotate": "轮换密钥",
+      "remove": "移除代理"
+    },
+    "rotate": {
+      "title": "轮换代理密钥",
+      "description": "将生成新令牌，旧令牌立即失效。你必须用新令牌更新代理。",
+      "confirm": "轮换密钥",
+      "cancel": "取消",
+      "rotating": "轮换中…"
+    },
+    "remove": {
+      "title": "移除代理",
+      "description": "从你的机群中移除“{{name}}”？其项目将回退到本地备份，排队中的任务将被取消。",
+      "confirm": "移除",
+      "cancel": "取消"
     }
   }
 }

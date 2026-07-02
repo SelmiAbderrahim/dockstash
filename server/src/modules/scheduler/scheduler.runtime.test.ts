@@ -78,10 +78,21 @@ vi.mock('../alerting/index.js', () => ({
   sendFailureAlert: vi.fn(async () => undefined),
 }));
 
+// --- agents mock: control the fleet maintenance sweep outcome per firing --
+vi.mock('../agents/index.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../agents/index.js')>();
+  return {
+    ...actual,
+    expireStaleAgentJobs: vi.fn(async () => undefined),
+    sweepOfflineAgents: vi.fn(async () => undefined),
+  };
+});
+
 const { BullmqQueueBackend } = await import('./scheduler.queue.bullmq.js');
 const { NodeCronScheduler } = await import('./scheduler.cron.node.js');
 const { startScheduler } = await import('./scheduler.runtime.js');
 const alerting = await import('../alerting/index.js');
+const agents = await import('../agents/index.js');
 
 function makeRestic(): ResticRunnerExt {
   return {
@@ -181,17 +192,26 @@ describe('scheduler.runtime: startScheduler', () => {
     await runtime.queue.add({ projectId, owner: userId, kind: 'check' });
     await runtime.queue.waitIdle();
 
-    // A join over the log namespace exercises the runtime's ownership.ownerOf.
+    // A join over the log namespace exercises the runtime's ownership.ownerOf:
+    // unknown id → in-memory index miss + agent-job miss → rejected...
     const token = jwt.sign({ id: userId }, env.JWT_SECRET);
     const ack = await fake.simulateJoin(token, 'job-x');
     expect(ack).toMatchObject({ ok: false });
+    // ...and the local job processed above ('1') → index hit → accepted.
+    const okAck = await fake.simulateJoin(token, '1');
+    expect(okAck).toMatchObject({ ok: true });
 
-    // Only the heartbeat cron was registered (no enabled schedules). Fire it
-    // once for the success path (sweep resolves)...
+    // Heartbeat + fleet-maintenance crons were registered (no enabled
+    // schedules). Fire them once for the success path (sweeps resolve)...
     for (const cb of cronState.callbacks) await cb();
-    // ...and once for the failure path (sweep throws → catch branch).
+    expect(agents.expireStaleAgentJobs).toHaveBeenCalled();
+    expect(agents.sweepOfflineAgents).toHaveBeenCalled();
+    // ...and once for the failure path (both sweeps throw → catch branches).
     (alerting.runHeartbeatSweep as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error('heartbeat boom'),
+    );
+    (agents.expireStaleAgentJobs as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('lease sweep boom'),
     );
     for (const cb of cronState.callbacks) await cb();
     await runtime.shutdown();

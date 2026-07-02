@@ -8,6 +8,7 @@ import { VsPage } from './components/VsPage';
 import { CompareCategoryPage } from './components/CompareCategoryPage';
 import { GuidesHub } from './components/GuidesHub';
 import { GuidePage } from './components/GuidePage';
+import { FleetAgentsPage } from './components/FleetAgentsPage';
 import { UseCasePage } from './components/UseCasePage';
 import { Security } from './components/Security';
 import { Faq } from './components/Faq';
@@ -35,6 +36,7 @@ const pages: RouteObject[] = [
   { path: 'guides', element: <GuidesHub /> },
   { path: 'guides/:entry', element: <GuidePage /> },
   { path: 'backup/:entry', element: <UseCasePage /> },
+  { path: 'fleet-agents', element: <FleetAgentsPage /> },
   { path: 'security', element: <Security /> },
   { path: 'faq', element: <Faq /> },
   { path: 'privacy', element: <Privacy /> },

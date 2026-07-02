@@ -248,6 +248,9 @@ export const zh: DictionaryShape = {
     error: {
       notFound: '未找到代理。',
       notOwner: '您不拥有此代理。',
+      unauthorized: '代理认证失败。',
+      jobNotFound: '未找到代理任务。',
+      drillNotSupported: '远程代理暂不支持恢复演练。',
     },
   },
   language: {
