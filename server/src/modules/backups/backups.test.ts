@@ -90,6 +90,9 @@ function makeMocks(): {
     async inspect(container: string) {
       return { id: container, running: true };
     },
+    async listContainers() {
+      return [];
+    },
   };
   return { restic, docker };
 }
@@ -483,6 +486,27 @@ describe('backups: scanProject', () => {
     ).rejects.toThrow(/not a valid mapping/);
   });
 
+  it('falls back to compose.yaml when docker-compose.yml is absent', async () => {
+    const only = 'services:\n  db:\n    image: postgres:16';
+    const composeYamlReader = (p: string) =>
+      p === '/var/www/alt/compose.yaml'
+        ? Promise.resolve(only)
+        : Promise.reject(new Error('ENOENT'));
+    const plan = await scanProject('/var/www/alt', { readFile: composeYamlReader });
+    expect(plan.databases[0]?.type).toBe('postgres');
+  });
+
+  it('prefers docker-compose.yml over later candidates', async () => {
+    const seen: string[] = [];
+    const bothReader = (p: string) => {
+      seen.push(p);
+      return Promise.resolve('services:\n  db:\n    image: mysql:8');
+    };
+    await scanProject('/var/www/pref', { readFile: bothReader });
+    // The first candidate resolves, so no later filename is ever read.
+    expect(seen).toEqual(['/var/www/pref/docker-compose.yml']);
+  });
+
   it('uses the default file reader when none is injected (missing file rejects)', async () => {
     await expect(scanProject('/nope/does/not/exist')).rejects.toThrow();
   });
@@ -581,12 +605,22 @@ describe('backups: service + persistence', () => {
       }),
     ).rejects.toMatchObject({ status: 400 });
 
+    // configs share the restic argv with paths, so they are held to the same
+    // /var/www allowlist — an out-of-tree config must be rejected too.
+    await expect(
+      updateProjectPlan(p._id.toString(), a.id, {
+        paths: ['/var/www/p'],
+        databases: [],
+        configs: ['/etc/traefik'],
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+
     const updated = await updateProjectPlan(p._id.toString(), a.id, {
       paths: ['/var/www/p'],
       databases: [
         { service: 'db', type: 'postgres', container: 'p_db_1', enabled: true },
       ],
-      configs: ['/etc/traefik'],
+      configs: ['/var/www/p/docker-compose.yml'],
     });
     expect(updated.plan.databases).toHaveLength(1);
   });
@@ -652,7 +686,7 @@ describe('backups: runBackup orchestration', () => {
         { service: 'pg', type: 'postgres', container: 'p_pg_1', enabled: true },
         { service: 'disabled', type: 'postgres', container: 'x', enabled: false },
       ],
-      configs: ['/etc/traefik'],
+      configs: ['/var/www/p/traefik.yml'],
     } as typeof p.plan;
     await p.save();
     return { userId: a.id, projectId: p._id.toString() };
@@ -683,7 +717,7 @@ describe('backups: runBackup orchestration', () => {
     expect(restic.calls[1]?.args).toEqual([
       'backup',
       '/var/www/p',
-      '/etc/traefik',
+      '/var/www/p/traefik.yml',
     ]);
     expect(restic.calls[1]?.hasStdin).toBe(false);
     const persisted = await Project.findById(projectId);
@@ -715,7 +749,7 @@ describe('backups: runBackup orchestration', () => {
     expect(restic.calls[0]?.args).toEqual(['backup', '/data/dump.rdb']);
     expect(restic.calls[0]?.hasStdin).toBe(false);
     // then the paths+configs layer
-    expect(restic.calls[1]?.args).toEqual(['backup', '/var/www/p', '/etc/traefik']);
+    expect(restic.calls[1]?.args).toEqual(['backup', '/var/www/p', '/var/www/p/traefik.yml']);
   });
 
   it('file-mode adapter: a dump stream error fails the run before restic', async () => {
@@ -738,6 +772,9 @@ describe('backups: runBackup orchestration', () => {
       },
       async inspect() {
         return { id: '', running: true };
+      },
+      async listContainers() {
+        return [];
       },
     };
     await expect(
@@ -763,6 +800,9 @@ describe('backups: runBackup orchestration', () => {
       },
       async inspect() {
         return { id: '', running: false };
+      },
+      async listContainers() {
+        return [];
       },
     };
     await expect(
@@ -994,7 +1034,7 @@ describe('backups: HTTP routes (ownership + auth)', () => {
         plan: {
           paths: ['/var/www/p'],
           databases: [{ service: 'db', type: 'postgres', container: 'p_db_1' }],
-          configs: ['/etc/traefik'],
+          configs: ['/var/www/p/traefik.yml'],
         },
       });
     expect(res.status).toBe(200);

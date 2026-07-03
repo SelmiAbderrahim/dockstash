@@ -178,6 +178,7 @@ export const de: DictionaryShape = {
       projectNotFound: 'Projekt nicht gefunden.',
       notOwner: 'Sie sind nicht Eigentümer dieses Projekts.',
       scanFailed: 'Projekt-Scan fehlgeschlagen: {{message}}',
+      discoverFailed: 'Erkennung fehlgeschlagen: {{message}}',
       noAdapter: 'Kein Backup-Adapter passt zum Dienst {{service}}.',
       dumpFailed: 'Datenbank-Dump fehlgeschlagen für {{service}}: {{message}}',
       resticFailed: 'Restic-Backup fehlgeschlagen: {{message}}',

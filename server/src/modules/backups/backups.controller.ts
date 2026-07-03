@@ -16,6 +16,11 @@ import {
   updateProjectAgent,
   updateProjectPlan,
 } from './backups.service.js';
+import {
+  discoverContainers,
+  discoverFolders,
+  makeDiscoveryDockerClient,
+} from './backups.discover.js';
 import { serializeProject } from './backups.serialize.js';
 import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
@@ -24,6 +29,19 @@ export const scan: RequestHandler = asyncHandler(async (req, res) => {
   const { path: projectPath } = scanProjectSchema.parse(req.body);
   const plan = await scanProjectPath(projectPath, { t: req.t });
   res.status(200).json({ plan });
+});
+
+export const listFolders: RequestHandler = asyncHandler(async (req, res) => {
+  const folders = await discoverFolders({ t: req.t });
+  res.status(200).json({ folders });
+});
+
+export const listContainers: RequestHandler = asyncHandler(async (req, res) => {
+  const result = await discoverContainers({
+    dockerClient: makeDiscoveryDockerClient(),
+    t: req.t,
+  });
+  res.status(200).json(result);
 });
 
 export const create: RequestHandler = asyncHandler(async (req, res) => {

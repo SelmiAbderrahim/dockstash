@@ -68,7 +68,7 @@ async function seedProject(ownerId: string, name = 'p'): Promise<string> {
       { service: 'pg', type: 'postgres', container: `${name}_pg_1`, enabled: true },
       { service: 'disabled', type: 'postgres', container: 'x', enabled: false },
     ],
-    configs: ['/etc/traefik'],
+    configs: [`/var/www/${name}/traefik.yml`],
   } as typeof p.plan;
   await p.save();
   return p._id.toString();

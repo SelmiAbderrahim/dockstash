@@ -2,6 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import * as client from '@shared/api/client';
 import {
   listProjectsRequest,
+  discoverFoldersRequest,
+  discoverContainersRequest,
   scanProjectRequest,
   createProjectRequest,
   updatePlanRequest,
@@ -30,6 +32,21 @@ describe('projects api wrappers', () => {
     expect(result).toEqual([{ id: 'p1' }]);
   });
 
+  it('discoverFoldersRequest GETs /backups/discover/folders and unwraps folders', async () => {
+    apiClient.mockResolvedValue({ folders: [{ name: 'app' }] } as never);
+    const result = await discoverFoldersRequest();
+    expect(apiClient).toHaveBeenCalledWith('/backups/discover/folders', { auth: true });
+    expect(result).toEqual([{ name: 'app' }]);
+  });
+
+  it('discoverContainersRequest GETs /backups/discover/containers and returns the result', async () => {
+    const payload = { containers: [{ project: 'shop' }], dockerAvailable: true };
+    apiClient.mockResolvedValue(payload as never);
+    const result = await discoverContainersRequest();
+    expect(apiClient).toHaveBeenCalledWith('/backups/discover/containers', { auth: true });
+    expect(result).toEqual(payload);
+  });
+
   it('scanProjectRequest POSTs the path and unwraps plan', async () => {
     apiClient.mockResolvedValue({ plan } as never);
     const result = await scanProjectRequest('/var/www/app');
@@ -43,7 +60,7 @@ describe('projects api wrappers', () => {
 
   it('createProjectRequest POSTs the input and unwraps project', async () => {
     apiClient.mockResolvedValue({ project: { id: 'p2' } } as never);
-    const input = { name: 'app', path: '/var/www/app', plan };
+    const input = { name: 'app', path: '/var/www/app', repoPassword: 'password1', plan };
     const result = await createProjectRequest(input);
     expect(apiClient).toHaveBeenCalledWith('/backups', { method: 'POST', auth: true, body: input });
     expect(result).toEqual({ id: 'p2' });

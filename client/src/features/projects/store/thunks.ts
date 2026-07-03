@@ -2,14 +2,24 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
 import {
   assignProjectAgentRequest,
+  createProjectRequest,
   createScheduleRequest,
+  discoverContainersRequest,
+  discoverFoldersRequest,
   listProjectsRequest,
   listSchedulesRequest,
   runBackupNowRequest,
+  scanProjectRequest,
   updatePlanRequest,
   updateScheduleRequest,
 } from '../api';
-import type { Project, ProjectPlan, Schedule } from '../types';
+import type {
+  DiscoverContainersResult,
+  DiscoveredFolder,
+  Project,
+  ProjectPlan,
+  Schedule,
+} from '../types';
 
 export const fetchProjects = createAsyncThunk<Project[], void, { rejectValue: string }>(
   'projects/fetch',
@@ -21,6 +31,53 @@ export const fetchProjects = createAsyncThunk<Project[], void, { rejectValue: st
     }
   },
 );
+
+export const discoverFolders = createAsyncThunk<
+  DiscoveredFolder[],
+  void,
+  { rejectValue: string }
+>('projects/discoverFolders', async (_, { rejectWithValue }) => {
+  try {
+    return await discoverFoldersRequest();
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not scan folders.'));
+  }
+});
+
+export const discoverContainers = createAsyncThunk<
+  DiscoverContainersResult,
+  void,
+  { rejectValue: string }
+>('projects/discoverContainers', async (_, { rejectWithValue }) => {
+  try {
+    return await discoverContainersRequest();
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not list containers.'));
+  }
+});
+
+export const scanProject = createAsyncThunk<ProjectPlan, { path: string }, { rejectValue: string }>(
+  'projects/scan',
+  async ({ path }, { rejectWithValue }) => {
+    try {
+      return await scanProjectRequest(path);
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not scan the project.'));
+    }
+  },
+);
+
+export const createProject = createAsyncThunk<
+  Project,
+  { name: string; path: string; repoPassword: string; plan: ProjectPlan },
+  { rejectValue: string }
+>('projects/create', async (input, { rejectWithValue }) => {
+  try {
+    return await createProjectRequest(input);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not create the project.'));
+  }
+});
 
 export const savePlan = createAsyncThunk<
   Project,

@@ -46,9 +46,24 @@ export interface DbDiffer {
   diff(input: DbDiffInput): Promise<DbDiffResult>;
 }
 
+/**
+ * A running container as surfaced by `GET /containers/json`. Only the fields the
+ * discovery grouping needs are carried forward; `labels` bears the compose
+ * metadata (`com.docker.compose.*`) used to reconstruct project groupings.
+ */
+export interface DockerContainerSummary {
+  id: string;
+  names: string[];
+  image: string;
+  state: string;
+  labels: Record<string, string>;
+}
+
 export interface DockerClient {
   exec(container: string, argv: string[]): Promise<Readable>;
   inspect(container: string): Promise<{ id: string; running: boolean }>;
+  /** List running containers (read-only) for local Compose-project discovery. */
+  listContainers(): Promise<DockerContainerSummary[]>;
 }
 
 /**

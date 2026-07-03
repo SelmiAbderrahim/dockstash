@@ -154,6 +154,15 @@ describe('settings: storage CRUD', () => {
       .send({ host: '', user: 'u', port: 22, privateKey: 'k' });
     expect(res.status).toBe(400);
   });
+
+  it('rejects a host beginning with "-" (ssh argument-injection guard)', async () => {
+    const { token } = await seedUser('a@t.com');
+    const res = await request(app)
+      .put('/api/settings/storage')
+      .set('Authorization', `JWT ${token}`)
+      .send({ host: '-oProxyCommand=x', user: 'backup', port: 22, privateKey: 'k' });
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('settings: connection test + pinning', () => {

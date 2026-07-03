@@ -178,6 +178,7 @@ export const ar: DictionaryShape = {
       projectNotFound: 'المشروع غير موجود.',
       notOwner: 'أنت لا تملك هذا المشروع.',
       scanFailed: 'فشل مسح المشروع: {{message}}',
+      discoverFailed: 'فشل الاكتشاف: {{message}}',
       noAdapter: 'لا يوجد محول نسخ احتياطي مطابق للخدمة {{service}}.',
       dumpFailed: 'فشل تفريغ قاعدة البيانات لـ {{service}}: {{message}}',
       resticFailed: 'فشل النسخ الاحتياطي لـ Restic: {{message}}',

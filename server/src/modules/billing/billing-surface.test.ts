@@ -73,8 +73,25 @@ describe('billing / controller + service surface', () => {
     __setPaymentProviderForTests(null);
   });
 
+  // A checkout/change-plan productId must belong to an active pricing tier.
+  async function seedProTier(): Promise<void> {
+    await PricingTier.create({
+      slug: 'pro',
+      name: 'Pro',
+      priceMonthly: 9,
+      priceYearly: 90,
+      productIdMonthly: 'prod_pro',
+      productIdYearly: 'prod_pro_year',
+      interval: 'month',
+      caps: { projects: 10, retentionDays: 30, frequency: 'daily' },
+      flags: { schedules: true, emailAlerts: true, multiVps: false },
+      active: true,
+    });
+  }
+
   it('POST /checkout returns the checkout url on success', async () => {
     __setPaymentProviderForTests(mockProvider());
+    await seedProTier();
     const user = await createBuyer('co@example.com');
     const token = signToken(toPublicUser(user));
     const res = await request(app)
@@ -84,6 +101,18 @@ describe('billing / controller + service surface', () => {
     expect(res.status).toBe(200);
     expect(res.body.url).toBe('https://polar.sh/checkout');
     expect(res.body.providerCheckoutId).toBe('chk_1');
+  });
+
+  it('POST /checkout rejects a productId not in the catalog (400)', async () => {
+    __setPaymentProviderForTests(mockProvider());
+    // No pricing tier seeded → 'prod_evil' is not a known product.
+    const user = await createBuyer('evil@example.com');
+    const token = signToken(toPublicUser(user));
+    const res = await request(app)
+      .post('/api/billing/checkout')
+      .set(auth(token))
+      .send({ productId: 'prod_evil', successUrl: 'https://x/y' });
+    expect(res.status).toBe(400);
   });
 
   it('startCheckoutForUser throws notFound for a missing user', async () => {
@@ -129,6 +158,7 @@ describe('billing / controller + service surface', () => {
 
   it('POST /change-plan updates the plan, records an audit entry, and returns status', async () => {
     __setPaymentProviderForTests(mockProvider());
+    await seedProTier();
     const user = await createBuyer('cp@example.com');
     const customer = await Customer.create({
       userId: user._id,

@@ -1,5 +1,4 @@
 import type { RequestHandler } from 'express';
-import { env } from '../../config/env.js';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';

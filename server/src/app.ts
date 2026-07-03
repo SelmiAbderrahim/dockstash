@@ -13,6 +13,7 @@ import { apiNoStore } from './shared/middleware/no-store.js';
 import {
   createAgentRateLimiter,
   createAuthRateLimiter,
+  createContactRateLimiter,
   createWebhookRateLimiter,
 } from './shared/middleware/rate-limit.js';
 import { issueCsrfToken } from './shared/middleware/csrf.js';
@@ -95,7 +96,9 @@ export function createApp(): Express {
   // GDPR export/deletion stays reachable even for unverified accounts (data
   // rights must not be gated); health/seo/security are public above.
   app.use('/api/legal', legalRouter);
-  app.use('/api/communication', communicationRouter);
+  // Contact form is unauthenticated and sends a real email per request — throttle
+  // it to prevent mail-bombing / provider-quota abuse.
+  app.use('/api/communication', createContactRateLimiter(), communicationRouter);
   // Fleet-agent machine surface: daemons self-authenticate with their
   // composite Bearer token (require-agent-auth) — no JWT, no email gate.
   // Distinct prefix from the user-facing /api/agents router below.

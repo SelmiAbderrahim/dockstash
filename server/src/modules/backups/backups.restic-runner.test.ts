@@ -255,7 +255,9 @@ describe('TmpfsKeyMaterializer', () => {
       { privateKey: 'KEY-BYTES', hostKeyLine: 'host ssh-ed25519 AAAA' },
       async ({ keyPath, knownHostsPath }) => {
         seenDir = path.dirname(keyPath);
-        expect(await fs.readFile(keyPath, 'utf8')).toBe('KEY-BYTES');
+        // normalizePrivateKey() guarantees exactly one trailing newline (OpenSSH
+        // rejects a key file without it), so the materialized file is 'KEY-BYTES\n'.
+        expect(await fs.readFile(keyPath, 'utf8')).toBe('KEY-BYTES\n');
         expect(await fs.readFile(knownHostsPath, 'utf8')).toBe('host ssh-ed25519 AAAA\n');
         const mode = (await fs.stat(keyPath)).mode & 0o777;
         expect(mode).toBe(0o600);

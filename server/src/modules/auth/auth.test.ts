@@ -14,6 +14,22 @@ import { authenticate } from './auth.service.js';
 import { requireVerified } from './auth.controller.js';
 import { registerStrategies } from './passport.strategies.js';
 import { env } from '../../config/env.js';
+import { setResendTransport } from '../communication/mailers/resend.js';
+
+// Single-use email tokens are hashed at rest (see auth.service hashToken), so
+// the raw token only exists in the outbound email. Capture emails through the
+// transport spy and pull the raw token out of the URL.
+const sentEmails: Array<{ to: string; subject: string; text: string }> = [];
+
+function rawTokenFrom(pathSegment: string): string {
+  for (let i = sentEmails.length - 1; i >= 0; i--) {
+    const m = sentEmails[i]!.text.match(new RegExp(`/${pathSegment}/([a-f0-9]+)`));
+    if (m) return m[1]!;
+  }
+  return '';
+}
+const rawVerifyToken = (): string => rawTokenFrom('verify-email');
+const rawResetToken = (): string => rawTokenFrom('reset-password');
 
 /** Drives an asyncHandler-wrapped middleware and resolves with the value passed to next(). */
 function invokeHandler(
@@ -40,16 +56,31 @@ const validUser = {
 };
 
 describe('auth module', () => {
+  const prevResendKey = env.RESEND_API_KEY;
+  const prevResendFrom = env.RESEND_FROM;
+
   beforeAll(async () => {
     await startMemoryMongo();
+    // Route outbound email to a capturing spy so tests can read the raw
+    // (unhashed) reset/verify tokens that only exist in the email body.
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = 'test-key';
+    (env as { RESEND_FROM?: string }).RESEND_FROM = 'no-reply@dockstash.test';
+    setResendTransport(async (msg) => {
+      sentEmails.push({ to: msg.to, subject: msg.subject, text: msg.text });
+      return { delivered: true };
+    });
   });
 
   afterAll(async () => {
     await stopMemoryMongo();
+    setResendTransport(null);
+    (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = prevResendKey;
+    (env as { RESEND_FROM?: string }).RESEND_FROM = prevResendFrom;
   });
 
   beforeEach(async () => {
     await clearCollections();
+    sentEmails.length = 0;
   });
 
   describe('POST /api/auth/signup', () => {
@@ -174,13 +205,21 @@ describe('auth module', () => {
       expect(res.status).toBe(200);
       const user = await User.findOne({ email: validUser.email });
       expect(user?.resetPasswordToken).toBeTruthy();
+      // Stored token is hashed at rest — never the raw token emailed to the user.
+      const rawToken = rawResetToken();
+      expect(rawToken).not.toBe('');
+      expect(user?.resetPasswordToken).not.toBe(rawToken);
+      expect(user?.resetPasswordToken).toHaveLength(64); // sha256 hex
     });
 
-    it('rejects an unknown email', async () => {
+    it('responds generically for an unknown email (no enumeration)', async () => {
       const res = await request(app)
         .post('/api/auth/forgot-password')
         .send({ email: 'nobody@example.com' });
-      expect(res.status).toBe(400);
+      // Same 200 as a known email — status must not leak account existence.
+      expect(res.status).toBe(200);
+      // And nothing was sent for the unknown address.
+      expect(rawResetToken()).toBe('');
     });
 
     it('resets the password with a valid token then blocks reuse of the old password', async () => {
@@ -188,8 +227,8 @@ describe('auth module', () => {
         .post('/api/auth/forgot-password')
         .send({ email: validUser.email })
         .expect(200);
-      const user = await User.findOne({ email: validUser.email });
-      const token = user?.resetPasswordToken ?? '';
+      const token = rawResetToken();
+      expect(token).not.toBe('');
       const res = await request(app)
         .post(`/api/auth/reset-password/${token}`)
         .send({ password: 'brandnewpass9' });
@@ -215,7 +254,7 @@ describe('auth module', () => {
     });
 
     it('verifies the account with a valid token', async () => {
-      const token = await tokenFromDb(validUser.email);
+      const token = rawVerifyToken();
       const res = await request(app).post(`/api/auth/verify-email/${token}`);
       expect(res.status).toBe(200);
       const user = await User.findOne({ email: validUser.email });
@@ -229,7 +268,7 @@ describe('auth module', () => {
     });
 
     it('rejects a token that was already consumed', async () => {
-      const token = await tokenFromDb(validUser.email);
+      const token = rawVerifyToken();
       await request(app).post(`/api/auth/verify-email/${token}`).expect(200);
       const res = await request(app).post(`/api/auth/verify-email/${token}`);
       expect(res.status).toBe(400);
@@ -260,7 +299,7 @@ describe('auth module', () => {
     });
 
     it('responds generically for an already-verified account', async () => {
-      const token = await tokenFromDb(validUser.email);
+      const token = rawVerifyToken();
       await request(app).post(`/api/auth/verify-email/${token}`).expect(200);
       const res = await request(app)
         .post('/api/auth/resend-verification')
@@ -272,6 +311,18 @@ describe('auth module', () => {
   describe('JWT strategy rejections', () => {
     it('rejects a token whose payload has no id', async () => {
       const token = jwt.sign({ email: 'x@example.com' }, env.JWT_SECRET, { expiresIn: '1h' });
+      const res = await request(app)
+        .get('/api/users/507f1f77bcf86cd799439011')
+        .set('Authorization', `JWT ${token}`);
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a token signed with a non-HS256 algorithm (alg pinning)', async () => {
+      const token = jwt.sign(
+        { id: '507f1f77bcf86cd799439011' },
+        env.JWT_SECRET,
+        { algorithm: 'HS512', expiresIn: '1h' },
+      );
       const res = await request(app)
         .get('/api/users/507f1f77bcf86cd799439011')
         .set('Authorization', `JWT ${token}`);
@@ -313,7 +364,7 @@ describe('auth module', () => {
 
     it('allows the user through once verified', async () => {
       const { token, id } = await signupAndLogin();
-      const verifyToken = await tokenFromDb(validUser.email);
+      const verifyToken = rawVerifyToken();
       await request(app).post(`/api/auth/verify-email/${verifyToken}`).expect(200);
       const res = await request(app)
         .get(`/api/users/${id}`)

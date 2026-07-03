@@ -62,6 +62,10 @@ export async function runBackupJob(
   deps: BackupDeps,
 ): Promise<JobResultStats> {
   for (const p of job.plan.paths) assertAllowedPath(p);
+  // `configs` join the restic argv alongside `paths` (see below), so they must
+  // clear the same /var/www allowlist — a server-trusted job must never carry
+  // an out-of-tree config path.
+  for (const c of job.plan.configs) assertAllowedPath(c);
   await deps.restic.init();
 
   for (const db of job.plan.databases) {

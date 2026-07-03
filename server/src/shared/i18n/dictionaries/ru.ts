@@ -178,6 +178,7 @@ export const ru: DictionaryShape = {
       projectNotFound: 'Проект не найден.',
       notOwner: 'Вы не являетесь владельцем этого проекта.',
       scanFailed: 'Не удалось просканировать проект: {{message}}',
+      discoverFailed: 'Не удалось выполнить обнаружение: {{message}}',
       noAdapter: 'Не найден адаптер резервного копирования для сервиса {{service}}.',
       dumpFailed: 'Ошибка дампа базы данных для {{service}}: {{message}}',
       resticFailed: 'Ошибка резервного копирования Restic: {{message}}',

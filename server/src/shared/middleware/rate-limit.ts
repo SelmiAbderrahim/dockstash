@@ -58,6 +58,34 @@ export function createAgentRateLimiter(overrides: RateLimitOverrides = {}): Requ
   });
 }
 
+/**
+ * Public contact-form limiter (`/api/communication`). This surface is
+ * unauthenticated and fires a real outbound email per request, so it must be
+ * throttled hard to prevent mail-bombing / provider-quota abuse. Defaults to a
+ * small bucket; overridable for tests.
+ */
+export function createContactRateLimiter(overrides: RateLimitOverrides = {}): RequestHandler {
+  return rateLimit({
+    ...commonOptions,
+    windowMs: overrides.windowMs ?? 15 * 60 * 1000,
+    max: overrides.max ?? 5,
+  });
+}
+
+/**
+ * GDPR data-export limiter (`POST /api/legal/export`). Each call serializes the
+ * caller's full account (user + all projects), so throttle it to prevent
+ * DB/CPU amplification from a logged-in user. Correctly owner-scoped already;
+ * this just caps the rate. Overridable for tests.
+ */
+export function createExportRateLimiter(overrides: RateLimitOverrides = {}): RequestHandler {
+  return rateLimit({
+    ...commonOptions,
+    windowMs: overrides.windowMs ?? 15 * 60 * 1000,
+    max: overrides.max ?? 10,
+  });
+}
+
 // Back-compat singletons (unused after prompt 11 wiring; kept exported so
 // downstream imports don't break).
 export const authRateLimiter: RequestHandler = createAuthRateLimiter();

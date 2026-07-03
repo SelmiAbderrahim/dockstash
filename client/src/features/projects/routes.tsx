@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 import { RequireVerified } from '@features/auth';
 import { ProjectsScreen } from './components/ProjectsScreen';
+import { AddProjectScreen } from './components/AddProjectScreen';
 import { ProjectDetailScreen } from './components/ProjectDetailScreen';
 
 export const projectsRoutes: RouteObject[] = [
@@ -9,6 +10,14 @@ export const projectsRoutes: RouteObject[] = [
     element: (
       <RequireVerified>
         <ProjectsScreen />
+      </RequireVerified>
+    ),
+  },
+  {
+    path: 'projects/new',
+    element: (
+      <RequireVerified>
+        <AddProjectScreen />
       </RequireVerified>
     ),
   },

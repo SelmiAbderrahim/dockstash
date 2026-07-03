@@ -1,6 +1,10 @@
 **/node_modules
 **/dist
 **/coverage
+**/cov-*
+**/coverage-*
+**/.nyc_output
+**/*.lcov
 **/.vite
 **/.vite-cache
 **/*.tsbuildinfo

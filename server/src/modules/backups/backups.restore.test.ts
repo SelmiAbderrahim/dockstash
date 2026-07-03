@@ -121,18 +121,18 @@ describe('runRestore', () => {
     const result = await runRestore(
       String(project._id),
       id,
-      { snapshotId: 'snap1', overwrite: false, targetPath: '/var/www/app-restored' },
+      { snapshotId: 'deadbeef', overwrite: false, targetPath: '/var/www/app-restored' },
       { resticRunner: runner },
     );
     expect(runner.restore).toHaveBeenCalledWith([
       'restore',
-      'snap1',
+      'deadbeef',
       '--target',
       '/var/www/app-restored',
     ]);
     expect(result).toEqual({
       status: 'pass',
-      snapshotId: 'snap1',
+      snapshotId: 'deadbeef',
       target: '/var/www/app-restored',
     });
     const row = await Project.findById(project._id);
@@ -152,10 +152,10 @@ describe('runRestore', () => {
     const result = await runRestore(
       String(project._id),
       id,
-      { snapshotId: 'snap1', overwrite: true },
+      { snapshotId: 'deadbeef', overwrite: true },
       { resticRunner: runner },
     );
-    expect(runner.restore).toHaveBeenCalledWith(['restore', 'snap1', '--target', '/']);
+    expect(runner.restore).toHaveBeenCalledWith(['restore', 'deadbeef', '--target', '/']);
     expect(result.target).toBe('/');
   });
 
@@ -171,7 +171,7 @@ describe('runRestore', () => {
       runRestore(
         String(project._id),
         id,
-        { snapshotId: 's', overwrite: false, targetPath: '/etc' },
+        { snapshotId: 'deadbeef', overwrite: false, targetPath: '/etc' },
         { resticRunner: runner },
       ),
     ).rejects.toMatchObject({ status: 400 });
@@ -179,7 +179,26 @@ describe('runRestore', () => {
       runRestore(
         String(project._id),
         id,
-        { snapshotId: 's', overwrite: false },
+        { snapshotId: 'deadbeef', overwrite: false },
+        { resticRunner: runner },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(runner.restore).not.toHaveBeenCalled();
+  });
+
+  it('rejects a malformed snapshotId before touching restic (argv injection guard)', async () => {
+    const { id } = await seedUser('r@t.com');
+    const project = await createProject(id, {
+      name: 'app',
+      path: '/var/www/app',
+      repoPassword: 'pw',
+    });
+    const runner = stubRunner();
+    await expect(
+      runRestore(
+        String(project._id),
+        id,
+        { snapshotId: '--insecure-no-password', overwrite: true },
         { resticRunner: runner },
       ),
     ).rejects.toMatchObject({ status: 400 });
@@ -198,7 +217,7 @@ describe('runRestore', () => {
       runRestore(
         String(project._id),
         b.id,
-        { snapshotId: 's', overwrite: true },
+        { snapshotId: 'deadbeef', overwrite: true },
         { resticRunner: stubRunner() },
       ),
     ).rejects.toMatchObject({ status: 403 });
@@ -220,7 +239,7 @@ describe('runRestore', () => {
       runRestore(
         String(project._id),
         id,
-        { snapshotId: 'nope', overwrite: true },
+        { snapshotId: 'deadbeef', overwrite: true },
         { resticRunner: runner },
       ),
     ).rejects.toMatchObject({ status: 500 });
@@ -245,7 +264,7 @@ describe('runRestore', () => {
       runRestore(
         String(project._id),
         id,
-        { snapshotId: 's', overwrite: true },
+        { snapshotId: 'deadbeef', overwrite: true },
         { resticRunner: runner },
       ),
     ).rejects.toMatchObject({ status: 500 });
@@ -271,12 +290,12 @@ describe('dispatchJob: restore kind', () => {
           projectId: String(project._id),
           owner: id,
           kind: 'restore',
-          payload: { snapshotId: 'abc', overwrite: true },
+          payload: { snapshotId: 'deadbeef', overwrite: true },
         },
       },
       { resticRunner: runner },
     );
-    expect(runner.restore).toHaveBeenCalledWith(['restore', 'abc', '--target', '/']);
+    expect(runner.restore).toHaveBeenCalledWith(['restore', 'deadbeef', '--target', '/']);
   });
 
   it('throws when a restore job carries no payload', async () => {

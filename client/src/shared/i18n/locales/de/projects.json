@@ -17,13 +17,63 @@
     "backupNow": "Jetzt sichern",
     "running": "Läuft…",
     "open": "Details",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "addProject": "Projekt hinzufügen",
+    "addFirst": "Erstes Projekt hinzufügen"
   },
   "empty": {
     "title": "Keine Projekte gefunden.",
-    "hint": "Ordner unter /var/www anlegen und aktualisieren."
+    "hint": "Fügen Sie Ihr erstes Projekt hinzu, um es zu sichern."
   },
   "errors": {
     "load": "Projekte konnten nicht geladen werden."
+  },
+  "add": {
+    "title": "Projekt hinzufügen",
+    "lede": "Wählen Sie einen Ordner, ein laufendes Docker-Compose-Projekt oder geben Sie einen Pfad ein.",
+    "scanning": "Wird gescannt…",
+    "cancel": "Zurück zu Projekten",
+    "select": "Auswählen",
+    "services": "Dienste",
+    "tabs": {
+      "aria": "Quelle wählen",
+      "folders": "Ordner",
+      "docker": "Laufendes Docker",
+      "manual": "Manueller Pfad"
+    },
+    "folders": {
+      "emptyTitle": "Keine Ordner gefunden.",
+      "emptyHint": "Keine Unterordner unter /var/www."
+    },
+    "docker": {
+      "unavailableTitle": "Docker ist nicht verfügbar.",
+      "unavailableHint": "Auf diesem Server ist kein Docker-Socket konfiguriert.",
+      "emptyTitle": "Keine laufenden Container.",
+      "emptyHint": "Starten Sie ein Compose-Projekt und aktualisieren Sie."
+    },
+    "manual": {
+      "label": "Projektpfad",
+      "scan": "Scannen"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Nur Dateien",
+      "added": "Bereits hinzugefügt",
+      "notAddable": "Außerhalb von /var/www",
+      "standalone": "Eigenständig"
+    },
+    "review": {
+      "title": "Prüfen und erstellen",
+      "nameLabel": "Projektname",
+      "passwordLabel": "Repository-Passwort",
+      "passwordHint": "Mindestens 8 Zeichen. Verschlüsselt Ihr Backup-Repository.",
+      "files": "Dateien",
+      "databases": "Datenbanken",
+      "configs": "Konfigurationen",
+      "none": "Nichts erkannt.",
+      "create": "Projekt erstellen",
+      "creating": "Wird erstellt…",
+      "back": "Zurück"
+    }
   }
 }

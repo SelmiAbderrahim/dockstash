@@ -178,6 +178,7 @@ export const es: DictionaryShape = {
       projectNotFound: 'Proyecto no encontrado.',
       notOwner: 'No eres el propietario de este proyecto.',
       scanFailed: 'Fallo al escanear el proyecto: {{message}}',
+      discoverFailed: 'Fallo en la detección: {{message}}',
       noAdapter: 'Ningún adaptador de copia de seguridad coincide con el servicio {{service}}.',
       dumpFailed: 'Fallo del volcado de base de datos para {{service}}: {{message}}',
       resticFailed: 'Fallo de la copia Restic: {{message}}',

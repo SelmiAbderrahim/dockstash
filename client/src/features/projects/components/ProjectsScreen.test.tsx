@@ -56,6 +56,15 @@ const baseState: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
+  folders: [],
+  foldersStatus: 'idle',
+  containers: [],
+  dockerAvailable: false,
+  containersStatus: 'idle',
+  scannedPlan: null,
+  scanStatus: 'idle',
+  createStatus: 'idle',
+  addError: null,
 };
 
 const makeStore = (projects: Partial<ProjectsState> = {}) =>
@@ -87,11 +96,22 @@ beforeEach(() => {
 });
 
 describe('ProjectsScreen', () => {
-  it('fetches projects on mount and shows the empty state', async () => {
+  it('fetches projects on mount and shows the empty state with a CTA', async () => {
     mocked.listProjectsRequest.mockResolvedValue([]);
     renderScreen(makeStore());
     await waitFor(() => expect(mocked.listProjectsRequest).toHaveBeenCalled());
     expect(await screen.findByText(/no projects found/i)).toBeInTheDocument();
+    const cta = screen.getByRole('link', { name: /add your first project/i });
+    expect(cta).toHaveAttribute('href', '/projects/new');
+  });
+
+  it('always shows the header Add project link', () => {
+    mocked.listProjectsRequest.mockReturnValue(new Promise(() => {}));
+    renderScreen(makeStore());
+    expect(screen.getByRole('link', { name: /add project/i })).toHaveAttribute(
+      'href',
+      '/projects/new',
+    );
   });
 
   it('shows the loading state while the fetch is pending', () => {

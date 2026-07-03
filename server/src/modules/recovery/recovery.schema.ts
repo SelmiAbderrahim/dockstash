@@ -1,5 +1,17 @@
 import { z } from 'zod';
 import { DATABASE_TYPES } from '../backups/backups.model.js';
+import { isAllowedProjectPath } from '../backups/backups.paths.js';
+
+/**
+ * Same /var/www allowlist the create/update-plan flow enforces. An import
+ * envelope must not be a back door for persisting a project whose path/config
+ * points outside the allowed tree — that would feed the backup file-read
+ * primitive. Applied to every filesystem path an entry carries.
+ */
+const allowedPath = z
+  .string()
+  .min(1)
+  .refine(isAllowedProjectPath, { message: 'Path must be under /var/www/*' });
 
 /**
  * At-rest secret envelope. Ciphertext + iv + authTag are base64 strings; the
@@ -27,9 +39,9 @@ const databaseLayerSchema = z
 
 const planSchema = z
   .object({
-    paths: z.array(z.string().min(1)).default([]),
+    paths: z.array(allowedPath).default([]),
     databases: z.array(databaseLayerSchema).default([]),
-    configs: z.array(z.string().min(1)).default([]),
+    configs: z.array(allowedPath).default([]),
   })
   .strict();
 
@@ -39,7 +51,7 @@ export const projectEntrySchema = z
     /** Original _id (used for idempotent re-import reconciliation). */
     id: z.string().min(1),
     name: z.string().min(1).max(120),
-    path: z.string().min(1),
+    path: allowedPath,
     plan: planSchema,
     /** Ciphertext + keyVersion only — never plaintext. */
     repoPasswordEnc: encryptedSecretSchema,

@@ -123,6 +123,28 @@ describe('resend transport', () => {
     });
   });
 
+  it('includes reply_to in the HTTP transport body when replyTo is set', async () => {
+    await withResendConfigured(async () => {
+      const fetchSpy = vi.spyOn(globalThis, 'fetch' as never).mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => '',
+      } as unknown as Response);
+      setResendTransport(null);
+      const res = await sendEmail({
+        to: 'x@example.com',
+        subject: 's',
+        text: 't',
+        replyTo: 'submitter@example.com',
+      });
+      expect(res.delivered).toBe(true);
+      const [, opts] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit];
+      const body = JSON.parse(String(opts.body));
+      expect(body.reply_to).toBe('submitter@example.com');
+      fetchSpy.mockRestore();
+    });
+  });
+
   it('surfaces text() rejection on failed response without throwing', async () => {
     await withResendConfigured(async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch' as never).mockResolvedValue({
@@ -161,7 +183,7 @@ describe('communication.service localized senders', () => {
   });
   afterAll(() => setResendTransport(null));
 
-  it('deliverContactForm sends with the sender name', async () => {
+  it('deliverContactForm uses our own sender and puts the submitter in reply-to', async () => {
     await withResendConfigured(async () => {
       await deliverContactForm({
         firstName: 'A',
@@ -172,7 +194,12 @@ describe('communication.service localized senders', () => {
       });
       expect(seen).toHaveLength(1);
       expect(seen[0]?.subject).toBe('hi');
-      expect(seen[0]?.from).toBe('A B <a@b.co>');
+      // `from` must NOT be the submitter (no spoofing) — it falls back to env sender.
+      expect(seen[0]?.from).toBeUndefined();
+      // Submitter identity rides in reply-to + the body so replies still work.
+      expect(seen[0]?.replyTo).toBe('a@b.co');
+      expect(seen[0]?.text).toContain('From: A B <a@b.co>');
+      expect(seen[0]?.text).toContain('yo');
     });
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { projectsReducer, clearActiveJob, resetSaveStatus } from './slice';
+import { projectsReducer, clearActiveJob, resetSaveStatus, resetAddFlow } from './slice';
 import {
   fetchProjects,
   fetchSchedules,
@@ -7,8 +7,12 @@ import {
   runBackupNow,
   savePlan,
   saveSchedule,
+  discoverFolders,
+  discoverContainers,
+  scanProject,
+  createProject,
 } from './thunks';
-import type { Project, Schedule } from '../types';
+import type { Project, ProjectPlan, Schedule } from '../types';
 
 const initial = () => projectsReducer(undefined, { type: 'unknown' });
 
@@ -185,6 +189,87 @@ describe('projects slice', () => {
     expect(s.error).toBe('save boom');
     s = projectsReducer(initial(), { type: saveSchedule.rejected.type });
     expect(s.error).toBe('Could not save schedule.');
+  });
+
+  it('discoverFolders lifecycle', () => {
+    let s = projectsReducer(initial(), { type: discoverFolders.pending.type });
+    expect(s.foldersStatus).toBe('loading');
+    const folders = [{ name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' }];
+    s = projectsReducer(s, { type: discoverFolders.fulfilled.type, payload: folders });
+    expect(s.foldersStatus).toBe('succeeded');
+    expect(s.folders).toEqual(folders);
+    s = projectsReducer(s, { type: discoverFolders.rejected.type, payload: 'fs boom' });
+    expect(s.foldersStatus).toBe('failed');
+    expect(s.addError).toBe('fs boom');
+    s = projectsReducer(initial(), { type: discoverFolders.rejected.type });
+    expect(s.addError).toBe('Could not scan folders.');
+  });
+
+  it('discoverContainers lifecycle carries dockerAvailable', () => {
+    let s = projectsReducer(initial(), { type: discoverContainers.pending.type });
+    expect(s.containersStatus).toBe('loading');
+    s = projectsReducer(s, {
+      type: discoverContainers.fulfilled.type,
+      payload: { containers: [{ project: 'shop' }], dockerAvailable: true },
+    });
+    expect(s.containersStatus).toBe('succeeded');
+    expect(s.dockerAvailable).toBe(true);
+    expect(s.containers).toHaveLength(1);
+    s = projectsReducer(s, { type: discoverContainers.rejected.type, payload: 'docker boom' });
+    expect(s.containersStatus).toBe('failed');
+    expect(s.addError).toBe('docker boom');
+    s = projectsReducer(initial(), { type: discoverContainers.rejected.type });
+    expect(s.addError).toBe('Could not list containers.');
+  });
+
+  it('scanProject lifecycle stores and clears the scanned plan', () => {
+    const plan: ProjectPlan = { paths: ['/var/www/app'], databases: [], configs: [] };
+    let s = projectsReducer(
+      { ...initial(), scannedPlan: plan },
+      { type: scanProject.pending.type },
+    );
+    expect(s.scanStatus).toBe('loading');
+    expect(s.scannedPlan).toBeNull();
+    s = projectsReducer(s, { type: scanProject.fulfilled.type, payload: plan });
+    expect(s.scanStatus).toBe('succeeded');
+    expect(s.scannedPlan).toEqual(plan);
+    s = projectsReducer(s, { type: scanProject.rejected.type, payload: 'scan boom' });
+    expect(s.scanStatus).toBe('failed');
+    expect(s.addError).toBe('scan boom');
+    s = projectsReducer(initial(), { type: scanProject.rejected.type });
+    expect(s.addError).toBe('Could not scan the project.');
+  });
+
+  it('createProject.fulfilled prepends the new project', () => {
+    const seeded = projectsReducer(initial(), {
+      type: fetchProjects.fulfilled.type,
+      payload: [project],
+    });
+    let s = projectsReducer(seeded, { type: createProject.pending.type });
+    expect(s.createStatus).toBe('loading');
+    const fresh = { ...project, id: 'p2', name: 'new' };
+    s = projectsReducer(s, { type: createProject.fulfilled.type, payload: fresh });
+    expect(s.createStatus).toBe('succeeded');
+    expect(s.items[0]?.id).toBe('p2');
+    expect(s.items).toHaveLength(2);
+    s = projectsReducer(s, { type: createProject.rejected.type, payload: 'dup' });
+    expect(s.createStatus).toBe('failed');
+    expect(s.addError).toBe('dup');
+    s = projectsReducer(initial(), { type: createProject.rejected.type });
+    expect(s.addError).toBe('Could not create the project.');
+  });
+
+  it('resetAddFlow clears scan/create state', () => {
+    const plan: ProjectPlan = { paths: ['/var/www/app'], databases: [], configs: [] };
+    let s = projectsReducer({ ...initial(), scannedPlan: plan, addError: 'x' }, {
+      type: scanProject.fulfilled.type,
+      payload: plan,
+    });
+    s = projectsReducer(s, resetAddFlow());
+    expect(s.scannedPlan).toBeNull();
+    expect(s.scanStatus).toBe('idle');
+    expect(s.createStatus).toBe('idle');
+    expect(s.addError).toBeNull();
   });
 
   it('resetSaveStatus returns save statuses to idle', () => {

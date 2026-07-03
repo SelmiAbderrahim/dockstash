@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, PlusIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { ResticLogPanel } from '@shared/components/ResticLogPanel';
@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Skeleton } from '@shared/ui/skeleton';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -133,11 +134,18 @@ export const ProjectsScreen = () => {
       className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8"
       aria-labelledby="projects-heading"
     >
-      <header className="flex flex-col gap-1">
-        <h1 id="projects-heading" className="text-2xl font-semibold tracking-tight">
-          {t('heading')}
-        </h1>
-        <p className="text-muted-foreground text-sm">{t('lede')}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 id="projects-heading" className="text-2xl font-semibold tracking-tight">
+            {t('heading')}
+          </h1>
+          <p className="text-muted-foreground text-sm">{t('lede')}</p>
+        </div>
+        <Button asChild>
+          <Link to="/projects/new">
+            <PlusIcon className="size-4" aria-hidden="true" /> {t('actions.addProject')}
+          </Link>
+        </Button>
       </header>
 
       {status === 'loading' && (
@@ -178,6 +186,13 @@ export const ProjectsScreen = () => {
             <EmptyTitle>{t('empty.title')}</EmptyTitle>
             <EmptyDescription>{t('empty.hint')}</EmptyDescription>
           </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/projects/new">
+                <PlusIcon className="size-4" aria-hidden="true" /> {t('actions.addFirst')}
+              </Link>
+            </Button>
+          </EmptyContent>
         </Empty>
       )}
 

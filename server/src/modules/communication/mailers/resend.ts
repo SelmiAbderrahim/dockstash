@@ -8,6 +8,7 @@ import { logger } from '../../../config/logger.js';
 export type EmailMessage = {
   to: string;
   from?: string;
+  replyTo?: string;
   subject: string;
   text: string;
   html?: string;
@@ -34,6 +35,7 @@ const httpTransport: ResendTransport = async (message, from, apiKey) => {
     subject: message.subject,
     text: message.text,
   };
+  if (message.replyTo) body.reply_to = message.replyTo;
   if (message.html) body.html = message.html;
 
   const response = await fetch(RESEND_API_URL, {

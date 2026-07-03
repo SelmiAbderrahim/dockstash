@@ -17,13 +17,63 @@
     "backupNow": "立即备份",
     "running": "运行中…",
     "open": "详情",
-    "retry": "重试"
+    "retry": "重试",
+    "addProject": "添加项目",
+    "addFirst": "添加第一个项目"
   },
   "empty": {
     "title": "未找到项目。",
-    "hint": "在 /var/www 下添加目录后刷新。"
+    "hint": "添加第一个项目即可开始备份。"
   },
   "errors": {
     "load": "无法加载项目。"
+  },
+  "add": {
+    "title": "添加项目",
+    "lede": "选择一个目录、一个运行中的 Docker Compose 项目，或输入路径。",
+    "scanning": "扫描中…",
+    "cancel": "返回项目",
+    "select": "选择",
+    "services": "服务",
+    "tabs": {
+      "aria": "选择来源",
+      "folders": "目录",
+      "docker": "运行中的 Docker",
+      "manual": "手动路径"
+    },
+    "folders": {
+      "emptyTitle": "未找到目录。",
+      "emptyHint": "/var/www 下没有子目录。"
+    },
+    "docker": {
+      "unavailableTitle": "Docker 不可用。",
+      "unavailableHint": "此服务器未配置 Docker 套接字。",
+      "emptyTitle": "没有运行中的容器。",
+      "emptyHint": "启动一个 Compose 项目后刷新。"
+    },
+    "manual": {
+      "label": "项目路径",
+      "scan": "扫描"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "仅文件",
+      "added": "已添加",
+      "notAddable": "在 /var/www 之外",
+      "standalone": "独立"
+    },
+    "review": {
+      "title": "确认并创建",
+      "nameLabel": "项目名称",
+      "passwordLabel": "仓库密码",
+      "passwordHint": "至少 8 个字符。用于加密您的备份仓库。",
+      "files": "文件",
+      "databases": "数据库",
+      "configs": "配置",
+      "none": "未检测到。",
+      "create": "创建项目",
+      "creating": "创建中…",
+      "back": "返回"
+    }
   }
 }

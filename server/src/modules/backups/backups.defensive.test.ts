@@ -74,6 +74,9 @@ function makeDocker(overrides: Partial<DockerClient> = {}): DockerClient {
     async inspect(container) {
       return { id: container, running: true };
     },
+    async listContainers() {
+      return [];
+    },
     ...overrides,
   };
 }
@@ -196,6 +199,36 @@ describe('backups.service: defensive guards', () => {
       },
     });
     expect(project.plan.paths).toContain('/var/www/withplan');
+  });
+
+  it('rejects a plan config outside the /var/www allowlist on create', async () => {
+    const id = await seedUser('badconfig@test.com');
+    await expect(
+      createProject(id, {
+        name: 'badconfig',
+        path: '/var/www/badconfig',
+        repoPassword: 'password1',
+        plan: { paths: ['/var/www/badconfig'], databases: [], configs: ['/etc/passwd'] },
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('refuses to run a backup whose persisted plan has an out-of-tree config', async () => {
+    const id = await seedUser('smuggled@test.com');
+    const projectId = await seedProject(id);
+    // Simulate a plan that bypassed the schema (e.g. legacy row / raw write):
+    // the runBackup allowlist re-assert must catch it before restic runs.
+    await Project.updateOne(
+      { _id: projectId },
+      { $set: { 'plan.configs': ['/var/lib/dockstash/.env'] } },
+    );
+    await expect(
+      runBackup(projectId, id, {
+        resticRunner: makeRestic(),
+        dockerClient: makeDocker(),
+        composeServices: { pg: { image: 'postgres:16' } },
+      }),
+    ).rejects.toMatchObject({ status: 400 });
   });
 
   it('succeeds with default compose services when none are supplied', async () => {
@@ -445,7 +478,7 @@ describe('runRestore: alert transport explosion is swallowed', () => {
       runRestore(
         projectId,
         id,
-        { snapshotId: 's1', overwrite: true },
+        { snapshotId: 'deadbeef', overwrite: true },
         {
           resticRunner: {
             ...makeRestic(),

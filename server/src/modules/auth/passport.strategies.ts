@@ -37,6 +37,9 @@ export function registerStrategies(): void {
       {
         jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme('jwt'),
         secretOrKey: env.JWT_SECRET,
+        // Pin the accepted algorithm to the one we sign with (HS256). Belt-and-
+        // suspenders against alg-confusion / `alg:none` acceptance.
+        algorithms: ['HS256'],
       },
       (payload: { _id?: string; id?: string; email?: string; role?: string }, done) => {
         const id = payload.id ?? payload._id;

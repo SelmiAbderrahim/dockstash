@@ -17,13 +17,63 @@
     "backupNow": "Backup Now",
     "running": "Running…",
     "open": "Details",
-    "retry": "Retry"
+    "retry": "Retry",
+    "addProject": "Add project",
+    "addFirst": "Add your first project"
   },
   "empty": {
     "title": "No projects found.",
-    "hint": "Add a folder under /var/www and refresh."
+    "hint": "Add your first project to start backing it up."
   },
   "errors": {
     "load": "Could not load projects."
+  },
+  "add": {
+    "title": "Add a project",
+    "lede": "Pick a folder, a running Docker Compose project, or enter a path.",
+    "scanning": "Scanning…",
+    "cancel": "Back to projects",
+    "select": "Select",
+    "services": "Services",
+    "tabs": {
+      "aria": "Choose a source",
+      "folders": "Folders",
+      "docker": "Running Docker",
+      "manual": "Manual path"
+    },
+    "folders": {
+      "emptyTitle": "No folders found.",
+      "emptyHint": "No subdirectories under /var/www."
+    },
+    "docker": {
+      "unavailableTitle": "Docker is not available.",
+      "unavailableHint": "No Docker socket is configured on this server.",
+      "emptyTitle": "No running containers.",
+      "emptyHint": "Start a Compose project, then refresh."
+    },
+    "manual": {
+      "label": "Project path",
+      "scan": "Scan"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Files only",
+      "added": "Already added",
+      "notAddable": "Outside /var/www",
+      "standalone": "Standalone"
+    },
+    "review": {
+      "title": "Review and create",
+      "nameLabel": "Project name",
+      "passwordLabel": "Repository password",
+      "passwordHint": "At least 8 characters. Encrypts your backup repository.",
+      "files": "Files",
+      "databases": "Databases",
+      "configs": "Configs",
+      "none": "None detected.",
+      "create": "Create project",
+      "creating": "Creating…",
+      "back": "Back"
+    }
   }
 }

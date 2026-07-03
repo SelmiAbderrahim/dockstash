@@ -178,6 +178,7 @@ export const fr: DictionaryShape = {
       projectNotFound: 'Projet introuvable.',
       notOwner: 'Vous n’êtes pas propriétaire de ce projet.',
       scanFailed: 'Échec de l’analyse du projet : {{message}}',
+      discoverFailed: 'Échec de la découverte : {{message}}',
       noAdapter: 'Aucun adaptateur de sauvegarde ne correspond au service {{service}}.',
       dumpFailed: 'Échec du dump de la base de données pour {{service}} : {{message}}',
       resticFailed: 'Échec de la sauvegarde Restic : {{message}}',

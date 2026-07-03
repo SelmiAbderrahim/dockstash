@@ -10,6 +10,13 @@ import type { ResticRunner } from './backups.boundaries.js';
 export type Translator = (key: string, vars?: TranslationVars) => string;
 const identityT: Translator = (key) => key;
 
+/**
+ * A restic snapshot id is either a short/long hex id or the alias `latest`.
+ * Validate before it enters the restic argv so a value like `--flag` can never
+ * be interpreted as an option (argument injection).
+ */
+const SNAPSHOT_ID_RE = /^([0-9a-f]{8,64}|latest)$/i;
+
 export interface RestoreOptions {
   snapshotId: string;
   /**
@@ -47,6 +54,9 @@ export async function runRestore(
   deps: RunRestoreDeps,
 ): Promise<RunRestoreResult> {
   const t = deps.t ?? identityT;
+  if (!SNAPSHOT_ID_RE.test(opts.snapshotId)) {
+    throw HttpError.badRequest(t('errors.badRequest'));
+  }
   const project = await loadOwnedProject(projectId, userId, { t });
 
   let target: string;

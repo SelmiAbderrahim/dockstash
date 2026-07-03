@@ -26,11 +26,15 @@ function normalizedClientUrl(): string {
 }
 
 export async function deliverContactForm(input: ContactFormInput): Promise<void> {
+  // The `from` MUST be our own verified sender (env RESEND_FROM, applied by the
+  // transport when `from` is omitted) — never the submitter's address, which is
+  // attacker-controlled and would let anyone spoof the From of support mail.
+  // The submitter's identity rides in `replyTo` + the body so replies still work.
   await sendEmail({
-    from: `${input.firstName} ${input.lastName} <${input.email}>`,
     to: contactFormRecipient(),
+    replyTo: input.email,
     subject: input.subject,
-    text: input.message,
+    text: `From: ${input.firstName} ${input.lastName} <${input.email}>\n\n${input.message}`,
   });
 }
 

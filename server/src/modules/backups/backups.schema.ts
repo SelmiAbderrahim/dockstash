@@ -17,7 +17,10 @@ const databaseLayerInput = z.object({
 const planInput = z.object({
   paths: z.array(projectPath).default([]),
   databases: z.array(databaseLayerInput).default([]),
-  configs: z.array(z.string().min(1)).default([]),
+  // `configs` are backed up via the same restic argv as `paths`, so they MUST
+  // pass the same /var/www allowlist — otherwise an absolute path like
+  // /etc/passwd would be dumped into the tenant's repo (arbitrary file read).
+  configs: z.array(projectPath).default([]),
 });
 
 export const scanProjectSchema = z.object({

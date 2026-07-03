@@ -12,6 +12,7 @@ import {
   verifyLoginOtp,
 } from './thunks';
 import { loadCookie } from '@shared/utils/cookies';
+import * as cookies from '@shared/utils/cookies';
 import type { AuthUser } from '../types';
 import * as api from '../api';
 
@@ -52,6 +53,45 @@ describe('auth thunks', () => {
     expect(result.payload).toEqual({ otpRequired: false, emailVerified: true, role: 'Member' });
     expect(loadCookie<string>('token')).toBe('JWT abc');
     expect(loadCookie<AuthUser>('user')?.email).toBe('a@b.co');
+  });
+
+  it('loginUser writes the token/user cookies with sameSite=strict', async () => {
+    const spy = vi.spyOn(cookies, 'saveCookie');
+    mocked.loginRequest.mockResolvedValue({
+      token: 'JWT abc',
+      user: { id: '1', email: 'a@b.co', emailVerified: true, role: 'Member' },
+    });
+    const store = makeStore();
+    await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
+    const tokenCall = spy.mock.calls.find((c) => c[0] === 'token');
+    const userCall = spy.mock.calls.find((c) => c[0] === 'user');
+    expect(tokenCall?.[2]).toMatchObject({ path: '/', sameSite: 'strict' });
+    expect(userCall?.[2]).toMatchObject({ path: '/', sameSite: 'strict' });
+    // Under jsdom's http origin, `secure` must NOT be set (would drop the cookie).
+    expect((tokenCall?.[2] as { secure?: boolean }).secure).toBeUndefined();
+    spy.mockRestore();
+  });
+
+  it('loginUser marks the token cookie secure when served over https', async () => {
+    const original = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...original, protocol: 'https:' },
+    });
+    const spy = vi.spyOn(cookies, 'saveCookie');
+    try {
+      mocked.loginRequest.mockResolvedValue({
+        token: 'JWT abc',
+        user: { id: '1', email: 'a@b.co', emailVerified: true, role: 'Member' },
+      });
+      const store = makeStore();
+      await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
+      const tokenCall = spy.mock.calls.find((c) => c[0] === 'token');
+      expect(tokenCall?.[2]).toMatchObject({ path: '/', sameSite: 'strict', secure: true });
+    } finally {
+      spy.mockRestore();
+      Object.defineProperty(window, 'location', { configurable: true, value: original });
+    }
   });
 
   it('loginUser defaults emailVerified and role when the fields are missing', async () => {

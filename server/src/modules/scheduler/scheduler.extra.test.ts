@@ -72,6 +72,9 @@ function makeDocker(): DockerClient {
     async inspect(container) {
       return { id: container, running: true };
     },
+    async listContainers() {
+      return [];
+    },
   };
 }
 

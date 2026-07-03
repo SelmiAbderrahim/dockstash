@@ -3,6 +3,10 @@ import { configureStore } from '@reduxjs/toolkit';
 import { projectsReducer } from './slice';
 import {
   fetchProjects,
+  discoverFolders,
+  discoverContainers,
+  scanProject,
+  createProject,
   savePlan,
   assignProjectAgent,
   runBackupNow,
@@ -14,6 +18,8 @@ import * as api from '../api';
 
 vi.mock('../api', () => ({
   listProjectsRequest: vi.fn(),
+  discoverFoldersRequest: vi.fn(),
+  discoverContainersRequest: vi.fn(),
   scanProjectRequest: vi.fn(),
   createProjectRequest: vi.fn(),
   updatePlanRequest: vi.fn(),
@@ -48,6 +54,58 @@ describe('projects thunks', () => {
     const result = await makeStore().dispatch(fetchProjects());
     expect(fetchProjects.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('nope');
+  });
+
+  it('discoverFolders resolves the folder list / rejects with a message', async () => {
+    mocked.discoverFoldersRequest.mockResolvedValue([{ name: 'app' }] as never);
+    let result = await makeStore().dispatch(discoverFolders());
+    expect(discoverFolders.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toEqual([{ name: 'app' }]);
+
+    mocked.discoverFoldersRequest.mockRejectedValue(new Error('fs'));
+    result = await makeStore().dispatch(discoverFolders());
+    expect(discoverFolders.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('fs');
+  });
+
+  it('discoverContainers resolves the result / rejects with a message', async () => {
+    const payload = { containers: [], dockerAvailable: true };
+    mocked.discoverContainersRequest.mockResolvedValue(payload as never);
+    let result = await makeStore().dispatch(discoverContainers());
+    expect(discoverContainers.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toEqual(payload);
+
+    mocked.discoverContainersRequest.mockRejectedValue(new Error('docker'));
+    result = await makeStore().dispatch(discoverContainers());
+    expect(discoverContainers.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('docker');
+  });
+
+  it('scanProject resolves the plan / rejects with a message', async () => {
+    mocked.scanProjectRequest.mockResolvedValue(plan);
+    let result = await makeStore().dispatch(scanProject({ path: '/var/www/app' }));
+    expect(scanProject.fulfilled.match(result)).toBe(true);
+    expect(mocked.scanProjectRequest).toHaveBeenCalledWith('/var/www/app');
+    expect(result.payload).toEqual(plan);
+
+    mocked.scanProjectRequest.mockRejectedValue(new Error('no compose'));
+    result = await makeStore().dispatch(scanProject({ path: '/var/www/app' }));
+    expect(scanProject.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('no compose');
+  });
+
+  it('createProject resolves the project / rejects with a message', async () => {
+    mocked.createProjectRequest.mockResolvedValue(project);
+    const input = { name: 'app', path: '/var/www/app', repoPassword: 'password1', plan };
+    let result = await makeStore().dispatch(createProject(input));
+    expect(createProject.fulfilled.match(result)).toBe(true);
+    expect(mocked.createProjectRequest).toHaveBeenCalledWith(input);
+    expect(result.payload).toEqual(project);
+
+    mocked.createProjectRequest.mockRejectedValue(new Error('dup'));
+    result = await makeStore().dispatch(createProject(input));
+    expect(createProject.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('dup');
   });
 
   it('savePlan resolves the updated project', async () => {

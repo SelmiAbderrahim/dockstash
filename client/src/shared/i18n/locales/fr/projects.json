@@ -17,13 +17,63 @@
     "backupNow": "Sauvegarder maintenant",
     "running": "En cours…",
     "open": "Détails",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "addProject": "Ajouter un projet",
+    "addFirst": "Ajouter votre premier projet"
   },
   "empty": {
     "title": "Aucun projet trouvé.",
-    "hint": "Ajoutez un dossier sous /var/www puis rafraîchissez."
+    "hint": "Ajoutez votre premier projet pour commencer à le sauvegarder."
   },
   "errors": {
     "load": "Impossible de charger les projets."
+  },
+  "add": {
+    "title": "Ajouter un projet",
+    "lede": "Choisissez un dossier, un projet Docker Compose en cours, ou saisissez un chemin.",
+    "scanning": "Analyse…",
+    "cancel": "Retour aux projets",
+    "select": "Sélectionner",
+    "services": "Services",
+    "tabs": {
+      "aria": "Choisir une source",
+      "folders": "Dossiers",
+      "docker": "Docker en cours",
+      "manual": "Chemin manuel"
+    },
+    "folders": {
+      "emptyTitle": "Aucun dossier trouvé.",
+      "emptyHint": "Aucun sous-dossier sous /var/www."
+    },
+    "docker": {
+      "unavailableTitle": "Docker n’est pas disponible.",
+      "unavailableHint": "Aucun socket Docker n’est configuré sur ce serveur.",
+      "emptyTitle": "Aucun conteneur en cours.",
+      "emptyHint": "Démarrez un projet Compose, puis rafraîchissez."
+    },
+    "manual": {
+      "label": "Chemin du projet",
+      "scan": "Analyser"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Fichiers seulement",
+      "added": "Déjà ajouté",
+      "notAddable": "Hors de /var/www",
+      "standalone": "Autonome"
+    },
+    "review": {
+      "title": "Vérifier et créer",
+      "nameLabel": "Nom du projet",
+      "passwordLabel": "Mot de passe du dépôt",
+      "passwordHint": "Au moins 8 caractères. Chiffre votre dépôt de sauvegarde.",
+      "files": "Fichiers",
+      "databases": "Bases de données",
+      "configs": "Configurations",
+      "none": "Aucun détecté.",
+      "create": "Créer le projet",
+      "creating": "Création…",
+      "back": "Retour"
+    }
   }
 }

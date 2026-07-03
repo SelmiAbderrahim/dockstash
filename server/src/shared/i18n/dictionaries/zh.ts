@@ -178,6 +178,7 @@ export const zh: DictionaryShape = {
       projectNotFound: '项目未找到。',
       notOwner: '您不是此项目的所有者。',
       scanFailed: '项目扫描失败：{{message}}',
+      discoverFailed: '发现失败：{{message}}',
       noAdapter: '没有备份适配器与服务 {{service}} 匹配。',
       dumpFailed: '{{service}} 的数据库转储失败：{{message}}',
       resticFailed: 'Restic 备份失败：{{message}}',

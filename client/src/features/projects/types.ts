@@ -28,6 +28,28 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface DiscoveredFolder {
+  name: string;
+  path: string;
+  hasCompose: boolean;
+  composeFile: string | null;
+}
+
+export interface DiscoveredContainerGroup {
+  project: string;
+  workingDir: string | null;
+  configFiles: string[];
+  services: string[];
+  containerNames: string[];
+  addable: boolean;
+  standalone: boolean;
+}
+
+export interface DiscoverContainersResult {
+  containers: DiscoveredContainerGroup[];
+  dockerAvailable: boolean;
+}
+
 export interface Schedule {
   id: string;
   projectId: string;

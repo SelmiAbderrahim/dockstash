@@ -33,6 +33,36 @@ describe('communication module', () => {
     expect(res.body.message).toMatch(/has been sent/i);
   });
 
+  it('rejects an oversized message body (length cap)', async () => {
+    const res = await request(app).post('/api/communication/contact').send({
+      firstName: 'Jane',
+      lastName: 'Doe',
+      email: 'jane@example.com',
+      subject: 'Hello',
+      message: 'x'.repeat(5001),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rate-limits repeated contact submissions (429 after the bucket is spent)', async () => {
+    // A fresh app instance gets its own limiter bucket, so this does not leak
+    // into the shared `app` used by the other cases.
+    const limitedApp = createApp();
+    const payload = {
+      firstName: 'Flood',
+      lastName: 'Bot',
+      email: 'flood@example.com',
+      subject: 'spam',
+      message: 'spam',
+    };
+    let sawLimited = false;
+    for (let i = 0; i < 6; i++) {
+      const res = await request(limitedApp).post('/api/communication/contact').send(payload);
+      if (res.status === 429) sawLimited = true;
+    }
+    expect(sawLimited).toBe(true);
+  });
+
   it('localizes the contact confirmation via Accept-Language', async () => {
     const res = await request(app)
       .post('/api/communication/contact')

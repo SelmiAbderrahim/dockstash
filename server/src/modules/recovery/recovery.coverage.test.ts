@@ -10,7 +10,7 @@ import {
   startMemoryMongo,
   stopMemoryMongo,
 } from '../../shared/testing/mongo.js';
-import { User } from '../users/index.js';
+import { User, ROLE_SUPERADMIN } from '../users/index.js';
 import { Project } from '../backups/backups.model.js';
 import { encryptSecret } from '../../shared/crypto/index.js';
 import type { ResticRunner, ResticBackupOptions } from '../backups/backups.boundaries.js';
@@ -38,12 +38,16 @@ function signToken(userId: string): string {
   return jwt.sign({ _id: userId, id: userId }, env.JWT_SECRET, { expiresIn: '1h' });
 }
 
-async function seedUser(email: string): Promise<{ id: string; token: string }> {
+async function seedUser(
+  email: string,
+  role?: string,
+): Promise<{ id: string; token: string }> {
   const u = await User.create({
     email,
     password: 'irrelevant',
     profile: { firstName: 'R', lastName: 'U' },
     emailVerified: true,
+    ...(role ? { role } : {}),
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }
@@ -222,7 +226,7 @@ describe('recovery coverage: DB-backed branches', () => {
           plan: {
             paths: ['/var/www/p'],
             databases: [{ service: 's', type: 'postgres', container: 'c', enabled: true }],
-            configs: ['cfg'],
+            configs: ['/var/www/p/cfg'],
           },
           repoPasswordEnc: encryptSecret('reachable-pw-42'),
         },
@@ -399,7 +403,7 @@ describe('recovery coverage: DB-backed branches', () => {
   });
 
   it('POST /self-backup runs the injected runNow path', async () => {
-    const owner = await seedUser('cov-runnow@t.com');
+    const owner = await seedUser('cov-runnow@t.com', ROLE_SUPERADMIN);
     configureRecoveryController({ runNow: async () => ({ ran: true }) });
     const res = await request(app)
       .post('/api/recovery/self-backup')
@@ -410,7 +414,7 @@ describe('recovery coverage: DB-backed branches', () => {
   });
 
   it('POST /self-backup runs the injected restic+mongoDump path', async () => {
-    const owner = await seedUser('cov-direct@t.com');
+    const owner = await seedUser('cov-direct@t.com', ROLE_SUPERADMIN);
     configureRecoveryController({ resticRunner: makeRestic(), mongoDump: makeMongoDump() });
     const res = await request(app)
       .post('/api/recovery/self-backup')
@@ -421,7 +425,7 @@ describe('recovery coverage: DB-backed branches', () => {
   });
 
   it('POST /self-backup with only resticRunner (no mongoDump) falls through to 500', async () => {
-    const owner = await seedUser('cov-partial@t.com');
+    const owner = await seedUser('cov-partial@t.com', ROLE_SUPERADMIN);
     configureRecoveryController({ resticRunner: makeRestic() });
     const res = await request(app)
       .post('/api/recovery/self-backup')
@@ -430,7 +434,7 @@ describe('recovery coverage: DB-backed branches', () => {
   });
 
   it('POST /self-backup with nothing configured returns 500 (localized via req.t)', async () => {
-    const owner = await seedUser('cov-none@t.com');
+    const owner = await seedUser('cov-none@t.com', ROLE_SUPERADMIN);
     const res = await request(app)
       .post('/api/recovery/self-backup')
       .set('Authorization', `JWT ${owner.token}`);
@@ -438,7 +442,7 @@ describe('recovery coverage: DB-backed branches', () => {
   });
 
   it('GET /self-backup renders null startedAt/finishedAt for a raw running row', async () => {
-    const owner = await seedUser('cov-list-null@t.com');
+    const owner = await seedUser('cov-list-null@t.com', ROLE_SUPERADMIN);
     await SelfBackupRun.collection.insertOne({ repo: env.SELF_BACKUP_REPO, status: 'running' });
     const res = await request(app)
       .get('/api/recovery/self-backup')

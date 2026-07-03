@@ -339,6 +339,21 @@ describe('legal / GDPR', () => {
       expect(res.body.projects).toHaveLength(1);
     });
 
+    it('rate-limits repeated /export calls (429 once the bucket is spent)', async () => {
+      // Fresh app → isolated limiter bucket, so this cannot leak into the
+      // shared `app` used by the other cases.
+      const limitedApp = createApp();
+      const { userId } = await seedUserAndProjects();
+      let sawLimited = false;
+      for (let i = 0; i < 11; i++) {
+        const res = await request(limitedApp)
+          .post('/api/legal/export')
+          .set('Authorization', token(userId));
+        if (res.status === 429) sawLimited = true;
+      }
+      expect(sawLimited).toBe(true);
+    });
+
     it('POST /delete-account returns 500 when the purge queue is not configured', async () => {
       const { userId } = await seedUserAndProjects();
       resetLegalController();

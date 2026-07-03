@@ -71,6 +71,9 @@ function makeBaseDocker(overrides: Partial<DockerClient> = {}): DockerClient {
     async inspect(container) {
       return { id: container, running: true };
     },
+    async listContainers() {
+      return [];
+    },
     ...overrides,
   };
 }

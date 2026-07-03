@@ -19,6 +19,22 @@ async function loadUserOrThrow(userId: string) {
   return user;
 }
 
+/**
+ * Guard against a client passing an arbitrary `productId`. Only products that
+ * belong to an active pricing tier (monthly or yearly) are accepted — this
+ * closes the door on self-selecting a non-catalog / internal / discounted Polar
+ * product that might exist in the merchant org.
+ */
+async function assertKnownProduct(productId: string): Promise<void> {
+  const match = await PricingTier.findOne({
+    active: true,
+    $or: [{ productIdMonthly: productId }, { productIdYearly: productId }],
+  }).lean();
+  if (!match) {
+    throw HttpError.badRequest('errors.badRequest');
+  }
+}
+
 export async function startCheckoutForUser(
   userId: string,
   input: { productId: string; successUrl: string; cancelUrl?: string },
@@ -28,6 +44,7 @@ export async function startCheckoutForUser(
   if (!provider.isConfigured()) {
     throw HttpError.internal('billing.error.notConfigured');
   }
+  await assertKnownProduct(input.productId);
   return provider.createCheckout({
     productId: input.productId,
     userId: String(user._id),
@@ -62,6 +79,7 @@ export async function changePlanForUser(
   if (!sub) {
     throw HttpError.notFound('billing.error.noSubscription');
   }
+  await assertKnownProduct(input.productId);
   const normalized = await provider.changePlan({
     providerSubscriptionId: sub.providerSubscriptionId,
     productId: input.productId,

@@ -1,13 +1,23 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   assignProjectAgent,
+  createProject,
+  discoverContainers,
+  discoverFolders,
   fetchProjects,
   fetchSchedules,
   runBackupNow,
   savePlan,
   saveSchedule,
+  scanProject,
 } from './thunks';
-import type { Project, Schedule } from '../types';
+import type {
+  DiscoveredContainerGroup,
+  DiscoveredFolder,
+  Project,
+  ProjectPlan,
+  Schedule,
+} from '../types';
 
 export type LoadState = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -20,6 +30,16 @@ export interface ProjectsState {
   schedulesStatus: LoadState;
   scheduleSaveStatus: LoadState;
   planSaveStatus: LoadState;
+  // Add-project discovery flow
+  folders: DiscoveredFolder[];
+  foldersStatus: LoadState;
+  containers: DiscoveredContainerGroup[];
+  dockerAvailable: boolean;
+  containersStatus: LoadState;
+  scannedPlan: ProjectPlan | null;
+  scanStatus: LoadState;
+  createStatus: LoadState;
+  addError: string | null;
 }
 
 const initialState: ProjectsState = {
@@ -31,6 +51,15 @@ const initialState: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
+  folders: [],
+  foldersStatus: 'idle',
+  containers: [],
+  dockerAvailable: false,
+  containersStatus: 'idle',
+  scannedPlan: null,
+  scanStatus: 'idle',
+  createStatus: 'idle',
+  addError: null,
 };
 
 const projectsSlice = createSlice({
@@ -43,6 +72,12 @@ const projectsSlice = createSlice({
     resetSaveStatus(state) {
       state.planSaveStatus = 'idle';
       state.scheduleSaveStatus = 'idle';
+    },
+    resetAddFlow(state) {
+      state.scannedPlan = null;
+      state.scanStatus = 'idle';
+      state.createStatus = 'idle';
+      state.addError = null;
     },
   },
   extraReducers: (builder) => {
@@ -84,6 +119,56 @@ const projectsSlice = createSlice({
       .addCase(assignProjectAgent.rejected, (state, action) => {
         state.error = action.payload ?? 'Could not assign the agent.';
       })
+      .addCase(discoverFolders.pending, (state) => {
+        state.foldersStatus = 'loading';
+        state.addError = null;
+      })
+      .addCase(discoverFolders.fulfilled, (state, action) => {
+        state.foldersStatus = 'succeeded';
+        state.folders = action.payload;
+      })
+      .addCase(discoverFolders.rejected, (state, action) => {
+        state.foldersStatus = 'failed';
+        state.addError = action.payload ?? 'Could not scan folders.';
+      })
+      .addCase(discoverContainers.pending, (state) => {
+        state.containersStatus = 'loading';
+        state.addError = null;
+      })
+      .addCase(discoverContainers.fulfilled, (state, action) => {
+        state.containersStatus = 'succeeded';
+        state.containers = action.payload.containers;
+        state.dockerAvailable = action.payload.dockerAvailable;
+      })
+      .addCase(discoverContainers.rejected, (state, action) => {
+        state.containersStatus = 'failed';
+        state.addError = action.payload ?? 'Could not list containers.';
+      })
+      .addCase(scanProject.pending, (state) => {
+        state.scanStatus = 'loading';
+        state.scannedPlan = null;
+        state.addError = null;
+      })
+      .addCase(scanProject.fulfilled, (state, action) => {
+        state.scanStatus = 'succeeded';
+        state.scannedPlan = action.payload;
+      })
+      .addCase(scanProject.rejected, (state, action) => {
+        state.scanStatus = 'failed';
+        state.addError = action.payload ?? 'Could not scan the project.';
+      })
+      .addCase(createProject.pending, (state) => {
+        state.createStatus = 'loading';
+        state.addError = null;
+      })
+      .addCase(createProject.fulfilled, (state, action) => {
+        state.createStatus = 'succeeded';
+        state.items.unshift(action.payload);
+      })
+      .addCase(createProject.rejected, (state, action) => {
+        state.createStatus = 'failed';
+        state.addError = action.payload ?? 'Could not create the project.';
+      })
       .addCase(fetchSchedules.pending, (state) => {
         state.schedulesStatus = 'loading';
       })
@@ -111,5 +196,5 @@ const projectsSlice = createSlice({
   },
 });
 
-export const { clearActiveJob, resetSaveStatus } = projectsSlice.actions;
+export const { clearActiveJob, resetSaveStatus, resetAddFlow } = projectsSlice.actions;
 export const projectsReducer = projectsSlice.reducer;

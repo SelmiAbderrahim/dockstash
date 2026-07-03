@@ -8,6 +8,23 @@ import {
   hreflangAlternates,
 } from './meta';
 
+/**
+ * Serialize a JSON-LD document for safe embedding inside a `<script>` element.
+ * `JSON.stringify` does not escape `<`, `>` or `&`, so a value containing
+ * `</script>` (or a `<!--` sequence) would break out of the script tag in the
+ * server-rendered HTML. Escaping these to unicode escapes keeps the JSON valid
+ * while making script-context breakout impossible. `U+2028/U+2029` are also
+ * escaped as they are invalid raw in a script context.
+ */
+export function safeJsonLd(doc: unknown): string {
+  return JSON.stringify(doc)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
 export interface SeoProps {
   /** Page <title> (Helmet appends the site name). */
   title: string;
@@ -128,7 +145,7 @@ export const Seo = ({
 
       {jsonLdDocs.map((doc, index) => (
         <script key={index} type="application/ld+json">
-          {JSON.stringify(doc)}
+          {safeJsonLd(doc)}
         </script>
       ))}
     </Helmet>

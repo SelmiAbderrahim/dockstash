@@ -49,6 +49,7 @@ export async function createProject(
   const t = deps.t ?? identityT;
   assertAllowedPath(input.path, t);
   for (const p of input.plan?.paths ?? []) assertAllowedPath(p, t);
+  for (const c of input.plan?.configs ?? []) assertAllowedPath(c, t);
   const repoPasswordEnc = encryptSecret(input.repoPassword);
   const plan = input.plan ?? { paths: [input.path], databases: [], configs: [] };
   const project = await Project.create({
@@ -97,6 +98,7 @@ export async function updateProjectPlan(
   const t = deps.t ?? identityT;
   const project = await loadOwnedProject(projectId, userId, deps);
   for (const p of plan.paths) assertAllowedPath(p, t);
+  for (const c of plan.configs) assertAllowedPath(c, t);
   project.plan = {
     paths: plan.paths,
     databases: plan.databases.map((d) => ({
@@ -189,6 +191,10 @@ export async function runBackup(
   });
   assertAllowedPath(project.path, t);
   for (const p of project.plan.paths) assertAllowedPath(p, t);
+  // `configs` share the restic argv with `paths`; re-assert the allowlist here
+  // so a plan persisted through any path (recovery import, legacy row) cannot
+  // smuggle an out-of-tree file into the backup.
+  for (const c of project.plan.configs) assertAllowedPath(c, t);
 
   if (deps.diskProbe) {
     const minFree = deps.minFreeBytes ?? MIN_FREE_BYTES_DEFAULT;

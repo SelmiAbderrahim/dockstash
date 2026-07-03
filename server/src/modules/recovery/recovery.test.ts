@@ -9,7 +9,7 @@ import {
   startMemoryMongo,
   stopMemoryMongo,
 } from '../../shared/testing/mongo.js';
-import { User } from '../users/index.js';
+import { User, ROLE_SUPERADMIN } from '../users/index.js';
 import { createProject } from '../backups/backups.service.js';
 import { Project, type ProjectHydrated } from '../backups/backups.model.js';
 import { verifyKeyParity } from '../../shared/i18n/index.js';
@@ -39,12 +39,16 @@ function signToken(userId: string): string {
   return jwt.sign({ _id: userId, id: userId }, env.JWT_SECRET, { expiresIn: '1h' });
 }
 
-async function seedUser(email: string): Promise<{ id: string; token: string }> {
+async function seedUser(
+  email: string,
+  role?: string,
+): Promise<{ id: string; token: string }> {
   const u = await User.create({
     email,
     password: 'irrelevant',
     profile: { firstName: 'R', lastName: 'U' },
     emailVerified: true,
+    ...(role ? { role } : {}),
   });
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }
@@ -340,6 +344,24 @@ describe('recovery: import validation', () => {
     await expect(importEnvelope(owner.id, env)).rejects.toMatchObject({ status: 400 });
   });
 
+  it('rejects an envelope whose project path is outside the /var/www allowlist', async () => {
+    const owner = await seedUser('ipath@t.com');
+    const env = baseEnvelope();
+    env.projects[0]!.path = '/etc';
+    env.projects[0]!.plan.paths = ['/etc'];
+    await expect(importEnvelope(owner.id, env)).rejects.toMatchObject({ status: 400 });
+    // Nothing was persisted.
+    expect(await Project.countDocuments({ owner: owner.id })).toBe(0);
+  });
+
+  it('rejects an envelope whose plan config is outside the /var/www allowlist', async () => {
+    const owner = await seedUser('icfg@t.com');
+    const env = baseEnvelope();
+    env.projects[0]!.plan.configs = ['/root/.ssh/id_rsa'];
+    await expect(importEnvelope(owner.id, env)).rejects.toMatchObject({ status: 400 });
+    expect(await Project.countDocuments({ owner: owner.id })).toBe(0);
+  });
+
   it('rejects an envelope with a plaintext password field (zod .strict())', async () => {
     const owner = await seedUser('i2@t.com');
     const env = baseEnvelope() as unknown as Record<string, unknown>;
@@ -474,8 +496,20 @@ describe('recovery: HTTP routes', () => {
     expect(resFr.body.error.message).toBeTruthy();
   });
 
+  it('rejects self-backup for a non-superadmin user (403)', async () => {
+    const owner = await seedUser('h-nonadmin@t.com');
+    const postRes = await request(app)
+      .post('/api/recovery/self-backup')
+      .set('Authorization', `JWT ${owner.token}`);
+    expect(postRes.status).toBe(403);
+    const listRes = await request(app)
+      .get('/api/recovery/self-backup')
+      .set('Authorization', `JWT ${owner.token}`);
+    expect(listRes.status).toBe(403);
+  });
+
   it('POST /self-backup triggers a run via the configured queue', async () => {
-    const owner = await seedUser('h3@t.com');
+    const owner = await seedUser('h3@t.com', ROLE_SUPERADMIN);
     const queue = new MemoryQueue();
     let seen = 0;
     queue.setProcessor(async (job) => {
@@ -491,7 +525,7 @@ describe('recovery: HTTP routes', () => {
   });
 
   it('GET /self-backup lists recent runs', async () => {
-    const owner = await seedUser('h4@t.com');
+    const owner = await seedUser('h4@t.com', ROLE_SUPERADMIN);
     await SelfBackupRun.create({
       repo: env.SELF_BACKUP_REPO,
       status: 'success',

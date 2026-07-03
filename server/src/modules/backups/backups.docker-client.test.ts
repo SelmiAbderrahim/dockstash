@@ -173,6 +173,70 @@ describe('HttpDockerClient', () => {
     await expect(client.inspect('a')).rejects.toThrow(/malformed JSON/);
   });
 
+  it('lists containers and normalizes fields', async () => {
+    const { fn, calls } = fakeRequest([
+      {
+        status: 200,
+        body: [
+          {
+            Id: 'c1',
+            Names: ['/app_db_1', 42],
+            Image: 'postgres:16',
+            State: 'running',
+            Labels: { 'com.docker.compose.project': 'app' },
+          },
+          { Id: 'c2' },
+        ],
+      },
+    ]);
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => new PassThrough(),
+    });
+    await expect(client.listContainers()).resolves.toEqual([
+      {
+        id: 'c1',
+        names: ['/app_db_1'],
+        image: 'postgres:16',
+        state: 'running',
+        labels: { 'com.docker.compose.project': 'app' },
+      },
+      { id: 'c2', names: [], image: '', state: '', labels: {} },
+    ]);
+    expect(calls[0]).toMatchObject({ method: 'GET', path: '/containers/json' });
+  });
+
+  it('coerces non-array Names and array/absent Labels to safe defaults', async () => {
+    const { fn } = fakeRequest([
+      { status: 200, body: [{ Id: 'x', Names: 'nope', Labels: ['not', 'an', 'object'] }] },
+    ]);
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => new PassThrough(),
+    });
+    await expect(client.listContainers()).resolves.toEqual([
+      { id: 'x', names: [], image: '', state: '', labels: {} },
+    ]);
+  });
+
+  it('rejects listContainers on non-200, malformed JSON, and non-array payloads', async () => {
+    const { fn } = fakeRequest([
+      { status: 500, body: 'engine error' },
+      { status: 200, body: 'not-json' },
+      { status: 200, body: { not: 'an array' } },
+    ]);
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => new PassThrough(),
+    });
+    await expect(client.listContainers()).rejects.toThrow(/list containers failed \(500\)/);
+    await expect(client.listContainers()).rejects.toThrow(/malformed JSON/);
+    await expect(client.listContainers()).rejects.toThrow(/non-array/);
+  });
+
   it('URL-encodes container identifiers', async () => {
     const { fn, calls } = fakeRequest([
       { status: 200, body: { Id: 'x', State: { Running: false } } },

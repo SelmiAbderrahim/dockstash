@@ -1,5 +1,11 @@
 import { apiClient } from '@shared/api/client';
-import type { Project, ProjectPlan, Schedule } from './types';
+import type {
+  DiscoverContainersResult,
+  DiscoveredFolder,
+  Project,
+  ProjectPlan,
+  Schedule,
+} from './types';
 
 interface ProjectsListResp {
   projects: Project[];
@@ -23,12 +29,27 @@ interface ScheduleResp {
 export const listProjectsRequest = () =>
   apiClient<ProjectsListResp>('/backups', { auth: true }).then((r) => r.projects);
 
+interface FoldersResp {
+  folders: DiscoveredFolder[];
+}
+
+export const discoverFoldersRequest = () =>
+  apiClient<FoldersResp>('/backups/discover/folders', { auth: true }).then((r) => r.folders);
+
+export const discoverContainersRequest = () =>
+  apiClient<DiscoverContainersResult>('/backups/discover/containers', { auth: true });
+
 export const scanProjectRequest = (path: string) =>
   apiClient<ScanResp>('/backups/scan', { method: 'POST', auth: true, body: { path } }).then(
     (r) => r.plan,
   );
 
-export const createProjectRequest = (input: { name: string; path: string; plan: ProjectPlan }) =>
+export const createProjectRequest = (input: {
+  name: string;
+  path: string;
+  repoPassword: string;
+  plan: ProjectPlan;
+}) =>
   apiClient<ProjectResp>('/backups', { method: 'POST', auth: true, body: input }).then(
     (r) => r.project,
   );

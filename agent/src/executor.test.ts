@@ -143,11 +143,11 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const docker = makeFakeDocker();
     const job = baseJob({
       kind: 'restore',
-      restore: { snapshotId: 'snap-1', overwrite: true, targetPath: null },
+      restore: { snapshotId: 'deadbeef', overwrite: true, targetPath: null },
     });
     const result = await executeJob(job, { restic, docker, log: vi.fn() });
     expect(result).toEqual({ ok: true });
-    expect(calls.restore).toEqual([['restore', 'snap-1', '--target', '/']]);
+    expect(calls.restore).toEqual([['restore', 'deadbeef', '--target', '/']]);
   });
 
   it('restore: non-overwrite targets the allowed project path', async () => {
@@ -155,11 +155,11 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const docker = makeFakeDocker();
     const job = baseJob({
       kind: 'restore',
-      restore: { snapshotId: 'snap-1', overwrite: false, targetPath: '/var/www/app' },
+      restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: '/var/www/app' },
     });
     const result = await executeJob(job, { restic, docker, log: vi.fn() });
     expect(result).toEqual({ ok: true });
-    expect(calls.restore).toEqual([['restore', 'snap-1', '--target', '/var/www/app']]);
+    expect(calls.restore).toEqual([['restore', 'deadbeef', '--target', '/var/www/app']]);
   });
 
   it('restore: missing restore payload fails the job', async () => {
@@ -170,13 +170,26 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     expect(result).toEqual({ ok: false, error: 'restore job missing payload' });
   });
 
+  it('restore: a malformed snapshotId is rejected without touching restic', async () => {
+    const { restic, calls } = makeFakeRestic();
+    const docker = makeFakeDocker();
+    const job = baseJob({
+      kind: 'restore',
+      maxAttempts: 1,
+      restore: { snapshotId: '--insecure-no-password', overwrite: true, targetPath: null },
+    });
+    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    expect(result).toEqual({ ok: false, error: 'invalid snapshot id: --insecure-no-password' });
+    expect(calls.restore).toEqual([]);
+  });
+
   it('restore: falsy targetPath (non-overwrite) is rejected without touching isAllowedProjectPath', async () => {
     const { restic } = makeFakeRestic();
     const docker = makeFakeDocker();
     const job = baseJob({
       kind: 'restore',
       maxAttempts: 1,
-      restore: { snapshotId: 'snap-1', overwrite: false, targetPath: null },
+      restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: null },
     });
     const result = await executeJob(job, { restic, docker, log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'restore target not allowed: ' });
@@ -188,7 +201,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const job = baseJob({
       kind: 'restore',
       maxAttempts: 1,
-      restore: { snapshotId: 'snap-1', overwrite: false, targetPath: '/etc/passwd' },
+      restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: '/etc/passwd' },
     });
     const result = await executeJob(job, { restic, docker, log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'restore target not allowed: /etc/passwd' });

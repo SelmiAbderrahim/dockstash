@@ -390,4 +390,17 @@ describe('runBackupJob', () => {
     expect(resticCalls).toHaveLength(0);
     expect(dockerCalls).toHaveLength(0);
   });
+
+  it('rejects a plan CONFIG outside the /var/www allowlist before touching restic or docker', async () => {
+    const { restic, calls: resticCalls } = makeFakeRestic();
+    const { docker, calls: dockerCalls } = makeFakeDocker();
+    const job = baseJob({
+      plan: { paths: ['/var/www/app'], configs: ['/root/.ssh/id_rsa'], databases: [] },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /path not allowed: \/root\/\.ssh\/id_rsa/,
+    );
+    expect(resticCalls).toHaveLength(0);
+    expect(dockerCalls).toHaveLength(0);
+  });
 });

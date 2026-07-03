@@ -9,12 +9,22 @@ import {
   selectScheduleForProject,
   selectPlanSaveStatus,
   selectScheduleSaveStatus,
+  selectDiscoveredFolders,
+  selectFoldersStatus,
+  selectDiscoveredContainers,
+  selectContainersStatus,
+  selectDockerAvailable,
+  selectScannedPlan,
+  selectScanStatus,
+  selectCreateStatus,
+  selectAddError,
+  selectProjectPaths,
 } from './selectors';
 import type { ProjectsState } from './slice';
 import type { Project, Schedule } from '../types';
 import type { RootState } from '@app/store';
 
-const project = { id: 'p1', name: 'app' } as unknown as Project;
+const project = { id: 'p1', name: 'app', path: '/var/www/app' } as unknown as Project;
 const schedule = { id: 's1', projectId: 'p1' } as unknown as Schedule;
 
 const projects: ProjectsState = {
@@ -26,6 +36,25 @@ const projects: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'loading',
   planSaveStatus: 'failed',
+  folders: [{ name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' }],
+  foldersStatus: 'succeeded',
+  containers: [
+    {
+      project: 'shop',
+      workingDir: '/var/www/shop',
+      configFiles: [],
+      services: ['db'],
+      containerNames: ['shop_db_1'],
+      addable: true,
+      standalone: false,
+    },
+  ],
+  dockerAvailable: true,
+  containersStatus: 'succeeded',
+  scannedPlan: { paths: ['/var/www/app'], databases: [], configs: [] },
+  scanStatus: 'succeeded',
+  createStatus: 'idle',
+  addError: 'add oops',
 };
 
 const state = { projects } as unknown as RootState;
@@ -53,5 +82,18 @@ describe('projects selectors', () => {
   it('selectScheduleForProject finds a schedule or null', () => {
     expect(selectScheduleForProject('p1')(state)).toEqual(schedule);
     expect(selectScheduleForProject('nope')(state)).toBeNull();
+  });
+
+  it('reads the add-project discovery slices', () => {
+    expect(selectDiscoveredFolders(state)).toHaveLength(1);
+    expect(selectFoldersStatus(state)).toBe('succeeded');
+    expect(selectDiscoveredContainers(state)[0]?.project).toBe('shop');
+    expect(selectContainersStatus(state)).toBe('succeeded');
+    expect(selectDockerAvailable(state)).toBe(true);
+    expect(selectScannedPlan(state)?.paths).toEqual(['/var/www/app']);
+    expect(selectScanStatus(state)).toBe('succeeded');
+    expect(selectCreateStatus(state)).toBe('idle');
+    expect(selectAddError(state)).toBe('add oops');
+    expect(selectProjectPaths(state)).toEqual(['/var/www/app']);
   });
 });

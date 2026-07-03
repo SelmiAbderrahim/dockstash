@@ -12,6 +12,20 @@ import {
 } from '../api';
 import type { AuthUser, LoginRequest, OtpVerifyRequest, RegisterRequest } from '../types';
 
+/**
+ * Cookie attributes for the auth token/user cookies. `sameSite: 'strict'`
+ * shrinks the cross-site attack surface, and `secure` is set whenever the page
+ * is served over HTTPS so the bearer token never rides a plaintext request
+ * (it is left off under http:// so local dev keeps working). Computed at call
+ * time so this is SSR-safe (no `location` access at module load).
+ */
+function authCookieOptions(): { path: string; sameSite: 'strict'; secure?: boolean } {
+  const secure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+  return secure
+    ? { path: '/', sameSite: 'strict', secure: true }
+    : { path: '/', sameSite: 'strict' };
+}
+
 export type LoginResult =
   | { otpRequired: true; challengeId: string }
   | { otpRequired: false; emailVerified: boolean; role: string };
@@ -25,8 +39,8 @@ export const loginUser = createAsyncThunk<LoginResult, LoginRequest, { rejectVal
         // No cookies yet — the session starts only after the OTP verifies.
         return { otpRequired: true, challengeId: data.challengeId };
       }
-      saveCookie('token', data.token, { path: '/' });
-      saveCookie('user', data.user, { path: '/' });
+      saveCookie('token', data.token, authCookieOptions());
+      saveCookie('user', data.user, authCookieOptions());
       return {
         otpRequired: false,
         emailVerified: data.user.emailVerified ?? false,
@@ -45,8 +59,8 @@ export const verifyLoginOtp = createAsyncThunk<
 >('auth/verifyLoginOtp', async (body, { rejectWithValue }) => {
   try {
     const data = await verifyLoginOtpRequest(body);
-    saveCookie('token', data.token, { path: '/' });
-    saveCookie('user', data.user, { path: '/' });
+    saveCookie('token', data.token, authCookieOptions());
+    saveCookie('user', data.user, authCookieOptions());
     return {
       emailVerified: data.user.emailVerified ?? false,
       role: data.user.role ?? '',
@@ -63,8 +77,8 @@ export const registerUser = createAsyncThunk<
 >('auth/register', async (body, { rejectWithValue }) => {
   try {
     const data = await registerRequest(body);
-    saveCookie('token', data.token, { path: '/' });
-    saveCookie('user', data.user, { path: '/' });
+    saveCookie('token', data.token, authCookieOptions());
+    saveCookie('user', data.user, authCookieOptions());
     return {
       email: data.user.email,
       emailVerified: data.user.emailVerified ?? false,
@@ -83,7 +97,7 @@ export const verifyEmail = createAsyncThunk<string, string, { rejectValue: strin
       // Reflect the confirmed state into the stored user so guards stop
       // redirecting after a refresh.
       const user = loadCookie<AuthUser>('user');
-      if (user) saveCookie('user', { ...user, emailVerified: true }, { path: '/' });
+      if (user) saveCookie('user', { ...user, emailVerified: true }, authCookieOptions());
       return data.message;
     } catch (err) {
       return rejectWithValue(messageFromError(err, 'Verification failed.'));

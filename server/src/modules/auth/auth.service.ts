@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
@@ -26,12 +26,24 @@ function verifyUrlFor(token: string): string {
   return `${env.CLIENT_URL.replace(/\/$/, '')}/verify-email/${token}`;
 }
 
+/**
+ * Hash single-use email tokens (password-reset + email-verification) before
+ * they touch the DB. The raw token is emailed to the user; only its SHA-256
+ * digest is stored, so a DB read (dump, backup, replica) cannot be replayed to
+ * hijack a reset or forge a verification. Mirrors how OTP codes and agent API
+ * secrets are already hashed at rest. Tokens are 96 hex chars of CSPRNG entropy,
+ * so a plain (unsalted) SHA-256 is sufficient — there is nothing to brute-force.
+ */
+function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
 async function issueVerificationToken(
   user: UserHydrated,
   locale: SupportedLocale,
 ): Promise<void> {
   const token = randomBytes(48).toString('hex');
-  user.emailVerificationToken = token;
+  user.emailVerificationToken = hashToken(token);
   user.emailVerificationExpires = new Date(Date.now() + VERIFY_TOKEN_TTL_MS);
   await user.save();
   // `sendEmail` swallows transport errors internally (logs + returns), so this
@@ -98,7 +110,7 @@ export async function registerUser(
  */
 export async function verifyEmailWithToken(token: string): Promise<UserHydrated> {
   const user = await User.findOne({
-    emailVerificationToken: token,
+    emailVerificationToken: hashToken(token),
     emailVerificationExpires: { $gt: new Date() },
   });
   if (!user) {
@@ -140,13 +152,20 @@ export function issueLoginResponse(user: UserHydrated): IssuedToken {
   return { token: `JWT ${signToken(publicUser)}`, user: publicUser };
 }
 
-export async function generateResetToken(email: string): Promise<{ user: UserHydrated; token: string }> {
+export async function generateResetToken(
+  email: string,
+): Promise<{ user: UserHydrated; token: string } | null> {
+  // Non-enumerating: an unknown email returns null (the controller still
+  // responds with the same generic 200) so an attacker cannot distinguish
+  // registered from unregistered addresses by status code. Mirrors
+  // `resendVerification`.
   const user = await User.findOne({ email });
   if (!user) {
-    throw HttpError.badRequest('errors.badRequest');
+    return null;
   }
   const token = randomBytes(48).toString('hex');
-  user.resetPasswordToken = token;
+  // Store only the hash; the raw token goes out in the email (see hashToken).
+  user.resetPasswordToken = hashToken(token);
   user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
   await user.save();
 
@@ -159,7 +178,7 @@ export async function generateResetToken(email: string): Promise<{ user: UserHyd
 
 export async function resetPasswordWithToken(token: string, newPassword: string): Promise<UserHydrated> {
   const user = await User.findOne({
-    resetPasswordToken: token,
+    resetPasswordToken: hashToken(token),
     resetPasswordExpires: { $gt: new Date() },
   });
   if (!user) {

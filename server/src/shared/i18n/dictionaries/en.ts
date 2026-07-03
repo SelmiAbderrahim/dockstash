@@ -176,6 +176,7 @@ export const en = {
       projectNotFound: 'Project not found.',
       notOwner: 'You do not own this project.',
       scanFailed: 'Failed to scan project: {{message}}',
+      discoverFailed: 'Discovery failed: {{message}}',
       noAdapter: 'No backup adapter matched service {{service}}.',
       dumpFailed: 'Database dump failed for {{service}}: {{message}}',
       resticFailed: 'Restic backup failed: {{message}}',

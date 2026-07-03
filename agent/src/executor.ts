@@ -20,6 +20,12 @@ const defaultSleep = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
+/**
+ * A restic snapshot id is a hex id or the alias `latest`. Validate before it
+ * enters the restic argv so a value like `--flag` cannot be parsed as an option.
+ */
+const SNAPSHOT_ID_RE = /^([0-9a-f]{8,64}|latest)$/i;
+
 /** Retention policy → restic `forget --prune` argv (parity with pruneArgs). */
 export function pruneArgs(retention: NonNullable<ClaimedJob['retention']>): string[] {
   return [
@@ -54,6 +60,9 @@ async function dispatchKind(job: ClaimedJob, deps: ExecutorDeps): Promise<JobRes
     case 'restore': {
       if (!job.restore) {
         throw new Error('restore job missing payload');
+      }
+      if (!SNAPSHOT_ID_RE.test(job.restore.snapshotId)) {
+        throw new Error(`invalid snapshot id: ${job.restore.snapshotId}`);
       }
       let target: string;
       if (job.restore.overwrite) {

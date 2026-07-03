@@ -31,6 +31,37 @@ export type FileReader = (absolutePath: string) => Promise<string>;
 
 const defaultReader: FileReader = async (absolutePath) => readFile(absolutePath, 'utf8');
 
+/**
+ * Compose filenames Docker Compose itself resolves, in precedence order. The
+ * scanner and the folder-discovery probe both walk this list so a project using
+ * any common variant (not just `docker-compose.yml`) is detected.
+ */
+export const COMPOSE_FILENAMES = [
+  'docker-compose.yml',
+  'docker-compose.yaml',
+  'compose.yml',
+  'compose.yaml',
+] as const;
+
+/**
+ * Read the first present compose file under `projectPath`. Returns its raw text
+ * and the resolved filename; throws when none of the candidates exist.
+ */
+export async function readComposeFile(
+  projectPath: string,
+  read: FileReader,
+): Promise<{ raw: string; filename: string }> {
+  for (const filename of COMPOSE_FILENAMES) {
+    try {
+      const raw = await read(path.posix.join(projectPath, filename));
+      return { raw, filename };
+    } catch {
+      // try the next candidate
+    }
+  }
+  throw new Error('scanProject: docker-compose.yml not found');
+}
+
 export function resolveContainerName(projectPath: string, service: string): string {
   const projectSlug = path.posix.basename(projectPath).toLowerCase().replace(/[^a-z0-9]/g, '');
   return `${projectSlug || 'project'}_${service}_1`;
@@ -56,13 +87,7 @@ export async function scanProject(
   options: ScanOptions = {},
 ): Promise<BackupPlan> {
   const read = options.readFile ?? defaultReader;
-  const composePath = path.posix.join(projectPath, 'docker-compose.yml');
-  let raw: string;
-  try {
-    raw = await read(composePath);
-  } catch {
-    throw new Error('scanProject: docker-compose.yml not found');
-  }
+  const { raw } = await readComposeFile(projectPath, read);
   const parsed = yaml.load(raw);
   if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('scanProject: docker-compose.yml is not a valid mapping');

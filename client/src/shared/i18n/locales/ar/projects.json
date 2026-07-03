@@ -17,13 +17,63 @@
     "backupNow": "نسخ احتياطي الآن",
     "running": "قيد التنفيذ…",
     "open": "التفاصيل",
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "addProject": "إضافة مشروع",
+    "addFirst": "أضف مشروعك الأول"
   },
   "empty": {
     "title": "لم يتم العثور على أي مشروع.",
-    "hint": "أضف مجلداً ضمن /var/www ثم حدّث."
+    "hint": "أضف مشروعك الأول لبدء نسخه احتياطياً."
   },
   "errors": {
     "load": "تعذّر تحميل المشاريع."
+  },
+  "add": {
+    "title": "إضافة مشروع",
+    "lede": "اختر مجلداً أو مشروع Docker Compose قيد التشغيل، أو أدخل مساراً.",
+    "scanning": "جارٍ المسح…",
+    "cancel": "العودة إلى المشاريع",
+    "select": "اختيار",
+    "services": "الخدمات",
+    "tabs": {
+      "aria": "اختر مصدراً",
+      "folders": "المجلدات",
+      "docker": "Docker قيد التشغيل",
+      "manual": "مسار يدوي"
+    },
+    "folders": {
+      "emptyTitle": "لم يُعثر على مجلدات.",
+      "emptyHint": "لا توجد مجلدات فرعية ضمن /var/www."
+    },
+    "docker": {
+      "unavailableTitle": "Docker غير متاح.",
+      "unavailableHint": "لا يوجد مقبس Docker مُهيأ على هذا الخادم.",
+      "emptyTitle": "لا توجد حاويات قيد التشغيل.",
+      "emptyHint": "شغّل مشروع Compose ثم حدّث."
+    },
+    "manual": {
+      "label": "مسار المشروع",
+      "scan": "مسح"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "ملفات فقط",
+      "added": "مُضاف بالفعل",
+      "notAddable": "خارج /var/www",
+      "standalone": "مستقل"
+    },
+    "review": {
+      "title": "المراجعة والإنشاء",
+      "nameLabel": "اسم المشروع",
+      "passwordLabel": "كلمة مرور المستودع",
+      "passwordHint": "٨ أحرف على الأقل. تُشفّر مستودع النسخ الاحتياطي.",
+      "files": "الملفات",
+      "databases": "قواعد البيانات",
+      "configs": "الإعدادات",
+      "none": "لم يُكتشف شيء.",
+      "create": "إنشاء المشروع",
+      "creating": "جارٍ الإنشاء…",
+      "back": "رجوع"
+    }
   }
 }

@@ -72,6 +72,15 @@ const baseState: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
+  folders: [],
+  foldersStatus: 'idle',
+  containers: [],
+  dockerAvailable: false,
+  containersStatus: 'idle',
+  scannedPlan: null,
+  scanStatus: 'idle',
+  createStatus: 'idle',
+  addError: null,
 };
 
 const makeStore = (projects: Partial<ProjectsState> = {}) =>
