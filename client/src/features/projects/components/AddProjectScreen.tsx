@@ -273,7 +273,9 @@ export const AddProjectScreen = () => {
             <Empty data-testid="folders-empty">
               <EmptyHeader>
                 <EmptyTitle>{t('add.folders.emptyTitle')}</EmptyTitle>
-                <EmptyDescription>{t('add.folders.emptyHint')}</EmptyDescription>
+                <EmptyDescription>
+                  {t(isAgent ? 'add.folders.emptyHintAgent' : 'add.folders.emptyHint')}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
@@ -314,7 +316,9 @@ export const AddProjectScreen = () => {
             <Empty data-testid="docker-unavailable">
               <EmptyHeader>
                 <EmptyTitle>{t('add.docker.unavailableTitle')}</EmptyTitle>
-                <EmptyDescription>{t('add.docker.unavailableHint')}</EmptyDescription>
+                <EmptyDescription>
+                  {t(isAgent ? 'add.docker.unavailableHintAgent' : 'add.docker.unavailableHint')}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}

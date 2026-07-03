@@ -63,21 +63,35 @@ export const defaultComposeProbe: ComposeProbe = async (dirPath) => {
   return null;
 };
 
+/** Minimal logger the collector uses to explain WHY a source came back empty. */
+export interface DiscoveryLog {
+  warn(obj: Record<string, unknown>, msg: string): void;
+}
+
+const NOOP_LOG: DiscoveryLog = { warn() {} };
+
 export interface CollectDiscoveryDeps {
   folderReader?: FolderReader;
   composeProbe?: ComposeProbe;
   dockerClient: Pick<DockerClient, 'listContainers'>;
+  /** Optional — when provided, empty folders/containers are explained here. */
+  log?: DiscoveryLog;
 }
 
 async function collectFolders(
   folderReader: FolderReader,
   composeProbe: ComposeProbe,
+  log: DiscoveryLog,
 ): Promise<AgentDiscoveredFolder[]> {
   let entries: FolderEntry[];
   try {
     entries = await folderReader(ALLOWED_PATH_ROOT);
-  } catch {
+  } catch (err) {
     // /var/www may be absent or unreadable — an empty list is a valid snapshot.
+    log.warn(
+      { err: String(err), root: ALLOWED_PATH_ROOT },
+      'discovery: project root unreadable — is /var/www mounted into the agent container?',
+    );
     return [];
   }
   const folders: AgentDiscoveredFolder[] = [];
@@ -107,15 +121,22 @@ export async function collectDiscovery(
 ): Promise<AgentDiscoverySnapshot> {
   const folderReader = deps.folderReader ?? defaultFolderReader;
   const composeProbe = deps.composeProbe ?? defaultComposeProbe;
+  const log = deps.log ?? NOOP_LOG;
 
-  const folders = await collectFolders(folderReader, composeProbe);
+  const folders = await collectFolders(folderReader, composeProbe, log);
 
   let containers: DockerContainerSummary[] = [];
   let dockerAvailable = true;
   try {
     containers = (await deps.dockerClient.listContainers()).slice(0, MAX_CONTAINERS);
-  } catch {
+  } catch (err) {
     dockerAvailable = false;
+    // The real reason (403 → proxy denies CONTAINERS; ECONNREFUSED/ENOTFOUND →
+    // proxy unreachable) is otherwise invisible to the operator.
+    log.warn(
+      { err: String(err) },
+      'discovery: Docker unreachable — check DOCKER_HOST and that the socket-proxy is up and allows CONTAINERS',
+    );
   }
 
   return { folders, containers, dockerAvailable };

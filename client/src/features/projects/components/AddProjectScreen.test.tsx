@@ -429,4 +429,23 @@ describe('AddProjectScreen — fleet target', () => {
     expect(await screen.findByText('Review and create')).toBeInTheDocument();
     expect(mocked.scanProjectRequest).not.toHaveBeenCalled();
   });
+
+  it('shows agent-specific empty-state copy (not the local /var/www wording) when an agent reports no folders', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    mocked.discoverAgentRequest.mockResolvedValue({
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: '2026-07-03T00:00:00.000Z',
+    });
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('ag1'));
+
+    const empty = await screen.findByTestId('folders-empty');
+    // Agent-aware hint, NOT the local-host "on this server / No subdirectories" copy.
+    expect(within(empty).getByText(/this agent reported no projects/i)).toBeInTheDocument();
+    expect(within(empty).queryByText(/No subdirectories under \/var\/www\./)).not.toBeInTheDocument();
+  });
 });

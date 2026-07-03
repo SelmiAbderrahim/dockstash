@@ -1,7 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   collectDiscovery,
   defaultComposeProbe,
@@ -82,17 +82,23 @@ describe('collectDiscovery — containers', () => {
     expect(snap.containers).toEqual(containers);
   });
 
-  it('degrades to dockerAvailable:false when listContainers throws', async () => {
+  it('degrades to dockerAvailable:false and logs the reason when listContainers throws', async () => {
+    const warn = vi.fn();
     const snap = await collectDiscovery({
       folderReader: async () => [],
       composeProbe: async () => null,
+      log: { warn },
       dockerClient: {
         listContainers: async () => {
-          throw new Error('docker down');
+          throw new Error('docker down (403)');
         },
       },
     });
     expect(snap).toMatchObject({ dockerAvailable: false, containers: [] });
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.stringContaining('403') }),
+      expect.stringContaining('Docker unreachable'),
+    );
   });
 
   it('caps the container list', async () => {

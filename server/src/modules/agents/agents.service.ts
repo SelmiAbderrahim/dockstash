@@ -4,6 +4,7 @@ import { hashApiSecret } from '../../shared/crypto/index.js';
 import { translate, DEFAULT_LOCALE } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import { Project } from '../backups/backups.model.js';
 import { Agent, type AgentHydrated } from './agents.model.js';
 import { AgentJob } from './agent-jobs.model.js';
@@ -115,6 +116,17 @@ export async function touchAgentHeartbeat(
   deps: { now?: Date } = {},
 ): Promise<AgentHydrated | null> {
   const now = deps.now ?? new Date();
+  if (info.discovery) {
+    logger.debug(
+      {
+        agentId,
+        folders: info.discovery.folders.length,
+        containers: info.discovery.containers.length,
+        dockerAvailable: info.discovery.dockerAvailable,
+      },
+      'agent discovery snapshot stored',
+    );
+  }
   return Agent.findByIdAndUpdate(
     agentId,
     {

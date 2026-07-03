@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "Keine Ordner gefunden.",
-      "emptyHint": "Keine Unterordner unter /var/www."
+      "emptyHint": "Keine Unterordner unter /var/www.",
+      "emptyHintAgent": "Dieser Agent hat keine Projekte unter /var/www gemeldet — stellen Sie sicher, dass Ihr Projekt dort liegt und der Agent es lesen kann."
     },
     "docker": {
       "unavailableTitle": "Docker ist nicht verfügbar.",
       "unavailableHint": "Auf diesem Server ist kein Docker-Socket konfiguriert.",
+      "unavailableHintAgent": "Dieser Agent erreicht Docker nicht. Prüfen Sie, ob der Socket-Proxy auf dem Agent-Host läuft.",
       "emptyTitle": "Keine laufenden Container.",
       "emptyHint": "Starten Sie ein Compose-Projekt und aktualisieren Sie."
     },

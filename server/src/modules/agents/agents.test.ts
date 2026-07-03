@@ -23,6 +23,7 @@ import { User } from '../users/users.model.js';
 import { Project } from '../backups/backups.model.js';
 import { verifyApiSecret } from '../../shared/crypto/index.js';
 import { AgentJob } from './agent-jobs.model.js';
+import { Agent } from './agents.model.js';
 import {
   computeFleet,
   deleteAgent,
@@ -479,17 +480,63 @@ describe('agents: discovery endpoint', () => {
     expect(view.body.containers[0]).toMatchObject({ project: 'blog', addable: true });
   });
 
-  it('rejects a discovery snapshot with too many container labels', () => {
-    const labels = Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`k${i}`, 'v']));
-    expect(() =>
-      agentHeartbeatSchema.parse({
+  it('salvages (does not reject) a snapshot that exceeds the label/value caps', () => {
+    const labels = Object.fromEntries(Array.from({ length: 60 }, (_, i) => [`k${i}`, 'x'.repeat(600)]));
+    const parsed = agentHeartbeatSchema.parse({
+      discovery: {
+        folders: [],
+        containers: [{ id: 'a', names: [], image: '', state: '', labels }],
+        dockerAvailable: true,
+      },
+    });
+    const kept = parsed.discovery!.containers[0]!.labels;
+    // Capped to 50 entries, each value truncated to 512 chars — never thrown away.
+    expect(Object.keys(kept)).toHaveLength(50);
+    expect(Object.values(kept)[0]).toHaveLength(512);
+  });
+
+  it('machine heartbeat SALVAGES an over-cap discovery: 200, online, stored ≤50 labels', async () => {
+    const { id } = await seedUser('salv@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'salv.example' });
+    const agentId = TOKEN_RE.exec(token)?.[1] as string;
+    const labels = Object.fromEntries(Array.from({ length: 60 }, (_, i) => [`k${i}`, 'v']));
+
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        version: '0.1.0',
+        hostname: 'vps',
         discovery: {
-          folders: [],
-          containers: [{ id: 'a', names: [], image: '', state: '', labels }],
+          folders: [{ name: 'blog', path: '/var/www/blog', hasCompose: true, composeFile: 'docker-compose.yml' }],
+          containers: [{ id: 'a', names: ['/c'], image: 'redis:7', state: 'running', labels }],
           dockerAvailable: true,
         },
-      }),
-    ).toThrow();
+      });
+    expect(hb.status).toBe(200);
+    expect(hb.body.agent.status).toBe('online');
+
+    const agent = await Agent.findById(agentId);
+    expect(Object.keys(agent!.discovery!.containers[0]!.labels as object)).toHaveLength(50);
+    expect(agent!.discovery!.folders).toHaveLength(1);
+  });
+
+  it('machine heartbeat with a structurally-bogus discovery stays online and drops only discovery', async () => {
+    const { id } = await seedUser('bogus@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'bogus.example' });
+    const agentId = TOKEN_RE.exec(token)?.[1] as string;
+
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      // folders as a string is not a valid array — must NOT 400 the heartbeat.
+      .send({ version: '0.1.0', hostname: 'vps', discovery: { folders: 'nope', containers: [], dockerAvailable: false } });
+    expect(hb.status).toBe(200);
+    expect(hb.body.agent.status).toBe('online');
+
+    const agent = await Agent.findById(agentId);
+    expect(agent!.status).toBe('online');
+    expect(agent!.discovery ?? null).toBeNull();
   });
 });
 

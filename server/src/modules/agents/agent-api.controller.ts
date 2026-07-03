@@ -2,9 +2,12 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import type { AgentPrincipal } from '../../shared/middleware/require-agent-auth.js';
 import {
-  agentHeartbeatSchema,
+  agentHeartbeatCoreSchema,
+  agentDiscoveryInput,
+  type AgentDiscoveryInput,
   agentJobIdParamsSchema,
   agentJobLogsSchema,
   agentJobResultSchema,
@@ -23,11 +26,27 @@ function requireAgent(agent: AgentPrincipal | undefined): AgentPrincipal {
 
 export const agentHeartbeatHandler: RequestHandler = asyncHandler(async (req, res) => {
   const principal = requireAgent(req.agent);
-  const input = agentHeartbeatSchema.parse(req.body);
+  // Liveness fields are parsed on their own so a malformed discovery snapshot can
+  // never reject the heartbeat and flap the agent offline.
+  const core = agentHeartbeatCoreSchema.parse(req.body);
+  const rawDiscovery = (req.body as { discovery?: unknown } | undefined)?.discovery;
+  let discovery: AgentDiscoveryInput | undefined;
+  if (rawDiscovery !== undefined) {
+    const parsed = agentDiscoveryInput.safeParse(rawDiscovery);
+    if (parsed.success) {
+      discovery = parsed.data;
+    } else {
+      // Keep the agent online; just skip this snapshot and tell the operator why.
+      logger.warn(
+        { agentId: principal.id, issues: parsed.error.issues },
+        'agent discovery payload rejected; recording heartbeat without discovery',
+      );
+    }
+  }
   const agent = await touchAgentHeartbeat(principal.id, {
-    version: input.version,
-    hostname: input.hostname,
-    discovery: input.discovery,
+    version: core.version,
+    hostname: core.hostname,
+    discovery,
   });
   /* c8 ignore next 3 -- unreachable: the principal was loaded by requireAgentAuth in this request */
   if (!agent) {

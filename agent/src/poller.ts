@@ -104,6 +104,14 @@ export class Poller {
       try {
         this.cachedSnapshot = await this.opts.collectDiscovery();
         this.lastDiscoveryAt = now;
+        this.opts.log.info(
+          {
+            folders: this.cachedSnapshot.folders.length,
+            containers: this.cachedSnapshot.containers.length,
+            dockerAvailable: this.cachedSnapshot.dockerAvailable,
+          },
+          'discovery snapshot collected',
+        );
       } catch (err) {
         this.opts.log.warn({ err }, 'discovery collect failed');
       }

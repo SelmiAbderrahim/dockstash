@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "未找到目录。",
-      "emptyHint": "/var/www 下没有子目录。"
+      "emptyHint": "/var/www 下没有子目录。",
+      "emptyHintAgent": "该代理未在 /var/www 下报告任何项目——请确认项目位于此处且代理可读取。"
     },
     "docker": {
       "unavailableTitle": "Docker 不可用。",
       "unavailableHint": "此服务器未配置 Docker 套接字。",
+      "unavailableHintAgent": "该代理无法访问 Docker。请确认代理主机上的 socket 代理正在运行。",
       "emptyTitle": "没有运行中的容器。",
       "emptyHint": "启动一个 Compose 项目后刷新。"
     },

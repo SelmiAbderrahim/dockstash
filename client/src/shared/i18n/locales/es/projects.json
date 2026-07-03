@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "No se encontraron carpetas.",
-      "emptyHint": "No hay subcarpetas en /var/www."
+      "emptyHint": "No hay subcarpetas en /var/www.",
+      "emptyHintAgent": "Este agente no informó proyectos en /var/www — comprueba que tu proyecto esté ahí y que el agente pueda leerlo."
     },
     "docker": {
       "unavailableTitle": "Docker no está disponible.",
       "unavailableHint": "No hay ningún socket de Docker configurado en este servidor.",
+      "unavailableHintAgent": "Este agente no puede acceder a Docker. Comprueba que el proxy del socket esté en marcha en el host del agente.",
       "emptyTitle": "No hay contenedores en ejecución.",
       "emptyHint": "Inicia un proyecto Compose y actualiza."
     },

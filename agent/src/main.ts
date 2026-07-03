@@ -62,7 +62,7 @@ export async function runAgent(deps: RunAgentDeps = {}): Promise<RunningAgent> {
   let collect = deps.collectDiscovery;
   if (!collect) {
     const discoveryDocker = new HttpDockerClient({ dockerHost: config.DOCKER_HOST });
-    collect = () => collectDiscovery({ dockerClient: discoveryDocker });
+    collect = () => collectDiscovery({ dockerClient: discoveryDocker, log });
   }
 
   const poller = new Poller({

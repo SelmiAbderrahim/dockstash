@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "No folders found.",
-      "emptyHint": "No subdirectories under /var/www."
+      "emptyHint": "No subdirectories under /var/www.",
+      "emptyHintAgent": "This agent reported no projects under /var/www — confirm your project is there and the agent can read it."
     },
     "docker": {
       "unavailableTitle": "Docker is not available.",
       "unavailableHint": "No Docker socket is configured on this server.",
+      "unavailableHintAgent": "This agent can't reach Docker. Confirm the socket-proxy is running on the agent host.",
       "emptyTitle": "No running containers.",
       "emptyHint": "Start a Compose project, then refresh."
     },

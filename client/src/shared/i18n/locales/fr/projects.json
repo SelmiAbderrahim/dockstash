@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "Aucun dossier trouvé.",
-      "emptyHint": "Aucun sous-dossier sous /var/www."
+      "emptyHint": "Aucun sous-dossier sous /var/www.",
+      "emptyHintAgent": "Cet agent n'a signalé aucun projet dans /var/www — vérifiez que votre projet s'y trouve et que l'agent peut le lire."
     },
     "docker": {
       "unavailableTitle": "Docker n’est pas disponible.",
       "unavailableHint": "Aucun socket Docker n’est configuré sur ce serveur.",
+      "unavailableHintAgent": "Cet agent ne peut pas accéder à Docker. Vérifiez que le proxy de socket est actif sur l'hôte de l'agent.",
       "emptyTitle": "Aucun conteneur en cours.",
       "emptyHint": "Démarrez un projet Compose, puis rafraîchissez."
     },

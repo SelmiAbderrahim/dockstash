@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "Папки не найдены.",
-      "emptyHint": "Нет подпапок в /var/www."
+      "emptyHint": "Нет подпапок в /var/www.",
+      "emptyHintAgent": "Этот агент не сообщил о проектах в /var/www — убедитесь, что проект находится там и агент может его читать."
     },
     "docker": {
       "unavailableTitle": "Docker недоступен.",
       "unavailableHint": "На этом сервере не настроен сокет Docker.",
+      "unavailableHintAgent": "Этот агент не может подключиться к Docker. Проверьте, что socket-proxy запущен на хосте агента.",
       "emptyTitle": "Нет запущенных контейнеров.",
       "emptyHint": "Запустите проект Compose и обновите."
     },

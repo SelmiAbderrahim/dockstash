@@ -49,11 +49,13 @@
     },
     "folders": {
       "emptyTitle": "لم يُعثر على مجلدات.",
-      "emptyHint": "لا توجد مجلدات فرعية ضمن /var/www."
+      "emptyHint": "لا توجد مجلدات فرعية ضمن /var/www.",
+      "emptyHintAgent": "لم يُبلّغ هذا الوكيل عن أي مشاريع ضمن /var/www — تأكد من وجود مشروعك هناك وأن الوكيل يستطيع قراءته."
     },
     "docker": {
       "unavailableTitle": "Docker غير متاح.",
       "unavailableHint": "لا يوجد مقبس Docker مُهيأ على هذا الخادم.",
+      "unavailableHintAgent": "لا يستطيع هذا الوكيل الوصول إلى Docker. تأكد من تشغيل وكيل السوكِت على مضيف الوكيل.",
       "emptyTitle": "لا توجد حاويات قيد التشغيل.",
       "emptyHint": "شغّل مشروع Compose ثم حدّث."
     },
