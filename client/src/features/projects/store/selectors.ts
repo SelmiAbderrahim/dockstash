@@ -23,3 +23,10 @@ export const selectCreateStatus = (state: RootState) => state.projects.createSta
 export const selectAddError = (state: RootState) => state.projects.addError;
 export const selectProjectPaths = (state: RootState) =>
   state.projects.items.map((p) => p.path);
+export const selectAgentFolders = (state: RootState) => state.projects.agentFolders;
+export const selectAgentContainers = (state: RootState) => state.projects.agentContainers;
+export const selectAgentDockerAvailable = (state: RootState) =>
+  state.projects.agentDockerAvailable;
+export const selectAgentSnapshotAt = (state: RootState) => state.projects.agentSnapshotAt;
+export const selectAgentDiscoveryStatus = (state: RootState) =>
+  state.projects.agentDiscoveryStatus;

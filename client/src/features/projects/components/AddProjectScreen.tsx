@@ -18,8 +18,10 @@ import {
   EmptyTitle,
 } from '@shared/ui/empty';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
+import { listAgentsRequest, type Agent } from '@features/fleet';
 import {
   createProject,
+  discoverAgent,
   discoverContainers,
   discoverFolders,
   scanProject,
@@ -27,6 +29,11 @@ import {
 import { resetAddFlow } from '../store/slice';
 import {
   selectAddError,
+  selectAgentContainers,
+  selectAgentDiscoveryStatus,
+  selectAgentDockerAvailable,
+  selectAgentFolders,
+  selectAgentSnapshotAt,
   selectContainersStatus,
   selectCreateStatus,
   selectDiscoveredContainers,
@@ -39,23 +46,46 @@ import {
 import type { ProjectPlan } from '../types';
 
 const TABS = ['folders', 'docker', 'manual'] as const;
+const LOCAL = 'local';
 const emptyPlan = (path: string): ProjectPlan => ({
   paths: [path],
   databases: [],
   configs: [],
 });
 
+// Local folders lack a plan (server scans on pick); agent folders carry one.
+interface DisplayFolder {
+  name: string;
+  path: string;
+  hasCompose: boolean;
+  composeFile: string | null;
+  plan?: ProjectPlan;
+}
+interface DisplayContainer {
+  project: string;
+  workingDir: string | null;
+  services: string[];
+  addable: boolean;
+  standalone: boolean;
+  plan?: ProjectPlan | null;
+}
+
 export const AddProjectScreen = () => {
-  const { t } = useTranslation('projects');
+  const { t, i18n } = useTranslation('projects');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [tab, setTab] = useTabParam('folders', TABS);
 
-  const folders = useAppSelector(selectDiscoveredFolders);
+  const localFolders = useAppSelector(selectDiscoveredFolders);
   const foldersStatus = useAppSelector(selectFoldersStatus);
-  const containers = useAppSelector(selectDiscoveredContainers);
+  const localContainers = useAppSelector(selectDiscoveredContainers);
   const containersStatus = useAppSelector(selectContainersStatus);
-  const dockerAvailable = useAppSelector(selectDockerAvailable);
+  const localDockerAvailable = useAppSelector(selectDockerAvailable);
+  const agentFolders = useAppSelector(selectAgentFolders);
+  const agentContainers = useAppSelector(selectAgentContainers);
+  const agentDockerAvailable = useAppSelector(selectAgentDockerAvailable);
+  const agentSnapshotAt = useAppSelector(selectAgentSnapshotAt);
+  const agentDiscoveryStatus = useAppSelector(selectAgentDiscoveryStatus);
   const scanStatus = useAppSelector(selectScanStatus);
   const createStatus = useAppSelector(selectCreateStatus);
   const addError = useAppSelector(selectAddError);
@@ -68,11 +98,23 @@ export const AddProjectScreen = () => {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [manualPath, setManualPath] = useState('');
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [target, setTarget] = useState<string>(LOCAL);
+  const isAgent = target !== LOCAL;
+
+  // Fleet agents for the target picker; self-gates to Local-only on error/lock.
+  useEffect(() => {
+    void listAgentsRequest().then(setAgents, () => setAgents([]));
+  }, []);
 
   useEffect(() => {
+    if (isAgent) {
+      void dispatch(discoverAgent({ agentId: target }));
+      return;
+    }
     if (tab === 'folders') void dispatch(discoverFolders());
     else if (tab === 'docker') void dispatch(discoverContainers());
-  }, [tab, dispatch]);
+  }, [tab, target, isAgent, dispatch]);
 
   useEffect(() => () => void dispatch(resetAddFlow()), [dispatch]);
 
@@ -85,8 +127,8 @@ export const AddProjectScreen = () => {
     setPlan(nextPlan);
   };
 
-  // Compose sources scan for a plan; plain folders skip straight to a
-  // files-only plan.
+  // Compose sources on the LOCAL host scan for a plan (the server reads its own
+  // fs); plain local folders skip straight to a files-only plan.
   const pickComposeSource = async (nextPath: string, nextName: string) => {
     setPath(nextPath);
     setName(nextName);
@@ -96,9 +138,28 @@ export const AddProjectScreen = () => {
     }
   };
 
+  // A folder carrying a plan (agent) goes straight to review; otherwise the
+  // local scan/files-only path applies.
+  const pickFolder = (f: DisplayFolder) => {
+    if (f.plan) return toReview(f.path, f.name, f.plan);
+    if (f.hasCompose) return void pickComposeSource(f.path, f.name);
+    return toReview(f.path, f.name, emptyPlan(f.path));
+  };
+
+  const pickContainer = (c: DisplayContainer) => {
+    if (c.plan) return toReview(c.workingDir as string, c.project, c.plan);
+    return void pickComposeSource(c.workingDir as string, c.project);
+  };
+
   const submit = async (finalPlan: ProjectPlan) => {
     const res = await dispatch(
-      createProject({ name: name.trim(), path, repoPassword: password, plan: finalPlan }),
+      createProject({
+        name: name.trim(),
+        path,
+        repoPassword: password,
+        plan: finalPlan,
+        agentId: isAgent ? target : null,
+      }),
     );
     if (createProject.fulfilled.match(res)) {
       navigate('/projects');
@@ -129,6 +190,14 @@ export const AddProjectScreen = () => {
     );
   }
 
+  const folders: DisplayFolder[] = isAgent ? agentFolders : localFolders;
+  const containers: DisplayContainer[] = isAgent ? agentContainers : localContainers;
+  const dockerAvailable = isAgent ? agentDockerAvailable : localDockerAvailable;
+  const foldersLoading = (isAgent ? agentDiscoveryStatus : foldersStatus) === 'loading';
+  const foldersReady = (isAgent ? agentDiscoveryStatus : foldersStatus) === 'succeeded';
+  const dockerLoading = (isAgent ? agentDiscoveryStatus : containersStatus) === 'loading';
+  const dockerReady = (isAgent ? agentDiscoveryStatus : containersStatus) === 'succeeded';
+
   return (
     <section
       className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-8"
@@ -140,6 +209,34 @@ export const AddProjectScreen = () => {
         </h1>
         <p className="text-muted-foreground text-sm">{t('add.lede')}</p>
       </header>
+
+      <div className="flex flex-col gap-2" data-tour="add-target">
+        <label className="text-sm font-medium" htmlFor="target-host">
+          {t('add.target.label')}
+        </label>
+        <select
+          id="target-host"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          className="border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full max-w-sm rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+        >
+          <option value={LOCAL}>{t('add.target.local')}</option>
+          {agents.map((a) => (
+            <option key={a.id} value={a.id}>
+              {a.name} ({a.host})
+            </option>
+          ))}
+        </select>
+        {isAgent && (
+          <p className="text-muted-foreground text-xs">
+            {agentSnapshotAt
+              ? t('add.target.snapshotAt', {
+                  at: new Date(agentSnapshotAt).toLocaleString(i18n.language),
+                })
+              : t('add.target.noSnapshot')}
+          </p>
+        )}
+      </div>
 
       {scanning && (
         <p
@@ -158,21 +255,21 @@ export const AddProjectScreen = () => {
       )}
 
       <Tabs value={tab} onValueChange={setTab} className="gap-6">
-        <TabsList aria-label={t('add.tabs.aria')}>
+        <TabsList aria-label={t('add.tabs.aria')} data-tour="add-source-tabs">
           <TabsTrigger value="folders">
             <FolderIcon className="size-4" aria-hidden="true" /> {t('add.tabs.folders')}
           </TabsTrigger>
           <TabsTrigger value="docker">
             <ContainerIcon className="size-4" aria-hidden="true" /> {t('add.tabs.docker')}
           </TabsTrigger>
-          <TabsTrigger value="manual">
+          <TabsTrigger value="manual" disabled={isAgent}>
             <PencilIcon className="size-4" aria-hidden="true" /> {t('add.tabs.manual')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="folders" className="flex flex-col gap-3">
-          {foldersStatus === 'loading' && <Skeleton className="h-24 w-full" />}
-          {foldersStatus === 'succeeded' && folders.length === 0 && (
+          {foldersLoading && <Skeleton className="h-24 w-full" />}
+          {foldersReady && folders.length === 0 && (
             <Empty data-testid="folders-empty">
               <EmptyHeader>
                 <EmptyTitle>{t('add.folders.emptyTitle')}</EmptyTitle>
@@ -201,11 +298,7 @@ export const AddProjectScreen = () => {
                     type="button"
                     variant="outline"
                     disabled={added || scanning}
-                    onClick={() =>
-                      f.hasCompose
-                        ? void pickComposeSource(f.path, f.name)
-                        : toReview(f.path, f.name, emptyPlan(f.path))
-                    }
+                    onClick={() => pickFolder(f)}
                   >
                     {t('add.select')}
                   </Button>
@@ -216,8 +309,8 @@ export const AddProjectScreen = () => {
         </TabsContent>
 
         <TabsContent value="docker" className="flex flex-col gap-3">
-          {containersStatus === 'loading' && <Skeleton className="h-24 w-full" />}
-          {containersStatus === 'succeeded' && !dockerAvailable && (
+          {dockerLoading && <Skeleton className="h-24 w-full" />}
+          {dockerReady && !dockerAvailable && (
             <Empty data-testid="docker-unavailable">
               <EmptyHeader>
                 <EmptyTitle>{t('add.docker.unavailableTitle')}</EmptyTitle>
@@ -225,7 +318,7 @@ export const AddProjectScreen = () => {
               </EmptyHeader>
             </Empty>
           )}
-          {containersStatus === 'succeeded' && dockerAvailable && containers.length === 0 && (
+          {dockerReady && dockerAvailable && containers.length === 0 && (
             <Empty data-testid="docker-empty">
               <EmptyHeader>
                 <EmptyTitle>{t('add.docker.emptyTitle')}</EmptyTitle>
@@ -266,7 +359,7 @@ export const AddProjectScreen = () => {
                       type="button"
                       variant="outline"
                       disabled={disabled}
-                      onClick={() => void pickComposeSource(c.workingDir as string, c.project)}
+                      onClick={() => pickContainer(c)}
                     >
                       {t('add.select')}
                     </Button>

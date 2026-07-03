@@ -46,9 +46,9 @@ describe('guide selectors', () => {
       'agent-name-input',
     );
     // Index past the end clamps to the final step rather than returning null.
-    // The explore-fleet tour ends on the "watch it come online" step.
+    // The explore-fleet tour now ends on the "back this agent up" cross-route step.
     expect(selectActiveStepTarget(state({ activeTourId: 'explore-fleet', stepIndex: 99 }))).toBe(
-      'fleet-table-status',
+      'projects-add-button',
     );
   });
 });

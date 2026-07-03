@@ -19,6 +19,11 @@ import {
   selectCreateStatus,
   selectAddError,
   selectProjectPaths,
+  selectAgentFolders,
+  selectAgentContainers,
+  selectAgentDockerAvailable,
+  selectAgentSnapshotAt,
+  selectAgentDiscoveryStatus,
 } from './selectors';
 import type { ProjectsState } from './slice';
 import type { Project, Schedule } from '../types';
@@ -55,6 +60,11 @@ const projects: ProjectsState = {
   scanStatus: 'succeeded',
   createStatus: 'idle',
   addError: 'add oops',
+  agentFolders: [{ name: 'a', path: '/var/www/a', hasCompose: true, composeFile: 'docker-compose.yml', plan: { paths: ['/var/www/a'], databases: [], configs: [] } }],
+  agentContainers: [],
+  agentDockerAvailable: true,
+  agentSnapshotAt: '2026-07-03T00:00:00Z',
+  agentDiscoveryStatus: 'succeeded',
 };
 
 const state = { projects } as unknown as RootState;
@@ -95,5 +105,13 @@ describe('projects selectors', () => {
     expect(selectCreateStatus(state)).toBe('idle');
     expect(selectAddError(state)).toBe('add oops');
     expect(selectProjectPaths(state)).toEqual(['/var/www/app']);
+  });
+
+  it('reads the agent discovery slices', () => {
+    expect(selectAgentFolders(state)).toHaveLength(1);
+    expect(selectAgentContainers(state)).toEqual([]);
+    expect(selectAgentDockerAvailable(state)).toBe(true);
+    expect(selectAgentSnapshotAt(state)).toBe('2026-07-03T00:00:00Z');
+    expect(selectAgentDiscoveryStatus(state)).toBe('succeeded');
   });
 });

@@ -9,10 +9,12 @@ import {
   deleteAgent,
   effectiveAgentStatus,
   listAgentsForUser,
+  loadOwnedAgent,
   registerAgent,
   rotateAgentKey,
 } from './agents.service.js';
 import type { AgentHydrated } from './agents.model.js';
+import { buildAgentDiscoveryView, type StoredSnapshot } from './agents.discovery.js';
 
 /** Multi-VPS fleet is a Business feature — gate every agent operation. */
 function serializeAgent(agent: AgentHydrated) {
@@ -87,4 +89,15 @@ export const fleetHandler: RequestHandler = asyncHandler(async (req, res) => {
   await assertMultiVpsAllowed(userId, { t: req.t });
   const fleet = await computeFleet(userId);
   res.status(200).json({ fleet });
+});
+
+export const agentDiscoveryHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const userId = requireUserId(req.user);
+  await assertMultiVpsAllowed(userId, { t: req.t });
+  const { agentId } = agentIdParamsSchema.parse(req.params);
+  const agent = await loadOwnedAgent(agentId, userId, { t: req.t });
+  const view = buildAgentDiscoveryView(
+    (agent.discovery ?? null) as unknown as StoredSnapshot | null,
+  );
+  res.status(200).json(view);
 });

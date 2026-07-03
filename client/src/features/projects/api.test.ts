@@ -4,6 +4,7 @@ import {
   listProjectsRequest,
   discoverFoldersRequest,
   discoverContainersRequest,
+  discoverAgentRequest,
   scanProjectRequest,
   createProjectRequest,
   updatePlanRequest,
@@ -47,6 +48,14 @@ describe('projects api wrappers', () => {
     expect(result).toEqual(payload);
   });
 
+  it('discoverAgentRequest GETs the agent discovery snapshot', async () => {
+    const payload = { folders: [], containers: [], dockerAvailable: false, snapshotAt: null };
+    apiClient.mockResolvedValue(payload as never);
+    const result = await discoverAgentRequest('a1');
+    expect(apiClient).toHaveBeenCalledWith('/agents/a1/discovery', { auth: true });
+    expect(result).toEqual(payload);
+  });
+
   it('scanProjectRequest POSTs the path and unwraps plan', async () => {
     apiClient.mockResolvedValue({ plan } as never);
     const result = await scanProjectRequest('/var/www/app');
@@ -60,7 +69,13 @@ describe('projects api wrappers', () => {
 
   it('createProjectRequest POSTs the input and unwraps project', async () => {
     apiClient.mockResolvedValue({ project: { id: 'p2' } } as never);
-    const input = { name: 'app', path: '/var/www/app', repoPassword: 'password1', plan };
+    const input = {
+      name: 'app',
+      path: '/var/www/app',
+      repoPassword: 'password1',
+      plan,
+      agentId: 'a1',
+    };
     const result = await createProjectRequest(input);
     expect(apiClient).toHaveBeenCalledWith('/backups', { method: 'POST', auth: true, body: input });
     expect(result).toEqual({ id: 'p2' });

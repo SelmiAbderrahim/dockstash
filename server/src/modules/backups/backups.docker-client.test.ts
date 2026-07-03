@@ -207,9 +207,9 @@ describe('HttpDockerClient', () => {
     expect(calls[0]).toMatchObject({ method: 'GET', path: '/containers/json' });
   });
 
-  it('coerces non-array Names and array/absent Labels to safe defaults', async () => {
+  it('coerces non-array Names, array/absent Labels, and a missing Id to defaults', async () => {
     const { fn } = fakeRequest([
-      { status: 200, body: [{ Id: 'x', Names: 'nope', Labels: ['not', 'an', 'object'] }] },
+      { status: 200, body: [{ Id: 'x', Names: 'nope', Labels: ['not', 'an', 'object'] }, {}] },
     ]);
     const client = new HttpDockerClient({
       dockerHost: 'tcp://proxy:2375',
@@ -218,6 +218,7 @@ describe('HttpDockerClient', () => {
     });
     await expect(client.listContainers()).resolves.toEqual([
       { id: 'x', names: [], image: '', state: '', labels: {} },
+      { id: '', names: [], image: '', state: '', labels: {} },
     ]);
   });
 

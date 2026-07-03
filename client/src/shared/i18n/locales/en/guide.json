@@ -124,6 +124,28 @@
         "online": {
           "title": "Watch it come online",
           "body": "Once the agent is running it phones home every few seconds. Its status here flips to Online within a minute."
+        },
+        "addProject": {
+          "title": "Back this agent up",
+          "body": "Now head to Projects → Add project and choose this agent as the backup target — its folders and containers appear automatically."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Add your first project",
+      "description": "Add a project from a local folder, a running container, or a fleet agent.",
+      "steps": {
+        "add": {
+          "title": "Add a project",
+          "body": "Start here — open the Add-project wizard."
+        },
+        "target": {
+          "title": "Pick the backup target",
+          "body": "Back up this server, or choose a fleet agent to back up that VPS. An agent's projects come from its latest reported snapshot."
+        },
+        "source": {
+          "title": "Choose a source",
+          "body": "Browse folders under /var/www, pick a running Docker Compose project, or type a path. Review the detected plan, set a name and repository password, then create."
         }
       }
     },

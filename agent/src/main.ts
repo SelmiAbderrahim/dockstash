@@ -4,6 +4,7 @@ import { loadConfig, type AgentConfig } from './config.js';
 import { makeLogger } from './logging.js';
 import { AgentApiClient } from './api-client.js';
 import { HttpDockerClient } from './docker-client.js';
+import { collectDiscovery, type AgentDiscoverySnapshot } from './discovery.js';
 import { ProcessResticRunner } from './restic-runner.js';
 import { executeJob } from './executor.js';
 import { Poller, type PollerLogger } from './poller.js';
@@ -19,6 +20,8 @@ export interface RunAgentDeps {
   /** Injectable executor for tests; production builds runners per job. */
   execute?(job: ClaimedJob, pushLog: (line: string) => void, config: AgentConfig): Promise<JobResult>;
   startHealth?: typeof startHealthServer;
+  /** Injectable discovery collector for tests; production reads the real host. */
+  collectDiscovery?(): Promise<AgentDiscoverySnapshot>;
 }
 
 /** Production per-job executor: fresh restic runner bound to the claim payload. */
@@ -54,6 +57,14 @@ export async function runAgent(deps: RunAgentDeps = {}): Promise<RunningAgent> {
   });
   const execute = deps.execute ?? productionExecute;
 
+  // A read-only Docker client for discovery, reused across heartbeats (job
+  // execution builds its own per-job client in productionExecute).
+  let collect = deps.collectDiscovery;
+  if (!collect) {
+    const discoveryDocker = new HttpDockerClient({ dockerHost: config.DOCKER_HOST });
+    collect = () => collectDiscovery({ dockerClient: discoveryDocker });
+  }
+
   const poller = new Poller({
     api,
     log,
@@ -62,6 +73,7 @@ export async function runAgent(deps: RunAgentDeps = {}): Promise<RunningAgent> {
     pollIntervalMs: config.DOCKSTASH_POLL_INTERVAL_MS,
     heartbeatIntervalMs: config.DOCKSTASH_HEARTBEAT_INTERVAL_MS,
     execute: (job, pushLog) => execute(job, pushLog, config),
+    collectDiscovery: collect,
   });
 
   const health = (deps.startHealth ?? startHealthServer)(config.HEALTH_PORT, () =>

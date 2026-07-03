@@ -32,6 +32,13 @@ export const createProjectSchema = z.object({
   path: projectPath,
   repoPassword: z.string().min(8),
   plan: planInput.optional(),
+  // Assign the new project to a fleet agent at creation (Business-tier). Omitted
+  // or null → runs on the local server.
+  agentId: z
+    .string()
+    .regex(/^[a-f0-9]{24}$/i, 'invalid agent id')
+    .nullable()
+    .optional(),
 });
 
 export const projectIdParamsSchema = z.object({

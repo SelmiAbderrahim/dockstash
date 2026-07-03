@@ -1,11 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LogBatcher, Poller, type PollerLogger } from './poller.js';
 import type { AgentApiClient } from './api-client.js';
+import type { AgentDiscoverySnapshot } from './discovery.js';
 import type { ClaimedJob, JobResult } from './types.js';
 
 function makeLogger(): PollerLogger {
   return { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
 }
+
+const SNAP: AgentDiscoverySnapshot = {
+  folders: [{ name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' }],
+  containers: [],
+  dockerAvailable: true,
+};
 
 function job(id = 'job-1'): ClaimedJob {
   return {
@@ -151,6 +158,73 @@ describe('Poller', () => {
     expect(fake.heartbeat).toHaveBeenCalledTimes(1);
     expect(poller.status().lastHeartbeatAt).not.toBeNull();
     await poller.stop();
+  });
+
+  function makeDiscoveryPoller(
+    fake: FakeApi,
+    collect: () => Promise<AgentDiscoverySnapshot>,
+    opts: { discoveryIntervalMs?: number; now?: () => number } = {},
+    log: PollerLogger = makeLogger(),
+  ): { poller: Poller; log: PollerLogger } {
+    const poller = new Poller({
+      api: asApiClient(fake),
+      log,
+      version: '0.1.0',
+      hostname: 'vps-1',
+      pollIntervalMs: 10_000,
+      heartbeatIntervalMs: 30_000,
+      execute: async () => ({ ok: true }),
+      jitter: () => 0,
+      collectDiscovery: collect,
+      ...opts,
+    });
+    return { poller, log };
+  }
+
+  it('attaches a discovery snapshot to the heartbeat (default clock + interval)', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn(async () => SNAP);
+    const { poller } = makeDiscoveryPoller(fake, collect);
+    await poller.heartbeatOnce();
+    expect(collect).toHaveBeenCalledTimes(1);
+    expect(fake.heartbeat).toHaveBeenCalledWith({
+      version: '0.1.0',
+      hostname: 'vps-1',
+      discovery: SNAP,
+    });
+  });
+
+  it('reuses the cached snapshot within the throttle window', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn(async () => SNAP);
+    const now = vi.fn(() => 1000);
+    const { poller } = makeDiscoveryPoller(fake, collect, { discoveryIntervalMs: 5000, now });
+    await poller.heartbeatOnce();
+    await poller.heartbeatOnce();
+    expect(collect).toHaveBeenCalledTimes(1);
+  });
+
+  it('recomputes the snapshot after the throttle window elapses', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn(async () => SNAP);
+    let t = 1000;
+    const now = () => t;
+    const { poller } = makeDiscoveryPoller(fake, collect, { discoveryIntervalMs: 5000, now });
+    await poller.heartbeatOnce();
+    t += 6000;
+    await poller.heartbeatOnce();
+    expect(collect).toHaveBeenCalledTimes(2);
+  });
+
+  it('omits discovery and warns when the collector throws', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn(async () => {
+      throw new Error('scan boom');
+    });
+    const { poller, log } = makeDiscoveryPoller(fake, collect, { now: () => 1 });
+    await poller.heartbeatOnce();
+    expect(log.warn).toHaveBeenCalledWith({ err: expect.any(Error) }, 'discovery collect failed');
+    expect(fake.heartbeat).toHaveBeenCalledWith({ version: '0.1.0', hostname: 'vps-1' });
   });
 
   it('logs a warning when heartbeat fails, without crashing', async () => {

@@ -9,6 +9,7 @@ import {
   saveSchedule,
   discoverFolders,
   discoverContainers,
+  discoverAgent,
   scanProject,
   createProject,
 } from './thunks';
@@ -220,6 +221,30 @@ describe('projects slice', () => {
     expect(s.addError).toBe('docker boom');
     s = projectsReducer(initial(), { type: discoverContainers.rejected.type });
     expect(s.addError).toBe('Could not list containers.');
+  });
+
+  it('discoverAgent lifecycle fills folders + containers from one snapshot', () => {
+    let s = projectsReducer(initial(), { type: discoverAgent.pending.type });
+    expect(s.agentDiscoveryStatus).toBe('loading');
+    s = projectsReducer(s, {
+      type: discoverAgent.fulfilled.type,
+      payload: {
+        folders: [{ name: 'a', path: '/var/www/a', hasCompose: false, composeFile: null, plan: { paths: ['/var/www/a'], databases: [], configs: [] } }],
+        containers: [{ project: 'p', workingDir: '/var/www/p', configFiles: [], services: [], containerNames: [], addable: true, standalone: false, plan: { paths: ['/var/www/p'], databases: [], configs: [] } }],
+        dockerAvailable: true,
+        snapshotAt: '2026-07-03T00:00:00Z',
+      },
+    });
+    expect(s.agentDiscoveryStatus).toBe('succeeded');
+    expect(s.agentFolders).toHaveLength(1);
+    expect(s.agentContainers).toHaveLength(1);
+    expect(s.agentDockerAvailable).toBe(true);
+    expect(s.agentSnapshotAt).toBe('2026-07-03T00:00:00Z');
+    s = projectsReducer(s, { type: discoverAgent.rejected.type, payload: 'gone' });
+    expect(s.agentDiscoveryStatus).toBe('failed');
+    expect(s.addError).toBe('gone');
+    s = projectsReducer(initial(), { type: discoverAgent.rejected.type });
+    expect(s.addError).toBe('Could not load agent discovery.');
   });
 
   it('scanProject lifecycle stores and clears the scanned plan', () => {

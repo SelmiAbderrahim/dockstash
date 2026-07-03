@@ -1,6 +1,6 @@
 {
   "heading": "Projects",
-  "lede": "Every folder under /var/www is a project. One click to back it up.",
+  "lede": "Add a project from a folder, a running container, or a fleet agent — then back it up.",
   "loading": "Loading projects…",
   "never": "Never",
   "meta": {
@@ -35,6 +35,12 @@
     "cancel": "Back to projects",
     "select": "Select",
     "services": "Services",
+    "target": {
+      "label": "Backup target",
+      "local": "Local server",
+      "snapshotAt": "Last reported {{at}}",
+      "noSnapshot": "This agent hasn't reported yet — check back shortly."
+    },
     "tabs": {
       "aria": "Choose a source",
       "folders": "Folders",

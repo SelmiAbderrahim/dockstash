@@ -105,6 +105,11 @@ const renderScreen = (opts: Options = {}) => {
         scanStatus: 'idle' as const,
         createStatus: 'idle' as const,
         addError: null,
+        agentFolders: [],
+        agentContainers: [],
+        agentDockerAvailable: false,
+        agentSnapshotAt: null,
+        agentDiscoveryStatus: 'idle' as const,
       },
     },
   });

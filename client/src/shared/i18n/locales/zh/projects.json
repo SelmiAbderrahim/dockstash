@@ -1,6 +1,6 @@
 {
   "heading": "项目",
-  "lede": "/var/www 下的每个目录即一个项目。一键备份。",
+  "lede": "从目录、运行中的容器或车队代理添加一个项目——然后备份它。",
   "loading": "正在加载项目…",
   "never": "从未",
   "meta": {
@@ -35,6 +35,12 @@
     "cancel": "返回项目",
     "select": "选择",
     "services": "服务",
+    "target": {
+      "label": "备份目标",
+      "local": "本地服务器",
+      "snapshotAt": "最近上报 {{at}}",
+      "noSnapshot": "该代理尚未上报——请稍后再查看。"
+    },
     "tabs": {
       "aria": "选择来源",
       "folders": "目录",

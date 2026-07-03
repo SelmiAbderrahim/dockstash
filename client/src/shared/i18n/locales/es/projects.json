@@ -1,6 +1,6 @@
 {
   "heading": "Proyectos",
-  "lede": "Cada carpeta en /var/www es un proyecto. Un clic para hacer copia.",
+  "lede": "Añade un proyecto desde una carpeta, un contenedor en ejecución o un agente de flota — y hazle copia.",
   "loading": "Cargando proyectos…",
   "never": "Nunca",
   "meta": {
@@ -35,6 +35,12 @@
     "cancel": "Volver a proyectos",
     "select": "Seleccionar",
     "services": "Servicios",
+    "target": {
+      "label": "Destino de copia",
+      "local": "Servidor local",
+      "snapshotAt": "Último reporte {{at}}",
+      "noSnapshot": "Este agente aún no ha reportado — vuelve a comprobar en breve."
+    },
     "tabs": {
       "aria": "Elegir una fuente",
       "folders": "Carpetas",

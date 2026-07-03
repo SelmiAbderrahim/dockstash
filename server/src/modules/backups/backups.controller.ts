@@ -46,7 +46,10 @@ export const listContainers: RequestHandler = asyncHandler(async (req, res) => {
 
 export const create: RequestHandler = asyncHandler(async (req, res) => {
   const input = createProjectSchema.parse(req.body);
-  const project = await createProject(requireUserId(req.user), input, { t: req.t });
+  const userId = requireUserId(req.user);
+  // Assigning to a fleet agent at creation is a Business-tier operation.
+  if (input.agentId) await assertMultiVpsAllowed(userId, { t: req.t });
+  const project = await createProject(userId, input, { t: req.t });
   res.status(201).json({ project: serializeProject(project) });
 });
 

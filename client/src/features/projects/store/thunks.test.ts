@@ -5,6 +5,7 @@ import {
   fetchProjects,
   discoverFolders,
   discoverContainers,
+  discoverAgent,
   scanProject,
   createProject,
   savePlan,
@@ -20,6 +21,7 @@ vi.mock('../api', () => ({
   listProjectsRequest: vi.fn(),
   discoverFoldersRequest: vi.fn(),
   discoverContainersRequest: vi.fn(),
+  discoverAgentRequest: vi.fn(),
   scanProjectRequest: vi.fn(),
   createProjectRequest: vi.fn(),
   updatePlanRequest: vi.fn(),
@@ -81,6 +83,20 @@ describe('projects thunks', () => {
     expect(result.payload).toBe('docker');
   });
 
+  it('discoverAgent resolves the snapshot / rejects with a message', async () => {
+    const snap = { folders: [], containers: [], dockerAvailable: true, snapshotAt: null };
+    mocked.discoverAgentRequest.mockResolvedValue(snap as never);
+    let result = await makeStore().dispatch(discoverAgent({ agentId: 'a1' }));
+    expect(discoverAgent.fulfilled.match(result)).toBe(true);
+    expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('a1');
+    expect(result.payload).toEqual(snap);
+
+    mocked.discoverAgentRequest.mockRejectedValue(new Error('gone'));
+    result = await makeStore().dispatch(discoverAgent({ agentId: 'a1' }));
+    expect(discoverAgent.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('gone');
+  });
+
   it('scanProject resolves the plan / rejects with a message', async () => {
     mocked.scanProjectRequest.mockResolvedValue(plan);
     let result = await makeStore().dispatch(scanProject({ path: '/var/www/app' }));
@@ -96,7 +112,7 @@ describe('projects thunks', () => {
 
   it('createProject resolves the project / rejects with a message', async () => {
     mocked.createProjectRequest.mockResolvedValue(project);
-    const input = { name: 'app', path: '/var/www/app', repoPassword: 'password1', plan };
+    const input = { name: 'app', path: '/var/www/app', repoPassword: 'password1', plan, agentId: 'a1' };
     let result = await makeStore().dispatch(createProject(input));
     expect(createProject.fulfilled.match(result)).toBe(true);
     expect(mocked.createProjectRequest).toHaveBeenCalledWith(input);

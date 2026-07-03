@@ -1,6 +1,6 @@
 {
   "heading": "Projekte",
-  "lede": "Jeder Ordner unter /var/www ist ein Projekt. Ein Klick sichert es.",
+  "lede": "Fügen Sie ein Projekt aus einem Ordner, einem laufenden Container oder einem Flotten-Agent hinzu — und sichern Sie es.",
   "loading": "Projekte werden geladen…",
   "never": "Nie",
   "meta": {
@@ -35,6 +35,12 @@
     "cancel": "Zurück zu Projekten",
     "select": "Auswählen",
     "services": "Dienste",
+    "target": {
+      "label": "Sicherungsziel",
+      "local": "Lokaler Server",
+      "snapshotAt": "Zuletzt gemeldet {{at}}",
+      "noSnapshot": "Dieser Agent hat noch nichts gemeldet — bitte später erneut prüfen."
+    },
     "tabs": {
       "aria": "Quelle wählen",
       "folders": "Ordner",

@@ -8,6 +8,7 @@ import { Project } from '../backups/backups.model.js';
 import { Agent, type AgentHydrated } from './agents.model.js';
 import { AgentJob } from './agent-jobs.model.js';
 import type { RegisterAgentInput } from './agents.schema.js';
+import type { AgentDiscoveryInput } from './agent-api.schema.js';
 
 type Translator = (key: string, vars?: TranslationVars) => string;
 const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars);
@@ -104,6 +105,7 @@ export async function deleteAgent(
 export interface AgentHeartbeatInfo {
   version?: string;
   hostname?: string;
+  discovery?: AgentDiscoveryInput;
 }
 
 /** Mark an agent as seen — sets status online + lastSeenAt + self-reported info. */
@@ -120,6 +122,9 @@ export async function touchAgentHeartbeat(
       lastSeenAt: now,
       ...(info.version !== undefined ? { agentVersion: info.version } : {}),
       ...(info.hostname !== undefined ? { hostname: info.hostname } : {}),
+      ...(info.discovery !== undefined
+        ? { discovery: { ...info.discovery, snapshotAt: now } }
+        : {}),
     },
     { new: true },
   );

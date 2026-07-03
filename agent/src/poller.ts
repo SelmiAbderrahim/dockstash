@@ -1,4 +1,5 @@
 import type { AgentApiClient } from './api-client.js';
+import type { AgentDiscoverySnapshot } from './discovery.js';
 import type { ClaimedJob, JobResult } from './types.js';
 
 export interface PollerLogger {
@@ -63,6 +64,15 @@ export interface PollerOptions {
   execute(job: ClaimedJob, pushLog: (line: string) => void): Promise<JobResult>;
   /** ±20% timer jitter source, injectable for tests. */
   jitter?(): number;
+  /**
+   * Builds this host's discovery snapshot (folders + running containers). When
+   * provided, the poller attaches a throttled snapshot to each heartbeat.
+   */
+  collectDiscovery?(): Promise<AgentDiscoverySnapshot>;
+  /** Minimum gap between snapshot recomputes; between gaps the cache is reused. */
+  discoveryIntervalMs?: number;
+  /** Monotonic clock (ms), injectable for tests. */
+  now?(): number;
 }
 
 /**
@@ -76,8 +86,30 @@ export class Poller {
   private running = false;
   private currentJobId: string | null = null;
   private lastHeartbeatAt: Date | null = null;
+  private cachedSnapshot: AgentDiscoverySnapshot | null = null;
+  private lastDiscoveryAt = 0;
 
   constructor(private readonly opts: PollerOptions) {}
+
+  /**
+   * Return a snapshot for the heartbeat, recomputing at most once per
+   * `discoveryIntervalMs` and reusing the cache in between. Never throws — a
+   * collect failure keeps the last good snapshot (or none).
+   */
+  private async snapshotForHeartbeat(): Promise<AgentDiscoverySnapshot | undefined> {
+    if (!this.opts.collectDiscovery) return undefined;
+    const now = (this.opts.now ?? (() => Date.now()))();
+    const intervalMs = this.opts.discoveryIntervalMs ?? 120_000;
+    if (this.cachedSnapshot === null || now - this.lastDiscoveryAt >= intervalMs) {
+      try {
+        this.cachedSnapshot = await this.opts.collectDiscovery();
+        this.lastDiscoveryAt = now;
+      } catch (err) {
+        this.opts.log.warn({ err }, 'discovery collect failed');
+      }
+    }
+    return this.cachedSnapshot ?? undefined;
+  }
 
   /** ±20% of the base interval, so a fleet never thunders in lockstep. */
   private jittered(base: number): number {
@@ -91,9 +123,11 @@ export class Poller {
 
   async heartbeatOnce(): Promise<void> {
     try {
+      const discovery = await this.snapshotForHeartbeat();
       await this.opts.api.heartbeat({
         version: this.opts.version,
         hostname: this.opts.hostname,
+        ...(discovery ? { discovery } : {}),
       });
       this.lastHeartbeatAt = new Date();
     } catch (err) {

@@ -92,9 +92,11 @@ describe('runAgent', () => {
       hostname: 'vps-test',
       execute,
       startHealth,
+      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false }),
     });
 
     // Immediate heartbeat is fired synchronously by poller.start().
+    await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
     expect(fakeFetch).toHaveBeenCalled();
@@ -134,6 +136,7 @@ describe('runAgent', () => {
       },
       execute,
       startHealth,
+      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false }),
     });
 
     expect(running.poller).toBeDefined();

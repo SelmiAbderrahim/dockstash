@@ -14,6 +14,39 @@ const hashedSecretSchema = new mongoose.Schema(
   { _id: false },
 );
 
+// Raw discovery snapshot reported by the daemon (this host's /var/www folders +
+// running containers). Stored verbatim; the read endpoint groups + derives plans.
+const discoveredFolderSchema = new mongoose.Schema(
+  {
+    name: { type: String, default: '' },
+    path: { type: String, default: '' },
+    hasCompose: { type: Boolean, default: false },
+    composeFile: { type: String, default: null },
+  },
+  { _id: false },
+);
+
+const discoveredContainerSchema = new mongoose.Schema(
+  {
+    id: { type: String, default: '' },
+    names: { type: [String], default: [] },
+    image: { type: String, default: '' },
+    state: { type: String, default: '' },
+    labels: { type: mongoose.Schema.Types.Mixed, default: {} },
+  },
+  { _id: false },
+);
+
+const agentDiscoverySchema = new mongoose.Schema(
+  {
+    folders: { type: [discoveredFolderSchema], default: [] },
+    containers: { type: [discoveredContainerSchema], default: [] },
+    dockerAvailable: { type: Boolean, default: false },
+    snapshotAt: { type: Date, default: null },
+  },
+  { _id: false },
+);
+
 const agentSchema = new mongoose.Schema(
   {
     owner: {
@@ -33,6 +66,8 @@ const agentSchema = new mongoose.Schema(
     // Self-reported by the daemon on heartbeat.
     agentVersion: { type: String, default: '' },
     hostname: { type: String, default: '' },
+    // Latest discovery snapshot (folders + running containers) from the daemon.
+    discovery: { type: agentDiscoverySchema, default: null },
   },
   { timestamps: true },
 );

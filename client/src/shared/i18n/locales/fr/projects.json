@@ -1,6 +1,6 @@
 {
   "heading": "Projets",
-  "lede": "Chaque dossier sous /var/www est un projet. Un clic pour le sauvegarder.",
+  "lede": "Ajoutez un projet depuis un dossier, un conteneur en cours ou un agent de flotte — puis sauvegardez-le.",
   "loading": "Chargement des projets…",
   "never": "Jamais",
   "meta": {
@@ -35,6 +35,12 @@
     "cancel": "Retour aux projets",
     "select": "Sélectionner",
     "services": "Services",
+    "target": {
+      "label": "Cible de sauvegarde",
+      "local": "Serveur local",
+      "snapshotAt": "Dernier rapport {{at}}",
+      "noSnapshot": "Cet agent n’a pas encore transmis de données — réessayez bientôt."
+    },
     "tabs": {
       "aria": "Choisir une source",
       "folders": "Dossiers",

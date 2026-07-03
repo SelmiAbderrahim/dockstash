@@ -83,6 +83,9 @@ function makeFakeDocker(opts: FakeDockerOptions = {}): {
     async inspect(container) {
       return { id: container, running: true };
     },
+    async listContainers() {
+      return [];
+    },
   };
   return { docker, calls };
 }

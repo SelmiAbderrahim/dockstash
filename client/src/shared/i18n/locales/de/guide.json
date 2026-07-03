@@ -124,6 +124,28 @@
         "online": {
           "title": "Beim Online-Gehen zusehen",
           "body": "Sobald der Agent läuft, meldet er sich alle paar Sekunden. Sein Status wechselt hier innerhalb einer Minute auf Online."
+        },
+        "addProject": {
+          "title": "Diesen Agent sichern",
+          "body": "Gehen Sie jetzt zu Projekte → Projekt hinzufügen und wählen Sie diesen Agent als Sicherungsziel — seine Ordner und Container erscheinen automatisch."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Erstes Projekt hinzufügen",
+      "description": "Fügen Sie ein Projekt aus einem lokalen Ordner, einem laufenden Container oder einem Flotten-Agent hinzu.",
+      "steps": {
+        "add": {
+          "title": "Projekt hinzufügen",
+          "body": "Beginnen Sie hier — öffnen Sie den Assistenten zum Hinzufügen."
+        },
+        "target": {
+          "title": "Sicherungsziel wählen",
+          "body": "Sichern Sie diesen Server oder wählen Sie einen Flotten-Agent, um dessen VPS zu sichern. Die Projekte eines Agents stammen aus seinem zuletzt gemeldeten Snapshot."
+        },
+        "source": {
+          "title": "Quelle wählen",
+          "body": "Durchsuchen Sie Ordner unter /var/www, wählen Sie ein laufendes Docker-Compose-Projekt oder geben Sie einen Pfad ein. Prüfen Sie den erkannten Plan, vergeben Sie Name und Repository-Passwort und erstellen Sie."
         }
       }
     },

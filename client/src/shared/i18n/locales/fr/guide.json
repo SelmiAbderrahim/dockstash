@@ -124,6 +124,28 @@
         "online": {
           "title": "Voyez-le se connecter",
           "body": "Une fois lancé, l'agent se signale toutes les quelques secondes. Son statut passe à « En ligne » en moins d'une minute."
+        },
+        "addProject": {
+          "title": "Sauvegardez cet agent",
+          "body": "Allez maintenant dans Projets → Ajouter un projet et choisissez cet agent comme cible de sauvegarde — ses dossiers et conteneurs apparaissent automatiquement."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Ajoutez votre premier projet",
+      "description": "Ajoutez un projet depuis un dossier local, un conteneur en cours ou un agent de flotte.",
+      "steps": {
+        "add": {
+          "title": "Ajouter un projet",
+          "body": "Commencez ici — ouvrez l’assistant d’ajout de projet."
+        },
+        "target": {
+          "title": "Choisissez la cible",
+          "body": "Sauvegardez ce serveur, ou choisissez un agent de flotte pour sauvegarder ce VPS. Les projets d’un agent proviennent de son dernier instantané transmis."
+        },
+        "source": {
+          "title": "Choisissez une source",
+          "body": "Parcourez les dossiers sous /var/www, choisissez un projet Docker Compose en cours, ou saisissez un chemin. Vérifiez le plan détecté, définissez un nom et un mot de passe de dépôt, puis créez."
         }
       }
     },

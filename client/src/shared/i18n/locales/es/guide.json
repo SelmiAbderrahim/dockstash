@@ -124,6 +124,28 @@
         "online": {
           "title": "Míralo conectarse",
           "body": "Una vez en marcha, el agente se comunica cada pocos segundos. Su estado aquí cambia a En línea en menos de un minuto."
+        },
+        "addProject": {
+          "title": "Respalda este agente",
+          "body": "Ahora ve a Proyectos → Añadir proyecto y elige este agente como destino de copia — sus carpetas y contenedores aparecen automáticamente."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Añade tu primer proyecto",
+      "description": "Añade un proyecto desde una carpeta local, un contenedor en ejecución o un agente de flota.",
+      "steps": {
+        "add": {
+          "title": "Añadir un proyecto",
+          "body": "Empieza aquí — abre el asistente para añadir un proyecto."
+        },
+        "target": {
+          "title": "Elige el destino",
+          "body": "Respalda este servidor, o elige un agente de flota para respaldar ese VPS. Los proyectos de un agente provienen de su último informe."
+        },
+        "source": {
+          "title": "Elige una fuente",
+          "body": "Explora carpetas en /var/www, elige un proyecto de Docker Compose en ejecución o escribe una ruta. Revisa el plan detectado, define un nombre y una contraseña de repositorio, y crea."
         }
       }
     },

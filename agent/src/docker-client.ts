@@ -3,9 +3,23 @@
 import * as http from 'node:http';
 import { PassThrough, type Readable } from 'node:stream';
 
+/**
+ * A running container as surfaced by `GET /containers/json` — the subset the
+ * discovery snapshot needs. `labels` carries the `com.docker.compose.*` metadata.
+ */
+export interface DockerContainerSummary {
+  id: string;
+  names: string[];
+  image: string;
+  state: string;
+  labels: Record<string, string>;
+}
+
 export interface DockerClient {
   exec(container: string, argv: string[]): Promise<Readable>;
   inspect(container: string): Promise<{ id: string; running: boolean }>;
+  /** List running containers (read-only) for local Compose-project discovery. */
+  listContainers(): Promise<DockerContainerSummary[]>;
 }
 
 /** Minimal request boundary over the Docker Engine API. Injectable for tests. */
@@ -173,6 +187,47 @@ export class HttpDockerClient implements DockerClient {
       body: { Detach: false, Tty: false },
     });
     return demuxDockerStream(raw);
+  }
+
+  async listContainers(): Promise<DockerContainerSummary[]> {
+    const res = await this.request({ method: 'GET', path: '/containers/json' });
+    if (res.status !== 200) {
+      throw new Error(
+        `docker list containers failed (${res.status}): ${res.body.toString().trim()}`,
+      );
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(res.body.toString());
+    } catch {
+      throw new Error('docker list containers returned malformed JSON');
+    }
+    if (!Array.isArray(parsed)) {
+      throw new Error('docker list containers returned a non-array');
+    }
+    return parsed.map((entry) => {
+      const c = entry as {
+        Id?: string;
+        Names?: unknown;
+        Image?: string;
+        State?: string;
+        Labels?: unknown;
+      };
+      const names = Array.isArray(c.Names)
+        ? c.Names.filter((n): n is string => typeof n === 'string')
+        : [];
+      const labels =
+        c.Labels && typeof c.Labels === 'object' && !Array.isArray(c.Labels)
+          ? (c.Labels as Record<string, string>)
+          : {};
+      return {
+        id: c.Id ?? '',
+        names,
+        image: c.Image ?? '',
+        state: c.State ?? '',
+        labels,
+      };
+    });
   }
 
   async inspect(container: string): Promise<{ id: string; running: boolean }> {

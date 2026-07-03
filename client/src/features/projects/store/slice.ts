@@ -2,6 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
   assignProjectAgent,
   createProject,
+  discoverAgent,
   discoverContainers,
   discoverFolders,
   fetchProjects,
@@ -12,6 +13,8 @@ import {
   scanProject,
 } from './thunks';
 import type {
+  AgentContainerGroup,
+  AgentFolder,
   DiscoveredContainerGroup,
   DiscoveredFolder,
   Project,
@@ -40,6 +43,12 @@ export interface ProjectsState {
   scanStatus: LoadState;
   createStatus: LoadState;
   addError: string | null;
+  // Remote fleet-agent discovery (one snapshot fills both folders + containers)
+  agentFolders: AgentFolder[];
+  agentContainers: AgentContainerGroup[];
+  agentDockerAvailable: boolean;
+  agentSnapshotAt: string | null;
+  agentDiscoveryStatus: LoadState;
 }
 
 const initialState: ProjectsState = {
@@ -60,6 +69,11 @@ const initialState: ProjectsState = {
   scanStatus: 'idle',
   createStatus: 'idle',
   addError: null,
+  agentFolders: [],
+  agentContainers: [],
+  agentDockerAvailable: false,
+  agentSnapshotAt: null,
+  agentDiscoveryStatus: 'idle',
 };
 
 const projectsSlice = createSlice({
@@ -143,6 +157,21 @@ const projectsSlice = createSlice({
       .addCase(discoverContainers.rejected, (state, action) => {
         state.containersStatus = 'failed';
         state.addError = action.payload ?? 'Could not list containers.';
+      })
+      .addCase(discoverAgent.pending, (state) => {
+        state.agentDiscoveryStatus = 'loading';
+        state.addError = null;
+      })
+      .addCase(discoverAgent.fulfilled, (state, action) => {
+        state.agentDiscoveryStatus = 'succeeded';
+        state.agentFolders = action.payload.folders;
+        state.agentContainers = action.payload.containers;
+        state.agentDockerAvailable = action.payload.dockerAvailable;
+        state.agentSnapshotAt = action.payload.snapshotAt;
+      })
+      .addCase(discoverAgent.rejected, (state, action) => {
+        state.agentDiscoveryStatus = 'failed';
+        state.addError = action.payload ?? 'Could not load agent discovery.';
       })
       .addCase(scanProject.pending, (state) => {
         state.scanStatus = 'loading';

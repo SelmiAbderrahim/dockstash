@@ -50,6 +50,23 @@ export interface DiscoverContainersResult {
   dockerAvailable: boolean;
 }
 
+/** A fleet agent's discovered folder, carrying a ready backup plan. */
+export interface AgentFolder extends DiscoveredFolder {
+  plan: ProjectPlan;
+}
+
+/** A fleet agent's Compose group; `plan` derived from its live containers. */
+export interface AgentContainerGroup extends DiscoveredContainerGroup {
+  plan: ProjectPlan | null;
+}
+
+export interface AgentDiscoveryView {
+  folders: AgentFolder[];
+  containers: AgentContainerGroup[];
+  dockerAvailable: boolean;
+  snapshotAt: string | null;
+}
+
 export interface Schedule {
   id: string;
   projectId: string;

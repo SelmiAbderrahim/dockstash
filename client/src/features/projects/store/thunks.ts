@@ -4,6 +4,7 @@ import {
   assignProjectAgentRequest,
   createProjectRequest,
   createScheduleRequest,
+  discoverAgentRequest,
   discoverContainersRequest,
   discoverFoldersRequest,
   listProjectsRequest,
@@ -14,6 +15,7 @@ import {
   updateScheduleRequest,
 } from '../api';
 import type {
+  AgentDiscoveryView,
   DiscoverContainersResult,
   DiscoveredFolder,
   Project,
@@ -56,6 +58,18 @@ export const discoverContainers = createAsyncThunk<
   }
 });
 
+export const discoverAgent = createAsyncThunk<
+  AgentDiscoveryView,
+  { agentId: string },
+  { rejectValue: string }
+>('projects/discoverAgent', async ({ agentId }, { rejectWithValue }) => {
+  try {
+    return await discoverAgentRequest(agentId);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not load agent discovery.'));
+  }
+});
+
 export const scanProject = createAsyncThunk<ProjectPlan, { path: string }, { rejectValue: string }>(
   'projects/scan',
   async ({ path }, { rejectWithValue }) => {
@@ -69,7 +83,7 @@ export const scanProject = createAsyncThunk<ProjectPlan, { path: string }, { rej
 
 export const createProject = createAsyncThunk<
   Project,
-  { name: string; path: string; repoPassword: string; plan: ProjectPlan },
+  { name: string; path: string; repoPassword: string; plan: ProjectPlan; agentId?: string | null },
   { rejectValue: string }
 >('projects/create', async (input, { rejectWithValue }) => {
   try {

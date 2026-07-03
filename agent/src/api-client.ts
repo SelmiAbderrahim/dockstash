@@ -1,3 +1,4 @@
+import type { AgentDiscoverySnapshot } from './discovery.js';
 import type { ClaimedJob, HeartbeatResponse, JobResult } from './types.js';
 
 export type FetchFn = (
@@ -58,7 +59,11 @@ export class AgentApiClient {
     return { status: res.status, data: (await res.json()) as T };
   }
 
-  async heartbeat(info: { version?: string; hostname?: string }): Promise<HeartbeatResponse> {
+  async heartbeat(info: {
+    version?: string;
+    hostname?: string;
+    discovery?: AgentDiscoverySnapshot;
+  }): Promise<HeartbeatResponse> {
     const { data } = await this.post<HeartbeatResponse>('/heartbeat', info);
     return data as HeartbeatResponse;
   }

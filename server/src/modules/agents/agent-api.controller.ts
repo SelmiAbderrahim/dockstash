@@ -27,6 +27,7 @@ export const agentHeartbeatHandler: RequestHandler = asyncHandler(async (req, re
   const agent = await touchAgentHeartbeat(principal.id, {
     version: input.version,
     hostname: input.hostname,
+    discovery: input.discovery,
   });
   /* c8 ignore next 3 -- unreachable: the principal was loaded by requireAgentAuth in this request */
   if (!agent) {

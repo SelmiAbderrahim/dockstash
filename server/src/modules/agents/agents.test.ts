@@ -34,6 +34,8 @@ import {
   sweepOfflineAgents,
   touchAgentHeartbeat,
 } from './agents.service.js';
+import { createProject } from '../backups/backups.service.js';
+import { agentHeartbeatSchema } from './agent-api.schema.js';
 
 const app = createApp();
 
@@ -362,5 +364,170 @@ describe('agents: HTTP routes', () => {
       .set('Authorization', `JWT ${token}`)
       .send({ host: 'h' });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('agents: discovery endpoint', () => {
+  it('requires auth', async () => {
+    expect(
+      (await request(app).get('/api/agents/507f1f77bcf86cd799439011/discovery')).status,
+    ).toBe(401);
+  });
+
+  it('returns an empty view before a snapshot, then the browse view after a heartbeat', async () => {
+    const { id, token } = await seedUser('disc@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'disc.example' });
+    const agentId = String(agent._id);
+
+    const empty = await request(app)
+      .get(`/api/agents/${agentId}/discovery`)
+      .set('Authorization', `JWT ${token}`);
+    expect(empty.status).toBe(200);
+    expect(empty.body).toEqual({
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: null,
+    });
+
+    await touchAgentHeartbeat(
+      agentId,
+      {
+        discovery: {
+          folders: [
+            { name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' },
+          ],
+          containers: [
+            {
+              id: 'a',
+              names: ['/app_db_1'],
+              image: 'postgres:16',
+              state: 'running',
+              labels: {
+                'com.docker.compose.project': 'app',
+                'com.docker.compose.project.working_dir': '/var/www/app',
+                'com.docker.compose.service': 'db',
+              },
+            },
+          ],
+          dockerAvailable: true,
+        },
+      },
+      { now: new Date('2026-07-03T00:00:00.000Z') },
+    );
+
+    const res = await request(app)
+      .get(`/api/agents/${agentId}/discovery`)
+      .set('Authorization', `JWT ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.dockerAvailable).toBe(true);
+    expect(res.body.snapshotAt).toBe('2026-07-03T00:00:00.000Z');
+    expect(res.body.folders[0].plan).toEqual({
+      paths: ['/var/www/app'],
+      databases: [],
+      configs: [],
+    });
+    const group = res.body.containers.find((c: { project: string }) => c.project === 'app');
+    expect(group.plan.databases[0]).toMatchObject({ type: 'postgres', container: 'app_db_1' });
+  });
+
+  it("rejects reading another owner's agent discovery", async () => {
+    const a = await seedUser('own@t.com');
+    const b = await seedUser('other@t.com');
+    const { agent } = await registerAgent(a.id, { name: 'v', host: 'own.example' });
+    const res = await request(app)
+      .get(`/api/agents/${String(agent._id)}/discovery`)
+      .set('Authorization', `JWT ${b.token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('machine heartbeat accepts and stores a discovery snapshot end-to-end', async () => {
+    const { id, token: userToken } = await seedUser('mh@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'mh.example' });
+    const agentId = TOKEN_RE.exec(token)?.[1] as string;
+
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        version: '0.1.0',
+        hostname: 'vps',
+        discovery: {
+          folders: [],
+          containers: [
+            {
+              id: 'a',
+              names: ['/blog_cache_1'],
+              image: 'redis:7',
+              state: 'running',
+              labels: {
+                'com.docker.compose.project': 'blog',
+                'com.docker.compose.project.working_dir': '/var/www/blog',
+                'com.docker.compose.service': 'cache',
+              },
+            },
+          ],
+          dockerAvailable: true,
+        },
+      });
+    expect(hb.status).toBe(200);
+
+    const view = await request(app)
+      .get(`/api/agents/${agentId}/discovery`)
+      .set('Authorization', `JWT ${userToken}`);
+    expect(view.body.dockerAvailable).toBe(true);
+    expect(view.body.containers[0]).toMatchObject({ project: 'blog', addable: true });
+  });
+
+  it('rejects a discovery snapshot with too many container labels', () => {
+    const labels = Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`k${i}`, 'v']));
+    expect(() =>
+      agentHeartbeatSchema.parse({
+        discovery: {
+          folders: [],
+          containers: [{ id: 'a', names: [], image: '', state: '', labels }],
+          dockerAvailable: true,
+        },
+      }),
+    ).toThrow();
+  });
+});
+
+describe('backups: create with agent assignment', () => {
+  it('assigns the project to an owned agent (service)', async () => {
+    const { id } = await seedUser('ca@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'ca.example' });
+    const project = await createProject(id, {
+      name: 'p',
+      path: '/var/www/p',
+      repoPassword: 'password1',
+      agentId: String(agent._id),
+    });
+    expect(String(project.agent)).toBe(String(agent._id));
+  });
+
+  it('rejects assigning to an agent the user does not own (service)', async () => {
+    const a = await seedUser('ca2@t.com');
+    const b = await seedUser('cb2@t.com');
+    const { agent } = await registerAgent(a.id, { name: 'v', host: 'ca2.example' });
+    await expect(
+      createProject(b.id, {
+        name: 'p',
+        path: '/var/www/p',
+        repoPassword: 'password1',
+        agentId: String(agent._id),
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('POST /api/backups with agentId assigns at creation', async () => {
+    const { id, token } = await seedUser('httpca@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'httpca.example' });
+    const res = await request(app)
+      .post('/api/backups')
+      .set('Authorization', `JWT ${token}`)
+      .send({ name: 'p', path: '/var/www/p', repoPassword: 'password1', agentId: String(agent._id) });
+    expect(res.status).toBe(201);
+    expect(res.body.project.agentId).toBe(String(agent._id));
   });
 });

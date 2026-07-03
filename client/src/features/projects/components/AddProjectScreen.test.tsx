@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
@@ -9,11 +9,18 @@ import { projectsReducer, type ProjectsState } from '../store/slice';
 import type { Project, ProjectPlan } from '../types';
 import { i18n, initI18n } from '@shared/i18n';
 import * as api from '../api';
+import * as fleet from '@features/fleet';
 
 vi.mock('../api', () => ({
   listProjectsRequest: vi.fn(async () => []),
   discoverFoldersRequest: vi.fn(async () => []),
   discoverContainersRequest: vi.fn(async () => ({ containers: [], dockerAvailable: false })),
+  discoverAgentRequest: vi.fn(async () => ({
+    folders: [],
+    containers: [],
+    dockerAvailable: false,
+    snapshotAt: null,
+  })),
   scanProjectRequest: vi.fn(async () => ({ paths: [], databases: [], configs: [] })),
   createProjectRequest: vi.fn(async () => ({ id: 'new' })),
   updatePlanRequest: vi.fn(),
@@ -24,7 +31,12 @@ vi.mock('../api', () => ({
   updateScheduleRequest: vi.fn(),
 }));
 
+vi.mock('@features/fleet', () => ({ listAgentsRequest: vi.fn(async () => []) }));
+
 const mocked = vi.mocked(api);
+const mockedFleet = vi.mocked(fleet);
+const agent = (over: Partial<fleet.Agent> = {}): fleet.Agent =>
+  ({ id: 'ag1', name: 'prod', host: '10.0.0.1', port: 22, status: 'online', lastSeenAt: null, ...over });
 
 const baseState: ProjectsState = {
   items: [],
@@ -44,6 +56,11 @@ const baseState: ProjectsState = {
   scanStatus: 'idle',
   createStatus: 'idle',
   addError: null,
+  agentFolders: [],
+  agentContainers: [],
+  agentDockerAvailable: false,
+  agentSnapshotAt: null,
+  agentDiscoveryStatus: 'idle',
 };
 
 const addedProject = (path: string): Project =>
@@ -88,6 +105,13 @@ beforeEach(() => {
   mocked.discoverContainersRequest.mockResolvedValue({ containers: [], dockerAvailable: false });
   mocked.scanProjectRequest.mockResolvedValue(planWithDb);
   mocked.createProjectRequest.mockResolvedValue({ id: 'new' } as never);
+  mockedFleet.listAgentsRequest.mockResolvedValue([]);
+  mocked.discoverAgentRequest.mockResolvedValue({
+    folders: [],
+    containers: [],
+    dockerAvailable: false,
+    snapshotAt: null,
+  });
 });
 
 describe('AddProjectScreen — folders tab', () => {
@@ -128,6 +152,7 @@ describe('AddProjectScreen — folders tab', () => {
         path: '/var/www/app',
         repoPassword: 'password1',
         plan: planWithDb,
+        agentId: null,
       }),
     );
     expect(await screen.findByText('projects-list')).toBeInTheDocument();
@@ -326,5 +351,82 @@ describe('AddProjectScreen — tabs', () => {
     renderScreen(makeStore(), '/projects/new?tab=bogus');
     // Folders discovery runs for the default tab.
     await waitFor(() => expect(mocked.discoverFoldersRequest).toHaveBeenCalled());
+  });
+});
+
+describe('AddProjectScreen — fleet target', () => {
+  it('shows only the Local option when there are no agents', async () => {
+    renderScreen(makeStore());
+    const select = (await screen.findByLabelText('Backup target')) as HTMLSelectElement;
+    expect(select.value).toBe('local');
+    expect(within(select).getAllByRole('option')).toHaveLength(1);
+  });
+
+  it('browses a fleet agent snapshot: folder → review without scan, creates with agentId', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    mocked.discoverAgentRequest.mockResolvedValue({
+      folders: [
+        {
+          name: 'shop',
+          path: '/var/www/shop',
+          hasCompose: true,
+          composeFile: 'docker-compose.yml',
+          plan: planWithDb,
+        },
+      ],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: '2026-07-03T00:00:00.000Z',
+    });
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('ag1'));
+    expect(screen.getByText(/Last reported/)).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Select' }));
+    expect(await screen.findByText('Review and create')).toBeInTheDocument();
+    expect(mocked.scanProjectRequest).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('Repository password'), {
+      target: { value: 'password1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Create project' }));
+    await waitFor(() =>
+      expect(mocked.createProjectRequest).toHaveBeenCalledWith(
+        expect.objectContaining({ agentId: 'ag1', path: '/var/www/shop' }),
+      ),
+    );
+    expect(await screen.findByText('projects-list')).toBeInTheDocument();
+  });
+
+  it('browses an agent container group → review with the derived plan (no scan), shows no-snapshot hint', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    mocked.discoverAgentRequest.mockResolvedValue({
+      folders: [],
+      containers: [
+        {
+          project: 'shop',
+          workingDir: '/var/www/shop',
+          configFiles: [],
+          services: ['db'],
+          containerNames: ['shop_db_1'],
+          addable: true,
+          standalone: false,
+          plan: planWithDb,
+        },
+      ],
+      dockerAvailable: true,
+      snapshotAt: null,
+    });
+    renderScreen(makeStore(), '/projects/new?tab=docker');
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalled());
+    expect(screen.getByText(/hasn't reported yet/)).toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Select' }));
+    expect(await screen.findByText('Review and create')).toBeInTheDocument();
+    expect(mocked.scanProjectRequest).not.toHaveBeenCalled();
   });
 });

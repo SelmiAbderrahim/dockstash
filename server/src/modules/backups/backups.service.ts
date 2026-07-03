@@ -50,6 +50,8 @@ export async function createProject(
   assertAllowedPath(input.path, t);
   for (const p of input.plan?.paths ?? []) assertAllowedPath(p, t);
   for (const c of input.plan?.configs ?? []) assertAllowedPath(c, t);
+  // A create-time agent assignment must own the agent (mirrors updateProjectAgent).
+  if (input.agentId) await loadOwnedAgent(input.agentId, userId, deps);
   const repoPasswordEnc = encryptSecret(input.repoPassword);
   const plan = input.plan ?? { paths: [input.path], databases: [], configs: [] };
   const project = await Project.create({
@@ -59,6 +61,7 @@ export async function createProject(
     plan,
     repoPasswordEnc,
     lastStatus: 'idle',
+    ...(input.agentId ? { agent: input.agentId } : {}),
   });
   return project;
 }

@@ -162,6 +162,45 @@ export const GUIDE_TOURS: TourDefinition[] = [
         bodyKey: 'tours.exploreFleet.steps.online.body',
         placement: 'bottom',
       },
+      {
+        // Cross-route: sends the user from a registered agent to the Add-Project
+        // flow, where the agent can be chosen as the backup target.
+        route: '/projects',
+        target: 'projects-add-button',
+        titleKey: 'tours.exploreFleet.steps.addProject.title',
+        bodyKey: 'tours.exploreFleet.steps.addProject.body',
+        placement: 'bottom',
+      },
+    ],
+  },
+  {
+    id: 'add-project',
+    titleKey: 'tours.addProject.title',
+    descriptionKey: 'tours.addProject.description',
+    routePrefix: '/projects',
+    steps: [
+      {
+        route: '/projects',
+        target: 'projects-add-button',
+        titleKey: 'tours.addProject.steps.add.title',
+        bodyKey: 'tours.addProject.steps.add.body',
+        placement: 'bottom',
+        advanceOn: 'click',
+      },
+      {
+        route: '/projects/new',
+        target: 'add-target',
+        titleKey: 'tours.addProject.steps.target.title',
+        bodyKey: 'tours.addProject.steps.target.body',
+        placement: 'bottom',
+      },
+      {
+        route: '/projects/new',
+        target: 'add-source-tabs',
+        titleKey: 'tours.addProject.steps.source.title',
+        bodyKey: 'tours.addProject.steps.source.body',
+        placement: 'bottom',
+      },
     ],
   },
   {

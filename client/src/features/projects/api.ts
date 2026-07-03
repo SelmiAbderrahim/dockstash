@@ -1,5 +1,6 @@
 import { apiClient } from '@shared/api/client';
 import type {
+  AgentDiscoveryView,
   DiscoverContainersResult,
   DiscoveredFolder,
   Project,
@@ -39,6 +40,9 @@ export const discoverFoldersRequest = () =>
 export const discoverContainersRequest = () =>
   apiClient<DiscoverContainersResult>('/backups/discover/containers', { auth: true });
 
+export const discoverAgentRequest = (agentId: string) =>
+  apiClient<AgentDiscoveryView>(`/agents/${agentId}/discovery`, { auth: true });
+
 export const scanProjectRequest = (path: string) =>
   apiClient<ScanResp>('/backups/scan', { method: 'POST', auth: true, body: { path } }).then(
     (r) => r.plan,
@@ -49,6 +53,7 @@ export const createProjectRequest = (input: {
   path: string;
   repoPassword: string;
   plan: ProjectPlan;
+  agentId?: string | null;
 }) =>
   apiClient<ProjectResp>('/backups', { method: 'POST', auth: true, body: input }).then(
     (r) => r.project,

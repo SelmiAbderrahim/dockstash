@@ -141,7 +141,7 @@ export const ProjectsScreen = () => {
           </h1>
           <p className="text-muted-foreground text-sm">{t('lede')}</p>
         </div>
-        <Button asChild>
+        <Button asChild data-tour="projects-add-button">
           <Link to="/projects/new">
             <PlusIcon className="size-4" aria-hidden="true" /> {t('actions.addProject')}
           </Link>
