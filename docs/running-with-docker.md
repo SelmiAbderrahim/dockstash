@@ -71,7 +71,7 @@ environment and to `web`'s Vite build args. No subdirectory `.env` files.
 ## The agent container (remote VPSes)
 
 Fleet agents are **not** part of this stack. Each runs standalone on a separate
-VPS via its own `agent/docker-compose.agent.yml` (image `dockstash/agent`, built
+VPS via its own `agent/docker-compose.agent.yml` (image `selmiabderrahim/agent`, built
 from `agent/Dockerfile`), reaching that host's Docker through its own bundled
 `docker-socket-proxy`. It phones home to `/api/agent/*` with a per-agent Bearer
 token; the main stack never connects out to it.
@@ -90,7 +90,7 @@ docker compose -f docker-compose.agent.yml up -d`. Full setup and security model
 
 ### Publishing the agent image
 
-Remote VPS operators **pull** `dockstash/agent:latest` — the install snippet never
+Remote VPS operators **pull** `selmiabderrahim/agent:latest` — the install snippet never
 runs `docker login`, so the Docker Hub repo must stay **public**. Publishing is
 automated: the `publish-agent` job in `.github/workflows/ci.yml` builds `agent/` and
 pushes `:latest` + `:<sha>` on every push to `master` (repo secrets
@@ -99,8 +99,8 @@ pushes `:latest` + `:<sha>` on every push to `master` (repo secrets
 To publish by hand (e.g. a hotfix before CI runs):
 
 ```bash
-docker build -t dockstash/agent:latest agent/
-docker push dockstash/agent:latest
+docker build -t selmiabderrahim/agent:latest agent/
+docker push selmiabderrahim/agent:latest
 # arm64 hosts — build multi-arch instead:
-# docker buildx build --platform linux/amd64,linux/arm64 -t dockstash/agent:latest --push agent/
+# docker buildx build --platform linux/amd64,linux/arm64 -t selmiabderrahim/agent:latest --push agent/
 ```

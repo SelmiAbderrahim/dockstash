@@ -100,6 +100,10 @@ export const envSchema = z.object({
   AGENT_OFFLINE_AFTER_SECONDS: z.coerce.number().int().positive().default(90),
   // Leased agent jobs fail when not renewed (log posts renew) within this window.
   AGENT_JOB_LEASE_SECONDS: z.coerce.number().int().positive().default(900),
+  // Docker image the dashboard install snippet tells remote VPSes to pull.
+  // Change it + restart the api container to update every generated snippet —
+  // no client rebuild (the client fetches it from /api/agents/install-config).
+  AGENT_IMAGE: z.string().min(1).default('selmiabderrahim/agent:latest'),
   CSRF_COOKIE_NAME: z.string().min(1).default('x-csrf-token'),
   CSRF_HEADER_NAME: z.string().min(1).default('x-csrf-token'),
   // Hours between account-deletion request and the irreversible repo purge.

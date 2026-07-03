@@ -47,7 +47,7 @@ export function buildAgentInstallCommand({ token, serverUrl }: InstallCommandOpt
     '    security_opt: [no-new-privileges:true]',
     '    cap_drop: [ALL]',
     '  agent:',
-    '    image: dockstash/agent:latest',
+    '    image: selmiabderrahim/agent:latest',
     '    restart: unless-stopped',
     '    depends_on: [docker-socket-proxy]',
     '    environment:',

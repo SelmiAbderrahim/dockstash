@@ -96,15 +96,15 @@ jobs:
 
   # Publish the fleet-agent image to Docker Hub. Runs ONLY on pushes to master
   # (never on PRs / forks — those have no credentials) so the copy-paste install
-  # snippet shown after agent registration — image: dockstash/agent:latest —
+  # snippet shown after agent registration — image: selmiabderrahim/agent:latest —
   # resolves for every remote VPS operator. Kept separate from docker-build so a
   # missing or expired publish credential can never block PR CI.
   #
   # Requires repo secrets DOCKERHUB_USERNAME + DOCKERHUB_TOKEN (write scope on the
-  # dockstash org). The Docker Hub repo must be PUBLIC — the VPS install flow pulls
+  # selmiabderrahim account). The Docker Hub repo must be PUBLIC — the VPS install flow pulls
   # without docker login.
   publish-agent:
-    name: publish (dockstash/agent)
+    name: publish (selmiabderrahim/agent)
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
@@ -123,5 +123,5 @@ jobs:
           context: ./agent
           push: true
           tags: |
-            dockstash/agent:latest
-            dockstash/agent:${{ github.sha }}
+            selmiabderrahim/agent:latest
+            selmiabderrahim/agent:${{ github.sha }}

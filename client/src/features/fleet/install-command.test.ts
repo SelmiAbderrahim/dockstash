@@ -57,6 +57,6 @@ describe('buildAgentInstallCommand', () => {
     const command = buildAgentInstallCommand({ serverUrl: 'http://dashboard.example.com' });
     expect(command.startsWith("cat > docker-compose.agent.yml <<'EOF'")).toBe(true);
     expect(command.endsWith('docker compose -f docker-compose.agent.yml up -d')).toBe(true);
-    expect(command).toContain('image: dockstash/agent:latest');
+    expect(command).toContain('image: selmiabderrahim/agent:latest');
   });
 });

@@ -25,7 +25,7 @@ services:
       - ALL
 
   agent:
-    image: dockstash/agent:latest
+    image: selmiabderrahim/agent:latest
     restart: unless-stopped
     depends_on:
       - docker-socket-proxy

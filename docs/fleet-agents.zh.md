@@ -13,7 +13,7 @@ Multi-VPS fleet is a **Business**-tier feature.
 ```
 Your VPS                                   Dockstash server
 ┌───────────────────────────┐   HTTPS      ┌─────────────────────────────┐
-│ dockstash/agent           │ ───────────▶ │ POST /api/agent/heartbeat   │
+│ selmiabderrahim/agent     │ ───────────▶ │ POST /api/agent/heartbeat   │
 │  poll (10s) + heartbeat   │  Authorization│      /jobs/claim            │
 │  restic + docker exec via │  Bearer dsa_… │      /jobs/:id/logs         │
 │  a local socket-proxy     │              │      /jobs/:id/result       │
@@ -44,7 +44,7 @@ services:
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
   agent:
-    image: dockstash/agent:latest
+    image: selmiabderrahim/agent:latest
     restart: unless-stopped
     depends_on: [docker-socket-proxy]
     environment:
