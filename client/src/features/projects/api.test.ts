@@ -5,6 +5,7 @@ import {
   discoverFoldersRequest,
   discoverContainersRequest,
   discoverAgentRequest,
+  refreshAgentDiscoveryRequest,
   scanProjectRequest,
   createProjectRequest,
   updatePlanRequest,
@@ -49,11 +50,27 @@ describe('projects api wrappers', () => {
   });
 
   it('discoverAgentRequest GETs the agent discovery snapshot', async () => {
-    const payload = { folders: [], containers: [], dockerAvailable: false, snapshotAt: null };
+    const payload = {
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: null,
+      reported: false,
+      errors: [],
+    };
     apiClient.mockResolvedValue(payload as never);
     const result = await discoverAgentRequest('a1');
     expect(apiClient).toHaveBeenCalledWith('/agents/a1/discovery', { auth: true });
     expect(result).toEqual(payload);
+  });
+
+  it('refreshAgentDiscoveryRequest POSTs to the refresh endpoint', async () => {
+    apiClient.mockResolvedValue(undefined as never);
+    await refreshAgentDiscoveryRequest('a1');
+    expect(apiClient).toHaveBeenCalledWith('/agents/a1/discovery/refresh', {
+      method: 'POST',
+      auth: true,
+    });
   });
 
   it('scanProjectRequest POSTs the path and unwraps plan', async () => {

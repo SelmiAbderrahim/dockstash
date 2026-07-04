@@ -110,6 +110,9 @@ const renderScreen = (opts: Options = {}) => {
         agentDockerAvailable: false,
         agentSnapshotAt: null,
         agentDiscoveryStatus: 'idle' as const,
+        agentReported: false,
+        agentDiscoveryErrors: [],
+        agentRefreshStatus: 'idle' as const,
       },
     },
   });

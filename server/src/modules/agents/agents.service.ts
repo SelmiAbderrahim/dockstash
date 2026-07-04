@@ -135,11 +135,46 @@ export async function touchAgentHeartbeat(
       ...(info.version !== undefined ? { agentVersion: info.version } : {}),
       ...(info.hostname !== undefined ? { hostname: info.hostname } : {}),
       ...(info.discovery !== undefined
-        ? { discovery: { ...info.discovery, snapshotAt: now } }
+        ? {
+            // Stored as `discoveryErrors` — `errors` is a reserved Mongoose
+            // Document pathname (see agents.model.ts).
+            discovery: (({ errors, ...rest }) => ({
+              ...rest,
+              discoveryErrors: errors,
+              snapshotAt: now,
+            }))(info.discovery),
+          }
         : {}),
     },
     { new: true },
   );
+}
+
+/**
+ * Record that the operator wants a fresh discovery snapshot. The server can't
+ * reach the agent directly (outbound-only), so this just sets a flag the next
+ * machine heartbeat picks up (see `consumeDiscoveryRefreshRequest`).
+ */
+export async function requestDiscoveryRefresh(
+  agentId: string,
+  userId: string,
+  deps: { t?: Translator; now?: Date } = {},
+): Promise<void> {
+  const agent = await loadOwnedAgent(agentId, userId, deps);
+  agent.discoveryRequestedAt = deps.now ?? new Date();
+  await agent.save();
+}
+
+/**
+ * Atomically clear a pending discovery-refresh request, reporting whether one
+ * was pending. Called once per heartbeat so the flag is consumed exactly once.
+ */
+export async function consumeDiscoveryRefreshRequest(agentId: string): Promise<boolean> {
+  const agent = await Agent.findOneAndUpdate(
+    { _id: agentId, discoveryRequestedAt: { $ne: null } },
+    { discoveryRequestedAt: null },
+  );
+  return !!agent;
 }
 
 /**

@@ -389,6 +389,8 @@ describe('agents: discovery endpoint', () => {
       containers: [],
       dockerAvailable: false,
       snapshotAt: null,
+      reported: false,
+      errors: [],
     });
 
     await touchAgentHeartbeat(
@@ -412,6 +414,7 @@ describe('agents: discovery endpoint', () => {
             },
           ],
           dockerAvailable: true,
+          errors: [],
         },
       },
       { now: new Date('2026-07-03T00:00:00.000Z') },
@@ -423,6 +426,8 @@ describe('agents: discovery endpoint', () => {
     expect(res.status).toBe(200);
     expect(res.body.dockerAvailable).toBe(true);
     expect(res.body.snapshotAt).toBe('2026-07-03T00:00:00.000Z');
+    expect(res.body.reported).toBe(true);
+    expect(res.body.errors).toEqual([]);
     expect(res.body.folders[0].plan).toEqual({
       paths: ['/var/www/app'],
       databases: [],
@@ -537,6 +542,111 @@ describe('agents: discovery endpoint', () => {
     const agent = await Agent.findById(agentId);
     expect(agent!.status).toBe('online');
     expect(agent!.discovery ?? null).toBeNull();
+  });
+
+  it('machine heartbeat stores discovery errors and the read endpoint surfaces them', async () => {
+    const { id, token: userToken } = await seedUser('errs@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'errs.example' });
+    const agentId = TOKEN_RE.exec(token)?.[1] as string;
+
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        version: '0.1.0',
+        hostname: 'vps',
+        discovery: {
+          folders: [],
+          containers: [],
+          dockerAvailable: false,
+          errors: ['Docker socket is unreachable — check that the docker-socket-proxy is running.'],
+        },
+      });
+    expect(hb.status).toBe(200);
+
+    const view = await request(app)
+      .get(`/api/agents/${agentId}/discovery`)
+      .set('Authorization', `JWT ${userToken}`);
+    expect(view.body.reported).toBe(true);
+    expect(view.body.errors).toEqual([
+      'Docker socket is unreachable — check that the docker-socket-proxy is running.',
+    ]);
+  });
+
+  it('salvages an over-cap errors array instead of rejecting the heartbeat', () => {
+    const errors = Array.from({ length: 30 }, (_, i) => `err-${i}`.repeat(50));
+    const parsed = agentHeartbeatSchema.parse({
+      discovery: { folders: [], containers: [], dockerAvailable: false, errors },
+    });
+    expect(parsed.discovery!.errors).toHaveLength(20);
+    expect(parsed.discovery!.errors[0]!.length).toBeLessThanOrEqual(512);
+  });
+
+  it('defaults errors to [] when the agent omits the field entirely', () => {
+    const parsed = agentHeartbeatSchema.parse({
+      discovery: { folders: [], containers: [], dockerAvailable: false },
+    });
+    expect(parsed.discovery!.errors).toEqual([]);
+  });
+});
+
+describe('agents: discovery refresh', () => {
+  it('requires auth', async () => {
+    expect(
+      (await request(app).post('/api/agents/507f1f77bcf86cd799439011/discovery/refresh')).status,
+    ).toBe(401);
+  });
+
+  it("rejects requesting a refresh for another owner's agent", async () => {
+    const a = await seedUser('rfa@t.com');
+    const b = await seedUser('rfb@t.com');
+    const { agent } = await registerAgent(a.id, { name: 'v', host: 'rf.example' });
+    const res = await request(app)
+      .post(`/api/agents/${String(agent._id)}/discovery/refresh`)
+      .set('Authorization', `JWT ${b.token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('sets discoveryRequestedAt, and the next machine heartbeat signals refreshDiscovery once then clears it', async () => {
+    const { id, token: userToken } = await seedUser('rf@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'rf2.example' });
+    const agentId = TOKEN_RE.exec(token)?.[1] as string;
+
+    const refresh = await request(app)
+      .post(`/api/agents/${agentId}/discovery/refresh`)
+      .set('Authorization', `JWT ${userToken}`);
+    expect(refresh.status).toBe(204);
+
+    const stored = await Agent.findById(agentId);
+    expect(stored!.discoveryRequestedAt).not.toBeNull();
+
+    const hb1 = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ version: '0.1.0', hostname: 'vps' });
+    expect(hb1.body.refreshDiscovery).toBe(true);
+
+    // Consumed atomically — flag cleared, so the very next heartbeat omits it.
+    const clearedAgent = await Agent.findById(agentId);
+    expect(clearedAgent!.discoveryRequestedAt).toBeNull();
+
+    const hb2 = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ version: '0.1.0', hostname: 'vps' });
+    expect(hb2.body.refreshDiscovery).toBeUndefined();
+  });
+
+  it('omits refreshDiscovery from the heartbeat response when no refresh was requested', async () => {
+    const { token } = await registerAgent(
+      (await seedUser('norf@t.com')).id,
+      { name: 'v', host: 'norf.example' },
+    );
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ version: '0.1.0', hostname: 'vps' });
+    expect(hb.body.refreshDiscovery).toBeUndefined();
   });
 });
 

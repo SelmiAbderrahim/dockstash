@@ -13,16 +13,18 @@ const composeLabels = (project: string, workingDir: string, service?: string) =>
 });
 
 describe('buildAgentDiscoveryView', () => {
-  it('returns an empty view for a null snapshot', () => {
+  it('returns an empty, not-reported view for a null snapshot', () => {
     expect(buildAgentDiscoveryView(null)).toEqual({
       folders: [],
       containers: [],
       dockerAvailable: false,
       snapshotAt: null,
+      reported: false,
+      errors: [],
     });
   });
 
-  it('gives folders a files-only plan and stamps snapshotAt', () => {
+  it('gives folders a files-only plan, stamps snapshotAt, and marks reported', () => {
     const snap: StoredSnapshot = {
       folders: [{ name: 'app', path: '/var/www/app', hasCompose: false, composeFile: null }],
       containers: [],
@@ -39,6 +41,25 @@ describe('buildAgentDiscoveryView', () => {
     });
     expect(view.snapshotAt).toBe('2026-07-03T00:00:00.000Z');
     expect(view.dockerAvailable).toBe(true);
+    expect(view.reported).toBe(true);
+    expect(view.errors).toEqual([]);
+  });
+
+  it('passes discoveryErrors through as the view errors array, reported even when empty', () => {
+    const snap: StoredSnapshot = {
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: new Date('2026-07-03T00:00:00.000Z'),
+      discoveryErrors: [
+        '/var/www is not readable from the agent container — check that it is mounted.',
+      ],
+    };
+    const view = buildAgentDiscoveryView(snap);
+    expect(view.reported).toBe(true);
+    expect(view.errors).toEqual([
+      '/var/www is not readable from the agent container — check that it is mounted.',
+    ]);
   });
 
   it('derives a plan from live containers for addable Compose projects', () => {

@@ -29,6 +29,7 @@ export interface AgentDiscoverySnapshot {
   folders: AgentDiscoveredFolder[];
   containers: DockerContainerSummary[];
   dockerAvailable: boolean;
+  errors: string[];
 }
 
 export interface FolderEntry {
@@ -82,7 +83,7 @@ async function collectFolders(
   folderReader: FolderReader,
   composeProbe: ComposeProbe,
   log: DiscoveryLog,
-): Promise<AgentDiscoveredFolder[]> {
+): Promise<{ folders: AgentDiscoveredFolder[]; error: string | null }> {
   let entries: FolderEntry[];
   try {
     entries = await folderReader(ALLOWED_PATH_ROOT);
@@ -92,7 +93,10 @@ async function collectFolders(
       { err: String(err), root: ALLOWED_PATH_ROOT },
       'discovery: project root unreadable — is /var/www mounted into the agent container?',
     );
-    return [];
+    return {
+      folders: [],
+      error: `${ALLOWED_PATH_ROOT} is not readable from the agent container — check that it is mounted (see docker-compose.agent.yml).`,
+    };
   }
   const folders: AgentDiscoveredFolder[] = [];
   for (const entry of entries) {
@@ -108,7 +112,7 @@ async function collectFolders(
     });
   }
   folders.sort((a, b) => a.name.localeCompare(b.name));
-  return folders;
+  return { folders, error: null };
 }
 
 /**
@@ -122,8 +126,10 @@ export async function collectDiscovery(
   const folderReader = deps.folderReader ?? defaultFolderReader;
   const composeProbe = deps.composeProbe ?? defaultComposeProbe;
   const log = deps.log ?? NOOP_LOG;
+  const errors: string[] = [];
 
-  const folders = await collectFolders(folderReader, composeProbe, log);
+  const { folders, error: folderError } = await collectFolders(folderReader, composeProbe, log);
+  if (folderError) errors.push(folderError);
 
   let containers: DockerContainerSummary[] = [];
   let dockerAvailable = true;
@@ -137,7 +143,10 @@ export async function collectDiscovery(
       { err: String(err) },
       'discovery: Docker unreachable — check DOCKER_HOST and that the socket-proxy is up and allows CONTAINERS',
     );
+    errors.push(
+      'Docker socket is unreachable — check that the docker-socket-proxy container is running and allows CONTAINERS.',
+    );
   }
 
-  return { folders, containers, dockerAvailable };
+  return { folders, containers, dockerAvailable, errors };
 }

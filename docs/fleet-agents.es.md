@@ -115,3 +115,35 @@ it is never silently retried.
   docker-compose.agent.yml up -d`.
 - **Reinstall / move** — remove the agent in the UI, register a fresh one, and
   bring up the compose file with the new token.
+
+### Troubleshooting empty folders
+
+The Add-Project picker (Fleet target → Folders/Docker tabs) reads a **cached
+snapshot** the agent last pushed on heartbeat — never live filesystem/Docker
+access, since the server can't reach the agent (outbound-only). An empty
+picker has three distinct causes, and the UI now tells you which:
+
+1. **Agent has never reported** — the picker shows "Agent hasn't reported
+   yet" with a link to this Fleet page. Check the agent is online (see
+   "Agent shows offline" above).
+2. **`/var/www` unreadable or not mounted** — the picker shows a discovery-
+   error banner ("`/var/www` is not readable from the agent container…").
+   SSH into the agent VPS and check the mount:
+   ```bash
+   docker compose -f docker-compose.agent.yml exec agent ls -la /var/www
+   ```
+   An empty or missing listing means the `- /var/www:/var/www:ro` volume in
+   `docker-compose.agent.yml` isn't mounted (or the host path is empty).
+3. **Docker socket unreachable** — the Docker tab shows a discovery-error
+   banner instead of "Docker is not available." SSH in and check the proxy:
+   ```bash
+   docker compose -f docker-compose.agent.yml ps          # both containers UP?
+   docker compose -f docker-compose.agent.yml exec agent \
+     wget -qO- http://docker-socket-proxy:2375/containers/json | head -c 200
+   ```
+   A 403 or connection error means `CONTAINERS: 1` isn't set on the proxy, or
+   the proxy container is down.
+
+Once fixed, use the **Refresh now** button next to the target picker instead
+of waiting for the next ~2-minute discovery interval — it flags the agent for
+an immediate re-scan on its very next heartbeat.

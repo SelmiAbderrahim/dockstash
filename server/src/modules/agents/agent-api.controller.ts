@@ -12,7 +12,11 @@ import {
   agentJobLogsSchema,
   agentJobResultSchema,
 } from './agent-api.schema.js';
-import { effectiveAgentStatus, touchAgentHeartbeat } from './agents.service.js';
+import {
+  consumeDiscoveryRefreshRequest,
+  effectiveAgentStatus,
+  touchAgentHeartbeat,
+} from './agents.service.js';
 import { appendJobLogs, claimNextJob, completeJob } from './agent-jobs.service.js';
 
 /** The middleware always sets req.agent on this surface; guard for typing. */
@@ -52,6 +56,7 @@ export const agentHeartbeatHandler: RequestHandler = asyncHandler(async (req, re
   if (!agent) {
     throw HttpError.unauthorized(req.t('agents.error.unauthorized'));
   }
+  const refreshDiscovery = await consumeDiscoveryRefreshRequest(principal.id);
   res.status(200).json({
     agent: {
       id: String(agent._id),
@@ -60,6 +65,7 @@ export const agentHeartbeatHandler: RequestHandler = asyncHandler(async (req, re
     },
     pollIntervalMs: 10_000,
     heartbeatIntervalMs: Math.floor((env.AGENT_OFFLINE_AFTER_SECONDS * 1000) / 3),
+    ...(refreshDiscovery ? { refreshDiscovery: true } : {}),
   });
 });
 

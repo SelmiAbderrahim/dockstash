@@ -24,6 +24,9 @@ import {
   selectAgentDockerAvailable,
   selectAgentSnapshotAt,
   selectAgentDiscoveryStatus,
+  selectAgentReported,
+  selectAgentDiscoveryErrors,
+  selectAgentRefreshStatus,
 } from './selectors';
 import type { ProjectsState } from './slice';
 import type { Project, Schedule } from '../types';
@@ -65,6 +68,9 @@ const projects: ProjectsState = {
   agentDockerAvailable: true,
   agentSnapshotAt: '2026-07-03T00:00:00Z',
   agentDiscoveryStatus: 'succeeded',
+  agentReported: true,
+  agentDiscoveryErrors: ['Docker socket is unreachable.'],
+  agentRefreshStatus: 'loading',
 };
 
 const state = { projects } as unknown as RootState;
@@ -113,5 +119,8 @@ describe('projects selectors', () => {
     expect(selectAgentDockerAvailable(state)).toBe(true);
     expect(selectAgentSnapshotAt(state)).toBe('2026-07-03T00:00:00Z');
     expect(selectAgentDiscoveryStatus(state)).toBe('succeeded');
+    expect(selectAgentReported(state)).toBe(true);
+    expect(selectAgentDiscoveryErrors(state)).toEqual(['Docker socket is unreachable.']);
+    expect(selectAgentRefreshStatus(state)).toBe('loading');
   });
 });

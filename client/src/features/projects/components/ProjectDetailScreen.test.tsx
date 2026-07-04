@@ -86,6 +86,9 @@ const baseState: ProjectsState = {
   agentDockerAvailable: false,
   agentSnapshotAt: null,
   agentDiscoveryStatus: 'idle',
+  agentReported: false,
+  agentDiscoveryErrors: [],
+  agentRefreshStatus: 'idle',
 };
 
 const makeStore = (projects: Partial<ProjectsState> = {}) =>

@@ -6,6 +6,7 @@ import {
   discoverFolders,
   discoverContainers,
   discoverAgent,
+  refreshAgent,
   scanProject,
   createProject,
   savePlan,
@@ -22,6 +23,7 @@ vi.mock('../api', () => ({
   discoverFoldersRequest: vi.fn(),
   discoverContainersRequest: vi.fn(),
   discoverAgentRequest: vi.fn(),
+  refreshAgentDiscoveryRequest: vi.fn(),
   scanProjectRequest: vi.fn(),
   createProjectRequest: vi.fn(),
   updatePlanRequest: vi.fn(),
@@ -84,7 +86,14 @@ describe('projects thunks', () => {
   });
 
   it('discoverAgent resolves the snapshot / rejects with a message', async () => {
-    const snap = { folders: [], containers: [], dockerAvailable: true, snapshotAt: null };
+    const snap = {
+      folders: [],
+      containers: [],
+      dockerAvailable: true,
+      snapshotAt: null,
+      reported: true,
+      errors: [],
+    };
     mocked.discoverAgentRequest.mockResolvedValue(snap as never);
     let result = await makeStore().dispatch(discoverAgent({ agentId: 'a1' }));
     expect(discoverAgent.fulfilled.match(result)).toBe(true);
@@ -95,6 +104,18 @@ describe('projects thunks', () => {
     result = await makeStore().dispatch(discoverAgent({ agentId: 'a1' }));
     expect(discoverAgent.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('gone');
+  });
+
+  it('refreshAgent requests a refresh for the given agent / rejects with a message', async () => {
+    mocked.refreshAgentDiscoveryRequest.mockResolvedValue(undefined);
+    let result = await makeStore().dispatch(refreshAgent({ agentId: 'a1' }));
+    expect(refreshAgent.fulfilled.match(result)).toBe(true);
+    expect(mocked.refreshAgentDiscoveryRequest).toHaveBeenCalledWith('a1');
+
+    mocked.refreshAgentDiscoveryRequest.mockRejectedValue(new Error('locked'));
+    result = await makeStore().dispatch(refreshAgent({ agentId: 'a1' }));
+    expect(refreshAgent.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('locked');
   });
 
   it('scanProject resolves the plan / rejects with a message', async () => {

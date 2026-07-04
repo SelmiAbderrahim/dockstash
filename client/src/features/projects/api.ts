@@ -43,6 +43,9 @@ export const discoverContainersRequest = () =>
 export const discoverAgentRequest = (agentId: string) =>
   apiClient<AgentDiscoveryView>(`/agents/${agentId}/discovery`, { auth: true });
 
+export const refreshAgentDiscoveryRequest = (agentId: string) =>
+  apiClient<void>(`/agents/${agentId}/discovery/refresh`, { method: 'POST', auth: true });
+
 export const scanProjectRequest = (path: string) =>
   apiClient<ScanResp>('/backups/scan', { method: 'POST', auth: true, body: { path } }).then(
     (r) => r.plan,

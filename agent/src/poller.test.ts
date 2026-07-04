@@ -204,6 +204,16 @@ describe('Poller', () => {
     expect(collect).toHaveBeenCalledTimes(1);
   });
 
+  it('force bypasses the throttle window even when the cache is still fresh', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn(async () => SNAP);
+    const now = vi.fn(() => 1000);
+    const { poller } = makeDiscoveryPoller(fake, collect, { discoveryIntervalMs: 999_999, now });
+    await poller.heartbeatOnce();
+    await poller.heartbeatOnce(true);
+    expect(collect).toHaveBeenCalledTimes(2);
+  });
+
   it('recomputes the snapshot after the throttle window elapses', async () => {
     const fake = makeFakeApi();
     const collect = vi.fn(async () => SNAP);
@@ -225,6 +235,47 @@ describe('Poller', () => {
     await poller.heartbeatOnce();
     expect(log.warn).toHaveBeenCalledWith({ err: expect.any(Error) }, 'discovery collect failed');
     expect(fake.heartbeat).toHaveBeenCalledWith({ version: '0.1.0', hostname: 'vps-1' });
+  });
+
+  it('when the server signals refreshDiscovery, immediately re-heartbeats with a forced fresh snapshot', async () => {
+    const fake = makeFakeApi();
+    fake.heartbeat
+      .mockResolvedValueOnce({
+        agent: { id: 'a1', name: 'agent', status: 'online' },
+        pollIntervalMs: 10_000,
+        heartbeatIntervalMs: 30_000,
+        refreshDiscovery: true,
+      })
+      .mockResolvedValueOnce({
+        agent: { id: 'a1', name: 'agent', status: 'online' },
+        pollIntervalMs: 10_000,
+        heartbeatIntervalMs: 30_000,
+      });
+    const collect = vi.fn(async () => SNAP);
+    const now = vi.fn(() => 1000);
+    const { poller } = makeDiscoveryPoller(fake, collect, { discoveryIntervalMs: 999_999, now });
+    await poller.heartbeatOnce();
+    // Two heartbeats: the original (throttle window open, cache primed) and the
+    // forced re-heartbeat triggered by refreshDiscovery.
+    expect(fake.heartbeat).toHaveBeenCalledTimes(2);
+    // Both calls collect fresh (force bypasses the huge throttle window on the
+    // second call — first call always collects since the cache starts empty).
+    expect(collect).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not recurse when the forced re-heartbeat itself has no refreshDiscovery flag', async () => {
+    const fake = makeFakeApi();
+    fake.heartbeat.mockResolvedValue({
+      agent: { id: 'a1', name: 'agent', status: 'online' },
+      pollIntervalMs: 10_000,
+      heartbeatIntervalMs: 30_000,
+      refreshDiscovery: true,
+    });
+    const { poller } = makePoller(fake);
+    // force=true path: even if the response claims refreshDiscovery again, the
+    // `!force` guard stops it from recursing forever.
+    await poller.heartbeatOnce(true);
+    expect(fake.heartbeat).toHaveBeenCalledTimes(1);
   });
 
   it('logs a warning when heartbeat fails, without crashing', async () => {

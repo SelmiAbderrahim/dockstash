@@ -30,3 +30,7 @@ export const selectAgentDockerAvailable = (state: RootState) =>
 export const selectAgentSnapshotAt = (state: RootState) => state.projects.agentSnapshotAt;
 export const selectAgentDiscoveryStatus = (state: RootState) =>
   state.projects.agentDiscoveryStatus;
+export const selectAgentReported = (state: RootState) => state.projects.agentReported;
+export const selectAgentDiscoveryErrors = (state: RootState) =>
+  state.projects.agentDiscoveryErrors;
+export const selectAgentRefreshStatus = (state: RootState) => state.projects.agentRefreshStatus;

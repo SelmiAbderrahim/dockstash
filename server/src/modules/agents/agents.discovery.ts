@@ -25,6 +25,12 @@ export interface StoredSnapshot {
   containers: DockerContainerSummary[];
   dockerAvailable: boolean;
   snapshotAt: Date | null;
+  /**
+   * Human-readable causes for an empty/degraded snapshot (older stored docs
+   * may lack this). Named `discoveryErrors` on the stored document — `errors`
+   * is a reserved Mongoose Document pathname (see agents.model.ts).
+   */
+  discoveryErrors?: string[];
 }
 
 export interface AgentFolderView extends SnapshotFolder {
@@ -42,6 +48,10 @@ export interface AgentDiscoveryView {
   containers: AgentContainerView[];
   dockerAvailable: boolean;
   snapshotAt: string | null;
+  /** True once the agent has ever sent a heartbeat; false means "never reported". */
+  reported: boolean;
+  /** Reasons the snapshot came back empty/degraded (e.g. unreadable /var/www, Docker unreachable). */
+  errors: string[];
 }
 
 const EMPTY_VIEW: AgentDiscoveryView = {
@@ -49,6 +59,8 @@ const EMPTY_VIEW: AgentDiscoveryView = {
   containers: [],
   dockerAvailable: false,
   snapshotAt: null,
+  reported: false,
+  errors: [],
 };
 
 function containerName(c: DockerContainerSummary): string {
@@ -104,5 +116,7 @@ export function buildAgentDiscoveryView(snapshot: StoredSnapshot | null): AgentD
     containers,
     dockerAvailable: snapshot.dockerAvailable,
     snapshotAt: snapshot.snapshotAt ? new Date(snapshot.snapshotAt).toISOString() : null,
+    reported: true,
+    errors: snapshot.discoveryErrors ?? [],
   };
 }

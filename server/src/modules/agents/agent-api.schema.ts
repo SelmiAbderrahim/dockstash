@@ -13,6 +13,7 @@ const MAX_LABELS = 50;
 const MAX_NAMES = 20;
 const MAX_FOLDERS = 200;
 const MAX_CONTAINERS = 500;
+const MAX_ERRORS = 20;
 
 const discoveredFolderInput = z.object({
   name: z.string().transform(truncate(255)),
@@ -40,6 +41,11 @@ export const agentDiscoveryInput = z.object({
   folders: z.array(discoveredFolderInput).transform((a) => a.slice(0, MAX_FOLDERS)),
   containers: z.array(containerSummaryInput).transform((a) => a.slice(0, MAX_CONTAINERS)),
   dockerAvailable: z.boolean(),
+  errors: z
+    .array(z.string().transform(truncate(512)))
+    .transform((a) => a.slice(0, MAX_ERRORS))
+    .optional()
+    .default([]),
 });
 export type AgentDiscoveryInput = z.infer<typeof agentDiscoveryInput>;
 

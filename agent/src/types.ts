@@ -40,6 +40,8 @@ export interface HeartbeatResponse {
   agent: { id: string; name: string; status: 'online' | 'offline' };
   pollIntervalMs: number;
   heartbeatIntervalMs: number;
+  /** Set once when an operator requested a fresh discovery snapshot (see /discovery/refresh). */
+  refreshDiscovery?: boolean;
 }
 
 export interface JobResultStats {

@@ -94,13 +94,14 @@ export class Poller {
   /**
    * Return a snapshot for the heartbeat, recomputing at most once per
    * `discoveryIntervalMs` and reusing the cache in between. Never throws — a
-   * collect failure keeps the last good snapshot (or none).
+   * collect failure keeps the last good snapshot (or none). `force` bypasses
+   * the throttle window — used right after the server signals `refreshDiscovery`.
    */
-  private async snapshotForHeartbeat(): Promise<AgentDiscoverySnapshot | undefined> {
+  private async snapshotForHeartbeat(force = false): Promise<AgentDiscoverySnapshot | undefined> {
     if (!this.opts.collectDiscovery) return undefined;
     const now = (this.opts.now ?? (() => Date.now()))();
     const intervalMs = this.opts.discoveryIntervalMs ?? 120_000;
-    if (this.cachedSnapshot === null || now - this.lastDiscoveryAt >= intervalMs) {
+    if (force || this.cachedSnapshot === null || now - this.lastDiscoveryAt >= intervalMs) {
       try {
         this.cachedSnapshot = await this.opts.collectDiscovery();
         this.lastDiscoveryAt = now;
@@ -129,15 +130,20 @@ export class Poller {
     return { runningJobId: this.currentJobId, lastHeartbeatAt: this.lastHeartbeatAt };
   }
 
-  async heartbeatOnce(): Promise<void> {
+  async heartbeatOnce(force = false): Promise<void> {
     try {
-      const discovery = await this.snapshotForHeartbeat();
-      await this.opts.api.heartbeat({
+      const discovery = await this.snapshotForHeartbeat(force);
+      const response = await this.opts.api.heartbeat({
         version: this.opts.version,
         hostname: this.opts.hostname,
         ...(discovery ? { discovery } : {}),
       });
       this.lastHeartbeatAt = new Date();
+      // The server consumes the refresh request atomically (once), so this
+      // can only fire once per operator request — safe to recurse.
+      if (response?.refreshDiscovery && !force) {
+        await this.heartbeatOnce(true);
+      }
     } catch (err) {
       // 401 may just mean a rotated key being re-provisioned — keep retrying.
       this.opts.log.warn({ err }, 'heartbeat failed');

@@ -41,6 +41,15 @@
       "snapshotAt": "Zuletzt gemeldet {{at}}",
       "noSnapshot": "Dieser Agent hat noch nichts gemeldet — bitte später erneut prüfen."
     },
+    "agent": {
+      "offlineBadge": "Offline",
+      "refresh": "Jetzt aktualisieren",
+      "refreshing": "Wird aktualisiert…",
+      "notReportedTitle": "Agent hat noch nichts gemeldet",
+      "notReportedHint": "Noch kein Snapshot erhalten — prüfen Sie auf der Flotten-Seite, ob der Agent online ist.",
+      "errorsTitle": "Bei der Erkennung sind Probleme aufgetreten",
+      "fleetLink": "In der Flotte ansehen"
+    },
     "tabs": {
       "aria": "Quelle wählen",
       "folders": "Ordner",

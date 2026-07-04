@@ -6,6 +6,7 @@ import {
   fleetHandler,
   listAgentsHandler,
   registerAgentHandler,
+  requestAgentDiscoveryRefreshHandler,
   rotateAgentKeyHandler,
 } from './agents.controller.js';
 
@@ -16,5 +17,6 @@ agentsRouter.get('/', listAgentsHandler);
 agentsRouter.post('/', registerAgentHandler);
 agentsRouter.get('/fleet', fleetHandler);
 agentsRouter.get('/:agentId/discovery', agentDiscoveryHandler);
+agentsRouter.post('/:agentId/discovery/refresh', requestAgentDiscoveryRefreshHandler);
 agentsRouter.post('/:agentId/rotate-key', rotateAgentKeyHandler);
 agentsRouter.delete('/:agentId', deleteAgentHandler);

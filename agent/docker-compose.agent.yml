@@ -35,6 +35,9 @@ services:
       DOCKER_HOST: tcp://docker-socket-proxy:2375
     volumes:
       # Backup-path root — matches the server-side /var/www/* allowlist.
+      # WARNING: removing/mis-mounting this breaks project discovery — the
+      # Add-Project folder picker will show empty with no obvious cause. See
+      # "Troubleshooting empty folders" in docs/fleet-agents.en.md.
       - /var/www:/var/www:ro
     tmpfs:
       - /tmp

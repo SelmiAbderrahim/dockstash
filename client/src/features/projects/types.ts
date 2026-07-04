@@ -65,6 +65,10 @@ export interface AgentDiscoveryView {
   containers: AgentContainerGroup[];
   dockerAvailable: boolean;
   snapshotAt: string | null;
+  /** True once the agent has ever sent a heartbeat; false means "never reported". */
+  reported: boolean;
+  /** Reasons the snapshot came back empty/degraded (e.g. unreadable /var/www, Docker unreachable). */
+  errors: string[];
 }
 
 export interface Schedule {

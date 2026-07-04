@@ -43,6 +43,9 @@ const agentDiscoverySchema = new mongoose.Schema(
     containers: { type: [discoveredContainerSchema], default: [] },
     dockerAvailable: { type: Boolean, default: false },
     snapshotAt: { type: Date, default: null },
+    // Named `discoveryErrors`, not `errors` — `errors` is a reserved Mongoose
+    // Document pathname (Document.prototype.errors) and collides silently.
+    discoveryErrors: { type: [String], default: [] },
   },
   { _id: false },
 );
@@ -68,6 +71,10 @@ const agentSchema = new mongoose.Schema(
     hostname: { type: String, default: '' },
     // Latest discovery snapshot (folders + running containers) from the daemon.
     discovery: { type: agentDiscoverySchema, default: null },
+    // Set by POST /:agentId/discovery/refresh; cleared + surfaced as
+    // `refreshDiscovery: true` on the next machine heartbeat (see
+    // agent-api.controller.ts). Server never reaches the agent directly.
+    discoveryRequestedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );

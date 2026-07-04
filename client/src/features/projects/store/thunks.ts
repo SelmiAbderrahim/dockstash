@@ -9,6 +9,7 @@ import {
   discoverFoldersRequest,
   listProjectsRequest,
   listSchedulesRequest,
+  refreshAgentDiscoveryRequest,
   runBackupNowRequest,
   scanProjectRequest,
   updatePlanRequest,
@@ -69,6 +70,17 @@ export const discoverAgent = createAsyncThunk<
     return rejectWithValue(messageFromError(err, 'Could not load agent discovery.'));
   }
 });
+
+export const refreshAgent = createAsyncThunk<void, { agentId: string }, { rejectValue: string }>(
+  'projects/refreshAgent',
+  async ({ agentId }, { rejectWithValue }) => {
+    try {
+      await refreshAgentDiscoveryRequest(agentId);
+    } catch (err) {
+      return rejectWithValue(messageFromError(err, 'Could not request a refresh.'));
+    }
+  },
+);
 
 export const scanProject = createAsyncThunk<ProjectPlan, { path: string }, { rejectValue: string }>(
   'projects/scan',

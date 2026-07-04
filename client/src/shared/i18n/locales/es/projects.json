@@ -41,6 +41,15 @@
       "snapshotAt": "Último reporte {{at}}",
       "noSnapshot": "Este agente aún no ha reportado — vuelve a comprobar en breve."
     },
+    "agent": {
+      "offlineBadge": "Sin conexión",
+      "refresh": "Actualizar ahora",
+      "refreshing": "Actualizando…",
+      "notReportedTitle": "El agente aún no ha reportado",
+      "notReportedHint": "Todavía no se ha recibido ningún reporte — comprueba en la página Flota que el agente esté en línea.",
+      "errorsTitle": "El descubrimiento reportó problemas",
+      "fleetLink": "Ver en Flota"
+    },
     "tabs": {
       "aria": "Elegir una fuente",
       "folders": "Carpetas",

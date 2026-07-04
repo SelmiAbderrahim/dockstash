@@ -44,7 +44,7 @@ describe('collectDiscovery — folders', () => {
     expect(snap.folders[1]).toMatchObject({ hasCompose: false, composeFile: null });
   });
 
-  it('returns an empty folder list when the reader throws', async () => {
+  it('returns an empty folder list and records a reason when the reader throws', async () => {
     const folderReader = async (): Promise<FolderEntry[]> => {
       throw new Error('ENOENT');
     };
@@ -54,6 +54,9 @@ describe('collectDiscovery — folders', () => {
       dockerClient: noDocker,
     });
     expect(snap.folders).toEqual([]);
+    expect(snap.errors).toEqual([
+      expect.stringContaining('is not readable from the agent container'),
+    ]);
   });
 
   it('caps the folder list', async () => {
@@ -69,7 +72,7 @@ describe('collectDiscovery — folders', () => {
 });
 
 describe('collectDiscovery — containers', () => {
-  it('ships raw container summaries when docker is available', async () => {
+  it('ships raw container summaries when docker is available, with no errors', async () => {
     const containers: DockerContainerSummary[] = [
       { id: 'a', names: ['/x'], image: 'redis:7', state: 'running', labels: {} },
     ];
@@ -80,9 +83,10 @@ describe('collectDiscovery — containers', () => {
     });
     expect(snap.dockerAvailable).toBe(true);
     expect(snap.containers).toEqual(containers);
+    expect(snap.errors).toEqual([]);
   });
 
-  it('degrades to dockerAvailable:false and logs the reason when listContainers throws', async () => {
+  it('degrades to dockerAvailable:false, logs, and records a reason when listContainers throws', async () => {
     const warn = vi.fn();
     const snap = await collectDiscovery({
       folderReader: async () => [],
@@ -99,6 +103,24 @@ describe('collectDiscovery — containers', () => {
       expect.objectContaining({ err: expect.stringContaining('403') }),
       expect.stringContaining('Docker unreachable'),
     );
+    expect(snap.errors).toEqual([
+      expect.stringContaining('Docker socket is unreachable'),
+    ]);
+  });
+
+  it('collects both a folder error and a docker error in the same snapshot', async () => {
+    const snap = await collectDiscovery({
+      folderReader: async () => {
+        throw new Error('EACCES');
+      },
+      composeProbe: async () => null,
+      dockerClient: {
+        listContainers: async () => {
+          throw new Error('ECONNREFUSED');
+        },
+      },
+    });
+    expect(snap.errors).toHaveLength(2);
   });
 
   it('caps the container list', async () => {

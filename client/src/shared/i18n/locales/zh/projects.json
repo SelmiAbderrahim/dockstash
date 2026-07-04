@@ -41,6 +41,15 @@
       "snapshotAt": "最近上报 {{at}}",
       "noSnapshot": "该代理尚未上报——请稍后再查看。"
     },
+    "agent": {
+      "offlineBadge": "离线",
+      "refresh": "立即刷新",
+      "refreshing": "正在刷新…",
+      "notReportedTitle": "代理尚未上报",
+      "notReportedHint": "尚未收到任何快照——请在车队页面确认该代理在线。",
+      "errorsTitle": "发现过程报告了问题",
+      "fleetLink": "在车队中查看"
+    },
     "tabs": {
       "aria": "选择来源",
       "folders": "目录",

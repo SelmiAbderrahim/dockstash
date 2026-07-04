@@ -11,6 +11,7 @@ import {
   listAgentsForUser,
   loadOwnedAgent,
   registerAgent,
+  requestDiscoveryRefresh,
   rotateAgentKey,
 } from './agents.service.js';
 import type { AgentHydrated } from './agents.model.js';
@@ -101,3 +102,13 @@ export const agentDiscoveryHandler: RequestHandler = asyncHandler(async (req, re
   );
   res.status(200).json(view);
 });
+
+export const requestAgentDiscoveryRefreshHandler: RequestHandler = asyncHandler(
+  async (req, res) => {
+    const userId = requireUserId(req.user);
+    await assertMultiVpsAllowed(userId, { t: req.t });
+    const { agentId } = agentIdParamsSchema.parse(req.params);
+    await requestDiscoveryRefresh(agentId, userId, { t: req.t });
+    res.status(204).end();
+  },
+);

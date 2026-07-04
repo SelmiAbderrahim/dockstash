@@ -10,6 +10,7 @@ import {
   discoverFolders,
   discoverContainers,
   discoverAgent,
+  refreshAgent,
   scanProject,
   createProject,
 } from './thunks';
@@ -233,6 +234,8 @@ describe('projects slice', () => {
         containers: [{ project: 'p', workingDir: '/var/www/p', configFiles: [], services: [], containerNames: [], addable: true, standalone: false, plan: { paths: ['/var/www/p'], databases: [], configs: [] } }],
         dockerAvailable: true,
         snapshotAt: '2026-07-03T00:00:00Z',
+        reported: true,
+        errors: ['Docker socket is unreachable.'],
       },
     });
     expect(s.agentDiscoveryStatus).toBe('succeeded');
@@ -240,11 +243,25 @@ describe('projects slice', () => {
     expect(s.agentContainers).toHaveLength(1);
     expect(s.agentDockerAvailable).toBe(true);
     expect(s.agentSnapshotAt).toBe('2026-07-03T00:00:00Z');
+    expect(s.agentReported).toBe(true);
+    expect(s.agentDiscoveryErrors).toEqual(['Docker socket is unreachable.']);
     s = projectsReducer(s, { type: discoverAgent.rejected.type, payload: 'gone' });
     expect(s.agentDiscoveryStatus).toBe('failed');
     expect(s.addError).toBe('gone');
     s = projectsReducer(initial(), { type: discoverAgent.rejected.type });
     expect(s.addError).toBe('Could not load agent discovery.');
+  });
+
+  it('refreshAgent lifecycle', () => {
+    let s = projectsReducer(initial(), { type: refreshAgent.pending.type });
+    expect(s.agentRefreshStatus).toBe('loading');
+    s = projectsReducer(s, { type: refreshAgent.fulfilled.type });
+    expect(s.agentRefreshStatus).toBe('succeeded');
+    s = projectsReducer(s, { type: refreshAgent.rejected.type, payload: 'locked' });
+    expect(s.agentRefreshStatus).toBe('failed');
+    expect(s.addError).toBe('locked');
+    s = projectsReducer(initial(), { type: refreshAgent.rejected.type });
+    expect(s.addError).toBe('Could not request a refresh.');
   });
 
   it('scanProject lifecycle stores and clears the scanned plan', () => {

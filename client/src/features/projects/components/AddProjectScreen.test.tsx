@@ -20,7 +20,10 @@ vi.mock('../api', () => ({
     containers: [],
     dockerAvailable: false,
     snapshotAt: null,
+    reported: false,
+    errors: [],
   })),
+  refreshAgentDiscoveryRequest: vi.fn(async () => undefined),
   scanProjectRequest: vi.fn(async () => ({ paths: [], databases: [], configs: [] })),
   createProjectRequest: vi.fn(async () => ({ id: 'new' })),
   updatePlanRequest: vi.fn(),
@@ -61,6 +64,9 @@ const baseState: ProjectsState = {
   agentDockerAvailable: false,
   agentSnapshotAt: null,
   agentDiscoveryStatus: 'idle',
+  agentReported: false,
+  agentDiscoveryErrors: [],
+  agentRefreshStatus: 'idle',
 };
 
 const addedProject = (path: string): Project =>
@@ -111,6 +117,8 @@ beforeEach(() => {
     containers: [],
     dockerAvailable: false,
     snapshotAt: null,
+    reported: false,
+    errors: [],
   });
 });
 
@@ -377,6 +385,8 @@ describe('AddProjectScreen — fleet target', () => {
       containers: [],
       dockerAvailable: false,
       snapshotAt: '2026-07-03T00:00:00.000Z',
+      reported: true,
+      errors: [],
     });
     renderScreen(makeStore());
     await screen.findByRole('option', { name: /prod/ });
@@ -418,6 +428,8 @@ describe('AddProjectScreen — fleet target', () => {
       ],
       dockerAvailable: true,
       snapshotAt: null,
+      reported: true,
+      errors: [],
     });
     renderScreen(makeStore(), '/projects/new?tab=docker');
     await screen.findByRole('option', { name: /prod/ });
@@ -437,6 +449,8 @@ describe('AddProjectScreen — fleet target', () => {
       containers: [],
       dockerAvailable: false,
       snapshotAt: '2026-07-03T00:00:00.000Z',
+      reported: true,
+      errors: [],
     });
     renderScreen(makeStore());
     await screen.findByRole('option', { name: /prod/ });
@@ -447,5 +461,74 @@ describe('AddProjectScreen — fleet target', () => {
     // Agent-aware hint, NOT the local-host "on this server / No subdirectories" copy.
     expect(within(empty).getByText(/this agent reported no projects/i)).toBeInTheDocument();
     expect(within(empty).queryByText(/No subdirectories under \/var\/www\./)).not.toBeInTheDocument();
+  });
+
+  it('shows a "not reported yet" alert with a Fleet link when the agent has never heartbeated', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    mocked.discoverAgentRequest.mockResolvedValue({
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: null,
+      reported: false,
+      errors: [],
+    });
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('ag1'));
+
+    expect(await screen.findByTestId('agent-not-reported')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View in Fleet' })).toHaveAttribute('href', '/fleet');
+    expect(screen.queryByTestId('agent-discovery-errors')).not.toBeInTheDocument();
+  });
+
+  it('shows the discovery errors reported by the agent instead of a generic empty hint', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    mocked.discoverAgentRequest.mockResolvedValue({
+      folders: [],
+      containers: [],
+      dockerAvailable: false,
+      snapshotAt: '2026-07-03T00:00:00.000Z',
+      reported: true,
+      errors: ['Docker socket is unreachable — check that the docker-socket-proxy is running.'],
+    });
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('ag1'));
+
+    const errors = await screen.findByTestId('agent-discovery-errors');
+    expect(within(errors).getByText(/Docker socket is unreachable/)).toBeInTheDocument();
+    expect(screen.queryByTestId('agent-not-reported')).not.toBeInTheDocument();
+  });
+
+  it('shows an offline badge and disables the folders/docker tabs for an offline agent', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent({ status: 'offline' })]);
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledWith('ag1'));
+
+    expect(screen.getByText('Offline')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Folders/ })).toBeDisabled();
+    expect(screen.getByRole('tab', { name: /Running Docker/ })).toBeDisabled();
+  });
+
+  it('clicking Refresh dispatches a refresh request for the current agent', async () => {
+    mockedFleet.listAgentsRequest.mockResolvedValue([agent()]);
+    renderScreen(makeStore());
+    await screen.findByRole('option', { name: /prod/ });
+    fireEvent.change(screen.getByLabelText('Backup target'), { target: { value: 'ag1' } });
+    await waitFor(() => expect(mocked.discoverAgentRequest).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh now' }));
+    await waitFor(() => expect(mocked.refreshAgentDiscoveryRequest).toHaveBeenCalledWith('ag1'));
+  });
+
+  it('hides the Refresh button for the local target', async () => {
+    renderScreen(makeStore());
+    await screen.findByLabelText('Backup target');
+    expect(screen.queryByRole('button', { name: 'Refresh now' })).not.toBeInTheDocument();
   });
 });

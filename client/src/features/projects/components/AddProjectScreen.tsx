@@ -24,15 +24,19 @@ import {
   discoverAgent,
   discoverContainers,
   discoverFolders,
+  refreshAgent,
   scanProject,
 } from '../store/thunks';
 import { resetAddFlow } from '../store/slice';
 import {
   selectAddError,
   selectAgentContainers,
+  selectAgentDiscoveryErrors,
   selectAgentDiscoveryStatus,
   selectAgentDockerAvailable,
   selectAgentFolders,
+  selectAgentRefreshStatus,
+  selectAgentReported,
   selectAgentSnapshotAt,
   selectContainersStatus,
   selectCreateStatus,
@@ -86,6 +90,9 @@ export const AddProjectScreen = () => {
   const agentDockerAvailable = useAppSelector(selectAgentDockerAvailable);
   const agentSnapshotAt = useAppSelector(selectAgentSnapshotAt);
   const agentDiscoveryStatus = useAppSelector(selectAgentDiscoveryStatus);
+  const agentReported = useAppSelector(selectAgentReported);
+  const agentDiscoveryErrors = useAppSelector(selectAgentDiscoveryErrors);
+  const agentRefreshStatus = useAppSelector(selectAgentRefreshStatus);
   const scanStatus = useAppSelector(selectScanStatus);
   const createStatus = useAppSelector(selectCreateStatus);
   const addError = useAppSelector(selectAddError);
@@ -117,6 +124,18 @@ export const AddProjectScreen = () => {
   }, [tab, target, isAgent, dispatch]);
 
   useEffect(() => () => void dispatch(resetAddFlow()), [dispatch]);
+
+  const selectedAgent = isAgent ? (agents.find((a) => a.id === target) ?? null) : null;
+  const agentOffline = selectedAgent?.status === 'offline';
+
+  const handleRefreshAgent = async () => {
+    await dispatch(refreshAgent({ agentId: target }));
+    // The daemon's next heartbeat (within its usual interval) carries the
+    // fresh snapshot — give it a moment before re-polling the read endpoint.
+    window.setTimeout(() => {
+      void dispatch(discoverAgent({ agentId: target }));
+    }, 5000);
+  };
 
   const isAdded = (candidate: string | null): boolean =>
     candidate !== null && addedPaths.includes(candidate);
@@ -224,17 +243,60 @@ export const AddProjectScreen = () => {
           {agents.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name} ({a.host})
+              {a.status === 'offline' ? ` — ${t('add.agent.offlineBadge')}` : ''}
             </option>
           ))}
         </select>
         {isAgent && (
-          <p className="text-muted-foreground text-xs">
-            {agentSnapshotAt
-              ? t('add.target.snapshotAt', {
-                  at: new Date(agentSnapshotAt).toLocaleString(i18n.language),
-                })
-              : t('add.target.noSnapshot')}
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-muted-foreground text-xs">
+              {agentSnapshotAt
+                ? t('add.target.snapshotAt', {
+                    at: new Date(agentSnapshotAt).toLocaleString(i18n.language),
+                  })
+                : t('add.target.noSnapshot')}
+            </p>
+            {agentOffline && (
+              <Badge variant="destructive">{t('add.agent.offlineBadge')}</Badge>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto p-0 text-xs"
+              disabled={agentRefreshStatus === 'loading'}
+              onClick={() => void handleRefreshAgent()}
+            >
+              {agentRefreshStatus === 'loading' && (
+                <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+              )}
+              {agentRefreshStatus === 'loading'
+                ? t('add.agent.refreshing')
+                : t('add.agent.refresh')}
+            </Button>
+          </div>
+        )}
+        {isAgent && !agentReported && (
+          <Alert data-testid="agent-not-reported">
+            <AlertDescription>
+              {t('add.agent.notReportedHint')}{' '}
+              <Link to="/fleet" className="font-medium underline-offset-4 hover:underline">
+                {t('add.agent.fleetLink')}
+              </Link>
+            </AlertDescription>
+          </Alert>
+        )}
+        {isAgent && agentReported && agentDiscoveryErrors.length > 0 && (
+          <Alert variant="destructive" data-testid="agent-discovery-errors">
+            <AlertDescription>
+              <p className="font-medium">{t('add.agent.errorsTitle')}</p>
+              <ul className="list-disc ps-4">
+                {agentDiscoveryErrors.map((e) => (
+                  <li key={e}>{e}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
@@ -256,10 +318,10 @@ export const AddProjectScreen = () => {
 
       <Tabs value={tab} onValueChange={setTab} className="gap-6">
         <TabsList aria-label={t('add.tabs.aria')} data-tour="add-source-tabs">
-          <TabsTrigger value="folders">
+          <TabsTrigger value="folders" disabled={agentOffline}>
             <FolderIcon className="size-4" aria-hidden="true" /> {t('add.tabs.folders')}
           </TabsTrigger>
-          <TabsTrigger value="docker">
+          <TabsTrigger value="docker" disabled={agentOffline}>
             <ContainerIcon className="size-4" aria-hidden="true" /> {t('add.tabs.docker')}
           </TabsTrigger>
           <TabsTrigger value="manual" disabled={isAgent}>

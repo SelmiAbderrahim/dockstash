@@ -41,6 +41,15 @@
       "snapshotAt": "Last reported {{at}}",
       "noSnapshot": "This agent hasn't reported yet — check back shortly."
     },
+    "agent": {
+      "offlineBadge": "Offline",
+      "refresh": "Refresh now",
+      "refreshing": "Refreshing…",
+      "notReportedTitle": "Agent hasn't reported yet",
+      "notReportedHint": "No snapshot received yet — check the Fleet page to confirm the agent is online.",
+      "errorsTitle": "Discovery reported problems",
+      "fleetLink": "View in Fleet"
+    },
     "tabs": {
       "aria": "Choose a source",
       "folders": "Folders",

@@ -41,6 +41,15 @@
       "snapshotAt": "Dernier rapport {{at}}",
       "noSnapshot": "Cet agent n’a pas encore transmis de données — réessayez bientôt."
     },
+    "agent": {
+      "offlineBadge": "Hors ligne",
+      "refresh": "Actualiser maintenant",
+      "refreshing": "Actualisation…",
+      "notReportedTitle": "L'agent n'a pas encore transmis de données",
+      "notReportedHint": "Aucune donnée reçue pour le moment — vérifiez sur la page Flotte que l'agent est bien en ligne.",
+      "errorsTitle": "La découverte a signalé des problèmes",
+      "fleetLink": "Voir dans Flotte"
+    },
     "tabs": {
       "aria": "Choisir une source",
       "folders": "Dossiers",

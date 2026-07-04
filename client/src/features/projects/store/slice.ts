@@ -7,6 +7,7 @@ import {
   discoverFolders,
   fetchProjects,
   fetchSchedules,
+  refreshAgent,
   runBackupNow,
   savePlan,
   saveSchedule,
@@ -49,6 +50,9 @@ export interface ProjectsState {
   agentDockerAvailable: boolean;
   agentSnapshotAt: string | null;
   agentDiscoveryStatus: LoadState;
+  agentReported: boolean;
+  agentDiscoveryErrors: string[];
+  agentRefreshStatus: LoadState;
 }
 
 const initialState: ProjectsState = {
@@ -74,6 +78,9 @@ const initialState: ProjectsState = {
   agentDockerAvailable: false,
   agentSnapshotAt: null,
   agentDiscoveryStatus: 'idle',
+  agentReported: false,
+  agentDiscoveryErrors: [],
+  agentRefreshStatus: 'idle',
 };
 
 const projectsSlice = createSlice({
@@ -168,10 +175,22 @@ const projectsSlice = createSlice({
         state.agentContainers = action.payload.containers;
         state.agentDockerAvailable = action.payload.dockerAvailable;
         state.agentSnapshotAt = action.payload.snapshotAt;
+        state.agentReported = action.payload.reported;
+        state.agentDiscoveryErrors = action.payload.errors;
       })
       .addCase(discoverAgent.rejected, (state, action) => {
         state.agentDiscoveryStatus = 'failed';
         state.addError = action.payload ?? 'Could not load agent discovery.';
+      })
+      .addCase(refreshAgent.pending, (state) => {
+        state.agentRefreshStatus = 'loading';
+      })
+      .addCase(refreshAgent.fulfilled, (state) => {
+        state.agentRefreshStatus = 'succeeded';
+      })
+      .addCase(refreshAgent.rejected, (state, action) => {
+        state.agentRefreshStatus = 'failed';
+        state.addError = action.payload ?? 'Could not request a refresh.';
       })
       .addCase(scanProject.pending, (state) => {
         state.scanStatus = 'loading';
