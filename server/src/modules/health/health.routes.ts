@@ -1,6 +1,14 @@
 import { Router } from 'express';
 import { requireAuth } from '../../shared/middleware/require-auth.js';
-import { health, metrics, projectHealth } from './health.controller.js';
+import {
+  alerts,
+  health,
+  markRead,
+  metrics,
+  overview,
+  projectHealth,
+  projectHealthDetail,
+} from './health.controller.js';
 
 /**
  * `/health` — unauthenticated liveness/readiness for external uptime monitoring.
@@ -14,3 +22,15 @@ healthRouter.get('/metrics', metrics);
 export const projectHealthRouter: Router = Router();
 projectHealthRouter.use(requireAuth);
 projectHealthRouter.get('/', projectHealth);
+
+/**
+ * Backup-health dashboard + alert center, mounted under `/api/health` AFTER
+ * `projectHealthRouter` — `GET /api/health/projects` (list) keeps its legacy
+ * handler while `/projects/:projectId` falls through to the detail here.
+ */
+export const backupHealthRouter: Router = Router();
+backupHealthRouter.use(requireAuth);
+backupHealthRouter.get('/overview', overview);
+backupHealthRouter.get('/projects/:projectId', projectHealthDetail);
+backupHealthRouter.get('/alerts', alerts);
+backupHealthRouter.post('/alerts/read', markRead);

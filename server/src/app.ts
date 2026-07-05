@@ -25,7 +25,11 @@ import { usersRouter } from './modules/users/index.js';
 import { backupsRouter } from './modules/backups/index.js';
 import { schedulerRouter } from './modules/scheduler/index.js';
 import { auditRouter } from './modules/audit/index.js';
-import { healthRouter, projectHealthRouter } from './modules/health/index.js';
+import {
+  backupHealthRouter,
+  healthRouter,
+  projectHealthRouter,
+} from './modules/health/index.js';
 import { seoRouter } from './modules/seo/index.js';
 import { recoveryRouter } from './modules/recovery/index.js';
 import { agentsRouter, agentApiRouter } from './modules/agents/index.js';
@@ -89,6 +93,9 @@ export function createApp(): Express {
 
   app.use('/api', healthRouter);
   app.use('/api/health/projects', projectHealthRouter);
+  // Backup-health dashboard + alert center (mounted after the legacy projects
+  // list so `GET /api/health/projects` keeps its handler; see health.routes).
+  app.use('/api/health', backupHealthRouter);
   // Auth routes are rate-limited: sustained cracking attempts hit 429 well
   // before they can enumerate accounts. The limiter is idempotent across
   // hot-reload restarts.

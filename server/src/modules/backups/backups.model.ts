@@ -106,6 +106,9 @@ const projectSchema = new mongoose.Schema(
       default: null,
     },
     lastRestoreDetail: { type: String, default: '' },
+    // Per-project outbound alert webhook (Pro+). '' = unset → alerts fall back
+    // to the operator-level ALERT_WEBHOOK_URL env target only.
+    alertWebhookUrl: { type: String, default: '', trim: true },
     // Lifecycle (prompt 07). A `paused` project is read-only: no new backups
     // run, but existing snapshots are retained. Set on downgrade-over-cap and
     // during lapse; cleared when the user reactivates or picks the project as

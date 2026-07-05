@@ -5,6 +5,7 @@ import { Project } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
 import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
 import { deliverAlertEmail, type AlertKind } from '../communication/index.js';
+import { recordAlert } from '../health/index.js';
 
 export type FailureKind = Exclude<AlertKind, 'heartbeat'>;
 
@@ -16,8 +17,8 @@ export interface FailureAlertInput {
 }
 
 export interface FailureAlertDeps {
-  webhookPoster?: (payload: AlertWebhookPayload) => Promise<void>;
-  /** Plan gate for the email channel — defaults to the billing entitlement. */
+  webhookPoster?: (payload: AlertWebhookPayload, url: string) => Promise<void>;
+  /** Plan gate for email + per-project webhook — defaults to billing. */
   emailAllowedFor?: (ownerId: string) => Promise<boolean>;
 }
 
@@ -30,10 +31,11 @@ export interface AlertWebhookPayload {
   failedAt: string;
 }
 
-async function defaultWebhookPoster(payload: AlertWebhookPayload): Promise<void> {
-  /* c8 ignore next -- caller only invokes this when ALERT_WEBHOOK_URL is set (see sendFailureAlert) */
-  if (!env.ALERT_WEBHOOK_URL) return;
-  const response = await fetch(env.ALERT_WEBHOOK_URL, {
+async function defaultWebhookPoster(
+  payload: AlertWebhookPayload,
+  url: string,
+): Promise<void> {
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -76,12 +78,30 @@ export async function sendFailureAlert(
       return;
     }
     const { email, locale } = await loadOwnerLocale(String(project.owner));
-    // Email alerts are a paid-plan feature; the webhook channel (operator
-    // infra) is always delivered. Gate only the email send.
-    const emailAllowed =
-      email !== null &&
-      (await (deps.emailAllowedFor ?? isEmailAlertsAllowed)(String(project.owner)));
+    // Outbound channels (email + per-project webhook) are paid-plan features;
+    // the operator-level env webhook and the in-app alert row are not gated.
+    const paidAlertsAllowed = await (deps.emailAllowedFor ?? isEmailAlertsAllowed)(
+      String(project.owner),
+    );
+    const emailAllowed = email !== null && paidAlertsAllowed;
     const lastGoodAt = project.lastSuccessAt ?? null;
+
+    // In-app alert row — always written, never fails the job path.
+    try {
+      await recordAlert({
+        owner: String(project.owner),
+        projectId: String(project._id),
+        projectName: project.name,
+        kind: input.kind,
+        severity: 'critical',
+        error: input.error,
+      });
+    } catch (err) {
+      logger.error(
+        { err, projectId: input.projectId, kind: input.kind },
+        'alert row persist failed',
+      );
+    }
     const webhookPayload: AlertWebhookPayload = {
       kind: input.kind,
       projectId: String(project._id),
@@ -111,10 +131,17 @@ export async function sendFailureAlert(
       }
     }
 
-    if (env.ALERT_WEBHOOK_URL) {
-      const poster = deps.webhookPoster ?? defaultWebhookPoster;
+    // Webhook fan-out: the per-project URL (Pro+) plus the operator-level env
+    // target. Deduped so the same URL is never posted twice.
+    const webhookTargets = new Set<string>();
+    if (project.alertWebhookUrl && paidAlertsAllowed) {
+      webhookTargets.add(project.alertWebhookUrl);
+    }
+    if (env.ALERT_WEBHOOK_URL) webhookTargets.add(env.ALERT_WEBHOOK_URL);
+    const poster = deps.webhookPoster ?? defaultWebhookPoster;
+    for (const url of webhookTargets) {
       try {
-        await poster(webhookPayload);
+        await poster(webhookPayload, url);
       } catch (err) {
         logger.error(
           { err, projectId: input.projectId, kind: input.kind },

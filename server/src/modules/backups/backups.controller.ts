@@ -2,6 +2,7 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import {
+  alertsConfigSchema,
   assignAgentSchema,
   createProjectSchema,
   projectIdParamsSchema,
@@ -14,6 +15,7 @@ import {
   loadOwnedProject,
   scanProjectPath,
   updateProjectAgent,
+  updateProjectAlerts,
   updateProjectPlan,
 } from './backups.service.js';
 import {
@@ -22,7 +24,10 @@ import {
   makeDiscoveryDockerClient,
 } from './backups.discover.js';
 import { serializeProject } from './backups.serialize.js';
-import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
+import {
+  assertAlertsAllowed,
+  assertMultiVpsAllowed,
+} from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
 
 export const scan: RequestHandler = asyncHandler(async (req, res) => {
@@ -73,6 +78,18 @@ export const patchPlan: RequestHandler = asyncHandler(async (req, res) => {
     { paths: plan.paths, databases: plan.databases.map((d) => ({ ...d, enabled: d.enabled ?? true })), configs: plan.configs },
     { t: req.t },
   );
+  res.status(200).json({ project: serializeProject(project) });
+});
+
+/** Per-project outbound alert webhook (Pro+ — same tier as email alerts). */
+export const patchAlerts: RequestHandler = asyncHandler(async (req, res) => {
+  const { projectId } = projectIdParamsSchema.parse(req.params);
+  const { webhookUrl } = alertsConfigSchema.parse(req.body);
+  const userId = requireUserId(req.user);
+  await assertAlertsAllowed(userId, { t: req.t });
+  const project = await updateProjectAlerts(projectId, userId, webhookUrl, {
+    t: req.t,
+  });
   res.status(200).json({ project: serializeProject(project) });
 });
 

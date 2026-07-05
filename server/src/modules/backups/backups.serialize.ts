@@ -28,6 +28,8 @@ export interface PublicProject {
   lastRestoreAt: string | null;
   lastRestoreStatus: 'pass' | 'fail' | null;
   lastRestoreDetail: string;
+  /** Per-project outbound alert webhook (Pro+); '' = unset. */
+  alertWebhookUrl: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -63,6 +65,7 @@ export function serializeProject(project: ProjectHydrated): PublicProject {
       : null,
     lastRestoreStatus: (project.lastRestoreStatus ?? null) as 'pass' | 'fail' | null,
     lastRestoreDetail: project.lastRestoreDetail ?? '',
+    alertWebhookUrl: project.alertWebhookUrl ?? '',
     createdAt: new Date((project as unknown as { createdAt: Date }).createdAt).toISOString(),
     updatedAt: new Date((project as unknown as { updatedAt: Date }).updatedAt).toISOString(),
   };

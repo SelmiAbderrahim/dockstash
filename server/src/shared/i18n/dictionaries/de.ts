@@ -53,6 +53,9 @@ export const de: DictionaryShape = {
       invalid: 'Dieser Bestätigungscode ist ungültig oder abgelaufen.',
       tooManyAttempts: 'Zu viele falsche Codes. Bitte melden Sie sich erneut an, um einen neuen Code zu erhalten.',
     },
+    oauth: {
+      providerNotEnabled: 'Dieser Anmeldeanbieter ist nicht aktiviert.',
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const de: DictionaryShape = {
       restoreDrillsLocked: 'Automatische Wiederherstellungstests sind in den Tarifen Pro und Business verfügbar.',
       pitrLocked: 'Point-in-Time-Wiederherstellung ist in den Tarifen Pro und Business verfügbar.',
       mirrorLocked: 'Der Spiegelmodus ist im Business-Tarif verfügbar.',
+      alertsLocked: 'Alarmkanäle (E-Mail und Webhooks) sind in den Tarifen Pro und Business verfügbar.',
       multiVpsLocked: 'Die Multi-VPS-Flottenansicht ist im Business-Tarif verfügbar.',
       projectPaused: 'Dieses Projekt ist pausiert. Reaktivieren Sie es oder upgraden Sie, um Backups auszuführen.',
       selectionInvalid: 'Wählen Sie zwischen einem und {{cap}} Projekten aus, die aktiv bleiben sollen.',
@@ -190,6 +194,11 @@ export const de: DictionaryShape = {
       snapshotsFailed: 'Snapshots konnten nicht aufgelistet werden: {{message}}',
       noSnapshotBeforeTs: 'Kein Snapshot bei oder vor {{ts}} vorhanden.',
       restoreFailed: 'Wiederherstellung fehlgeschlagen: {{message}}',
+      restoreSnapshotNotFound: 'Snapshot {{snapshotId}} wurde im Repository dieses Projekts nicht gefunden.',
+      restoreUnsupportedEngine: 'Die In-Place-Wiederherstellung wird für {{type}} noch nicht unterstützt. Stellen Sie an einem neuen Ort wieder her und laden Sie das Artefakt manuell.',
+      restoreNeedsDocker: 'Die Datenbank-Wiederherstellung benötigt die Docker-Laufzeit; sie ist auf diesem Server nicht konfiguriert.',
+      restoreContainerNotRunning: 'Container {{container}} läuft nicht — starten Sie ihn und versuchen Sie die Wiederherstellung erneut.',
+      restorePathOutsideRoots: 'Die Snapshot-Inhalte ({{path}}) liegen außerhalb der erlaubten Projektverzeichnisse; stellen Sie stattdessen an einem neuen Ort wieder her.',
     },
     success: {
       backupComplete: 'Backup erfolgreich abgeschlossen.',

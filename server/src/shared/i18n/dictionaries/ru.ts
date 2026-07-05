@@ -53,6 +53,9 @@ export const ru: DictionaryShape = {
       invalid: 'Этот код подтверждения недействителен или истёк.',
       tooManyAttempts: 'Слишком много неверных кодов. Войдите снова, чтобы получить новый код.',
     },
+    oauth: {
+      providerNotEnabled: 'Этот способ входа не включён.',
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const ru: DictionaryShape = {
       restoreDrillsLocked: 'Автоматические проверки восстановления доступны в тарифах Pro и Business.',
       pitrLocked: 'Восстановление на момент времени доступно в тарифах Pro и Business.',
       mirrorLocked: 'Режим зеркалирования доступен в тарифе Business.',
+      alertsLocked: 'Каналы оповещений (почта и вебхуки) доступны в тарифах Pro и Business.',
       multiVpsLocked: 'Просмотр парка нескольких VPS доступен в тарифе Business.',
       projectPaused: 'Проект приостановлен. Возобновите или обновите тариф, чтобы запускать резервное копирование.',
       selectionInvalid: 'Выберите от одного до {{cap}} проектов, которые останутся активными.',
@@ -190,6 +194,11 @@ export const ru: DictionaryShape = {
       snapshotsFailed: 'Не удалось получить список снимков: {{message}}',
       noSnapshotBeforeTs: 'Нет снимка на {{ts}} или ранее.',
       restoreFailed: 'Восстановление не удалось: {{message}}',
+      restoreSnapshotNotFound: 'Снимок {{snapshotId}} не найден в репозитории этого проекта.',
+      restoreUnsupportedEngine: 'Восстановление на месте пока не поддерживается для {{type}}. Восстановите в новое расположение и загрузите артефакт вручную.',
+      restoreNeedsDocker: 'Для восстановления базы данных требуется среда Docker; она не настроена на этом сервере.',
+      restoreContainerNotRunning: 'Контейнер {{container}} не запущен — запустите его и повторите восстановление.',
+      restorePathOutsideRoots: 'Содержимое снимка ({{path}}) находится вне разрешённых каталогов проекта; восстановите в новое расположение.',
     },
     success: {
       backupComplete: 'Резервное копирование успешно завершено.',

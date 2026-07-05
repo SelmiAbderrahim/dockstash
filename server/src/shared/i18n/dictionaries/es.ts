@@ -53,6 +53,9 @@ export const es: DictionaryShape = {
       invalid: 'Ese código de verificación no es válido o ha caducado.',
       tooManyAttempts: 'Demasiados códigos incorrectos. Inicia sesión de nuevo para obtener un código nuevo.',
     },
+    oauth: {
+      providerNotEnabled: 'Ese proveedor de inicio de sesión no está habilitado.',
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const es: DictionaryShape = {
       restoreDrillsLocked: 'Las pruebas de restauración automáticas están disponibles en los planes Pro y Business.',
       pitrLocked: 'La restauración a un punto en el tiempo está disponible en los planes Pro y Business.',
       mirrorLocked: 'El modo espejo está disponible en el plan Business.',
+      alertsLocked: 'Los canales de alerta (correo y webhooks) están disponibles en los planes Pro y Business.',
       multiVpsLocked: 'La vista de flota multi-VPS está disponible en el plan Business.',
       projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
       selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
@@ -190,6 +194,11 @@ export const es: DictionaryShape = {
       snapshotsFailed: 'No se pudieron listar las instantáneas: {{message}}',
       noSnapshotBeforeTs: 'No existe ninguna instantánea en {{ts}} o antes.',
       restoreFailed: 'La restauración falló: {{message}}',
+      restoreSnapshotNotFound: 'La instantánea {{snapshotId}} no se encontró en el repositorio de este proyecto.',
+      restoreUnsupportedEngine: 'La restauración en el lugar aún no es compatible con {{type}}. Restaure en una nueva ubicación y cargue el artefacto manualmente.',
+      restoreNeedsDocker: 'La restauración de base de datos requiere el entorno Docker; no está configurado en este servidor.',
+      restoreContainerNotRunning: 'El contenedor {{container}} no está en ejecución — inícielo y reintente la restauración.',
+      restorePathOutsideRoots: 'El contenido de la instantánea ({{path}}) está fuera de los directorios de proyecto permitidos; restaure en una nueva ubicación.',
     },
     success: {
       backupComplete: 'Copia de seguridad completada con éxito.',

@@ -159,6 +159,19 @@ export async function updateProjectAgent(
   return project;
 }
 
+/** Set/clear the per-project outbound alert webhook ('' = cleared). */
+export async function updateProjectAlerts(
+  projectId: string,
+  userId: string,
+  webhookUrl: string,
+  deps: UpdatePlanDeps = {},
+): Promise<ProjectHydrated> {
+  const project = await loadOwnedProject(projectId, userId, deps);
+  project.alertWebhookUrl = webhookUrl;
+  await project.save();
+  return project;
+}
+
 export interface ScanServiceDeps {
   t?: Translator;
   scanner?: typeof scanProject;

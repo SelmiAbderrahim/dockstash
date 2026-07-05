@@ -7,6 +7,7 @@ import {
   listContainers,
   listFolders,
   patchAgent,
+  patchAlerts,
   patchPlan,
   scan,
 } from './backups.controller.js';
@@ -28,5 +29,6 @@ backupsRouter.get('/:projectId/snapshots', listProjectSnapshots);
 backupsRouter.get('/:projectId/pitr', resolvePitr);
 backupsRouter.patch('/:projectId/plan', patchPlan);
 backupsRouter.patch('/:projectId/agent', patchAgent);
+backupsRouter.patch('/:projectId/alerts', patchAlerts);
 backupsRouter.post('/:projectId/check', check);
 backupsRouter.post('/:projectId/drill', drill);

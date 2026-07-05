@@ -183,6 +183,25 @@ export async function isEmailAlertsAllowed(userId: string): Promise<boolean> {
 }
 
 /**
+ * Enforce the outbound-alert-channel flag (email/webhook, Pro+ — same
+ * `emailAlerts` entitlement). Throws 403 `billing.entitlements.alertsLocked`
+ * so the client can render an upgrade prompt on the webhook settings form.
+ */
+export async function assertAlertsAllowed(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<ResolvedEntitlements> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  if (!resolved.entitlements.emailAlerts) {
+    throw HttpError.forbidden(t('billing.entitlements.alertsLocked'), {
+      reason: 'alertsLocked',
+    });
+  }
+  return resolved;
+}
+
+/**
  * Enforce the multi-VPS fleet feature (Business). Throws 403
  * `billing.entitlements.multiVpsLocked` for tiers without it.
  */

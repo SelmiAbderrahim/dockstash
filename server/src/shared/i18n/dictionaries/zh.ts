@@ -53,6 +53,9 @@ export const zh: DictionaryShape = {
       invalid: '该验证码无效或已过期。',
       tooManyAttempts: '错误验证码次数过多。请重新登录以获取新验证码。',
     },
+    oauth: {
+      providerNotEnabled: '该登录方式未启用。',
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const zh: DictionaryShape = {
       restoreDrillsLocked: '自动恢复演练在 Pro 和 Business 套餐中可用。',
       pitrLocked: '时间点恢复在 Pro 和 Business 套餐中可用。',
       mirrorLocked: '镜像模式在 Business 套餐中可用。',
+      alertsLocked: '警报通道（邮件和 Webhook）在 Pro 和 Business 套餐中可用。',
       multiVpsLocked: '多 VPS 集群视图在 Business 套餐中可用。',
       projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
       selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
@@ -190,6 +194,11 @@ export const zh: DictionaryShape = {
       snapshotsFailed: '无法列出快照：{{message}}',
       noSnapshotBeforeTs: '在 {{ts}} 或之前不存在快照。',
       restoreFailed: '恢复失败：{{message}}',
+      restoreSnapshotNotFound: '在此项目的仓库中未找到快照 {{snapshotId}}。',
+      restoreUnsupportedEngine: '{{type}} 暂不支持原地恢复。请恢复到新位置并手动加载制品。',
+      restoreNeedsDocker: '数据库恢复需要 Docker 运行时；本服务器未配置。',
+      restoreContainerNotRunning: '容器 {{container}} 未运行 — 请启动后重试恢复。',
+      restorePathOutsideRoots: '快照内容（{{path}}）不在允许的项目目录内；请改为恢复到新位置。',
     },
     success: {
       backupComplete: '备份已成功完成。',

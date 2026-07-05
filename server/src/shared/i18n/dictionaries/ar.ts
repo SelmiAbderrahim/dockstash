@@ -53,6 +53,9 @@ export const ar: DictionaryShape = {
       invalid: 'رمز التحقق غير صالح أو انتهت صلاحيته.',
       tooManyAttempts: 'عدد كبير جدًا من الرموز الخاطئة. يرجى تسجيل الدخول مرة أخرى للحصول على رمز جديد.',
     },
+    oauth: {
+      providerNotEnabled: 'مزوّد تسجيل الدخول هذا غير مفعّل.',
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const ar: DictionaryShape = {
       restoreDrillsLocked: 'اختبارات الاستعادة التلقائية متاحة في خطط Pro وBusiness.',
       pitrLocked: 'الاستعادة إلى نقطة زمنية متاحة في خطط Pro وBusiness.',
       mirrorLocked: 'وضع النسخ المتطابق متاح في خطة Business.',
+      alertsLocked: 'قنوات التنبيه (البريد الإلكتروني وWebhooks) متاحة في خطط Pro وBusiness.',
       multiVpsLocked: 'عرض أسطول متعدد الخوادم متاح في خطة Business.',
       projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
       selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
@@ -190,6 +194,11 @@ export const ar: DictionaryShape = {
       snapshotsFailed: 'تعذّر سرد اللقطات: {{message}}',
       noSnapshotBeforeTs: 'لا توجد لقطة عند {{ts}} أو قبلها.',
       restoreFailed: 'فشلت الاستعادة: {{message}}',
+      restoreSnapshotNotFound: 'لم يتم العثور على اللقطة {{snapshotId}} في مستودع هذا المشروع.',
+      restoreUnsupportedEngine: 'الاستعادة في المكان غير مدعومة بعد لـ {{type}}. استعد إلى موقع جديد وحمّل الملف يدوياً.',
+      restoreNeedsDocker: 'تتطلب استعادة قاعدة البيانات بيئة Docker؛ وهي غير مهيأة على هذا الخادم.',
+      restoreContainerNotRunning: 'الحاوية {{container}} متوقفة — شغّلها ثم أعد محاولة الاستعادة.',
+      restorePathOutsideRoots: 'محتوى اللقطة ({{path}}) خارج أدلة المشروع المسموح بها؛ استعد إلى موقع جديد بدلاً من ذلك.',
     },
     success: {
       backupComplete: 'اكتمل النسخ الاحتياطي بنجاح.',

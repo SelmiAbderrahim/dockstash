@@ -53,6 +53,9 @@ export const fr: DictionaryShape = {
       invalid: 'Ce code de vérification est invalide ou a expiré.',
       tooManyAttempts: 'Trop de codes incorrects. Veuillez vous reconnecter pour recevoir un nouveau code.',
     },
+    oauth: {
+      providerNotEnabled: "Ce fournisseur de connexion n'est pas activé.",
+    },
   },
   billing: {
     checkout: {
@@ -77,6 +80,7 @@ export const fr: DictionaryShape = {
       restoreDrillsLocked: 'Les tests de restauration automatiques sont disponibles avec les offres Pro et Business.',
       pitrLocked: 'La restauration à un instant donné est disponible avec les offres Pro et Business.',
       mirrorLocked: 'Le mode miroir est disponible avec l\'offre Business.',
+      alertsLocked: 'Les canaux d\'alerte (e-mail et webhooks) sont disponibles avec les offres Pro et Business.',
       multiVpsLocked: 'La vue de flotte multi-VPS est disponible avec l\'offre Business.',
       projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
       selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
@@ -190,6 +194,11 @@ export const fr: DictionaryShape = {
       snapshotsFailed: 'Impossible de lister les instantanés : {{message}}',
       noSnapshotBeforeTs: 'Aucun instantané n\'existe à {{ts}} ou avant.',
       restoreFailed: 'Échec de la restauration : {{message}}',
+      restoreSnapshotNotFound: 'Le snapshot {{snapshotId}} est introuvable dans le dépôt de ce projet.',
+      restoreUnsupportedEngine: 'La restauration en place n’est pas encore prise en charge pour {{type}}. Restaurez vers un nouvel emplacement et chargez l’artefact manuellement.',
+      restoreNeedsDocker: 'La restauration de base de données nécessite l’environnement Docker ; il n’est pas configuré sur ce serveur.',
+      restoreContainerNotRunning: 'Le conteneur {{container}} n’est pas en cours d’exécution — démarrez-le puis relancez la restauration.',
+      restorePathOutsideRoots: 'Le contenu du snapshot ({{path}}) est hors des répertoires de projet autorisés ; restaurez plutôt vers un nouvel emplacement.',
     },
     success: {
       backupComplete: 'Sauvegarde terminée avec succès.',

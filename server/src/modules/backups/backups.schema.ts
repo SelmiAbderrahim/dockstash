@@ -72,6 +72,27 @@ export const pitrQuerySchema = z.object({
 
 export const runDrillSchema = z.object({}).default({});
 
+/**
+ * `PATCH /:projectId/alerts` — per-project outbound alert webhook (Pro+).
+ * Empty string / null clears it (fall back to the operator-level env target).
+ */
+export const alertsConfigSchema = z.object({
+  webhookUrl: z
+    .union([
+      z
+        .string()
+        .url()
+        .max(2048)
+        .refine((v) => /^https?:\/\//i.test(v), {
+          message: 'webhook must be http(s)',
+        }),
+      z.literal(''),
+      z.null(),
+    ])
+    .transform((v) => v ?? ''),
+});
+export type AlertsConfigInput = z.infer<typeof alertsConfigSchema>;
+
 /** Assign the project to a fleet agent; null = run on the local server. */
 export const assignAgentSchema = z.object({
   agentId: z

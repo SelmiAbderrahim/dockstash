@@ -5,6 +5,7 @@ import { Project, type ProjectHydrated } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
 import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
 import { deliverAlertEmail } from '../communication/index.js';
+import { recordAlert } from '../health/index.js';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -66,6 +67,21 @@ async function sendHeartbeatAlertFor(
   emailAllowedFor: (ownerId: string) => Promise<boolean>,
 ): Promise<boolean> {
   try {
+    // In-app alert row — written for every tier, before the gated email.
+    try {
+      await recordAlert({
+        owner: String(project.owner),
+        projectId: String(project._id),
+        projectName: project.name,
+        kind: 'heartbeat',
+        severity: 'warning',
+      });
+    } catch (err) {
+      logger.error(
+        { err, projectId: String(project._id) },
+        'heartbeat alert row persist failed',
+      );
+    }
     const user = await User.findById(project.owner);
     // Email alerts are a paid-plan feature — skip the send (as if no address)
     // for tiers without it. The stall is still recorded/deduped as handled.

@@ -427,6 +427,106 @@ describe('runHeartbeatSweep', () => {
   });
 });
 
+describe('alert center persistence + per-project webhook', () => {
+  it('persists a critical Alert row on job failure — every tier', async () => {
+    const { Alert } = await import('../health/index.js');
+    const { user, project } = await seedProject({ name: 'row-proj' });
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'boom-row' },
+      { emailAllowedFor: async () => false }, // free tier still gets the row
+    );
+    const rows = await Alert.find({ owner: user._id });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      projectName: 'row-proj',
+      kind: 'backup',
+      severity: 'critical',
+      error: 'boom-row',
+      readAt: null,
+    });
+  });
+
+  it('persists a warning Alert row on heartbeat stall', async () => {
+    const { Alert } = await import('../health/index.js');
+    const now = new Date('2027-02-01T00:00:00Z');
+    const stale = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const { user } = await seedProject({ lastSuccessAt: stale });
+    await runHeartbeatSweep({ now, thresholdHours: 24 });
+    const rows = await Alert.find({ owner: user._id });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ kind: 'heartbeat', severity: 'warning' });
+  });
+
+  it('POSTs to the per-project webhook when the plan allows it', async () => {
+    const { project } = await seedProject();
+    project.alertWebhookUrl = 'https://project.example/hook';
+    await project.save();
+    const posts: Array<{ url: string }> = [];
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'e' },
+      {
+        webhookPoster: async (_payload, url) => {
+          posts.push({ url });
+        },
+      },
+    );
+    expect(posts.map((p) => p.url)).toEqual(['https://project.example/hook']);
+  });
+
+  it('skips the per-project webhook for tiers without alert channels', async () => {
+    const { project } = await seedProject();
+    project.alertWebhookUrl = 'https://project.example/hook';
+    await project.save();
+    const posts: string[] = [];
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'e' },
+      {
+        emailAllowedFor: async () => false,
+        webhookPoster: async (_payload, url) => {
+          posts.push(url);
+        },
+      },
+    );
+    expect(posts).toHaveLength(0);
+  });
+
+  it('dedupes when the project webhook equals the operator env webhook', async () => {
+    (env as { ALERT_WEBHOOK_URL?: string }).ALERT_WEBHOOK_URL = 'https://same.example';
+    const { project } = await seedProject();
+    project.alertWebhookUrl = 'https://same.example';
+    await project.save();
+    const posts: string[] = [];
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'e' },
+      {
+        webhookPoster: async (_payload, url) => {
+          posts.push(url);
+        },
+      },
+    );
+    expect(posts).toEqual(['https://same.example']);
+    (env as { ALERT_WEBHOOK_URL?: string }).ALERT_WEBHOOK_URL = originalWebhook;
+  });
+
+  it('fans out to both targets when project and env webhooks differ', async () => {
+    (env as { ALERT_WEBHOOK_URL?: string }).ALERT_WEBHOOK_URL = 'https://ops.example';
+    const { project } = await seedProject();
+    project.alertWebhookUrl = 'https://project.example/hook';
+    await project.save();
+    const posts: string[] = [];
+    await sendFailureAlert(
+      { projectId: String(project._id), kind: 'backup', error: 'e' },
+      {
+        webhookPoster: async (_payload, url) => {
+          posts.push(url);
+        },
+      },
+    );
+    expect(posts.sort()).toEqual(['https://ops.example', 'https://project.example/hook']);
+    (env as { ALERT_WEBHOOK_URL?: string }).ALERT_WEBHOOK_URL = originalWebhook;
+  });
+});
+
 afterEach(() => {
   vi.restoreAllMocks();
 });

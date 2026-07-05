@@ -51,6 +51,9 @@ export const en = {
       invalid: 'That verification code is invalid or has expired.',
       tooManyAttempts: 'Too many incorrect codes. Please sign in again to get a new code.',
     },
+    oauth: {
+      providerNotEnabled: 'That sign-in provider is not enabled.',
+    },
   },
   billing: {
     checkout: {
@@ -75,6 +78,7 @@ export const en = {
       restoreDrillsLocked: 'Automated restore drills are available on Pro and Business plans.',
       pitrLocked: 'Point-in-time restore is available on Pro and Business plans.',
       mirrorLocked: 'Mirror mode is available on the Business plan.',
+      alertsLocked: 'Alert channels (email and webhooks) are available on Pro and Business plans.',
       multiVpsLocked: 'Multi-VPS fleet view is available on the Business plan.',
       projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
       selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
@@ -188,6 +192,11 @@ export const en = {
       snapshotsFailed: 'Could not list snapshots: {{message}}',
       noSnapshotBeforeTs: 'No snapshot exists at or before {{ts}}.',
       restoreFailed: 'Restore failed: {{message}}',
+      restoreSnapshotNotFound: 'Snapshot {{snapshotId}} was not found in this project’s repository.',
+      restoreUnsupportedEngine: 'In-place restore is not supported for {{type}} yet. Restore to a new location and load the artifact manually.',
+      restoreNeedsDocker: 'Database restore requires the Docker runtime; it is not configured on this server.',
+      restoreContainerNotRunning: 'Container {{container}} is not running — start it and retry the restore.',
+      restorePathOutsideRoots: 'Snapshot contents ({{path}}) are outside the allowed project directories; restore to a new location instead.',
     },
     success: {
       backupComplete: 'Backup completed successfully.',
