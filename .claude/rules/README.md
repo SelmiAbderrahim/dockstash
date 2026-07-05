@@ -2,11 +2,12 @@
 
 Governance rules for the MERN starter project. Each rule is a focused `.md` file in this directory.
 
-## Kept Rules (12)
+## Kept Rules (13)
 
 | Rule | Source | Summary |
 |------|--------|---------|
 | `git-destructive-commands.md` | ported as-is | Never run destructive git commands without explicit per-turn user confirmation |
+| `docker-only-commands.md` | authored | Every build/test/runtime command runs inside Docker (`node:20-bookworm` dev tooling, `docker compose` stack ops); bare host `npm`/`node` forbidden |
 | `dockstash-design-system.md` | authored | Visual source of truth: monochrome shadcn tokens, serif-accent headlines, flat cards, inverted CTA bands (packaged as the `dockstash-design` skill) |
 | `environment-variables.md` | ported + adapted | Root `.env` only; MERN-typical vars (`MONGODB_URI`, `JWT_SECRET`, `PORT`, etc.) |
 | `site-url-env-pattern.md` | ported + adapted | Never hardcode URLs; derive from `CLIENT_URL` / `SERVER_URL` env vars |

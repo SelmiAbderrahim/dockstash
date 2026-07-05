@@ -77,36 +77,40 @@ mern-starter/
 
 ## 4. How to Run
 
+**ALL commands run inside Docker — never on the host.** See
+`.claude/rules/docker-only-commands.md` (strict rule). Dev tooling uses
+`node:20-bookworm` for CI parity; the stack runs via `docker compose`.
+
 ```bash
+# Full stack (api, web, mongo, redis, docker-socket-proxy)
+docker compose up -d --build
+docker compose ps                    # all services should report `healthy`
+
 # Install dependencies
-npm --prefix client install
-npm --prefix server install
-
-# Start the server (port 8080)
-npm --prefix server run dev          # tsx watch src/server.ts
-
-# Start the client (port 3000)
-npm --prefix client run dev          # vite
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm install
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm install
 
 # Type-check both sides
-npm --prefix client run typecheck
-npm --prefix server run typecheck
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run typecheck
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run typecheck
 
 # Lint
-npm --prefix client run lint
-npm --prefix server run lint
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run lint
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run lint
 
 # Run all tests
-npm --prefix server test
-npm --prefix client test
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm test
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm test
 
 # Run a single test file
-npm --prefix server exec -- vitest run src/modules/auth/auth.test.ts
-npm --prefix client exec -- vitest run src/features/auth/store/slice.test.ts
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run src/modules/auth/auth.test.ts
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm \
+  npx vitest run src/features/auth/store/slice.test.ts
 
 # Production build
-npm --prefix server run build        # tsup → dist/server.cjs
-npm --prefix client run build        # tsc --noEmit && vite build
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run build   # tsup → dist/server.cjs
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run build   # tsc --noEmit && vite build
 ```
 
 **Environment variables** — copy `.env.example` to `.env` at the repo root (never in subdirectories):
@@ -152,6 +156,9 @@ VITE_SOCKET_URL=http://localhost:8080         # falls back to / if omitted
 ## 5. Conventions
 
 These are the load-bearing rules. Each links to the full rule file in `.claude/rules/`.
+
+- **Docker-only commands.** Every build/test/runtime command runs inside Docker — never bare `npm`/`node`/`npx`/`tsc`/`vitest` on the host. Dev tooling via `docker run --rm -v "$PWD/<side>":/app -w /app node:20-bookworm <cmd>` (CI parity); stack ops via `docker compose`. Host allows only `git`, `docker`, `gh`, and read-only file inspection.
+  → `.claude/rules/docker-only-commands.md`
 
 - **Feature-module isolation.** Client features live under `client/src/features/<name>/`; server modules under `server/src/modules/<name>/`. Cross-feature imports must go through `shared/` or each module's `index.ts` public API. Never reach into another feature's internals directly.
   → `.claude/rules/mern-feature-modules.md`

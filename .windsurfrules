@@ -24,8 +24,10 @@ MongoDB + Express + React + Node. Client uses Webpack/React 15 today; modernizat
 
 - **Destructive git commands require explicit confirmation** — `git stash`, `git reset --hard`, `git clean -f`, `git commit --amend`, `git push --force`, and similar must never run without per-turn user approval. → `.claude/rules/git-destructive-commands.md`
 
+- **Docker-only commands** — Every build/test/runtime command runs inside Docker; never bare `npm`/`node`/`npx`/`tsc`/`vitest` on the host. Dev tooling via `docker run --rm -v "$PWD/<side>":/app -w /app node:20-bookworm <cmd>`; stack ops via `docker compose`. Host allows only `git`, `docker`, `gh`, read-only file inspection. → `.claude/rules/docker-only-commands.md`
+
 - **Spec-driven development for non-trivial features** — Start with a spec (problem statement, acceptance criteria, edge cases) before implementation. Bug fixes and one-liners skip the full workflow. → `.claude/rules/spec-driven-development.md`
 
 ## What this repo does NOT do
 
-No Docker, no SSR, no monorepo tooling, no GraphQL, no tRPC, no Postgres/Redis, no CSS-in-JS, no design system. REST + Sass + hand-written components.
+No monorepo tooling, no GraphQL, no tRPC, no Postgres. Docker-first (compose stack at repo root; all commands run in containers), marketing surface is SSR (Vite native), Tailwind v4 + shadcn/ui monochrome design system, Redis reserved for BullMQ. See CLAUDE.md §9 for the full, current list.
