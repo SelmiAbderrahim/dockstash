@@ -45,6 +45,8 @@ export interface SeoProps {
   localized?: boolean;
   /** Absolute OG image URL. Defaults to the site image. */
   image?: string;
+  /** Alt text for the OG image (accessibility + AEO signal). */
+  imageAlt?: string;
   type?: 'website' | 'article';
   /** When true, emit robots noindex (thin/low-data programmatic pages). */
   noindex?: boolean;
@@ -69,6 +71,7 @@ export const Seo = ({
   locale,
   localized = true,
   image = DEFAULT_OG_IMAGE,
+  imageAlt = `${SITE_NAME} — Docker backup that actually restores`,
   type = 'website',
   noindex = false,
   datePublished,
@@ -79,12 +82,21 @@ export const Seo = ({
   // the un-prefixed English URL, and the document language is 'en'.
   const contentLocale: SupportedLocale = localized ? locale : DEFAULT_LOCALE;
   const canonical = canonicalFor(basePath, contentLocale);
-  const alternates = localized ? hreflangAlternates(basePath) : [];
+  // hreflang cluster is emitted on every SSR route (including programmatic
+  // English-only pages served at locale-prefixed URLs). Google groups pages by
+  // hreflang and reconciles the group with canonical — the English canonical
+  // stays authoritative for programmatic pages while the cluster tells AI
+  // crawlers and search engines that every locale-prefix URL belongs to the
+  // same content.
+  const alternates = hreflangAlternates(basePath);
   // og:locale:alternate — real hreflang locales other than the active one and
-  // x-default, so social crawlers surface the localized variants.
-  const ogAlternateLocales = alternates
-    .filter((alt) => alt.hrefLang !== 'x-default' && alt.hrefLang !== contentLocale)
-    .map((alt) => alt.hrefLang);
+  // x-default, so social crawlers surface the localized variants. Only emit
+  // for pages whose content is actually translated (localized=true).
+  const ogAlternateLocales = localized
+    ? alternates
+        .filter((alt) => alt.hrefLang !== 'x-default' && alt.hrefLang !== contentLocale)
+        .map((alt) => alt.hrefLang)
+    : [];
   const jsonLdDocs = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
@@ -125,6 +137,7 @@ export const Seo = ({
       {/* All OG artwork is authored at the standard 1200×630 (scripts/optimize-og-image.mjs enforces it for the default). */}
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content={imageAlt} />
       <meta property="og:locale" content={contentLocale} />
       {ogAlternateLocales.map((alt) => (
         <meta key={alt} property="og:locale:alternate" content={alt} />
@@ -142,6 +155,7 @@ export const Seo = ({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+      <meta name="twitter:image:alt" content={imageAlt} />
 
       {jsonLdDocs.map((doc, index) => (
         <script key={index} type="application/ld+json">

@@ -184,8 +184,8 @@ export const Login = () => {
                 <p className="text-destructive text-sm">{errors.password.message}</p>
               ) : null}
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? t('login.submitting') : t('login.submit')}
+            <Button type="submit" loading={isSubmitting} className="w-full">
+              {t('login.submit')}
             </Button>
           </form>
           <Button asChild variant="link" className="mt-2 px-0">

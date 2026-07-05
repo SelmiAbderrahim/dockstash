@@ -63,6 +63,7 @@ export const VsPage = () => {
   const basePath = `/vs/${competitor.slug}`;
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.webPage(
       `Dockstash vs ${competitor.name}`,
       `Head-to-head comparison of Dockstash and ${competitor.name} for Docker backups.`,

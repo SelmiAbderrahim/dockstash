@@ -16,7 +16,7 @@ type JsonLd = Record<string, unknown>;
  * datasets carry a finer-grained `lastReviewed` (YYYY-MM) that overrides this
  * per page via `monthToIso`.
  */
-export const SITE_LAST_UPDATED = '2026-07-01';
+export const SITE_LAST_UPDATED = '2026-07-05';
 
 /** Expand a "YYYY-MM" review month to an ISO date at the first of the month. */
 export function monthToIso(month: string): string {
@@ -52,6 +52,17 @@ export function website(): JsonLd {
     name: SITE_NAME,
     publisher: { '@id': `${SITE_URL}/#organization` },
   };
+}
+
+/**
+ * Site-wide entity cluster (Organization + WebSite) for E-E-A-T signal parity.
+ * Emitted on every marketing surface so AI crawlers and search engines can
+ * resolve `#organization` / `#website` `@id` references from per-page nodes
+ * (WebPage, Article, BreadcrumbList) regardless of which page the crawler
+ * hits first. Cheap: two small nodes, JSON-LD is deduplicated by `@id`.
+ */
+export function siteEntities(): JsonLd[] {
+  return [organization(), website()];
 }
 
 export interface SoftwareOffer {

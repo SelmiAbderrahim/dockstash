@@ -204,8 +204,13 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
               <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 {t('fleet.dialog.cancel')}
               </Button>
-              <Button type="submit" data-tour="agent-register-submit" disabled={!canSubmit || saving}>
-                {saving ? t('fleet.dialog.submitting') : t('fleet.dialog.submit')}
+              <Button
+                type="submit"
+                data-tour="agent-register-submit"
+                disabled={!canSubmit}
+                loading={saving}
+              >
+                {t('fleet.dialog.submit')}
               </Button>
             </DialogFooter>
           </form>

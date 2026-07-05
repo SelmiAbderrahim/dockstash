@@ -77,6 +77,17 @@ describe('subscribeToJobLogs', () => {
     expect(fake.disconnect).toHaveBeenCalled();
   });
 
+  it('falls back to the "/" socket URL when VITE_SOCKET_URL is unset', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_SOCKET_URL', undefined as unknown as string);
+    const mod = await import('./logStream');
+    const fake = makeFakeSocket();
+    const factory = vi.fn(() => fake.socket);
+    mod.subscribeToJobLogs('job-x', {}, factory as never);
+    expect(factory).toHaveBeenCalledWith('//scheduler', expect.any(Object));
+    vi.unstubAllEnvs();
+  });
+
   it('uses the default socket factory and an empty token when no cookie is set', () => {
     const fake = makeFakeSocket();
     ioMock.mockReturnValue(fake.socket);

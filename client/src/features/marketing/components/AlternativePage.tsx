@@ -59,6 +59,7 @@ export const AlternativePage = () => {
   const basePath = `/alternatives/${competitor.slug}`;
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Alternatives', path: localeHref('/alternatives', locale) },

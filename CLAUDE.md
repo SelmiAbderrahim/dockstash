@@ -177,6 +177,12 @@ These are the load-bearing rules. Each links to the full rule file in `.claude/r
 - **Anti-Codex UI patterns.** No card-lift-on-hover, gradient text, pill buttons, bounce/pulse animations, or `transition: all`. Accessibility/forms/loading-state sections in force; visuals superseded by the design-system rule above.
   → `.claude/rules/ui-ux-patterns.md`
 
+- **Interaction hygiene (promoted).** Every clickable shows pointer/not-allowed cursors from the base primitive; async actions disable + show the shared `Spinner` via `Button` `loading`, restore on success AND error; all six states (default/hover/focus-visible/active/disabled/loading) present.
+  → `.claude/rules/interaction-hygiene.md`
+
+- **Shared layout system (promoted).** Exactly one Header/Footer/shell system in `client/src/shared/components/` — two variants (app sidebar shell + marketing top-nav), never inlined `<header>`/`<footer>` in feature layouts, `Sheet` mobile menu + `ThemeToggle` + locale switcher on both.
+  → `.claude/rules/shared-layout-system.md`
+
 - **Destructive git commands require explicit confirmation.** `git stash`, `git reset --hard`, `git clean -f`, `git commit --amend`, `git push --force`, and similar commands must never run without per-turn user approval.
   → `.claude/rules/git-destructive-commands.md`
 

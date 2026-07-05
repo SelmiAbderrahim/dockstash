@@ -48,7 +48,7 @@ export const Header = () => {
   const links = authenticated ? authedLinks : ANON_LINKS;
 
   return (
-    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur">
+    <header className="bg-background sticky top-0 z-40 border-b">
       <div className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
         <Link to="/" className="flex items-center" aria-label="Dockstash home">
           <BrandLogo />

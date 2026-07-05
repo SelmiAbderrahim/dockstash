@@ -80,7 +80,7 @@ describe('Footer', () => {
 });
 
 describe('AppLayout', () => {
-  it('renders header, footer, and the routed outlet', () => {
+  it('renders header, footer, and the routed outlet for an anonymous visitor', () => {
     render(
       <Provider store={makeStore(false)}>
         <MemoryRouter initialEntries={['/x']}>
@@ -96,6 +96,31 @@ describe('AppLayout', () => {
     );
     expect(screen.getByText('OUTLET')).toBeInTheDocument();
     expect(screen.getByText(/All Rights Reserved/)).toBeInTheDocument();
+  });
+
+  it('renders the SPEC-01 sidebar shell for an authenticated user', () => {
+    render(
+      <Provider store={makeStore(true)}>
+        <MemoryRouter initialEntries={['/dashboard']}>
+          <Shell>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<div>AUTHED OUTLET</div>} />
+              </Route>
+            </Routes>
+          </Shell>
+        </MemoryRouter>
+      </Provider>,
+    );
+    expect(screen.getByText('AUTHED OUTLET')).toBeInTheDocument();
+    // Sidebar is composed:
+    expect(
+      screen.getAllByRole('link', { name: /Projects/ }).length,
+    ).toBeGreaterThan(0);
+    // In-frame footer is present:
+    expect(screen.getByText(/All Rights Reserved/)).toBeInTheDocument();
+    // Sidebar-toggle button (topbar) is exposed:
+    expect(screen.getByRole('button', { name: /toggle sidebar/i })).toBeInTheDocument();
   });
 });
 

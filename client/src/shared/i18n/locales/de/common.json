@@ -6,11 +6,33 @@
     "projects": "Projekte",
     "snapshots": "Snapshots",
     "fleet": "Flotte",
+    "billing": "Abrechnung",
     "settings": "Einstellungen",
+    "profile": "Profil",
     "logout": "Abmelden",
+    "admin": "Admin",
     "superadmin": "Superadmin",
     "login": "Anmelden",
     "register": "Registrieren"
+  },
+  "sidebar": {
+    "brandLink": "Dockstash Startseite",
+    "toggle": "Seitenleiste umschalten",
+    "accountMenu": "Kontomenü",
+    "account": "Konto",
+    "groups": {
+      "overview": "Übersicht",
+      "backups": "Sicherungen",
+      "fleet": "Flotte",
+      "account": "Konto",
+      "admin": "Admin"
+    },
+    "footer": {
+      "guides": "Anleitungen",
+      "security": "Sicherheit",
+      "privacy": "Datenschutz",
+      "terms": "Bedingungen"
+    }
   },
   "footer": {
     "copyright": "© {{year}}, {{brand}}. Alle Rechte vorbehalten."

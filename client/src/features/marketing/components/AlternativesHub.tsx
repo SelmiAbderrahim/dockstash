@@ -63,6 +63,7 @@ export const AlternativesHub = () => {
   ];
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.itemList(spokePaths),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },

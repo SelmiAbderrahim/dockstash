@@ -4,7 +4,11 @@ import request from 'supertest';
 import { createApp } from '../../app.js';
 import { startMemoryMongo, stopMemoryMongo, clearCollections } from '../testing/mongo.js';
 import { createAuthRateLimiter } from './rate-limit.js';
-import { securityHeaders } from './security-headers.js';
+import {
+  CSP_INLINE_SSR_MARKER_HASH,
+  CSP_INLINE_THEME_HASH,
+  securityHeaders,
+} from './security-headers.js';
 
 beforeAll(() => startMemoryMongo());
 afterAll(() => stopMemoryMongo());
@@ -19,6 +23,27 @@ describe('security middleware wiring', () => {
     expect(res.headers['x-dns-prefetch-control']).toBeDefined();
     expect(res.headers['referrer-policy']).toBe('no-referrer');
     expect(res.headers['x-powered-by']).toBeUndefined();
+  });
+
+  it('emits Content-Security-Policy on API responses (SEC-11)', async () => {
+    const res = await request(app).get('/api/health');
+    const csp = res.headers['content-security-policy'];
+    expect(csp).toBeDefined();
+    expect(res.headers['content-security-policy-report-only']).toBeUndefined();
+    // Every directive from the starter policy present, in the same order the
+    // middleware emits them.
+    expect(csp).toContain("default-src 'self'");
+    expect(csp).toContain(
+      `script-src 'self' '${CSP_INLINE_THEME_HASH}' '${CSP_INLINE_SSR_MARKER_HASH}'`,
+    );
+    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+    expect(csp).toContain("img-src 'self' data:");
+    expect(csp).toContain("font-src 'self' data:");
+    expect(csp).toContain("connect-src 'self'");
+    expect(csp).toContain("object-src 'none'");
+    expect(csp).toContain("frame-ancestors 'none'");
+    expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain("form-action 'self'");
   });
 
   it('applies CORS locked to CLIENT_URL (no wildcard)', async () => {

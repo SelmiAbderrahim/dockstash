@@ -134,8 +134,8 @@ export const Register = () => {
                 <p className="text-destructive text-sm">{errors.password.message}</p>
               ) : null}
             </div>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? 'Registering...' : 'Register'}
+            <Button type="submit" loading={isSubmitting} className="w-full">
+              Register
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               By registering you agree to our{' '}

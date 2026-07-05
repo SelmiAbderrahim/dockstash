@@ -140,7 +140,11 @@ describe('RegisterAgentDialog form', () => {
 
   it('does not dispatch again while a registration is in flight', () => {
     renderDialog({}, { registerStatus: 'loading' });
-    expect(screen.getByRole('button', { name: 'Registering…' })).toBeDisabled();
+    // In-button loading (interaction-hygiene rule) keeps the label stable
+    // and flips aria-busy — no separate "Registering…" label swap.
+    const submit = screen.getByRole('button', { name: 'Register' });
+    expect(submit).toBeDisabled();
+    expect(submit.getAttribute('aria-busy')).toBe('true');
     fillForm();
     const form = screen.getByLabelText('Name').closest('form') as HTMLFormElement;
     fireEvent.submit(form);

@@ -6,11 +6,33 @@
     "projects": "项目",
     "snapshots": "快照",
     "fleet": "集群",
+    "billing": "计费",
     "settings": "设置",
+    "profile": "个人资料",
     "logout": "退出登录",
+    "admin": "管理",
     "superadmin": "超级管理员",
     "login": "登录",
     "register": "注册"
+  },
+  "sidebar": {
+    "brandLink": "Dockstash 首页",
+    "toggle": "切换侧边栏",
+    "accountMenu": "账户菜单",
+    "account": "账户",
+    "groups": {
+      "overview": "概览",
+      "backups": "备份",
+      "fleet": "集群",
+      "account": "账户",
+      "admin": "管理"
+    },
+    "footer": {
+      "guides": "指南",
+      "security": "安全",
+      "privacy": "隐私",
+      "terms": "条款"
+    }
   },
   "footer": {
     "copyright": "© {{year}}，{{brand}}。保留所有权利。"

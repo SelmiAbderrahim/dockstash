@@ -312,6 +312,7 @@ export const Terms = () => {
   const { locale } = useMarketingRoute();
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.webPage(
       'Terms of Service',
       'The terms that govern your use of Dockstash.',

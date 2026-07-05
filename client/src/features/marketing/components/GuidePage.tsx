@@ -96,6 +96,7 @@ export const GuidePage = () => {
   const lastModified = schema.monthToIso(guide.lastReviewed);
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.article({
       headline: `How to back up a ${guide.serviceName} Docker container`,
       description: `The correct, consistent way to back up ${guide.serviceName} in Docker — dump from the running container, encrypted off-site Restic snapshots, and a verified restore.`,

@@ -46,6 +46,7 @@ export const Faq = () => {
   }));
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.faqPage(siteFaq),
     schema.breadcrumbList([
       { name: t('shared.home'), path: localeHref('/', locale) },

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   ArchiveIcon,
@@ -12,13 +13,20 @@ import {
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
+import { IconTile } from '@shared/ui/icon-tile';
 import { Skeleton } from '@shared/ui/skeleton';
+import { StatCard } from '@shared/ui/stat-card';
 import { fetchSuperadminStats } from '../store/thunks';
 import {
   selectSuperadminError,
   selectSuperadminStats,
 } from '../store/selectors';
-import { StatTile } from './StatTile';
+
+const tile = (Icon: LucideIcon) => (
+  <IconTile size="sm" tone="muted">
+    <Icon aria-hidden="true" />
+  </IconTile>
+);
 
 export const OverviewTab = () => {
   const dispatch = useAppDispatch();
@@ -54,38 +62,38 @@ export const OverviewTab = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <StatTile label={t('overview.usersTotal')} value={stats.users.total} icon={UsersIcon} />
-        <StatTile label={t('overview.usersNew7d')} value={stats.users.new7d} icon={UserPlusIcon} />
-        <StatTile
+        <StatCard label={t('overview.usersTotal')} value={stats.users.total} icon={tile(UsersIcon)} />
+        <StatCard label={t('overview.usersNew7d')} value={stats.users.new7d} icon={tile(UserPlusIcon)} />
+        <StatCard
           label={t('overview.usersNew30d')}
           value={stats.users.new30d}
-          icon={UserPlusIcon}
+          icon={tile(UserPlusIcon)}
         />
-        <StatTile
+        <StatCard
           label={t('overview.verifiedPct')}
           value={`${stats.users.verifiedPct}%`}
-          icon={CheckCircleIcon}
+          icon={tile(CheckCircleIcon)}
         />
-        <StatTile label={t('overview.projects')} value={stats.projects.total} icon={FolderIcon} />
-        <StatTile
+        <StatCard label={t('overview.projects')} value={stats.projects.total} icon={tile(FolderIcon)} />
+        <StatCard
           label={t('overview.projectsPaused')}
           value={stats.projects.paused}
-          icon={PauseIcon}
+          icon={tile(PauseIcon)}
         />
-        <StatTile
+        <StatCard
           label={t('overview.backupsWithSuccess')}
           value={stats.backups.projectsWithSuccess}
-          icon={ArchiveIcon}
+          icon={tile(ArchiveIcon)}
         />
-        <StatTile
+        <StatCard
           label={t('overview.snapshots')}
           value={stats.snapshots.total}
-          icon={DatabaseIcon}
+          icon={tile(DatabaseIcon)}
         />
-        <StatTile
+        <StatCard
           label={t('overview.repoBytes')}
           value={stats.snapshots.repoBytes}
-          icon={DatabaseIcon}
+          icon={tile(DatabaseIcon)}
         />
       </div>
 

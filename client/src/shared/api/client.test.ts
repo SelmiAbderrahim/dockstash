@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { apiClient, ApiError } from './client';
 
+
 interface FakeResponseInit {
   ok?: boolean;
   status?: number;
@@ -95,6 +96,16 @@ describe('apiClient', () => {
     const spy = fetchSpy().mockResolvedValue(fakeResponse({ text: '' }));
     await apiClient('/thing', { cache: 'reload' });
     expect(spy.mock.calls[0]![1]?.cache).toBe('reload');
+  });
+
+  it('falls back to the "/api" base URL when VITE_API_BASE_URL is unset', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_API_BASE_URL', undefined as unknown as string);
+    const { apiClient: fallbackClient } = await import('./client');
+    const spy = fetchSpy().mockResolvedValue(fakeResponse({ text: '' }));
+    await fallbackClient('/thing');
+    expect(spy).toHaveBeenCalledWith('/api/thing', expect.any(Object));
+    vi.unstubAllEnvs();
   });
 
   it('respects caller-supplied headers instead of overriding them', async () => {

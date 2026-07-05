@@ -74,6 +74,7 @@ export const UseCasePage = () => {
   const lastModified = schema.monthToIso(app.lastReviewed);
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.article({
       headline: `How to back up ${app.appName} in Docker`,
       description: `Back up ${app.appName} in Docker completely — its database, data volumes, and config — stored encrypted off-site with a verified restore.`,

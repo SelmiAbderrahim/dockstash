@@ -1,0 +1,4 @@
+# Playwright artifacts — never commit traces or reports
+test-results/
+playwright-report/
+blob-report/

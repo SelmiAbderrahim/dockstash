@@ -7,7 +7,19 @@ import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules', '.vite', 'coverage', '*.cjs'],
+    ignores: [
+      'dist',
+      'node_modules',
+      '.vite',
+      'coverage',
+      '*.cjs',
+      // Playwright E2E lives outside src/. Its fixture pattern calls `use()`
+      // which is not a React Hook, triggering false-positive rules-of-hooks
+      // errors. E2E gates are behavioural (GATE-E2E §c), not lint-gated.
+      'e2e',
+      'playwright-report',
+      'test-results',
+    ],
   },
   {
     files: ['**/*.{ts,tsx}'],

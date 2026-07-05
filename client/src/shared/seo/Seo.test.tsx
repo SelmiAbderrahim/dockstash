@@ -33,6 +33,38 @@ describe('Seo', () => {
     ).toBe('630');
   });
 
+  it('emits og:image:alt and twitter:image:alt for accessibility + AEO', async () => {
+    renderSeo({ imageAlt: 'A verified Docker backup dashboard.' });
+    await waitFor(() => {
+      expect(
+        document.head.querySelector('meta[property="og:image:alt"]')?.getAttribute('content'),
+      ).toBe('A verified Docker backup dashboard.');
+    });
+    expect(
+      document.head.querySelector('meta[name="twitter:image:alt"]')?.getAttribute('content'),
+    ).toBe('A verified Docker backup dashboard.');
+  });
+
+  it('emits hreflang cluster for programmatic (localized=false) pages', async () => {
+    renderSeo({ basePath: '/vs/backrest', localized: false });
+    await waitFor(() => {
+      expect(
+        document.head.querySelectorAll('link[rel="alternate"][hreflang]').length,
+      ).toBeGreaterThanOrEqual(8);
+    });
+    const hreflangs = Array.from(
+      document.head.querySelectorAll('link[rel="alternate"][hreflang]'),
+    ).map((el) => el.getAttribute('hreflang'));
+    for (const lang of ['en', 'ar', 'fr', 'de', 'es', 'ru', 'zh', 'x-default']) {
+      expect(hreflangs).toContain(lang);
+    }
+    // og:locale:alternate still gated on localized — programmatic pages should
+    // not advertise localized OG variants (content is English).
+    expect(
+      document.head.querySelectorAll('meta[property="og:locale:alternate"]').length,
+    ).toBe(0);
+  });
+
   it('safeJsonLd escapes script-context breakout characters', () => {
     const out = safeJsonLd({ name: '</script><script>alert(1)</script>', amp: 'a&b' });
     // No raw breakout sequences survive.

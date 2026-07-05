@@ -18,6 +18,17 @@ describe('seo/schema JSON-LD builders', () => {
     expect(schema.website()['@type']).toBe('WebSite');
   });
 
+  it('siteEntities returns Organization + WebSite for cross-page emission', () => {
+    const entities = schema.siteEntities();
+    expect(entities).toHaveLength(2);
+    expect(entities[0]?.['@type']).toBe('Organization');
+    expect(entities[1]?.['@type']).toBe('WebSite');
+  });
+
+  it('SITE_LAST_UPDATED matches YYYY-MM-DD', () => {
+    expect(schema.SITE_LAST_UPDATED).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it('softwareApplication maps offers and defaults the currency', () => {
     const withOffers = schema.softwareApplication([{ name: 'Pro', price: '9' }]);
     const offers = withOffers.offers as Array<{ priceCurrency: string }>;

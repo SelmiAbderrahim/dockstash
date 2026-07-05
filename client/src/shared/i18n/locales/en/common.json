@@ -6,11 +6,33 @@
     "projects": "Projects",
     "snapshots": "Snapshots",
     "fleet": "Fleet",
+    "billing": "Billing",
     "settings": "Settings",
+    "profile": "Profile",
     "logout": "Logout",
+    "admin": "Admin",
     "superadmin": "Superadmin",
     "login": "Login",
     "register": "Register"
+  },
+  "sidebar": {
+    "brandLink": "Dockstash home",
+    "toggle": "Toggle sidebar",
+    "accountMenu": "Account menu",
+    "account": "Account",
+    "groups": {
+      "overview": "Overview",
+      "backups": "Backups",
+      "fleet": "Fleet",
+      "account": "Account",
+      "admin": "Admin"
+    },
+    "footer": {
+      "guides": "Guides",
+      "security": "Security",
+      "privacy": "Privacy",
+      "terms": "Terms"
+    }
   },
   "footer": {
     "copyright": "© {{year}}, {{brand}}. All Rights Reserved."

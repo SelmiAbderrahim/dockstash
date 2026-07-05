@@ -9,6 +9,20 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Root .env carries production origins (VITE_API_BASE_URL=https://dockstash.com/api,
+    // NODE_ENV=production). Vitest inherits import.meta.env from Vite, so those bleed
+    // into unit tests and (a) load React's production build (act() stripped) and
+    // (b) make apiClient assertions fail with prod host. Force a clean test env
+    // here — this is scoped to vitest, does not touch dev/build.
+    env: {
+      NODE_ENV: 'test',
+      VITE_API_BASE_URL: '/api',
+      VITE_SOCKET_URL: '/',
+    },
+    // Playwright specs live in `e2e/` and are driven by playwright.config.ts —
+    // vitest must not collect them (their module-level `test()` calls come
+    // from @playwright/test, not vitest, and throw on load).
+    exclude: ['node_modules/**', 'dist/**', 'e2e/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

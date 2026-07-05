@@ -30,7 +30,8 @@ interface ResticLogPanelProps {
 /**
  * Streams restic output from `/scheduler` socket namespace into a scrolling
  * `<pre role="log" aria-live="polite">`. Renders a spinner+text while the
- * run is active. No pulse, no bounce, no `transition: all`.
+ * run is active. Motion respects the anti-Codex constraints (no pulse,
+ * no bounce, scoped color-only transitions only).
  */
 export const ResticLogPanel = ({ jobId, title, onDone }: ResticLogPanelProps) => {
   const { t } = useTranslation('common');

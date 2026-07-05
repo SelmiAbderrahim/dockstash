@@ -6,11 +6,33 @@
     "projects": "Проекты",
     "snapshots": "Снимки",
     "fleet": "Флот",
+    "billing": "Оплата",
     "settings": "Настройки",
+    "profile": "Профиль",
     "logout": "Выйти",
+    "admin": "Админ",
     "superadmin": "Суперадмин",
     "login": "Вход",
     "register": "Регистрация"
+  },
+  "sidebar": {
+    "brandLink": "Главная Dockstash",
+    "toggle": "Переключить боковую панель",
+    "accountMenu": "Меню учётной записи",
+    "account": "Учётная запись",
+    "groups": {
+      "overview": "Обзор",
+      "backups": "Резервные копии",
+      "fleet": "Флот",
+      "account": "Учётная запись",
+      "admin": "Админ"
+    },
+    "footer": {
+      "guides": "Руководства",
+      "security": "Безопасность",
+      "privacy": "Конфиденциальность",
+      "terms": "Условия"
+    }
   },
   "footer": {
     "copyright": "© {{year}}, {{brand}}. Все права защищены."

@@ -3,9 +3,10 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
 
 import { cn } from "@/shared/lib/utils"
+import { Spinner } from "./spinner"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -41,17 +42,36 @@ const buttonVariants = cva(
 // React 18: refs must be forwarded explicitly (ref-as-prop is React 19).
 // Radix `asChild` triggers (DropdownMenu, Tooltip, Popover…) anchor their
 // popper on this ref — without forwardRef the menu renders off-screen.
+//
+// `loading` implements the interaction-hygiene rule: the button disables
+// immediately (no double-submit), swaps its leading icon for the shared
+// `Spinner`, and restores when the caller flips the flag back — on success
+// AND on error. Children stay visible so the width and label never jump.
+// `loading` is a no-op when `asChild` is set (the Slot renders arbitrary
+// markup — the caller owns its own affordance).
 const Button = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> &
     VariantProps<typeof buttonVariants> & {
       asChild?: boolean
+      loading?: boolean
     }
 >(function Button(
-  { className, variant = "default", size = "default", asChild = false, ...props },
+  {
+    className,
+    variant = "default",
+    size = "default",
+    asChild = false,
+    loading = false,
+    disabled,
+    children,
+    ...props
+  },
   ref
 ) {
   const Comp = asChild ? Slot.Root : "button"
+  const showSpinner = loading && !asChild
+  const isDisabled = asChild ? disabled : disabled || loading
 
   return (
     <Comp
@@ -59,9 +79,21 @@ const Button = React.forwardRef<
       data-slot="button"
       data-variant={variant}
       data-size={size}
+      data-loading={showSpinner ? "" : undefined}
+      aria-busy={showSpinner || undefined}
+      disabled={isDisabled}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
-    />
+    >
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {showSpinner ? <Spinner aria-hidden="true" /> : null}
+          {children}
+        </>
+      )}
+    </Comp>
   )
 })
 

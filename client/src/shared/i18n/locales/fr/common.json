@@ -6,11 +6,33 @@
     "projects": "Projets",
     "snapshots": "Instantanés",
     "fleet": "Flotte",
+    "billing": "Facturation",
     "settings": "Paramètres",
+    "profile": "Profil",
     "logout": "Déconnexion",
+    "admin": "Admin",
     "superadmin": "Superadmin",
     "login": "Connexion",
     "register": "Inscription"
+  },
+  "sidebar": {
+    "brandLink": "Accueil Dockstash",
+    "toggle": "Basculer la barre latérale",
+    "accountMenu": "Menu du compte",
+    "account": "Compte",
+    "groups": {
+      "overview": "Vue d'ensemble",
+      "backups": "Sauvegardes",
+      "fleet": "Flotte",
+      "account": "Compte",
+      "admin": "Admin"
+    },
+    "footer": {
+      "guides": "Guides",
+      "security": "Sécurité",
+      "privacy": "Confidentialité",
+      "terms": "Conditions"
+    }
   },
   "footer": {
     "copyright": "© {{year}}, {{brand}}. Tous droits réservés."

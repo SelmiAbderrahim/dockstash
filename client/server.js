@@ -9,7 +9,28 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
+import helmet from 'helmet';
 import { APP_PREFIXES } from './app-paths.mjs';
+
+// SHA-256 hashes of the two inline scripts served from this file (see
+// renderHtml below) + the theme no-flash bootstrap in index.html
+// (~lines 19–33). Recompute both if the script bodies change; kept in sync
+// with server/src/shared/middleware/security-headers.ts CSP_INLINE_*_HASH.
+const CSP_INLINE_THEME_HASH = 'sha256-Ai8enj3xMBb6rfnOEbqcZWXXLQ+hKVptkKTEKAJ0z/o=';
+const CSP_INLINE_SSR_MARKER_HASH =
+  'sha256-H4IPIqVUyi3ISZIAtVbaGRIonXX8D9ffDFVol7IUAGo=';
+const CSP_DIRECTIVES = {
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'", `'${CSP_INLINE_THEME_HASH}'`, `'${CSP_INLINE_SSR_MARKER_HASH}'`],
+  styleSrc: ["'self'", "'unsafe-inline'"],
+  imgSrc: ["'self'", 'data:'],
+  fontSrc: ["'self'", 'data:'],
+  connectSrc: ["'self'"],
+  objectSrc: ["'none'"],
+  frameAncestors: ["'none'"],
+  baseUri: ["'self'"],
+  formAction: ["'self'"],
+};
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
@@ -101,6 +122,15 @@ function canonicalRedirects(req, res, next) {
 async function createServer() {
   const app = express();
   app.disable('x-powered-by');
+  // SEC-11: helmet CSP for the SSR web surface. Enforced (not report-only).
+  app.use(
+    helmet({
+      contentSecurityPolicy: { useDefaults: false, directives: CSP_DIRECTIVES },
+      crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'same-site' },
+      referrerPolicy: { policy: 'no-referrer' },
+    }),
+  );
 
   app.get('/healthz', (_req, res) => res.type('text/plain').send('ok'));
 

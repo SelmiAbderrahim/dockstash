@@ -1,7 +1,9 @@
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, cleanup, within, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { I18nextProvider } from 'react-i18next';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
+import { TooltipProvider } from '@shared/ui/tooltip';
 import { ThemeProvider } from '@shared/theme/ThemeProvider';
 import { i18n, initI18n } from '@shared/i18n';
 import { MobileMenu, type MobileMenuLink } from './MobileMenu';
@@ -24,19 +26,15 @@ const renderMenu = () =>
   render(
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
-        <MemoryRouter initialEntries={['/pricing']}>
-          <MobileMenu links={LINKS} />
-          <Navigator />
-        </MemoryRouter>
+        <TooltipProvider>
+          <MemoryRouter initialEntries={['/pricing']}>
+            <MobileMenu links={LINKS} />
+            <Navigator />
+          </MemoryRouter>
+        </TooltipProvider>
       </ThemeProvider>
     </I18nextProvider>,
   );
-
-const getDetails = (): HTMLDetailsElement => {
-  const details = document.querySelector('details');
-  if (!details) throw new Error('details not rendered');
-  return details;
-};
 
 beforeEach(() => {
   initI18n({ initialLocale: 'en' });
@@ -47,33 +45,48 @@ afterEach(() => {
 });
 
 describe('MobileMenu', () => {
-  it('renders nav links with aria-current on the active one, plus Log in', () => {
+  it('exposes a trigger button labelled by the menu string', () => {
     renderMenu();
-    const pricing = screen.getByRole('link', { name: 'Pricing' });
+    expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument();
+  });
+
+  it('opens a sheet with the links + login row when the trigger is clicked', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole('button', { name: /menu/i }));
+    const dialog = await screen.findByRole('dialog');
+    const pricing = within(dialog).getByRole('link', { name: 'Pricing' });
     expect(pricing).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('link', { name: 'Guides' })).not.toHaveAttribute(
-      'aria-current',
-    );
-    expect(screen.getByRole('link', { name: 'Log in' })).toBeInTheDocument();
+    const guides = within(dialog).getByRole('link', { name: 'Guides' });
+    expect(guides).not.toHaveAttribute('aria-current');
+    expect(within(dialog).getByRole('link', { name: 'Log in' })).toBeInTheDocument();
   });
 
-  it('closes when the route changes', () => {
+  it('closes on route change (link click within the sheet)', async () => {
+    const user = userEvent.setup();
     renderMenu();
-    const details = getDetails();
-    details.open = true;
+    await user.click(screen.getByRole('button', { name: /menu/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('link', { name: 'Guides' }));
+    // Sheet closes as onOpenChange fires. Route effect also flips open→false.
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('closes when the login link inside the sheet is clicked', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole('button', { name: /menu/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('link', { name: 'Log in' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('closes when route changes via an external navigation', async () => {
+    const user = userEvent.setup();
+    renderMenu();
+    await user.click(screen.getByRole('button', { name: /menu/i }));
+    await screen.findByRole('dialog');
     fireEvent.click(screen.getByText('go-elsewhere'));
-    expect(details.open).toBe(false);
-  });
-
-  it('closes on pointerdown outside, but not on pointerdown inside', () => {
-    renderMenu();
-    const details = getDetails();
-
-    details.open = true;
-    fireEvent.pointerDown(screen.getByRole('link', { name: 'Guides' }));
-    expect(details.open).toBe(true);
-
-    fireEvent.pointerDown(document.body);
-    expect(details.open).toBe(false);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

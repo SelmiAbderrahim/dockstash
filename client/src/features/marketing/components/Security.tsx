@@ -43,6 +43,7 @@ export const Security = () => {
   }));
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.breadcrumbList([
       { name: t('shared.home'), path: localeHref('/', locale) },
       { name: t('security.breadcrumb'), path: localeHref('/security', locale) },

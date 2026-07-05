@@ -135,7 +135,7 @@ export const DISALLOWED_PATHS: readonly string[] = [
  * `client/src/shared/seo/schema.ts` whenever marketing content materially
  * changes — parity is enforced by `seo.parity.test.ts`.
  */
-export const SEO_LASTMOD = '2026-07-01';
+export const SEO_LASTMOD = '2026-07-05';
 
 /** Escape a string for safe inclusion in XML text / attribute values. */
 export function escapeXml(value: string): string {

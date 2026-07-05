@@ -128,8 +128,7 @@ export const Home = () => {
   }));
 
   const jsonLd = schema.graph(
-    schema.organization(),
-    schema.website(),
+    ...schema.siteEntities(),
     schema.softwareApplication([{ name: 'Free', price: '0' }]),
     schema.faqPage(homeFaq),
   );

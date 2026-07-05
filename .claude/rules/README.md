@@ -2,7 +2,7 @@
 
 Governance rules for the MERN starter project. Each rule is a focused `.md` file in this directory.
 
-## Kept Rules (10)
+## Kept Rules (12)
 
 | Rule | Source | Summary |
 |------|--------|---------|
@@ -13,6 +13,8 @@ Governance rules for the MERN starter project. Each rule is a focused `.md` file
 | `url-tab-state.md` | ported + adapted | Tab state MUST persist in `?tab=` query parameter |
 | `spec-driven-development.md` | ported + adapted | Spec-first workflow for features of meaningful complexity |
 | `ui-ux-patterns.md` | new (replaces `ui-ux-pro-max-patterns.md` + `uncodixify-ui.md`) | Anti-Codex design principles, accessibility, loading/error states (visuals superseded by `dockstash-design-system.md`) |
+| `interaction-hygiene.md` | promoted (G-17, Phase 02) | Pointer/not-allowed cursors from base primitive; in-button `Spinner` via `Button` `loading`; all six interaction states present |
+| `shared-layout-system.md` | promoted (G-17, Phase 02) | Exactly one Header/Footer/shell system with two variants (app sidebar + marketing top-nav); no inlined chrome in feature layouts |
 | `mern-feature-modules.md` | authored | `features/<name>` on client, `modules/<name>` on server; no cross-feature internal imports |
 | `mern-no-default-exports.md` | authored | Named exports only; no `export default` on components, actions, reducers, utilities |
 | `mern-mongoose-typed-schemas.md` | authored | Every Mongoose schema gets a type (JSDoc now, `InferSchemaType` on TS migration) |

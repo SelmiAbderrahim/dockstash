@@ -1,10 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { makeLogger } from './logging.js';
 
 describe('makeLogger', () => {
-  it('defaults to LOG_LEVEL or info', () => {
+  const savedLogLevel = process.env.LOG_LEVEL;
+  beforeEach(() => {
+    delete process.env.LOG_LEVEL;
+  });
+  afterEach(() => {
+    if (savedLogLevel === undefined) delete process.env.LOG_LEVEL;
+    else process.env.LOG_LEVEL = savedLogLevel;
+  });
+
+  it('falls back to info when LOG_LEVEL is unset', () => {
+    delete process.env.LOG_LEVEL;
     const logger = makeLogger();
-    expect(logger.level).toBe(process.env.LOG_LEVEL ?? 'info');
+    expect(logger.level).toBe('info');
+  });
+
+  it('honors LOG_LEVEL when it is set', () => {
+    process.env.LOG_LEVEL = 'warn';
+    const logger = makeLogger();
+    expect(logger.level).toBe('warn');
   });
 
   it('accepts an explicit level', () => {

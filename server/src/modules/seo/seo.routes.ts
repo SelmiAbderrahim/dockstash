@@ -108,6 +108,7 @@ export function renderLlmsTxt(origin: string): string {
     '## Product',
     `- [Home](${origin}/): What Dockstash does and how verified Docker backups work`,
     `- [Pricing](${origin}/pricing): Plans, including the free self-host tier`,
+    `- [Fleet agents](${origin}/fleet-agents): Back up every VPS from one dashboard with lightweight outbound-only agents`,
     `- [Security](${origin}/security): Security model, encryption, and restore verification`,
     `- [FAQ](${origin}/faq): Common questions about backing up Docker projects`,
     '',

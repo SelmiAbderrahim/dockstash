@@ -340,6 +340,7 @@ export const Privacy = () => {
   const { locale } = useMarketingRoute();
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.webPage(
       'Privacy Policy',
       'How Dockstash collects, uses, and protects your data.',

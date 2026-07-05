@@ -55,6 +55,7 @@ export const GuidesHub = () => {
   }));
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.itemList([...guideEntries, ...useCaseEntries]),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },

@@ -6,11 +6,33 @@
     "projects": "المشاريع",
     "snapshots": "اللقطات",
     "fleet": "الأسطول",
+    "billing": "الفوترة",
     "settings": "الإعدادات",
+    "profile": "الملف الشخصي",
     "logout": "تسجيل الخروج",
+    "admin": "الإدارة",
     "superadmin": "المشرف العام",
     "login": "تسجيل الدخول",
     "register": "إنشاء حساب"
+  },
+  "sidebar": {
+    "brandLink": "الصفحة الرئيسية لدوكستاش",
+    "toggle": "تبديل الشريط الجانبي",
+    "accountMenu": "قائمة الحساب",
+    "account": "الحساب",
+    "groups": {
+      "overview": "نظرة عامة",
+      "backups": "النسخ الاحتياطي",
+      "fleet": "الأسطول",
+      "account": "الحساب",
+      "admin": "الإدارة"
+    },
+    "footer": {
+      "guides": "الأدلة",
+      "security": "الأمان",
+      "privacy": "الخصوصية",
+      "terms": "الشروط"
+    }
   },
   "footer": {
     "copyright": "© {{year}}، {{brand}}. جميع الحقوق محفوظة."

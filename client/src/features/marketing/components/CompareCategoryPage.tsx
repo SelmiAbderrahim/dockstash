@@ -95,6 +95,7 @@ export const CompareCategoryPage = () => {
   const cloud = getCompetitor('simplebackups');
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.breadcrumbList([
       { name: 'Home', path: localeHref('/', locale) },
       { name: 'Alternatives', path: localeHref('/alternatives', locale) },

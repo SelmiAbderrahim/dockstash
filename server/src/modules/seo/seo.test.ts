@@ -47,6 +47,8 @@ describe('seo module', () => {
     expect(res.text).toContain('/guides/backup-postgres-docker');
     expect(res.text).toContain('/backup/wordpress-docker');
     expect(res.text).toContain('/vs/duplicati');
+    expect(res.text).toContain('/fleet-agents');
+    expect(res.text).toContain('/alternatives');
     expect(res.text).toContain('[Restic cron scripts alternative]');
     expect(res.text).not.toContain('undefined');
   });

@@ -1,7 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { MenuIcon } from 'lucide-react';
+import { Button } from '@shared/ui/button';
 import { Separator } from '@shared/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@shared/ui/sheet';
 import { ThemeToggle } from '@shared/components/ThemeToggle';
 import { cn } from '@shared/lib/utils';
 import { MarketingLocaleSwitcher } from './MarketingLocaleSwitcher';
@@ -14,47 +22,41 @@ export interface MobileMenuLink {
 }
 
 /**
- * Mobile navigation for the marketing header. Kept as a native
- * `<details>`/`<summary>` so it server-renders and toggles pre-hydration;
- * the post-hydration effects only add polish (close on route change and on
- * outside pointerdown). The header supplies `relative` positioning context
- * for the full-width panel.
+ * Marketing mobile navigation — shared `Sheet` primitive (G-09 /
+ * shared-layout-system rule). Retires the native `<details>` implementation
+ * so app + marketing surfaces share one mobile-menu affordance and pass the
+ * `Sheet` focus trap / escape-to-close a11y checks.
  */
 export const MobileMenu = ({ links }: { links: MobileMenuLink[] }) => {
   const { t } = useMarketingT();
-  const ref = useRef<HTMLDetailsElement>(null);
+  const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
 
-  // Close the panel when navigation happens (link click → route change).
+  // Close on route change (parity with the old `<details>` behavior).
   useEffect(() => {
-    /* v8 ignore next -- the <details> is always mounted with the ref attached */
-    ref.current?.removeAttribute('open');
+    setOpen(false);
   }, [pathname]);
 
-  // Close on pointerdown outside the menu (client-only, added post-hydration).
-  useEffect(() => {
-    const onPointerDown = (event: PointerEvent) => {
-      const el = ref.current;
-      /* v8 ignore next -- the <details> is always mounted with the ref attached */
-      if (!el) return;
-      if (!el.contains(event.target as Node)) {
-        el.removeAttribute('open');
-      }
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, []);
-
   return (
-    <details ref={ref} className="md:hidden">
-      <summary
-        aria-label={t('layout.menu')}
-        className="inline-flex size-9 cursor-pointer list-none items-center justify-center rounded-md border marker:content-none [&::-webkit-details-marker]:hidden"
-      >
-        <MenuIcon aria-hidden="true" className="size-5" />
-      </summary>
-      <div className="absolute inset-x-0 top-full z-20 border-b bg-background p-4">
-        <nav className="flex flex-col gap-0.5" aria-label={t('layout.navMobileLabel')}>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          variant="outline"
+          size="icon"
+          className="md:hidden"
+          aria-label={t('layout.menu')}
+        >
+          <MenuIcon aria-hidden="true" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-72">
+        <SheetHeader>
+          <SheetTitle>{t('layout.navMobileLabel')}</SheetTitle>
+        </SheetHeader>
+        <nav
+          className="flex flex-col gap-0.5 px-4"
+          aria-label={t('layout.navMobileLabel')}
+        >
           {links.map((link) => (
             <Link
               key={link.to}
@@ -66,23 +68,25 @@ export const MobileMenu = ({ links }: { links: MobileMenuLink[] }) => {
                   ? 'font-medium text-foreground'
                   : 'text-muted-foreground',
               )}
+              onClick={() => setOpen(false)}
             >
               {link.label}
             </Link>
           ))}
+          <Separator className="my-3" />
+          <Link
+            to="/login"
+            className="rounded-md px-3 py-2 text-base text-muted-foreground transition-colors hover:bg-muted/50"
+            onClick={() => setOpen(false)}
+          >
+            {t('layout.login')}
+          </Link>
+          <div className="mt-3 flex items-center justify-between gap-3 px-3">
+            <ThemeToggle />
+            <MarketingLocaleSwitcher id="marketing-locale-switcher-menu" />
+          </div>
         </nav>
-        <Separator className="my-3" />
-        <Link
-          to="/login"
-          className="block rounded-md px-3 py-2 text-base text-muted-foreground transition-colors hover:bg-muted/50"
-        >
-          {t('layout.login')}
-        </Link>
-        <div className="mt-3 flex items-center justify-between gap-3 px-3">
-          <ThemeToggle />
-          <MarketingLocaleSwitcher id="marketing-locale-switcher-menu" />
-        </div>
-      </div>
-    </details>
+      </SheetContent>
+    </Sheet>
   );
 };

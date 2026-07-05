@@ -131,6 +131,7 @@ export const Pricing = () => {
   ];
 
   const jsonLd = schema.graph(
+    ...schema.siteEntities(),
     schema.softwareApplication([
       { name: 'Free', price: '0' },
       { name: 'Pro', price: '9' },
