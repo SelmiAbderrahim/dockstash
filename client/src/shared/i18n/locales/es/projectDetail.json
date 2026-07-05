@@ -48,5 +48,9 @@
     "saving": "Guardando…",
     "saved": "Asignación guardada.",
     "error": "No se pudo asignar el agente."
+  },
+  "lastFailure": {
+    "title": "La última copia de seguridad falló",
+    "hint": "La copia de seguridad más reciente de este proyecto no se completó. Detalles a continuación:"
   }
 }

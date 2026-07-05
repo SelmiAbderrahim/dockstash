@@ -276,14 +276,20 @@ describe('backups: adapters', () => {
     ]);
   });
 
-  it('file-artifact adapters expose mode + artifact path + argv commands', () => {
-    const fileAdapters = [
-      { a: redisAdapter, dump: ['redis-cli', 'SAVE'], artifact: '/data/dump.rdb' },
-      { a: valkeyAdapter, dump: ['valkey-cli', 'SAVE'], artifact: '/data/dump.rdb' },
+  it('file-artifact adapters expose mode + artifactType + artifact path + argv commands', () => {
+    const fileAdapters: Array<{
+      a: (typeof redisAdapter);
+      dump: string[];
+      artifact: string;
+      kind: 'file' | 'directory';
+    }> = [
+      { a: redisAdapter, dump: ['redis-cli', 'SAVE'], artifact: '/data/dump.rdb', kind: 'file' },
+      { a: valkeyAdapter, dump: ['valkey-cli', 'SAVE'], artifact: '/data/dump.rdb', kind: 'file' },
       {
         a: sqliteAdapter,
         dump: ['sqlite3', '/data/app.db', '.backup /backup/app-backup.db'],
         artifact: '/backup/app-backup.db',
+        kind: 'file',
       },
       {
         a: clickhouseAdapter,
@@ -293,6 +299,7 @@ describe('backups: adapters', () => {
           "BACKUP DATABASE default TO Disk('backups', 'snapshot')",
         ],
         artifact: '/var/lib/clickhouse/backups/snapshot',
+        kind: 'directory',
       },
       {
         a: elasticsearchAdapter,
@@ -304,30 +311,36 @@ describe('backups: adapters', () => {
           'http://localhost:9200/_snapshot/dockstash/snapshot?wait_for_completion=true',
         ],
         artifact: '/usr/share/elasticsearch/snapshots',
+        kind: 'directory',
       },
       {
         a: rabbitmqAdapter,
         dump: ['rabbitmqctl', 'export_definitions', '/tmp/definitions.json'],
         artifact: '/tmp/definitions.json',
+        kind: 'file',
       },
       {
         a: minioAdapter,
         dump: ['mc', 'mirror', '--overwrite', 'local', '/backup/minio'],
         artifact: '/backup/minio',
+        kind: 'directory',
       },
       {
         a: influxdbAdapter,
         dump: ['influx', 'backup', '/backup/influx'],
         artifact: '/backup/influx',
+        kind: 'directory',
       },
       {
         a: neo4jAdapter,
         dump: ['neo4j-admin', 'database', 'dump', 'neo4j', '--to-path=/backup'],
         artifact: '/backup/neo4j.dump',
+        kind: 'file',
       },
     ];
-    for (const { a, dump, artifact } of fileAdapters) {
+    for (const { a, dump, artifact, kind } of fileAdapters) {
       expect(a.mode).toBe('file');
+      expect(a.artifactType).toBe(kind);
       expect(a.dumpCmd({})).toEqual(dump);
       expect(a.dumpArtifactPath({})).toBe(artifact);
       // restoreCmd is always an argv array (never a shell string)
@@ -778,7 +791,7 @@ describe('backups: runBackup orchestration', () => {
     expect(persisted?.lastStatus).toBe('success');
   });
 
-  it('file-mode adapter: runs the dump then restic-backs-up the artifact path', async () => {
+  it('file-mode adapter: dumps, then streams the artifact OUT via cat into restic --stdin', async () => {
     const { userId, projectId } = await seedProject();
     const p = await Project.findById(projectId);
     if (p) {
@@ -794,16 +807,53 @@ describe('backups: runBackup orchestration', () => {
       composeServices: { cache: { image: 'redis:7' } },
     });
     expect(result.status).toBe('success');
-    // dump command runs in the container (no stdin pipe for file mode)
-    expect(docker.calls[0]).toMatchObject({
-      container: 'p_cache_1',
-      argv: ['redis-cli', 'SAVE'],
-    });
-    // restic backs up the produced artifact path, not a --stdin stream
-    expect(restic.calls[0]?.args).toEqual(['backup', '/data/dump.rdb']);
-    expect(restic.calls[0]?.hasStdin).toBe(false);
+    // Two execs: the SAVE dump, then cat of the produced artifact.
+    expect(docker.calls[0]).toMatchObject({ container: 'p_cache_1', argv: ['redis-cli', 'SAVE'] });
+    expect(docker.calls[1]).toMatchObject({ container: 'p_cache_1', argv: ['cat', '/data/dump.rdb'] });
+    // restic gets the artifact via --stdin, NOT a bare in-container path.
+    expect(restic.calls[0]?.args).toEqual([
+      'backup',
+      '--stdin',
+      '--stdin-filename',
+      'cache-dump.rdb',
+    ]);
+    expect(restic.calls[0]?.hasStdin).toBe(true);
+    // Regression: the bare in-container path only exists inside the container,
+    // so `restic backup /data/dump.rdb` fails "does not exist" (the prod bug).
+    expect(restic.calls.some((c) => c.args.includes('/data/dump.rdb'))).toBe(false);
     // then the paths+configs layer
     expect(restic.calls[1]?.args).toEqual(['backup', '/var/www/p', '/var/www/p/traefik.yml']);
+  });
+
+  it('file-mode directory adapter: streams a tar of the artifact dir into restic --stdin', async () => {
+    const { userId, projectId } = await seedProject();
+    const p = await Project.findById(projectId);
+    if (p) {
+      p.plan.paths = [];
+      p.plan.configs = [];
+      p.plan.databases = [
+        { service: 'objects', type: 'minio', container: 'p_minio_1', enabled: true },
+      ] as typeof p.plan.databases;
+      await p.save();
+    }
+    const { restic, docker } = makeMocks();
+    const result = await runBackup(projectId, userId, {
+      resticRunner: restic,
+      dockerClient: docker,
+      composeServices: { objects: { image: 'minio/minio' } },
+    });
+    expect(result.status).toBe('success');
+    expect(docker.calls[1]).toMatchObject({
+      container: 'p_minio_1',
+      argv: ['tar', '-cf', '-', '-C', '/backup/minio', '.'],
+    });
+    expect(restic.calls[0]?.args).toEqual([
+      'backup',
+      '--stdin',
+      '--stdin-filename',
+      'objects.tar',
+    ]);
+    expect(restic.calls[0]?.hasStdin).toBe(true);
   });
 
   it('file-mode adapter: a dump stream error fails the run before restic', async () => {

@@ -167,9 +167,15 @@ export class ProcessResticRunner implements ResticRunnerExt {
     return this.keys.withKeyFiles(this.ssh, ({ keyPath, knownHostsPath }) =>
       exec([
         '-o',
-        // StrictHostKeyChecking=yes is the whole point: the known_hosts file
-        // holds exactly the pinned line, so any other key is rejected.
-        `sftp.command=ssh -i ${keyPath} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${knownHostsPath} -s sftp`,
+        // sftp.args (NOT sftp.command): restic keeps building the ssh argv —
+        // `ssh <host> -l <user> [-p <port>] <these args> -s sftp` — and injects
+        // ours. sftp.command would be used VERBATIM, dropping the destination
+        // from the repo URL, and ssh then dies with "You must specify a
+        // subsystem to invoke." StrictHostKeyChecking=yes is the whole point:
+        // the known_hosts file holds exactly the pinned line, so any other key
+        // is rejected. BatchMode=yes makes an auth failure fail fast instead
+        // of hanging the job on an interactive prompt.
+        `sftp.args=-i ${keyPath} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${knownHostsPath} -o BatchMode=yes`,
       ]),
     );
   }

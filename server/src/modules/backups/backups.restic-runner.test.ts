@@ -103,18 +103,25 @@ describe('ProcessResticRunner', () => {
     expect(call.env.RESTIC_PASSWORD).toBe('repo-pw');
   });
 
-  it('always forces StrictHostKeyChecking=yes for SFTP repos', async () => {
+  it('always forces StrictHostKeyChecking=yes for SFTP repos, via sftp.args', async () => {
     const cap = makeSpawnCapture();
     const runner = makeRunner(cap, true);
     const done = runner.backup(['backup', '/var/www/x']);
     cap.controls[0]!.close(0);
     await done;
-    const sftpOpt = cap.calls[0]!.argv.find((a) => a.startsWith('sftp.command='));
+    const sftpOpt = cap.calls[0]!.argv.find((a) => a.startsWith('sftp.args='));
     expect(sftpOpt).toBeDefined();
     expect(sftpOpt).toContain('StrictHostKeyChecking=yes');
     expect(sftpOpt).toContain('UserKnownHostsFile=/tmp/fake-known-hosts');
     expect(sftpOpt).toContain('-i /tmp/fake-key');
+    expect(sftpOpt).toContain('BatchMode=yes');
     expect(sftpOpt).not.toContain('StrictHostKeyChecking=no');
+    // Regression (restic semantics): sftp.command is used VERBATIM by restic —
+    // it drops the user@host destination from the repo URL and ssh dies with
+    // "You must specify a subsystem to invoke." We must only ever pass
+    // sftp.args (extra flags), never a full replacement command.
+    expect(cap.calls[0]!.argv.some((a) => a.startsWith('sftp.command='))).toBe(false);
+    expect(sftpOpt!.slice('sftp.args='.length).startsWith('ssh')).toBe(false);
   });
 
   it('pipes stdin streams into the child', async () => {

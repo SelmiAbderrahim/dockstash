@@ -19,8 +19,9 @@ import type {
   DiskSpaceProbe,
 } from './backups.boundaries.js';
 import { MIN_FREE_BYTES_DEFAULT } from './backups.boundaries.js';
-import { matchAdapter, type ComposeService } from './backups.adapters.js';
+import { matchAdapter, type ComposeService, type FileAdapter } from './backups.adapters.js';
 import type { CreateProjectInput } from './backups.schema.js';
+import path from 'node:path';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
 
@@ -267,12 +268,21 @@ export async function runBackup(
       }
       try {
         if (adapter.mode === 'file') {
-          // File-artifact engines (RDB, snapshot-API, mirror/export tools):
-          // the dump produces an artifact inside the container. Wait for the
-          // command to finish (drain its output), then restic-back-up the path.
+          // File-artifact engines (RDB, snapshot-API, mirror/export tools): the
+          // dump produces an artifact INSIDE the container. restic runs
+          // host-side and cannot read that in-container path (a bare
+          // `restic backup <path>` fails "<path> does not exist, skipping").
+          // Wait for the dump, then stream the artifact OUT via a second exec
+          // (`cat` for a file, `tar` for a directory) into restic --stdin.
           // `mode: 'file'` narrows the adapter union so dumpArtifactPath exists.
           await drainStream(stream);
-          await deps.resticRunner.backup(['backup', adapter.dumpArtifactPath(svc)]);
+          const { readArgv, stdinFilename } = artifactReadPlan(adapter, svc, db.service);
+          assertArgvSafe(readArgv);
+          const artifact = await deps.dockerClient.exec(db.container, readArgv);
+          await deps.resticRunner.backup(
+            ['backup', '--stdin', '--stdin-filename', stdinFilename],
+            { stdin: artifact },
+          );
         } else {
           // stdin engines stream their dump straight into restic (no disk hop).
           await deps.resticRunner.backup(
@@ -337,9 +347,33 @@ async function markStatus(
 }
 
 /**
+ * A file-mode dump writes its artifact INSIDE the container; restic runs on the
+ * host and cannot read it there. Build the command to stream the artifact back
+ * out — `cat` for a single file, `tar` for a directory — plus the filename it
+ * lands under in the restic snapshot. Kept in sync with agent/src/backup.ts.
+ */
+function artifactReadPlan(
+  adapter: FileAdapter,
+  svc: ComposeService,
+  service: string,
+): { readArgv: string[]; stdinFilename: string } {
+  const artifactPath = adapter.dumpArtifactPath(svc);
+  if (adapter.artifactType === 'directory') {
+    return {
+      readArgv: ['tar', '-cf', '-', '-C', artifactPath, '.'],
+      stdinFilename: `${service}.tar`,
+    };
+  }
+  return {
+    readArgv: ['cat', artifactPath],
+    stdinFilename: `${service}-${path.posix.basename(artifactPath)}`,
+  };
+}
+
+/**
  * Consume a container-exec stream to completion. For file-artifact adapters we
- * don't pipe the output anywhere — we only need the dump command to finish
- * (and surface any error) before restic backs up the produced path.
+ * only need the dump command to finish before we stream the produced artifact
+ * back out (see artifactReadPlan).
  */
 function drainStream(stream: NodeJS.ReadableStream): Promise<void> {
   return new Promise<void>((resolve, reject) => {

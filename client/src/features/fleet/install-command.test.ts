@@ -3,6 +3,7 @@ import {
   DEFAULT_PROJECT_ROOT,
   TOKEN_PLACEHOLDER,
   buildAgentInstallCommand,
+  buildAgentUpdateCommand,
   normalizeProjectRoot,
   parseProjectRootsInput,
   resolveAgentServerUrl,
@@ -92,6 +93,15 @@ describe('buildAgentInstallCommand', () => {
       roots: [],
     });
     expect(command).toContain(`DOCKSTASH_PROJECT_ROOTS: ${DEFAULT_PROJECT_ROOT}`);
+  });
+});
+
+describe('buildAgentUpdateCommand', () => {
+  it('emits the pull + force-recreate two-liner, no token', () => {
+    const command = buildAgentUpdateCommand();
+    expect(command).toContain('docker compose -f docker-compose.agent.yml pull');
+    expect(command).toContain('docker compose -f docker-compose.agent.yml up -d --force-recreate');
+    expect(command).not.toContain(TOKEN_PLACEHOLDER);
   });
 });
 

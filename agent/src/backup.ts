@@ -1,6 +1,7 @@
 // Lean reimplementation of the server's runBackup layer loop
 // (server/src/modules/backups/backups.service.ts:198-247) — keep semantics in sync.
-import { matchAdapter, type ComposeService } from './adapters.js';
+import path from 'node:path';
+import { matchAdapter, type ComposeService, type FileAdapter } from './adapters.js';
 import type { DockerClient } from './docker-client.js';
 import type { ResticRunnerExt } from './restic-runner.js';
 import { isAllowedProjectPath } from './paths.js';
@@ -39,6 +40,30 @@ export function drainStream(stream: NodeJS.ReadableStream): Promise<void> {
     stream.on('end', resolve);
     stream.resume();
   });
+}
+
+/**
+ * A file-mode dump writes its artifact INSIDE the container; restic runs on the
+ * host and cannot read it there. Build the command to stream the artifact back
+ * out — `cat` for a single file, `tar` for a directory — plus the filename it
+ * lands under in the restic snapshot.
+ */
+export function artifactReadPlan(
+  adapter: FileAdapter,
+  svc: ComposeService,
+  service: string,
+): { readArgv: string[]; stdinFilename: string } {
+  const artifactPath = adapter.dumpArtifactPath(svc);
+  if (adapter.artifactType === 'directory') {
+    return {
+      readArgv: ['tar', '-cf', '-', '-C', artifactPath, '.'],
+      stdinFilename: `${service}.tar`,
+    };
+  }
+  return {
+    readArgv: ['cat', artifactPath],
+    stdinFilename: `${service}-${path.posix.basename(artifactPath)}`,
+  };
 }
 
 /** Collect repo metering after a successful backup — feeds the job result. */
@@ -89,8 +114,18 @@ export async function runBackupJob(
     }
     try {
       if (adapter.mode === 'file') {
+        // The dump wrote its artifact INSIDE the container; restic runs
+        // host-side and cannot read that path (a bare `restic backup <path>`
+        // fails "<path> does not exist, skipping"). Wait for the dump, then
+        // stream the artifact OUT via a second exec into restic --stdin.
         await drainStream(stream);
-        await deps.restic.backup(['backup', adapter.dumpArtifactPath(svc)]);
+        const { readArgv, stdinFilename } = artifactReadPlan(adapter, svc, db.service);
+        assertArgvSafe(readArgv);
+        const artifact = await deps.docker.exec(db.container, readArgv);
+        await deps.restic.backup(
+          ['backup', '--stdin', '--stdin-filename', stdinFilename],
+          { stdin: artifact as never },
+        );
       } else {
         await deps.restic.backup(
           ['backup', '--stdin', '--stdin-filename', `${db.service}.dump`],

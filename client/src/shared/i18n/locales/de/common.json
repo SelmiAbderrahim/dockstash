@@ -99,7 +99,8 @@
       "aria": "Agent-Aktionen",
       "setup": "Installationsanleitung",
       "rotate": "Schlüssel erneuern",
-      "remove": "Agent entfernen"
+      "remove": "Agent entfernen",
+      "update": "Agent aktualisieren"
     },
     "rotate": {
       "title": "Agent-Schlüssel erneuern",
@@ -117,6 +118,12 @@
     "outdated": {
       "badge": "Update verfügbar",
       "hint": "Dieser Agent läuft mit Version {{version}}. Führen Sie den Setup-Befehl auf dem Host erneut aus, um ihn zu aktualisieren."
+    },
+    "update": {
+      "title": "Agent aktualisieren",
+      "description": "Das neueste Agent-Image ziehen und den Container auf dem Host neu erstellen.",
+      "intro": "Führen Sie dies auf dem Agent-Host aus und klicken Sie dann in „Projekt hinzufügen“ auf Aktualisieren.",
+      "close": "Schließen"
     }
   }
 }

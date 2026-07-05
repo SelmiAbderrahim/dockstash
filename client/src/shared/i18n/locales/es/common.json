@@ -99,7 +99,8 @@
       "aria": "Acciones del agente",
       "setup": "Instrucciones de instalación",
       "rotate": "Rotar clave",
-      "remove": "Eliminar agente"
+      "remove": "Eliminar agente",
+      "update": "Actualizar agente"
     },
     "rotate": {
       "title": "Rotar la clave del agente",
@@ -117,6 +118,12 @@
     "outdated": {
       "badge": "Actualización disponible",
       "hint": "Este agente ejecuta la versión {{version}}. Vuelva a ejecutar el comando de instalación en el host para actualizarlo."
+    },
+    "update": {
+      "title": "Actualizar agente",
+      "description": "Descargue la última imagen del agente y vuelva a crear el contenedor en el host.",
+      "intro": "Ejecute esto en el host del agente y luego haga clic en Actualizar en Agregar proyecto.",
+      "close": "Cerrar"
     }
   }
 }

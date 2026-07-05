@@ -48,5 +48,9 @@
     "saving": "Enregistrement…",
     "saved": "Affectation enregistrée.",
     "error": "Impossible d'affecter l'agent."
+  },
+  "lastFailure": {
+    "title": "Échec de la dernière sauvegarde",
+    "hint": "La dernière sauvegarde de ce projet ne s'est pas terminée. Détails ci-dessous :"
   }
 }

@@ -199,7 +199,7 @@ describe('runBackupJob', () => {
     expect(stats).toEqual({ snapshotCount: 0 });
   });
 
-  it('runs a file-mode adapter layer (redis) draining the stream then backing up the artifact path', async () => {
+  it('file-mode (redis): dumps, then streams the artifact OUT via cat into restic --stdin', async () => {
     const { restic, calls: resticCalls } = makeFakeRestic();
     const { docker, calls: dockerCalls } = makeFakeDocker();
     const job = baseJob({
@@ -212,9 +212,73 @@ describe('runBackupJob', () => {
       },
     });
     await runBackupJob(job, makeDeps(restic, docker));
-    expect(dockerCalls[0]).toEqual({ container: 'c-redis', argv: ['redis-cli', 'SAVE'] });
+    // Two execs: the SAVE dump, then cat of the produced artifact.
+    expect(dockerCalls).toEqual([
+      { container: 'c-redis', argv: ['redis-cli', 'SAVE'] },
+      { container: 'c-redis', argv: ['cat', '/data/dump.rdb'] },
+    ]);
     const backupCall = resticCalls.find((c) => c.op === 'backup');
-    expect(backupCall).toMatchObject({ op: 'backup', args: ['backup', '/data/dump.rdb'] });
+    expect(backupCall).toMatchObject({
+      op: 'backup',
+      args: ['backup', '--stdin', '--stdin-filename', 'cache-dump.rdb'],
+    });
+    expect(backupCall && 'stdin' in backupCall && backupCall.stdin).toBeDefined();
+    // Regression: restic must NEVER receive the bare in-container artifact path
+    // — that path only exists inside the container, so `restic backup <path>`
+    // fails "<path> does not exist" (the original prod bug).
+    expect(
+      resticCalls.some((c) => c.op === 'backup' && c.args.includes('/data/dump.rdb')),
+    ).toBe(false);
+  });
+
+  it('file-mode (directory adapter): streams a tar of the artifact dir into restic --stdin', async () => {
+    const { restic, calls: resticCalls } = makeFakeRestic();
+    const { docker, calls: dockerCalls } = makeFakeDocker();
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [
+          { service: 'objects', type: 'minio', container: 'c-minio', enabled: true },
+        ],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    // minio is a directory artifact → tar it out of the container.
+    expect(dockerCalls[1]).toEqual({
+      container: 'c-minio',
+      argv: ['tar', '-cf', '-', '-C', '/backup/minio', '.'],
+    });
+    const backupCall = resticCalls.find((c) => c.op === 'backup');
+    expect(backupCall).toMatchObject({
+      op: 'backup',
+      args: ['backup', '--stdin', '--stdin-filename', 'objects.tar'],
+    });
+  });
+
+  it('runs a mixed plan: a stdin layer (postgres) and a file layer (redis)', async () => {
+    const { restic, calls: resticCalls } = makeFakeRestic();
+    const { docker, calls: dockerCalls } = makeFakeDocker();
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [
+          { service: 'db', type: 'postgres', container: 'c-pg', enabled: true },
+          { service: 'cache', type: 'redis', container: 'c-redis', enabled: true },
+        ],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(dockerCalls).toEqual([
+      { container: 'c-pg', argv: ['pg_dumpall', '-U', 'postgres'] },
+      { container: 'c-redis', argv: ['redis-cli', 'SAVE'] },
+      { container: 'c-redis', argv: ['cat', '/data/dump.rdb'] },
+    ]);
+    const filenames = resticCalls
+      .filter((c) => c.op === 'backup')
+      .map((c) => (c.op === 'backup' ? c.args[c.args.indexOf('--stdin-filename') + 1] : ''));
+    expect(filenames).toEqual(['db.dump', 'cache-dump.rdb']);
   });
 
   it('skips disabled database layers', async () => {

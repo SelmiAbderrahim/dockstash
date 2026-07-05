@@ -164,11 +164,14 @@ describe('ProjectsScreen', () => {
     ]);
     renderScreen(makeStore());
     expect(await screen.findByTestId('projects-grid')).toBeInTheDocument();
-    // statusLabel maps each lastStatus to a namespaced key (all four branches).
-    expect(screen.getByText('projects.status.idle')).toBeInTheDocument();
-    expect(screen.getByText('projects.status.running')).toBeInTheDocument();
-    expect(screen.getByText('projects.status.success')).toBeInTheDocument();
-    expect(screen.getByText('projects.status.failed')).toBeInTheDocument();
+    // statusLabel must render the TRANSLATED text, never a raw i18n key
+    // (regression: 'projects.status.*' was double-prefixed inside the
+    // 'projects' namespace and leaked verbatim into the UI).
+    expect(screen.getByText('Idle')).toBeInTheDocument();
+    expect(screen.getByText('Running')).toBeInTheDocument();
+    expect(screen.getByText('Healthy')).toBeInTheDocument();
+    expect(screen.getByText('Failed')).toBeInTheDocument();
+    expect(screen.queryByText(/projects\.status\./)).not.toBeInTheDocument();
     // The three projects without lastRunAt show the "Never" placeholder.
     expect(screen.getAllByText('Never').length).toBe(3);
   });
@@ -183,11 +186,16 @@ describe('ProjectsScreen', () => {
     expect(screen.getByRole('button', { name: /backup now/i })).toBeDisabled();
   });
 
-  it('clears the active job when the log panel reports done', async () => {
+  it('clears the active job and refetches fresh status when the log panel reports done', async () => {
     mocked.listProjectsRequest.mockResolvedValue([baseProject({ id: 'p1' })]);
     const { store } = renderScreen(makeStore({ activeJobByProject: { p1: 'job-1' } }));
+    // One fetch on mount; clear the count so we assert the on-done refetch.
+    await waitFor(() => expect(mocked.listProjectsRequest).toHaveBeenCalled());
+    mocked.listProjectsRequest.mockClear();
     const doneBtn = await screen.findByTestId('log-done');
     fireEvent.click(doneBtn);
     await waitFor(() => expect(store.getState().projects.activeJobByProject.p1).toBeNull());
+    // A finished run pulls fresh status so the badge flips without a reload.
+    await waitFor(() => expect(mocked.listProjectsRequest).toHaveBeenCalledTimes(1));
   });
 });

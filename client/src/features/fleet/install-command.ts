@@ -125,4 +125,16 @@ export function buildAgentInstallCommand({
   ].join('\n');
 }
 
+/**
+ * The two-command update sequence for an already-installed agent — pull the
+ * latest image and recreate the container. No token/roots needed; the existing
+ * `docker-compose.agent.yml` on the host already holds them.
+ */
+export function buildAgentUpdateCommand(): string {
+  return [
+    'docker compose -f docker-compose.agent.yml pull',
+    'docker compose -f docker-compose.agent.yml up -d --force-recreate',
+  ].join('\n');
+}
+
 export { TOKEN_PLACEHOLDER };

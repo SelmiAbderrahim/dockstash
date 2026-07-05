@@ -48,5 +48,9 @@
     "saving": "Saving…",
     "saved": "Assignment saved.",
     "error": "Could not assign the agent."
+  },
+  "lastFailure": {
+    "title": "Last backup failed",
+    "hint": "The most recent backup run for this project did not complete. Details below:"
   }
 }

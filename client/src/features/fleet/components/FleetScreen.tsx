@@ -45,6 +45,7 @@ import {
 } from '../store/selectors';
 import { RegisterAgentDialog } from './RegisterAgentDialog';
 import { AgentSetupDialog } from './AgentSetupDialog';
+import { AgentUpdateDialog } from './AgentUpdateDialog';
 import type { FleetEntry } from '../types';
 
 /** Background refresh cadence — matches a heartbeat-driven online/offline flip. */
@@ -101,6 +102,7 @@ export const FleetScreen = () => {
 
   const [registerOpen, setRegisterOpen] = useState(false);
   const [setupAgent, setSetupAgent] = useState<FleetEntry | null>(null);
+  const [updateAgent, setUpdateAgent] = useState<FleetEntry | null>(null);
   const [removeAgent, setRemoveAgent] = useState<FleetEntry | null>(null);
   const activeStepTarget = useAppSelector(selectActiveStepTarget);
 
@@ -273,6 +275,9 @@ export const FleetScreen = () => {
                         <DropdownMenuItem onSelect={() => setSetupAgent(entry)}>
                           {t('fleet.actions.rotate')}
                         </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setUpdateAgent(entry)}>
+                          {t('fleet.actions.update')}
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           variant="destructive"
                           onSelect={() => setRemoveAgent(entry)}
@@ -291,6 +296,7 @@ export const FleetScreen = () => {
 
       <RegisterAgentDialog open={registerOpen} onClose={() => setRegisterOpen(false)} />
       <AgentSetupDialog agent={setupAgent} onClose={() => setSetupAgent(null)} />
+      <AgentUpdateDialog agent={updateAgent} onClose={() => setUpdateAgent(null)} />
       <AlertDialog
         open={removeAgent !== null}
         onOpenChange={(open) => {

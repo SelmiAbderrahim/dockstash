@@ -279,13 +279,28 @@ describe('FleetScreen background polling', () => {
 });
 
 describe('FleetScreen row actions', () => {
-  it('shows the three row actions in the dropdown menu', async () => {
+  it('shows the row actions in the dropdown menu', async () => {
     const user = userEvent.setup();
     renderScreen({ status: 'succeeded', items: entries });
     await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
     expect(await screen.findByRole('menuitem', { name: 'Setup instructions' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Rotate key' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Update agent' })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Remove agent' })).toBeInTheDocument();
+  });
+
+  it('opens the update dialog with the pull/recreate command from the update action', async () => {
+    const user = userEvent.setup();
+    renderScreen({ status: 'succeeded', items: entries });
+    await user.click(screen.getAllByRole('button', { name: 'Agent actions' })[0]!);
+    await user.click(await screen.findByRole('menuitem', { name: 'Update agent' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(
+      screen.getByText(/docker compose -f docker-compose\.agent\.yml pull/),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('opens the setup dialog from the setup action and closes it via onClose', async () => {

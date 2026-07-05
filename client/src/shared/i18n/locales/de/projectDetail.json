@@ -48,5 +48,9 @@
     "saving": "Wird gespeichert…",
     "saved": "Zuweisung gespeichert.",
     "error": "Agent konnte nicht zugewiesen werden."
+  },
+  "lastFailure": {
+    "title": "Letztes Backup fehlgeschlagen",
+    "hint": "Der letzte Backup-Lauf für dieses Projekt wurde nicht abgeschlossen. Details unten:"
   }
 }

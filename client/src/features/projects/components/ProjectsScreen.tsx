@@ -33,13 +33,13 @@ import type { Project } from '../types';
 function statusLabel(status: string, t: (k: string) => string): string {
   switch (status) {
     case 'running':
-      return t('projects.status.running');
+      return t('status.running');
     case 'success':
-      return t('projects.status.success');
+      return t('status.success');
     case 'failed':
-      return t('projects.status.failed');
+      return t('status.failed');
     default:
-      return t('projects.status.idle');
+      return t('status.idle');
   }
 }
 
@@ -110,7 +110,12 @@ const ProjectCard = ({ project }: CardProps) => {
         {jobId && (
           <ResticLogPanel
             jobId={jobId}
-            onDone={() => dispatch(clearActiveJob({ projectId: project.id }))}
+            onDone={() => {
+              dispatch(clearActiveJob({ projectId: project.id }));
+              // Pull fresh status so the badge/last-run reflect the finished run
+              // (success clears any prior failure) without a page reload.
+              void dispatch(fetchProjects());
+            }}
           />
         )}
       </CardContent>

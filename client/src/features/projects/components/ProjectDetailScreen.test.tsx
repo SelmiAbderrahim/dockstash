@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
@@ -101,6 +101,9 @@ const makeStore = (projects: Partial<ProjectsState> = {}) =>
 const renderDetail = (
   { projects = {}, entry = '/projects/p1' }: { projects?: Partial<ProjectsState>; entry?: string } = {},
 ) => {
+  // The screen always refetches projects on mount; default that refetch to
+  // return the preloaded items so it's a no-op for tests that don't care.
+  if (projects.items) mocked.listProjectsRequest.mockResolvedValue(projects.items);
   const store = makeStore(projects);
   const utils = render(
     <Provider store={store}>
@@ -135,9 +138,10 @@ describe('ProjectDetailScreen shell', () => {
     // Radix Tabs activate on focus, so drive tab switches with user-event.
     const user = userEvent.setup();
     renderDetail({ projects: { items: [baseProject()] } });
-    // fetchProjects should NOT run because the project is already present.
+    // Always refetch on mount so status/error reflect current DB, even when the
+    // project is already in the store (prevents a stale failure banner).
     await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
-    expect(mocked.listProjectsRequest).not.toHaveBeenCalled();
+    expect(mocked.listProjectsRequest).toHaveBeenCalled();
 
     expect(screen.getByRole('heading', { name: 'app' })).toBeInTheDocument();
     // Default tab is plan.
@@ -148,6 +152,30 @@ describe('ProjectDetailScreen shell', () => {
 
     await user.click(screen.getByRole('tab', { name: /restore drill/i }));
     expect(await screen.findByRole('heading', { name: /restore drill/i })).toBeInTheDocument();
+  });
+
+  it('surfaces the last backup failure reason when the project is failed', async () => {
+    renderDetail({
+      projects: {
+        items: [
+          baseProject({
+            lastStatus: 'failed',
+            lastError: 'restic dump failed: /data/dump.rdb does not exist, skipping',
+          }),
+        ],
+      },
+    });
+    const banner = await screen.findByTestId('last-failure');
+    expect(within(banner).getByText(/Last backup failed/i)).toBeInTheDocument();
+    expect(
+      within(banner).getByText(/\/data\/dump\.rdb does not exist/),
+    ).toBeInTheDocument();
+  });
+
+  it('shows no failure banner for a healthy project (or a failed one with no error text)', async () => {
+    renderDetail({ projects: { items: [baseProject({ lastStatus: 'success' })] } });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+    expect(screen.queryByTestId('last-failure')).not.toBeInTheDocument();
   });
 });
 

@@ -151,13 +151,19 @@ describe('mongoAdapter', () => {
 });
 
 describe('file-artifact adapters', () => {
-  const fileAdapters: Array<{ a: FileAdapter; dump: string[]; artifact: string }> = [
-    { a: redisAdapter, dump: ['redis-cli', 'SAVE'], artifact: '/data/dump.rdb' },
-    { a: valkeyAdapter, dump: ['valkey-cli', 'SAVE'], artifact: '/data/dump.rdb' },
+  const fileAdapters: Array<{
+    a: FileAdapter;
+    dump: string[];
+    artifact: string;
+    kind: 'file' | 'directory';
+  }> = [
+    { a: redisAdapter, dump: ['redis-cli', 'SAVE'], artifact: '/data/dump.rdb', kind: 'file' },
+    { a: valkeyAdapter, dump: ['valkey-cli', 'SAVE'], artifact: '/data/dump.rdb', kind: 'file' },
     {
       a: sqliteAdapter,
       dump: ['sqlite3', '/data/app.db', '.backup /backup/app-backup.db'],
       artifact: '/backup/app-backup.db',
+      kind: 'file',
     },
     {
       a: clickhouseAdapter,
@@ -167,6 +173,7 @@ describe('file-artifact adapters', () => {
         "BACKUP DATABASE default TO Disk('backups', 'snapshot')",
       ],
       artifact: '/var/lib/clickhouse/backups/snapshot',
+      kind: 'directory',
     },
     {
       a: elasticsearchAdapter,
@@ -178,32 +185,38 @@ describe('file-artifact adapters', () => {
         'http://localhost:9200/_snapshot/dockstash/snapshot?wait_for_completion=true',
       ],
       artifact: '/usr/share/elasticsearch/snapshots',
+      kind: 'directory',
     },
     {
       a: rabbitmqAdapter,
       dump: ['rabbitmqctl', 'export_definitions', '/tmp/definitions.json'],
       artifact: '/tmp/definitions.json',
+      kind: 'file',
     },
     {
       a: minioAdapter,
       dump: ['mc', 'mirror', '--overwrite', 'local', '/backup/minio'],
       artifact: '/backup/minio',
+      kind: 'directory',
     },
     {
       a: influxdbAdapter,
       dump: ['influx', 'backup', '/backup/influx'],
       artifact: '/backup/influx',
+      kind: 'directory',
     },
     {
       a: neo4jAdapter,
       dump: ['neo4j-admin', 'database', 'dump', 'neo4j', '--to-path=/backup'],
       artifact: '/backup/neo4j.dump',
+      kind: 'file',
     },
   ];
 
-  it('expose mode "file" + artifact path + argv-array commands', () => {
-    for (const { a, dump, artifact } of fileAdapters) {
+  it('expose mode "file" + artifactType + artifact path + argv-array commands', () => {
+    for (const { a, dump, artifact, kind } of fileAdapters) {
       expect(a.mode).toBe('file');
+      expect(a.artifactType).toBe(kind);
       expect(a.dumpCmd({})).toEqual(dump);
       expect(a.dumpArtifactPath({})).toBe(artifact);
       const restore = a.restoreCmd({});

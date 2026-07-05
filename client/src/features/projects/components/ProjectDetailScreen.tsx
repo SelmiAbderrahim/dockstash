@@ -10,7 +10,7 @@ import { useTabParam } from '@shared/hooks/useTabParam';
 import { Button } from '@shared/ui/button';
 import { Badge } from '@shared/ui/badge';
 import { Separator } from '@shared/ui/separator';
-import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert';
 import {
   Card,
   CardContent,
@@ -347,13 +347,17 @@ export const ProjectDetailScreen = () => {
   const project = useAppSelector(selectProjectById(projectId));
   const [tab, setTab] = useTabParam('plan', TABS);
 
+  // Always refetch on mount — a background job (or a run from the list screen)
+  // may have changed lastStatus/lastError since the store was last populated,
+  // and a stale `failed` snapshot would keep the failure banner up after the
+  // next run actually succeeded.
   useEffect(() => {
-    if (!project) void dispatch(fetchProjects());
+    void dispatch(fetchProjects());
     void dispatch(fetchSchedules());
     return () => {
       dispatch(resetSaveStatus());
     };
-  }, [dispatch, project]);
+  }, [dispatch]);
 
   if (!project) {
     return (
@@ -380,6 +384,18 @@ export const ProjectDetailScreen = () => {
         </h1>
         <p className="text-muted-foreground font-mono text-xs break-all">{project.path}</p>
       </header>
+
+      {project.lastStatus === 'failed' && project.lastError && (
+        <Alert variant="destructive" data-testid="last-failure">
+          <AlertTitle>{t('lastFailure.title')}</AlertTitle>
+          <AlertDescription>
+            <p>{t('lastFailure.hint')}</p>
+            <pre className="mt-2 max-h-48 w-full overflow-auto rounded-md border bg-muted/40 p-2 font-mono text-xs whitespace-pre-wrap">
+              {project.lastError}
+            </pre>
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Tabs value={tab} onValueChange={setTab} className="gap-6">
         <TabsList aria-label={t('tabs.aria')}>

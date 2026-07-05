@@ -62,9 +62,16 @@ export interface StdinAdapter extends AdapterBase {
   readonly mode: 'stdin';
 }
 
-/** Dump produces an artifact at `dumpArtifactPath` → restic backs up that path. */
+/**
+ * Dump produces an artifact at `dumpArtifactPath` INSIDE the container. restic
+ * runs host-side, so it cannot read that path directly — the orchestrator
+ * streams the artifact out with a second `docker exec` (`cat` for a file,
+ * `tar` for a directory) into `restic backup --stdin`. `artifactType` tells it
+ * which reader to use.
+ */
 export interface FileAdapter extends AdapterBase {
   readonly mode: 'file';
+  readonly artifactType: 'file' | 'directory';
   dumpArtifactPath(svc: ComposeService): string;
 }
 
@@ -171,6 +178,7 @@ export const mongoAdapter: StdinAdapter = {
 export const redisAdapter: FileAdapter = {
   type: 'redis',
   mode: 'file',
+  artifactType: 'file',
   match: (image) => /redis/i.test(image),
   // SAVE forks a synchronous point-in-time RDB to /data/dump.rdb; we back up
   // the finished file, never the live in-memory state.
@@ -184,6 +192,7 @@ export const redisAdapter: FileAdapter = {
 export const valkeyAdapter: FileAdapter = {
   type: 'valkey',
   mode: 'file',
+  artifactType: 'file',
   match: (image) => /valkey/i.test(image),
   dumpCmd: () => ['valkey-cli', 'SAVE'],
   dumpArtifactPath: () => '/data/dump.rdb',
@@ -193,6 +202,7 @@ export const valkeyAdapter: FileAdapter = {
 export const sqliteAdapter: FileAdapter = {
   type: 'sqlite',
   mode: 'file',
+  artifactType: 'file',
   match: (image) => /sqlite/i.test(image),
   // The .backup dot-command uses SQLite's online backup API (WAL-safe) to
   // produce a consistent copy while the app keeps writing.
@@ -204,6 +214,7 @@ export const sqliteAdapter: FileAdapter = {
 export const clickhouseAdapter: FileAdapter = {
   type: 'clickhouse',
   mode: 'file',
+  artifactType: 'directory',
   match: (image) => /clickhouse/i.test(image),
   // Native BACKUP statement snapshots table parts consistently to a backup disk.
   dumpCmd: () => [
@@ -222,6 +233,7 @@ export const clickhouseAdapter: FileAdapter = {
 export const elasticsearchAdapter: FileAdapter = {
   type: 'elasticsearch',
   mode: 'file',
+  artifactType: 'directory',
   match: (image) => /elasticsearch|opensearch/i.test(image),
   // Snapshot API writes a consistent, incremental snapshot into the registered
   // filesystem repository; we restic that repo directory.
@@ -245,6 +257,7 @@ export const elasticsearchAdapter: FileAdapter = {
 export const rabbitmqAdapter: FileAdapter = {
   type: 'rabbitmq',
   mode: 'file',
+  artifactType: 'file',
   match: (image) => /rabbitmq/i.test(image),
   // Broker definitions (vhosts, exchanges, queues, bindings, users, policies)
   // export cleanly as JSON — the durable, restorable part of RabbitMQ.
@@ -256,6 +269,7 @@ export const rabbitmqAdapter: FileAdapter = {
 export const minioAdapter: FileAdapter = {
   type: 'minio',
   mode: 'file',
+  artifactType: 'directory',
   match: (image) => /minio/i.test(image),
   // mc mirror copies objects through the S3 API (each object atomically),
   // preserving metadata — safer than a raw /data copy.
@@ -267,6 +281,7 @@ export const minioAdapter: FileAdapter = {
 export const influxdbAdapter: FileAdapter = {
   type: 'influxdb',
   mode: 'file',
+  artifactType: 'directory',
   match: (image) => /influxdb/i.test(image),
   // `influx backup` snapshots TSM shards + metadata consistently through the
   // engine (v2 HTTP API). v1 uses `influxd backup -portable` (see the guide).
@@ -278,6 +293,7 @@ export const influxdbAdapter: FileAdapter = {
 export const neo4jAdapter: FileAdapter = {
   type: 'neo4j',
   mode: 'file',
+  artifactType: 'file',
   match: (image) => /neo4j/i.test(image),
   // neo4j-admin dump is a consistent offline dump of the database store.
   dumpCmd: () => [

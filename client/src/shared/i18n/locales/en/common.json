@@ -99,7 +99,8 @@
       "aria": "Agent actions",
       "setup": "Setup instructions",
       "rotate": "Rotate key",
-      "remove": "Remove agent"
+      "remove": "Remove agent",
+      "update": "Update agent"
     },
     "rotate": {
       "title": "Rotate agent key",
@@ -117,6 +118,12 @@
     "outdated": {
       "badge": "Update available",
       "hint": "This agent runs version {{version}}. Re-run the setup command on the host to update it."
+    },
+    "update": {
+      "title": "Update agent",
+      "description": "Pull the latest agent image and recreate the container on the host.",
+      "intro": "Run this on the agent host, then click Refresh in Add Project.",
+      "close": "Close"
     }
   }
 }
