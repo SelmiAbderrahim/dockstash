@@ -15,7 +15,7 @@ const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars
  * never inline with a backup run.
  */
 export function pruneArgs(retention: RetentionPolicy): string[] {
-  return [
+  const args = [
     'forget',
     '--prune',
     '--keep-daily',
@@ -25,6 +25,15 @@ export function pruneArgs(retention: RetentionPolicy): string[] {
     '--keep-monthly',
     String(retention.keepMonthly),
   ];
+  // Continuous-backup keeps are appended only when set — 0/undefined keeps
+  // the pre-continuous argv byte-identical for legacy schedules.
+  if (retention.keepHourly !== undefined && retention.keepHourly > 0) {
+    args.push('--keep-hourly', String(retention.keepHourly));
+  }
+  if (retention.keepLast !== undefined && retention.keepLast > 0) {
+    args.push('--keep-last', String(retention.keepLast));
+  }
+  return args;
 }
 
 export interface RunPruneDeps {

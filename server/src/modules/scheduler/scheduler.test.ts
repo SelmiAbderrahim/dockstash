@@ -241,6 +241,38 @@ describe('scheduler: prune argv mapping', () => {
       '6',
     ]);
   });
+
+  it('appends continuous keeps only when set and > 0', () => {
+    expect(
+      pruneArgs({ keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepHourly: 24, keepLast: 12 }),
+    ).toEqual([
+      'forget',
+      '--prune',
+      '--keep-daily',
+      '7',
+      '--keep-weekly',
+      '4',
+      '--keep-monthly',
+      '6',
+      '--keep-hourly',
+      '24',
+      '--keep-last',
+      '12',
+    ]);
+    // 0 = legacy behaviour: flag omitted entirely.
+    expect(
+      pruneArgs({ keepDaily: 1, keepWeekly: 1, keepMonthly: 1, keepHourly: 0, keepLast: 0 }),
+    ).toEqual([
+      'forget',
+      '--prune',
+      '--keep-daily',
+      '1',
+      '--keep-weekly',
+      '1',
+      '--keep-monthly',
+      '1',
+    ]);
+  });
 });
 
 describe('scheduler: dispatcher (per-kind + prune separation)', () => {
@@ -902,7 +934,7 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
       projectId,
       kind: 'prune',
       cron: '0 3 * * *',
-      retention: { keepDaily: 2, keepWeekly: 1, keepMonthly: 1 },
+      retention: { keepDaily: 2, keepWeekly: 1, keepMonthly: 1, keepHourly: 0, keepLast: 0 },
     });
     const res = await request(app)
       .post('/api/scheduler/enqueue')

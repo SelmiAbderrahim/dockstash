@@ -10,6 +10,8 @@ export interface PublicSchedule {
     keepDaily: number;
     keepWeekly: number;
     keepMonthly: number;
+    keepHourly: number;
+    keepLast: number;
   };
   lastRunStatus: string;
   lastEnqueuedAt: string | null;
@@ -29,6 +31,9 @@ export function serializeSchedule(schedule: ScheduleHydrated): PublicSchedule {
       keepDaily: schedule.retention.keepDaily,
       keepWeekly: schedule.retention.keepWeekly,
       keepMonthly: schedule.retention.keepMonthly,
+      // Legacy rows predate these fields — surface the schema default (0).
+      keepHourly: schedule.retention.keepHourly ?? 0,
+      keepLast: schedule.retention.keepLast ?? 0,
     },
     lastRunStatus: schedule.lastRunStatus,
     lastEnqueuedAt: schedule.lastEnqueuedAt

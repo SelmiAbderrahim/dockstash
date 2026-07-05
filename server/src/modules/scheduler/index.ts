@@ -28,7 +28,7 @@ export type {
   AlertHook,
   ResticRunnerExt,
 } from './scheduler.boundaries.js';
-export { allowAllEntitlements } from './scheduler.entitlements.js';
+export { allowAllEntitlements, billingEntitlements } from './scheduler.entitlements.js';
 export { MemoryQueue } from './scheduler.queue.memory.js';
 export { BullmqQueueBackend } from './scheduler.queue.bullmq.js';
 export { NodeCronScheduler } from './scheduler.cron.node.js';

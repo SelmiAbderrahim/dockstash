@@ -19,11 +19,24 @@ describe('entitlements / classifyCron', () => {
   it('classifies five-field expressions by minute/hour specificity', () => {
     expect(classifyCron('0 3 * * *')).toBe('daily');
     expect(classifyCron('30 * * * *')).toBe('hourly');
-    expect(classifyCron('*/5 * * * *')).toBe('any-cron');
     expect(classifyCron('0-30 3 * * *')).toBe('any-cron');
     expect(classifyCron('15,45 3 * * *')).toBe('any-cron');
     expect(classifyCron('0 */2 * * *')).toBe('hourly');
     expect(classifyCron('0 1-5 * * *')).toBe('hourly');
     expect(classifyCron('0 8,20 * * *')).toBe('hourly');
+  });
+
+  it('classifies pure minute steps >= 5 as continuous (Pro near-PITR tier)', () => {
+    expect(classifyCron('*/5 * * * *')).toBe('continuous');
+    expect(classifyCron('*/15 * * * *')).toBe('continuous');
+    expect(classifyCron('*/30 * * * *')).toBe('continuous');
+  });
+
+  it('keeps sub-5-minute steps, bare *, and stepped-hour combos at any-cron', () => {
+    expect(classifyCron('*/1 * * * *')).toBe('any-cron');
+    expect(classifyCron('*/4 * * * *')).toBe('any-cron');
+    expect(classifyCron('* * * * *')).toBe('any-cron');
+    // Minute step with a constrained hour is not the continuous shape.
+    expect(classifyCron('*/15 2 * * *')).toBe('any-cron');
   });
 });

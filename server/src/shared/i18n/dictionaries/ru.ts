@@ -75,6 +75,8 @@ export const ru: DictionaryShape = {
       schedulesLocked: 'Плановые резервные копии недоступны на вашем текущем тарифе.',
       frequencyNotAllowed: 'Ваш тариф не поддерживает такую частоту расписания.',
       restoreDrillsLocked: 'Автоматические проверки восстановления доступны в тарифах Pro и Business.',
+      pitrLocked: 'Восстановление на момент времени доступно в тарифах Pro и Business.',
+      mirrorLocked: 'Режим зеркалирования доступен в тарифе Business.',
       multiVpsLocked: 'Просмотр парка нескольких VPS доступен в тарифе Business.',
       projectPaused: 'Проект приостановлен. Возобновите или обновите тариф, чтобы запускать резервное копирование.',
       selectionInvalid: 'Выберите от одного до {{cap}} проектов, которые останутся активными.',
@@ -186,6 +188,7 @@ export const ru: DictionaryShape = {
       noSpace: 'Недостаточно места на диске (свободно={{free}} байт).',
       runnerUnavailable: 'Список снимков недоступен: исполнитель резервного копирования не настроен.',
       snapshotsFailed: 'Не удалось получить список снимков: {{message}}',
+      noSnapshotBeforeTs: 'Нет снимка на {{ts}} или ранее.',
       restoreFailed: 'Восстановление не удалось: {{message}}',
     },
     success: {

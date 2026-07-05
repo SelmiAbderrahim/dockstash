@@ -5,6 +5,9 @@ export interface RetentionPolicy {
   keepDaily: number;
   keepWeekly: number;
   keepMonthly: number;
+  /** Continuous-backup keeps; 0/undefined omits the flag from `restic forget`. */
+  keepHourly?: number;
+  keepLast?: number;
 }
 
 /** One-shot restore parameters carried on ad-hoc `restore` jobs. */

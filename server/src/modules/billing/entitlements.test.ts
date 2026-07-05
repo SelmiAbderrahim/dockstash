@@ -13,10 +13,12 @@ import {
   assertScheduleAllowed,
   assertRestoreDrillAllowed,
   assertMultiVpsAllowed,
+  assertPitrAllowed,
   isEmailAlertsAllowed,
   classifyCron,
   clampRetentionDays,
   clampRetentionPolicy,
+  KEEP_LAST_MAX,
   resolveEntitlements,
 } from './entitlements.service.js';
 import { getBillingOverviewForUser, getUsageForUser } from './billing.service.js';
@@ -290,10 +292,11 @@ describe('enforcement guards', () => {
     expect(await isEmailAlertsAllowed(String(pro._id))).toBe(true);
   });
 
-  it('classifyCron labels daily/hourly/any-cron', () => {
+  it('classifyCron labels daily/hourly/continuous/any-cron', () => {
     expect(classifyCron('0 3 * * *')).toBe('daily');
     expect(classifyCron('30 * * * *')).toBe('hourly');
-    expect(classifyCron('*/5 * * * *')).toBe('any-cron');
+    expect(classifyCron('*/5 * * * *')).toBe('continuous');
+    expect(classifyCron('* * * * *')).toBe('any-cron');
   });
 
   it('getUsageForUser returns per-project metering for active projects', async () => {
@@ -625,5 +628,60 @@ describe('clampRetentionPolicy', () => {
       keepMonthly: 2,
     });
     expect(clamped).toEqual({ keepDaily: 5, keepWeekly: 3, keepMonthly: 2 });
+  });
+
+  it('clamps continuous keeps: keepHourly to tier-days*24, keepLast to KEEP_LAST_MAX', async () => {
+    const user = await createOwner('clamp-cont@example.com');
+    // Free tier: 7 days → keepHourly ceiling 168.
+    const clamped = await clampRetentionPolicy(String(user._id), {
+      keepDaily: 3,
+      keepWeekly: 1,
+      keepMonthly: 1,
+      keepHourly: 500,
+      keepLast: 10_000,
+    });
+    expect(clamped).toEqual({
+      keepDaily: 3,
+      keepWeekly: 1,
+      keepMonthly: 1,
+      keepHourly: 168,
+      keepLast: KEEP_LAST_MAX,
+    });
+  });
+
+  it('passes small continuous keeps through and omits absent ones', async () => {
+    const user = await createOwner('clamp-cont2@example.com');
+    await seedActiveSub(String(user._id), 'pro');
+    const withKeeps = await clampRetentionPolicy(String(user._id), {
+      keepDaily: 7,
+      keepWeekly: 4,
+      keepMonthly: 6,
+      keepHourly: 24,
+      keepLast: 12,
+    });
+    expect(withKeeps.keepHourly).toBe(24);
+    expect(withKeeps.keepLast).toBe(12);
+    const withoutKeeps = await clampRetentionPolicy(String(user._id), {
+      keepDaily: 7,
+      keepWeekly: 4,
+      keepMonthly: 6,
+    });
+    expect(withoutKeeps.keepHourly).toBeUndefined();
+    expect(withoutKeeps.keepLast).toBeUndefined();
+  });
+});
+
+describe('assertPitrAllowed', () => {
+  it('blocks free, allows pro', async () => {
+    const free = await createOwner('free-pitr@example.com');
+    await expect(assertPitrAllowed(String(free._id))).rejects.toMatchObject({
+      status: 403,
+      details: { reason: 'pitrLocked' },
+    });
+    const pro = await createOwner('pro-pitr@example.com');
+    await seedActiveSub(String(pro._id), 'pro');
+    await expect(assertPitrAllowed(String(pro._id))).resolves.toMatchObject({
+      slug: 'pro',
+    });
   });
 });

@@ -2,9 +2,11 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { HttpError } from '../../shared/utils/http-error.js';
-import { projectIdParamsSchema } from './backups.schema.js';
+import { assertPitrAllowed } from '../billing/entitlements.service.js';
+import { pitrQuerySchema, projectIdParamsSchema } from './backups.schema.js';
 import { loadOwnedProject } from './backups.service.js';
 import { serializeSnapshot } from './backups.serialize.js';
+import { pickNearestSnapshot } from './backups.pitr.js';
 import type { ResticSnapshotDetail } from './backups.restic-runner.js';
 import { ProcessResticRunner } from './backups.restic-runner.js';
 import { resolveProjectRunner } from './backups.runner-factory.js';
@@ -64,5 +66,40 @@ export const listProjectSnapshots: RequestHandler = asyncHandler(async (req, res
   }
   res.status(200).json({
     snapshots: records.map((s) => serializeSnapshot(s, projectId)),
+  });
+});
+
+/**
+ * Point-in-time resolver (Pro+): newest snapshot at or before `?ts=`. The
+ * client confirms the resolution, then enqueues a normal restore with the
+ * returned snapshot id — this endpoint never mutates anything.
+ */
+export const resolvePitr: RequestHandler = asyncHandler(async (req, res) => {
+  const { projectId } = projectIdParamsSchema.parse(req.params);
+  const { ts } = pitrQuerySchema.parse(req.query);
+  const userId = requireUserId(req.user);
+  // Ownership check first — 404/403 before any storage access.
+  await loadOwnedProject(projectId, userId, { t: req.t });
+  await assertPitrAllowed(userId, { t: req.t });
+  if (!deps) {
+    throw new HttpError(503, req.t('backups.error.runnerUnavailable'));
+  }
+  let records: ResticSnapshotDetail[];
+  try {
+    records = await deps.listSnapshots(projectId, userId);
+  } catch (err) {
+    if (err instanceof HttpError) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    throw new HttpError(502, req.t('backups.error.snapshotsFailed', { message }));
+  }
+  const target = new Date(ts);
+  const resolved = pickNearestSnapshot(records, target);
+  if (!resolved) {
+    throw HttpError.notFound(req.t('backups.error.noSnapshotBeforeTs', { ts }));
+  }
+  res.status(200).json({
+    target: target.toISOString(),
+    gapSeconds: resolved.gapSeconds,
+    snapshot: serializeSnapshot(resolved.snapshot, projectId),
   });
 });

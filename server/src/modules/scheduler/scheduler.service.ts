@@ -15,10 +15,11 @@ import type {
   RetentionPolicy,
   SchedulerQueue,
 } from './scheduler.boundaries.js';
-import type {
-  CreateScheduleInput,
-  EnqueueNowInput,
-  UpdateScheduleInput,
+import {
+  CONTINUOUS_PRESET,
+  type CreateScheduleInput,
+  type EnqueueNowInput,
+  type UpdateScheduleInput,
 } from './scheduler.schema.js';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
@@ -35,16 +36,22 @@ export async function createSchedule(
 ): Promise<ScheduleHydrated> {
   const t = ctx.t ?? identityT;
   await loadOwnedProject(input.projectId, userId, { t });
+  // `preset: 'continuous'` expands server-side; explicit cron/retention win
+  // over the preset's values so a client can tweak the cadence it seeds.
+  const cron = input.cron ?? CONTINUOUS_PRESET.cron;
+  const retention =
+    input.retention ??
+    (input.preset === 'continuous' ? { ...CONTINUOUS_PRESET.retention } : {});
   await assertScheduleAllowed(userId, {
     t,
-    frequency: classifyCron(input.cron),
+    frequency: classifyCron(cron),
   });
   const schedule = await Schedule.create({
     project: input.projectId,
     owner: userId,
     kind: input.kind,
-    cron: input.cron,
-    retention: input.retention ?? {},
+    cron,
+    retention,
     enabled: input.enabled ?? true,
   });
   return schedule;
@@ -82,6 +89,8 @@ export async function updateSchedule(
       keepDaily: input.retention.keepDaily ?? schedule.retention.keepDaily,
       keepWeekly: input.retention.keepWeekly ?? schedule.retention.keepWeekly,
       keepMonthly: input.retention.keepMonthly ?? schedule.retention.keepMonthly,
+      keepHourly: input.retention.keepHourly ?? schedule.retention.keepHourly,
+      keepLast: input.retention.keepLast ?? schedule.retention.keepLast,
     } as ScheduleHydrated['retention'];
   }
   await schedule.save();
@@ -128,6 +137,8 @@ export async function enqueueNow(
           keepDaily: schedule.retention.keepDaily,
           keepWeekly: schedule.retention.keepWeekly,
           keepMonthly: schedule.retention.keepMonthly,
+          keepHourly: schedule.retention.keepHourly,
+          keepLast: schedule.retention.keepLast,
         }
       : undefined;
     scheduleId = schedule._id.toString();

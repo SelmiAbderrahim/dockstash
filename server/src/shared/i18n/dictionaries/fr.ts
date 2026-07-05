@@ -75,6 +75,8 @@ export const fr: DictionaryShape = {
       schedulesLocked: 'Les sauvegardes planifiées ne sont pas disponibles sur votre offre actuelle.',
       frequencyNotAllowed: 'Votre offre ne permet pas cette fréquence de planification.',
       restoreDrillsLocked: 'Les tests de restauration automatiques sont disponibles avec les offres Pro et Business.',
+      pitrLocked: 'La restauration à un instant donné est disponible avec les offres Pro et Business.',
+      mirrorLocked: 'Le mode miroir est disponible avec l\'offre Business.',
       multiVpsLocked: 'La vue de flotte multi-VPS est disponible avec l\'offre Business.',
       projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
       selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
@@ -186,6 +188,7 @@ export const fr: DictionaryShape = {
       noSpace: 'Espace disque insuffisant (libre={{free}} octets).',
       runnerUnavailable: 'La liste des instantanés est indisponible : l’exécuteur de sauvegarde n’est pas configuré.',
       snapshotsFailed: 'Impossible de lister les instantanés : {{message}}',
+      noSnapshotBeforeTs: 'Aucun instantané n\'existe à {{ts}} ou avant.',
       restoreFailed: 'Échec de la restauration : {{message}}',
     },
     success: {

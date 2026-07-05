@@ -3,7 +3,11 @@ import { createApp } from './app.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
-import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
+import {
+  billingEntitlements,
+  startScheduler,
+  type SchedulerRuntime,
+} from './modules/scheduler/index.js';
 import {
   registerBillingCrons,
   seedPricingTiers,
@@ -56,6 +60,10 @@ function main(): void {
   let scheduler: SchedulerRuntime | null = null;
   startScheduler({
     io,
+    // Plan-gated job kinds (drill today, mirror later) are enforced at
+    // enqueue by the billing-backed checker; the free-for-all placeholder
+    // stays test-only.
+    entitlements: billingEntitlements,
     resticRunnerFor: useRealRunner
       ? makeResticRunnerFor
       : () => placeholderResticRunner(),

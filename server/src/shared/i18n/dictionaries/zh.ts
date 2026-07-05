@@ -75,6 +75,8 @@ export const zh: DictionaryShape = {
       schedulesLocked: '当前套餐不支持定时备份。',
       frequencyNotAllowed: '您的套餐不支持该定时频率。',
       restoreDrillsLocked: '自动恢复演练在 Pro 和 Business 套餐中可用。',
+      pitrLocked: '时间点恢复在 Pro 和 Business 套餐中可用。',
+      mirrorLocked: '镜像模式在 Business 套餐中可用。',
       multiVpsLocked: '多 VPS 集群视图在 Business 套餐中可用。',
       projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
       selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
@@ -186,6 +188,7 @@ export const zh: DictionaryShape = {
       noSpace: '磁盘空间不足（剩余={{free}} 字节）。',
       runnerUnavailable: '快照列表不可用：备份运行器尚未配置。',
       snapshotsFailed: '无法列出快照：{{message}}',
+      noSnapshotBeforeTs: '在 {{ts}} 或之前不存在快照。',
       restoreFailed: '恢复失败：{{message}}',
     },
     success: {

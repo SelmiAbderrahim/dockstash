@@ -24,6 +24,10 @@ const retentionSchema = new mongoose.Schema(
     keepDaily: { type: Number, default: 7, min: 0 },
     keepWeekly: { type: Number, default: 4, min: 0 },
     keepMonthly: { type: Number, default: 6, min: 0 },
+    // Continuous-backup keeps. 0 = omit the flag from `restic forget` (the
+    // pre-continuous behaviour), so legacy schedules are unaffected.
+    keepHourly: { type: Number, default: 0, min: 0 },
+    keepLast: { type: Number, default: 0, min: 0 },
   },
   { _id: false },
 );

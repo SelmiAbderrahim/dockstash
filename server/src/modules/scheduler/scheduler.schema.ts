@@ -11,16 +11,47 @@ const retentionInput = z.object({
   keepDaily: z.number().int().min(0).default(7),
   keepWeekly: z.number().int().min(0).default(4),
   keepMonthly: z.number().int().min(0).default(6),
+  // Continuous-backup keeps; 0 (default) omits the flag from `restic forget`.
+  keepHourly: z.number().int().min(0).default(0),
+  keepLast: z.number().int().min(0).default(0),
 });
 
-export const createScheduleSchema = z.object({
-  projectId: z.string().min(1),
-  // Restores are one-shot user actions — never schedulable.
-  kind: z.enum(SCHEDULABLE_JOB_KINDS),
-  cron: cronString,
-  retention: retentionInput.optional(),
-  enabled: z.boolean().optional(),
-});
+/**
+ * Server-side expansion of `preset: 'continuous'` — a 5-minute backup cadence
+ * with keeps that collapse the snapshot train into hourly/daily/weekly tiers.
+ */
+export const CONTINUOUS_PRESET = {
+  cron: '*/5 * * * *',
+  retention: {
+    keepDaily: 7,
+    keepWeekly: 4,
+    keepMonthly: 6,
+    keepHourly: 24,
+    keepLast: 12,
+  },
+} as const;
+
+export const createScheduleSchema = z
+  .object({
+    projectId: z.string().min(1),
+    // Restores are one-shot user actions — never schedulable.
+    kind: z.enum(SCHEDULABLE_JOB_KINDS),
+    // Optional when `preset` supplies it; the superRefine below enforces that.
+    cron: cronString.optional(),
+    retention: retentionInput.optional(),
+    enabled: z.boolean().optional(),
+    /** Sugar: expands server-side to CONTINUOUS_PRESET cron + retention. */
+    preset: z.literal('continuous').optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.cron === undefined && v.preset === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cron'],
+        message: 'cron is required unless a preset is given',
+      });
+    }
+  });
 
 export const updateScheduleSchema = z
   .object({

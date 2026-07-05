@@ -75,6 +75,8 @@ export const ar: DictionaryShape = {
       schedulesLocked: 'النسخ الاحتياطية المجدولة غير متاحة في خطتك الحالية.',
       frequencyNotAllowed: 'خطتك لا تسمح بهذا التكرار للجدولة.',
       restoreDrillsLocked: 'اختبارات الاستعادة التلقائية متاحة في خطط Pro وBusiness.',
+      pitrLocked: 'الاستعادة إلى نقطة زمنية متاحة في خطط Pro وBusiness.',
+      mirrorLocked: 'وضع النسخ المتطابق متاح في خطة Business.',
       multiVpsLocked: 'عرض أسطول متعدد الخوادم متاح في خطة Business.',
       projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
       selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
@@ -186,6 +188,7 @@ export const ar: DictionaryShape = {
       noSpace: 'مساحة القرص غير كافية (المتاح={{free}} بايت).',
       runnerUnavailable: 'قائمة اللقطات غير متاحة: مشغّل النسخ الاحتياطي غير مُهيأ.',
       snapshotsFailed: 'تعذّر سرد اللقطات: {{message}}',
+      noSnapshotBeforeTs: 'لا توجد لقطة عند {{ts}} أو قبلها.',
       restoreFailed: 'فشلت الاستعادة: {{message}}',
     },
     success: {

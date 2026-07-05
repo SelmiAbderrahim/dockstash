@@ -75,6 +75,8 @@ export const es: DictionaryShape = {
       schedulesLocked: 'Las copias de seguridad programadas no están disponibles en tu plan actual.',
       frequencyNotAllowed: 'Tu plan no permite esa frecuencia de programación.',
       restoreDrillsLocked: 'Las pruebas de restauración automáticas están disponibles en los planes Pro y Business.',
+      pitrLocked: 'La restauración a un punto en el tiempo está disponible en los planes Pro y Business.',
+      mirrorLocked: 'El modo espejo está disponible en el plan Business.',
       multiVpsLocked: 'La vista de flota multi-VPS está disponible en el plan Business.',
       projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
       selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
@@ -186,6 +188,7 @@ export const es: DictionaryShape = {
       noSpace: 'Espacio en disco insuficiente (libre={{free}} bytes).',
       runnerUnavailable: 'El listado de instantáneas no está disponible: el ejecutor de copias no está configurado.',
       snapshotsFailed: 'No se pudieron listar las instantáneas: {{message}}',
+      noSnapshotBeforeTs: 'No existe ninguna instantánea en {{ts}} o antes.',
       restoreFailed: 'La restauración falló: {{message}}',
     },
     success: {

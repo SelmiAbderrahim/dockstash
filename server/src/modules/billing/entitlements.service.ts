@@ -217,7 +217,16 @@ export interface RetentionPolicyShape {
   keepDaily: number;
   keepWeekly: number;
   keepMonthly: number;
+  /** Continuous-backup keeps; 0/undefined = flag omitted from `restic forget`. */
+  keepHourly?: number;
+  keepLast?: number;
 }
+
+/**
+ * Ceiling for `--keep-last` regardless of tier: one day of 5-minute snapshots.
+ * Guards restic memory/prune cost on continuous schedules.
+ */
+export const KEEP_LAST_MAX = 288;
 
 /**
  * Clamp a restic keep-count retention policy to the tier's retention ceiling
@@ -231,11 +240,38 @@ export async function clampRetentionPolicy(
   policy: RetentionPolicyShape,
 ): Promise<RetentionPolicyShape> {
   const tierDays = (await resolveEntitlements(userId)).entitlements.retentionDays;
-  return {
+  const clamped: RetentionPolicyShape = {
     keepDaily: Math.min(policy.keepDaily, tierDays),
     keepWeekly: Math.min(policy.keepWeekly, Math.ceil(tierDays / 7)),
     keepMonthly: Math.min(policy.keepMonthly, Math.ceil(tierDays / 30)),
   };
+  if (policy.keepHourly !== undefined) {
+    // Hourly keeps live inside the tier's day window.
+    clamped.keepHourly = Math.min(policy.keepHourly, tierDays * 24);
+  }
+  if (policy.keepLast !== undefined) {
+    clamped.keepLast = Math.min(policy.keepLast, KEEP_LAST_MAX);
+  }
+  return clamped;
+}
+
+/**
+ * Enforce the point-in-time-restore resolver flag (Pro+). Throws 403
+ * `billing.entitlements.pitrLocked` on the free tier so the client can render
+ * an upgrade prompt.
+ */
+export async function assertPitrAllowed(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<ResolvedEntitlements> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  if (!resolved.entitlements.pitrRestore) {
+    throw HttpError.forbidden(t('billing.entitlements.pitrLocked'), {
+      reason: 'pitrLocked',
+    });
+  }
+  return resolved;
 }
 
 /**
@@ -251,6 +287,15 @@ export function classifyCron(expr: string): ScheduleFrequency {
   const minute = parts[0] ?? '';
   /* c8 ignore next -- a 5-field split always yields a defined [1]; `?? ''` is defensive */
   const hour = parts[1] ?? '';
+  // Pure minute step (`*/N * * * *`): the continuous near-PITR shape. Steps of
+  // 5 minutes or coarser classify as `continuous` (Pro); finer steps stay
+  // `any-cron` (Business). Anything else non-fixed (lists, ranges, bare `*`)
+  // stays conservatively `any-cron`.
+  const stepMatch = /^\*\/(\d+)$/.exec(minute);
+  if (stepMatch !== null && hour === '*') {
+    const step = Number(stepMatch[1]);
+    return step >= 5 ? 'continuous' : 'any-cron';
+  }
   if (minute === '*' || minute.includes('*/') || minute.includes('-') || minute.includes(',')) {
     return 'any-cron';
   }

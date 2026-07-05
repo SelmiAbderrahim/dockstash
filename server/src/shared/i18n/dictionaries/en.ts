@@ -73,6 +73,8 @@ export const en = {
       schedulesLocked: 'Scheduled backups are not available on your current plan.',
       frequencyNotAllowed: 'Your plan does not allow that schedule frequency.',
       restoreDrillsLocked: 'Automated restore drills are available on Pro and Business plans.',
+      pitrLocked: 'Point-in-time restore is available on Pro and Business plans.',
+      mirrorLocked: 'Mirror mode is available on the Business plan.',
       multiVpsLocked: 'Multi-VPS fleet view is available on the Business plan.',
       projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
       selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
@@ -184,6 +186,7 @@ export const en = {
       noSpace: 'Insufficient disk space (free={{free}} bytes).',
       runnerUnavailable: 'Snapshot listing is unavailable: the backup runner is not configured.',
       snapshotsFailed: 'Could not list snapshots: {{message}}',
+      noSnapshotBeforeTs: 'No snapshot exists at or before {{ts}}.',
       restoreFailed: 'Restore failed: {{message}}',
     },
     success: {

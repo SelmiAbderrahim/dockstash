@@ -75,6 +75,8 @@ export const de: DictionaryShape = {
       schedulesLocked: 'Geplante Backups sind in Ihrem aktuellen Tarif nicht verfügbar.',
       frequencyNotAllowed: 'Ihr Tarif erlaubt diese Zeitplan-Häufigkeit nicht.',
       restoreDrillsLocked: 'Automatische Wiederherstellungstests sind in den Tarifen Pro und Business verfügbar.',
+      pitrLocked: 'Point-in-Time-Wiederherstellung ist in den Tarifen Pro und Business verfügbar.',
+      mirrorLocked: 'Der Spiegelmodus ist im Business-Tarif verfügbar.',
       multiVpsLocked: 'Die Multi-VPS-Flottenansicht ist im Business-Tarif verfügbar.',
       projectPaused: 'Dieses Projekt ist pausiert. Reaktivieren Sie es oder upgraden Sie, um Backups auszuführen.',
       selectionInvalid: 'Wählen Sie zwischen einem und {{cap}} Projekten aus, die aktiv bleiben sollen.',
@@ -186,6 +188,7 @@ export const de: DictionaryShape = {
       noSpace: 'Nicht genügend Speicherplatz (frei={{free}} Bytes).',
       runnerUnavailable: 'Snapshot-Liste nicht verfügbar: der Backup-Runner ist nicht konfiguriert.',
       snapshotsFailed: 'Snapshots konnten nicht aufgelistet werden: {{message}}',
+      noSnapshotBeforeTs: 'Kein Snapshot bei oder vor {{ts}} vorhanden.',
       restoreFailed: 'Wiederherstellung fehlgeschlagen: {{message}}',
     },
     success: {

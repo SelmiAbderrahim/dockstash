@@ -60,6 +60,16 @@ export const runCheckSchema = z.object({
   readDataSubset: z.number().int().min(1).max(100).optional(),
 });
 
+/** `GET /:projectId/pitr?ts=<ISO-8601>` — the requested point-in-time. */
+export const pitrQuerySchema = z.object({
+  ts: z
+    .string()
+    .min(1)
+    .refine((v) => !Number.isNaN(Date.parse(v)), {
+      message: 'ts must be an ISO-8601 datetime',
+    }),
+});
+
 export const runDrillSchema = z.object({}).default({});
 
 /** Assign the project to a fleet agent; null = run on the local server. */
