@@ -108,7 +108,7 @@ function baseJob(overrides: Partial<ClaimedJob> = {}): ClaimedJob {
 }
 
 function makeDeps(restic: ResticRunnerExt, docker: DockerClient): BackupDeps {
-  return { restic, docker, log: vi.fn() };
+  return { restic, docker, roots: ['/var/www'], log: vi.fn() };
 }
 
 describe('assertArgvSafe', () => {

@@ -573,3 +573,144 @@ describe('scheduler.extra: cron reconciliation extras', () => {
     expect(save).toHaveBeenCalledOnce();
   });
 });
+
+describe('scheduler.extra: restore enqueue validates targetPath against the project allowlist', () => {
+  function captureQueue(): { queue: SchedulerQueue; added: Array<{ payload?: unknown }> } {
+    const added: Array<{ payload?: unknown }> = [];
+    const queue: SchedulerQueue = {
+      async add(data) {
+        added.push(data as { payload?: unknown });
+        return { id: '1', data, attempts: 0 };
+      },
+      async activeCountForProject() {
+        return 0;
+      },
+      async waitIdle() {},
+      async close() {},
+    };
+    return { queue, added };
+  }
+
+  it('accepts a /var/www target for a local project and rejects one outside', async () => {
+    const userId = await seedUser('rt1@t.com');
+    const projectId = await seedProject(userId);
+    const { queue, added } = captureQueue();
+    const deps = { queue, entitlements: allowAllEntitlements };
+
+    await enqueueNow(
+      userId,
+      {
+        projectId,
+        kind: 'restore',
+        snapshotId: 'latest',
+        overwrite: false,
+        targetPath: '/var/www/restore-here',
+      },
+      deps,
+    );
+    expect(added[0]?.payload).toMatchObject({ targetPath: '/var/www/restore-here' });
+
+    await expect(
+      enqueueNow(
+        userId,
+        {
+          projectId,
+          kind: 'restore',
+          snapshotId: 'latest',
+          overwrite: false,
+          targetPath: '/root/.ssh',
+        },
+        deps,
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('skips target validation for overwrite restores (restic restores original paths)', async () => {
+    const userId = await seedUser('rt2@t.com');
+    const projectId = await seedProject(userId);
+    const { queue, added } = captureQueue();
+
+    await enqueueNow(
+      userId,
+      { projectId, kind: 'restore', snapshotId: 'latest', overwrite: true },
+      { queue, entitlements: allowAllEntitlements },
+    );
+    expect(added[0]?.payload).toMatchObject({ overwrite: true });
+  });
+
+  it("validates against the assigned agent's reported roots", async () => {
+    const userId = await seedUser('rt3@t.com');
+    const { registerAgent, touchAgentHeartbeat } = await import(
+      '../agents/agents.service.js'
+    );
+    const { agent } = await registerAgent(userId, { name: 'v', host: 'rt3.example' });
+    await touchAgentHeartbeat(String(agent._id), {
+      discovery: {
+        folders: [],
+        containers: [],
+        dockerAvailable: true,
+        roots: ['/opt/projects'],
+        errors: [],
+      },
+    });
+    const p = await createProject(userId, {
+      name: 'agent-proj',
+      path: '/opt/projects/shop',
+      repoPassword: 'password1',
+      agentId: String(agent._id),
+    });
+    const { queue, added } = captureQueue();
+    const deps = { queue, entitlements: allowAllEntitlements };
+
+    await enqueueNow(
+      userId,
+      {
+        projectId: String(p._id),
+        kind: 'restore',
+        snapshotId: 'latest',
+        overwrite: false,
+        targetPath: '/opt/projects/restore-here',
+      },
+      deps,
+    );
+    expect(added[0]?.payload).toMatchObject({ targetPath: '/opt/projects/restore-here' });
+
+    await expect(
+      enqueueNow(
+        userId,
+        {
+          projectId: String(p._id),
+          kind: 'restore',
+          snapshotId: 'latest',
+          overwrite: false,
+          targetPath: '/var/www/elsewhere',
+        },
+        deps,
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('scheduler.extra: restore enqueue with a missing targetPath (service-direct)', () => {
+  it('rejects overwrite:false with no targetPath at all', async () => {
+    const userId = await seedUser('rt4@t.com');
+    const projectId = await seedProject(userId);
+    const queue: SchedulerQueue = {
+      async add(data) {
+        return { id: '1', data, attempts: 0 };
+      },
+      async activeCountForProject() {
+        return 0;
+      },
+      async waitIdle() {},
+      async close() {},
+    };
+    await expect(
+      enqueueNow(
+        userId,
+        { projectId, kind: 'restore', snapshotId: 'latest', overwrite: false },
+        { queue, entitlements: allowAllEntitlements },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+});

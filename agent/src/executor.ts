@@ -10,6 +10,8 @@ import type { ClaimedJob, JobResult } from './types.js';
 export interface ExecutorDeps {
   restic: ResticRunnerExt;
   docker: DockerClient;
+  /** This agent's configured allowlist (config.DOCKSTASH_PROJECT_ROOTS). */
+  roots: readonly string[];
   log(line: string): void;
   sleep?(ms: number): Promise<void>;
   baseBackoffMs?: number;
@@ -69,7 +71,10 @@ async function dispatchKind(job: ClaimedJob, deps: ExecutorDeps): Promise<JobRes
         // Restic snapshots store absolute paths; `--target /` puts them back.
         target = '/';
       } else {
-        if (!job.restore.targetPath || !isAllowedProjectPath(job.restore.targetPath)) {
+        if (
+          !job.restore.targetPath ||
+          !isAllowedProjectPath(job.restore.targetPath, deps.roots)
+        ) {
           throw new Error(`restore target not allowed: ${job.restore.targetPath ?? ''}`);
         }
         target = job.restore.targetPath;

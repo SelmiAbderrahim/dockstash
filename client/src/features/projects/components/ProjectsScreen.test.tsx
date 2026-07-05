@@ -68,6 +68,7 @@ const baseState: ProjectsState = {
   agentFolders: [],
   agentContainers: [],
   agentDockerAvailable: false,
+  agentRoots: ['/var/www'],
   agentSnapshotAt: null,
   agentDiscoveryStatus: 'idle',
   agentReported: false,

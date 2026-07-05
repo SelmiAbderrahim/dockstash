@@ -1,7 +1,8 @@
 import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
-import { loadOwnedProject } from '../backups/backups.service.js';
+import { allowedRootsForProject, loadOwnedProject } from '../backups/backups.service.js';
+import { isAllowedProjectPath, isPathUnderRoots } from '../backups/backups.paths.js';
 import {
   assertScheduleAllowed,
   classifyCron,
@@ -131,11 +132,25 @@ export async function enqueueNow(
       : undefined;
     scheduleId = schedule._id.toString();
   } else {
-    await loadOwnedProject(input.projectId, userId, { t });
+    const project = await loadOwnedProject(input.projectId, userId, { t });
     projectId = input.projectId;
     kind = input.kind;
     retention = input.retention;
     if (kind === 'restore' && input.snapshotId && input.overwrite !== undefined) {
+      // Belt-and-braces: the executor (local runRestore or the remote agent)
+      // re-validates, but reject an out-of-allowlist target at enqueue time so
+      // the operator sees a 400 instead of a failed job minutes later.
+      if (!input.overwrite) {
+        const roots = await allowedRootsForProject(project, userId, { t });
+        const allowed = roots
+          ? isPathUnderRoots(input.targetPath, roots)
+          : isAllowedProjectPath(input.targetPath);
+        if (!allowed) {
+          throw HttpError.badRequest(
+            t('backups.error.pathNotAllowed', { path: input.targetPath ?? '' }),
+          );
+        }
+      }
       payload = {
         snapshotId: input.snapshotId,
         overwrite: input.overwrite,

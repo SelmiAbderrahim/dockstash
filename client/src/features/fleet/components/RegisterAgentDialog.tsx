@@ -16,6 +16,7 @@ import { registerAgent } from '../store/thunks';
 import type { FleetRejection } from '../store/thunks';
 import { resetRegisterState } from '../store/slice';
 import { selectRegisterError, selectRegisterStatus } from '../store/selectors';
+import { DEFAULT_PROJECT_ROOT, parseProjectRootsInput } from '../install-command';
 import { AgentKeyReveal } from './AgentKeyReveal';
 
 interface Props {
@@ -37,12 +38,18 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
   const [name, setName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState('');
+  // Directories the agent may discover/back up — baked into the install
+  // command as mounts + DOCKSTASH_PROJECT_ROOTS (never sent to the API; the
+  // server learns the real roots from the agent's heartbeat).
+  const [rootsInput, setRootsInput] = useState(DEFAULT_PROJECT_ROOT);
   const [token, setToken] = useState<string | null>(null);
   // Set from a 409 (duplicate host) so the error lands on the offending field
   // rather than the generic form alert. Cleared as soon as the host is edited.
   const [hostError, setHostError] = useState<string | null>(null);
 
-  const canSubmit = name.trim().length > 0 && host.trim().length > 0;
+  const parsedRoots = parseProjectRootsInput(rootsInput);
+  const rootsInvalid = parsedRoots.invalid.length > 0 || parsedRoots.roots.length === 0;
+  const canSubmit = name.trim().length > 0 && host.trim().length > 0 && !rootsInvalid;
   const saving = registerStatus === 'loading';
 
   const handleOpenChange = (next: boolean) => {
@@ -50,6 +57,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
       setName('');
       setHost('');
       setPort('');
+      setRootsInput(DEFAULT_PROJECT_ROOT);
       setToken(null);
       setHostError(null);
       dispatch(resetRegisterState());
@@ -90,7 +98,7 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
         {token ? (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex-1 overflow-y-auto px-6 pb-2">
-              <AgentKeyReveal token={token} />
+              <AgentKeyReveal token={token} roots={parsedRoots.roots} />
             </div>
             <DialogFooter className="border-t p-6 pt-4">
               <Button type="button" onClick={() => handleOpenChange(false)}>
@@ -155,6 +163,36 @@ export const RegisterAgentDialog = ({ open, onClose }: Props) => {
                 />
                 <small className="text-sm text-muted-foreground">{t('fleet.dialog.portHint')}</small>
               </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="agent-roots">{t('fleet.dialog.roots')}</Label>
+              <Input
+                id="agent-roots"
+                data-tour="agent-roots-input"
+                type="text"
+                value={rootsInput}
+                onChange={(e) => setRootsInput(e.target.value)}
+                autoComplete="off"
+                aria-invalid={rootsInvalid ? true : undefined}
+                aria-describedby={rootsInvalid ? 'agent-roots-error' : 'agent-roots-hint'}
+              />
+              {rootsInvalid ? (
+                <span
+                  id="agent-roots-error"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
+                >
+                  {parsedRoots.invalid.length > 0
+                    ? t('fleet.dialog.rootsInvalid', {
+                        entries: parsedRoots.invalid.join(', '),
+                      })
+                    : t('fleet.dialog.rootsEmpty')}
+                </span>
+              ) : (
+                <small id="agent-roots-hint" className="text-sm text-muted-foreground">
+                  {t('fleet.dialog.rootsHint')}
+                </small>
+              )}
             </div>
             {registerStatus === 'failed' && !hostError && (
               <span role="alert" className="text-sm font-medium text-destructive">

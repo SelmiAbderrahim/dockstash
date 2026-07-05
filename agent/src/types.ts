@@ -42,6 +42,8 @@ export interface HeartbeatResponse {
   heartbeatIntervalMs: number;
   /** Set once when an operator requested a fresh discovery snapshot (see /discovery/refresh). */
   refreshDiscovery?: boolean;
+  /** The agent version the server expects — used to warn the operator when this daemon is stale. */
+  latestVersion?: string;
 }
 
 export interface JobResultStats {

@@ -11,6 +11,8 @@ const entry: FleetEntry = {
   host: 'vps1.example',
   status: 'online',
   lastSeenAt: null,
+  agentVersion: '0.2.0',
+  outdated: false,
   projectCount: 1,
   totalBytes: 10,
   snapshotCount: 2,

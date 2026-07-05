@@ -21,9 +21,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/ui/dialog';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
 import { rotateAgentKey } from '../store/thunks';
 import { resetRotateState } from '../store/slice';
 import { selectRotateError, selectRotateStatus } from '../store/selectors';
+import { DEFAULT_PROJECT_ROOT, parseProjectRootsInput } from '../install-command';
 import { AgentInstallCommand } from './AgentInstallCommand';
 import { AgentKeyReveal } from './AgentKeyReveal';
 import type { FleetEntry } from '../types';
@@ -44,12 +47,18 @@ export const AgentSetupDialog = ({ agent, onClose }: Props) => {
   const rotateStatus = useAppSelector(selectRotateStatus);
   const rotateError = useAppSelector(selectRotateError);
   const [token, setToken] = useState<string | null>(null);
+  // Directories the agent may discover/back up — reflected live in the
+  // command below so a re-setup can add newly mounted project dirs.
+  const [rootsInput, setRootsInput] = useState(DEFAULT_PROJECT_ROOT);
 
   const rotating = rotateStatus === 'loading';
+  const parsedRoots = parseProjectRootsInput(rootsInput);
+  const rootsInvalid = parsedRoots.invalid.length > 0 || parsedRoots.roots.length === 0;
 
   const handleOpenChange = (next: boolean) => {
     if (!next) {
       setToken(null);
+      setRootsInput(DEFAULT_PROJECT_ROOT);
       dispatch(resetRotateState());
       onClose();
     }
@@ -78,11 +87,38 @@ export const AgentSetupDialog = ({ agent, onClose }: Props) => {
 
         {token ? (
           <div className="flex-1 overflow-y-auto px-6 pb-2">
-            <AgentKeyReveal token={token} />
+            <AgentKeyReveal token={token} roots={parsedRoots.roots} />
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 pb-2 text-start">
-            <AgentInstallCommand />
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="setup-agent-roots">{t('fleet.dialog.roots')}</Label>
+              <Input
+                id="setup-agent-roots"
+                type="text"
+                value={rootsInput}
+                onChange={(e) => setRootsInput(e.target.value)}
+                autoComplete="off"
+                aria-invalid={rootsInvalid ? true : undefined}
+                aria-describedby={rootsInvalid ? 'setup-agent-roots-error' : 'setup-agent-roots-hint'}
+              />
+              {rootsInvalid ? (
+                <span
+                  id="setup-agent-roots-error"
+                  role="alert"
+                  className="text-sm font-medium text-destructive"
+                >
+                  {parsedRoots.invalid.length > 0
+                    ? t('fleet.dialog.rootsInvalid', { entries: parsedRoots.invalid.join(', ') })
+                    : t('fleet.dialog.rootsEmpty')}
+                </span>
+              ) : (
+                <small id="setup-agent-roots-hint" className="text-sm text-muted-foreground">
+                  {t('fleet.dialog.rootsHint')}
+                </small>
+              )}
+            </div>
+            <AgentInstallCommand roots={parsedRoots.roots} />
             <p className="text-sm text-muted-foreground">{t('fleet.setup.keyPlaceholderNote')}</p>
             {rotateStatus === 'failed' && (
               <span role="alert" className="text-sm font-medium text-destructive">

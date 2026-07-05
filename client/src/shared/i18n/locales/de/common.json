@@ -79,7 +79,11 @@
       "copied": "Kopiert",
       "done": "Fertig",
       "installTitle": "Agent installieren",
-      "installIntro": "Führen Sie dies auf dem hinzuzufügenden Rechner aus. Es startet den Dockstash-Agent-Container mit eingebettetem Token."
+      "installIntro": "Führen Sie dies auf dem hinzuzufügenden Rechner aus. Es startet den Dockstash-Agent-Container mit eingebettetem Token.",
+      "roots": "Projektverzeichnisse",
+      "rootsHint": "Kommagetrennte absolute Pfade, die der Agent erkennen und sichern darf (z. B. /var/www, /opt/apps). Jeder wird in den Agent-Container eingebunden.",
+      "rootsInvalid": "Ungültige Verzeichnisse: {{entries}}. Verwenden Sie absolute Pfade außerhalb von /, /proc, /sys, /dev, /etc, /boot und /run.",
+      "rootsEmpty": "Geben Sie mindestens ein Projektverzeichnis an."
     },
     "install": {
       "copy": "Befehl kopieren",
@@ -109,6 +113,10 @@
       "description": "„{{name}}\" aus Ihrer Flotte entfernen? Seine Projekte fallen auf lokale Backups zurück und anstehende Aufträge werden abgebrochen.",
       "confirm": "Entfernen",
       "cancel": "Abbrechen"
+    },
+    "outdated": {
+      "badge": "Update verfügbar",
+      "hint": "Dieser Agent läuft mit Version {{version}}. Führen Sie den Setup-Befehl auf dem Host erneut aus, um ihn zu aktualisieren."
     }
   }
 }

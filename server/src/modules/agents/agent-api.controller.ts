@@ -13,6 +13,7 @@ import {
   agentJobResultSchema,
 } from './agent-api.schema.js';
 import {
+  EXPECTED_AGENT_VERSION,
   consumeDiscoveryRefreshRequest,
   effectiveAgentStatus,
   touchAgentHeartbeat,
@@ -65,6 +66,8 @@ export const agentHeartbeatHandler: RequestHandler = asyncHandler(async (req, re
     },
     pollIntervalMs: 10_000,
     heartbeatIntervalMs: Math.floor((env.AGENT_OFFLINE_AFTER_SECONDS * 1000) / 3),
+    // Lets a stale daemon warn in its own logs (see agent/src/poller.ts).
+    latestVersion: EXPECTED_AGENT_VERSION,
     ...(refreshDiscovery ? { refreshDiscovery: true } : {}),
   });
 });

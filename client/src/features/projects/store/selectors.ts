@@ -1,3 +1,4 @@
+import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '@app/store';
 
 export const selectProjects = (state: RootState) => state.projects.items;
@@ -21,12 +22,14 @@ export const selectScannedPlan = (state: RootState) => state.projects.scannedPla
 export const selectScanStatus = (state: RootState) => state.projects.scanStatus;
 export const selectCreateStatus = (state: RootState) => state.projects.createStatus;
 export const selectAddError = (state: RootState) => state.projects.addError;
-export const selectProjectPaths = (state: RootState) =>
-  state.projects.items.map((p) => p.path);
+export const selectProjectPaths = createSelector([selectProjects], (projects) =>
+  projects.map((p) => p.path),
+);
 export const selectAgentFolders = (state: RootState) => state.projects.agentFolders;
 export const selectAgentContainers = (state: RootState) => state.projects.agentContainers;
 export const selectAgentDockerAvailable = (state: RootState) =>
   state.projects.agentDockerAvailable;
+export const selectAgentRoots = (state: RootState) => state.projects.agentRoots;
 export const selectAgentSnapshotAt = (state: RootState) => state.projects.agentSnapshotAt;
 export const selectAgentDiscoveryStatus = (state: RootState) =>
   state.projects.agentDiscoveryStatus;

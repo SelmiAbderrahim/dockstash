@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TOKEN_PLACEHOLDER, buildAgentInstallCommand, resolveAgentServerUrl } from './install-command';
+import {
+  DEFAULT_PROJECT_ROOT,
+  TOKEN_PLACEHOLDER,
+  buildAgentInstallCommand,
+  normalizeProjectRoot,
+  parseProjectRootsInput,
+  resolveAgentServerUrl,
+} from './install-command';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -56,7 +63,75 @@ describe('buildAgentInstallCommand', () => {
   it('produces the full compose + up one-paste as a single joined script', () => {
     const command = buildAgentInstallCommand({ serverUrl: 'http://dashboard.example.com' });
     expect(command.startsWith("cat > docker-compose.agent.yml <<'EOF'")).toBe(true);
-    expect(command.endsWith('docker compose -f docker-compose.agent.yml up -d')).toBe(true);
+    expect(command).toContain('docker compose -f docker-compose.agent.yml pull');
+    expect(command.endsWith('docker compose -f docker-compose.agent.yml up -d --force-recreate')).toBe(
+      true,
+    );
     expect(command).toContain('image: selmiabderrahim/agent:latest');
+  });
+
+  it('mounts /var/www rw and lists it in DOCKSTASH_PROJECT_ROOTS by default', () => {
+    const command = buildAgentInstallCommand({ serverUrl: 'http://dashboard.example.com' });
+    expect(command).toContain('DOCKSTASH_PROJECT_ROOTS: /var/www');
+    expect(command).toContain('- /var/www:/var/www:rw');
+  });
+
+  it('mounts every chosen root and joins them in DOCKSTASH_PROJECT_ROOTS', () => {
+    const command = buildAgentInstallCommand({
+      serverUrl: 'http://dashboard.example.com',
+      roots: ['/var/www', '/opt/apps'],
+    });
+    expect(command).toContain('DOCKSTASH_PROJECT_ROOTS: /var/www,/opt/apps');
+    expect(command).toContain('- /var/www:/var/www:rw');
+    expect(command).toContain('- /opt/apps:/opt/apps:rw');
+  });
+
+  it('falls back to the default root when an empty roots array is passed', () => {
+    const command = buildAgentInstallCommand({
+      serverUrl: 'http://dashboard.example.com',
+      roots: [],
+    });
+    expect(command).toContain(`DOCKSTASH_PROJECT_ROOTS: ${DEFAULT_PROJECT_ROOT}`);
+  });
+});
+
+describe('normalizeProjectRoot', () => {
+  it('normalizes and strips trailing slashes', () => {
+    expect(normalizeProjectRoot('/var/www/')).toBe('/var/www');
+    expect(normalizeProjectRoot('  /opt//apps  ')).toBe('/opt/apps');
+  });
+
+  it('rejects empties, NUL, traversal, relative paths, and the filesystem root', () => {
+    expect(normalizeProjectRoot('')).toBeNull();
+    expect(normalizeProjectRoot('   ')).toBeNull();
+    expect(normalizeProjectRoot('/a\0b')).toBeNull();
+    expect(normalizeProjectRoot('/a/../b')).toBeNull();
+    expect(normalizeProjectRoot('relative')).toBeNull();
+    expect(normalizeProjectRoot('/')).toBeNull();
+    expect(normalizeProjectRoot('///')).toBeNull();
+  });
+
+  it('rejects denied system prefixes, exact and nested, but allows lookalikes', () => {
+    for (const denied of ['/proc', '/sys', '/dev', '/etc', '/boot', '/run']) {
+      expect(normalizeProjectRoot(denied)).toBeNull();
+      expect(normalizeProjectRoot(`${denied}/sub`)).toBeNull();
+    }
+    expect(normalizeProjectRoot('/etcetera')).toBe('/etcetera');
+  });
+});
+
+describe('parseProjectRootsInput', () => {
+  it('splits on commas and newlines, dedups, and keeps order', () => {
+    expect(parseProjectRootsInput('/var/www, /opt/apps\n/var/www/')).toEqual({
+      roots: ['/var/www', '/opt/apps'],
+      invalid: [],
+    });
+  });
+
+  it('skips empty segments and collects invalid entries', () => {
+    expect(parseProjectRootsInput(',/var/www,,relative,/etc/nginx')).toEqual({
+      roots: ['/var/www'],
+      invalid: ['relative', '/etc/nginx'],
+    });
   });
 });

@@ -238,7 +238,18 @@ export const FleetScreen = () => {
                   <TableCell className="font-medium">{entry.name}</TableCell>
                   <TableCell className="font-mono text-xs">{entry.host}</TableCell>
                   <TableCell>
-                    <StatusBadge status={entry.status} />
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusBadge status={entry.status} />
+                      {entry.outdated && (
+                        <Badge
+                          variant="destructive"
+                          data-testid={`agent-outdated-${entry.id}`}
+                          title={t('fleet.outdated.hint', { version: entry.agentVersion })}
+                        >
+                          {t('fleet.outdated.badge')}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {entry.lastSeenAt

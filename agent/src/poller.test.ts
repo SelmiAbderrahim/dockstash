@@ -12,6 +12,16 @@ const SNAP: AgentDiscoverySnapshot = {
   folders: [{ name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' }],
   containers: [],
   dockerAvailable: true,
+  roots: ['/var/www'],
+  errors: [],
+};
+
+const DEGRADED_SNAP: AgentDiscoverySnapshot = {
+  folders: [],
+  containers: [],
+  dockerAvailable: false,
+  roots: ['/var/www'],
+  errors: ['Docker socket is unreachable'],
 };
 
 function job(id = 'job-1'): ClaimedJob {
@@ -150,6 +160,39 @@ describe('Poller', () => {
     return { poller, log };
   }
 
+  it('warns exactly once when the server reports a newer agent version', async () => {
+    const fake = makeFakeApi();
+    fake.heartbeat = vi.fn(async () => ({
+      agent: { id: 'a1', name: 'agent', status: 'online' as const },
+      pollIntervalMs: 10_000,
+      heartbeatIntervalMs: 30_000,
+      latestVersion: '9.9.9',
+    }));
+    const log = makeLogger();
+    const { poller } = makePoller(fake, {}, log);
+    await poller.heartbeatOnce();
+    await poller.heartbeatOnce();
+    expect(log.warn).toHaveBeenCalledTimes(1);
+    expect(log.warn).toHaveBeenCalledWith(
+      { running: '0.1.0', latest: '9.9.9' },
+      expect.stringContaining('agent is outdated'),
+    );
+  });
+
+  it('does not warn when the server-reported version matches', async () => {
+    const fake = makeFakeApi();
+    fake.heartbeat = vi.fn(async () => ({
+      agent: { id: 'a1', name: 'agent', status: 'online' as const },
+      pollIntervalMs: 10_000,
+      heartbeatIntervalMs: 30_000,
+      latestVersion: '0.1.0',
+    }));
+    const log = makeLogger();
+    const { poller } = makePoller(fake, {}, log);
+    await poller.heartbeatOnce();
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
   it('fires an immediate heartbeat on start and records lastHeartbeatAt', async () => {
     const fake = makeFakeApi();
     const { poller } = makePoller(fake);
@@ -202,6 +245,21 @@ describe('Poller', () => {
     await poller.heartbeatOnce();
     await poller.heartbeatOnce();
     expect(collect).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not cache degraded snapshots for the full throttle window', async () => {
+    const fake = makeFakeApi();
+    const collect = vi.fn().mockResolvedValueOnce(DEGRADED_SNAP).mockResolvedValueOnce(SNAP);
+    const now = vi.fn(() => 1000);
+    const { poller } = makeDiscoveryPoller(fake, collect, { discoveryIntervalMs: 999_999, now });
+    await poller.heartbeatOnce();
+    await poller.heartbeatOnce();
+    expect(collect).toHaveBeenCalledTimes(2);
+    expect(fake.heartbeat).toHaveBeenLastCalledWith({
+      version: '0.1.0',
+      hostname: 'vps-1',
+      discovery: SNAP,
+    });
   });
 
   it('force bypasses the throttle window even when the cache is still fresh', async () => {

@@ -9,6 +9,8 @@ import type { ClaimedJob, JobResultStats } from './types.js';
 export interface BackupDeps {
   restic: ResticRunnerExt;
   docker: DockerClient;
+  /** This agent's configured allowlist (config.DOCKSTASH_PROJECT_ROOTS). */
+  roots: readonly string[];
   log(line: string): void;
 }
 
@@ -21,8 +23,8 @@ export function assertArgvSafe(argv: string[]): void {
   }
 }
 
-function assertAllowedPath(p: string): void {
-  if (!isAllowedProjectPath(p)) {
+function assertAllowedPath(p: string, roots: readonly string[]): void {
+  if (!isAllowedProjectPath(p, roots)) {
     throw new Error(`path not allowed: ${p}`);
   }
 }
@@ -61,11 +63,11 @@ export async function runBackupJob(
   job: ClaimedJob,
   deps: BackupDeps,
 ): Promise<JobResultStats> {
-  for (const p of job.plan.paths) assertAllowedPath(p);
+  for (const p of job.plan.paths) assertAllowedPath(p, deps.roots);
   // `configs` join the restic argv alongside `paths` (see below), so they must
-  // clear the same /var/www allowlist — a server-trusted job must never carry
-  // an out-of-tree config path.
-  for (const c of job.plan.configs) assertAllowedPath(c);
+  // clear the same project-roots allowlist — a server-trusted job must never
+  // carry an out-of-tree config path.
+  for (const c of job.plan.configs) assertAllowedPath(c, deps.roots);
   await deps.restic.init();
 
   for (const db of job.plan.databases) {

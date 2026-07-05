@@ -8,6 +8,7 @@ import {
   computeFleet,
   deleteAgent,
   effectiveAgentStatus,
+  isAgentOutdated,
   listAgentsForUser,
   loadOwnedAgent,
   registerAgent,
@@ -26,6 +27,8 @@ function serializeAgent(agent: AgentHydrated) {
     port: agent.port,
     status: effectiveAgentStatus(agent),
     lastSeenAt: agent.lastSeenAt ? new Date(agent.lastSeenAt).toISOString() : null,
+    agentVersion: agent.agentVersion,
+    outdated: isAgentOutdated(agent),
   };
 }
 

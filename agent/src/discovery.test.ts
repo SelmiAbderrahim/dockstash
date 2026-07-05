@@ -10,9 +10,11 @@ import {
 } from './discovery.js';
 import type { DockerContainerSummary } from './docker-client.js';
 
-function entry(over: Partial<FolderEntry> & { name: string }): FolderEntry {
+const ROOTS = ['/var/www'];
+
+function entry(over: Partial<FolderEntry> & { name: string }, root = '/var/www'): FolderEntry {
   return {
-    path: path.posix.join('/var/www/', over.name),
+    path: path.posix.join(root, over.name),
     isDirectory: true,
     isSymbolicLink: false,
     ...over,
@@ -33,7 +35,12 @@ describe('collectDiscovery — folders', () => {
     const composeProbe = async (dir: string): Promise<string | null> =>
       dir === '/var/www/alpha' ? 'docker-compose.yml' : null;
 
-    const snap = await collectDiscovery({ folderReader, composeProbe, dockerClient: noDocker });
+    const snap = await collectDiscovery({
+      roots: ROOTS,
+      folderReader,
+      composeProbe,
+      dockerClient: noDocker,
+    });
     expect(snap.folders.map((f) => f.name)).toEqual(['alpha', 'zeta']);
     expect(snap.folders[0]).toEqual({
       name: 'alpha',
@@ -42,6 +49,25 @@ describe('collectDiscovery — folders', () => {
       composeFile: 'docker-compose.yml',
     });
     expect(snap.folders[1]).toMatchObject({ hasCompose: false, composeFile: null });
+    expect(snap.roots).toEqual(['/var/www']);
+  });
+
+  it('scans every configured root and keeps scanning past an unreadable one', async () => {
+    const folderReader = async (root: string): Promise<FolderEntry[]> => {
+      if (root === '/var/www') throw new Error('ENOENT');
+      return [entry({ name: 'shop' }, '/srv/apps')];
+    };
+    const snap = await collectDiscovery({
+      roots: ['/var/www', '/srv/apps'],
+      folderReader,
+      composeProbe: async () => null,
+      dockerClient: noDocker,
+    });
+    expect(snap.folders.map((f) => f.path)).toEqual(['/srv/apps/shop']);
+    expect(snap.errors).toEqual([
+      expect.stringContaining('/var/www is not readable from the agent container'),
+    ]);
+    expect(snap.roots).toEqual(['/var/www', '/srv/apps']);
   });
 
   it('returns an empty folder list and records a reason when the reader throws', async () => {
@@ -49,6 +75,7 @@ describe('collectDiscovery — folders', () => {
       throw new Error('ENOENT');
     };
     const snap = await collectDiscovery({
+      roots: ROOTS,
       folderReader,
       composeProbe: async () => null,
       dockerClient: noDocker,
@@ -59,10 +86,13 @@ describe('collectDiscovery — folders', () => {
     ]);
   });
 
-  it('caps the folder list', async () => {
-    const folderReader = async (): Promise<FolderEntry[]> =>
-      Array.from({ length: 250 }, (_, i) => entry({ name: `p${String(i).padStart(3, '0')}` }));
+  it('caps the folder list across all roots', async () => {
+    const folderReader = async (root: string): Promise<FolderEntry[]> =>
+      Array.from({ length: 150 }, (_, i) =>
+        entry({ name: `p${String(i).padStart(3, '0')}` }, root),
+      );
     const snap = await collectDiscovery({
+      roots: ['/var/www', '/srv/apps'],
       folderReader,
       composeProbe: async () => null,
       dockerClient: noDocker,
@@ -77,6 +107,7 @@ describe('collectDiscovery — containers', () => {
       { id: 'a', names: ['/x'], image: 'redis:7', state: 'running', labels: {} },
     ];
     const snap = await collectDiscovery({
+      roots: ROOTS,
       folderReader: async () => [],
       composeProbe: async () => null,
       dockerClient: { listContainers: async () => containers },
@@ -89,6 +120,7 @@ describe('collectDiscovery — containers', () => {
   it('degrades to dockerAvailable:false, logs, and records a reason when listContainers throws', async () => {
     const warn = vi.fn();
     const snap = await collectDiscovery({
+      roots: ROOTS,
       folderReader: async () => [],
       composeProbe: async () => null,
       log: { warn },
@@ -110,6 +142,7 @@ describe('collectDiscovery — containers', () => {
 
   it('collects both a folder error and a docker error in the same snapshot', async () => {
     const snap = await collectDiscovery({
+      roots: ROOTS,
       folderReader: async () => {
         throw new Error('EACCES');
       },
@@ -132,6 +165,7 @@ describe('collectDiscovery — containers', () => {
       labels: {},
     }));
     const snap = await collectDiscovery({
+      roots: ROOTS,
       folderReader: async () => [],
       composeProbe: async () => null,
       dockerClient: { listContainers: async () => many },

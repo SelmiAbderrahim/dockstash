@@ -5,13 +5,13 @@ import type { TranslationVars } from '../../shared/i18n/index.js';
 import { assertProjectCap } from '../billing/entitlements.service.js';
 import { sendFailureAlert } from '../alerting/index.js';
 // Cycle-safe: agents.service imports backups.model, never this file.
-import { loadOwnedAgent } from '../agents/agents.service.js';
+import { allowedRootsForAgent, loadOwnedAgent } from '../agents/agents.service.js';
 import {
   Project,
   type ProjectHydrated,
   type BackupStatus,
 } from './backups.model.js';
-import { isAllowedProjectPath } from './backups.paths.js';
+import { isAllowedProjectPath, isPathUnderRoots } from './backups.paths.js';
 import { scanProject, type BackupPlan } from './backups.scan.js';
 import type {
   DockerClient,
@@ -31,10 +31,29 @@ export type Translator = (key: string, vars?: TranslationVars) => string;
  */
 const identityT: Translator = (key) => key;
 
-function assertAllowedPath(input: string, t: Translator): void {
-  if (!isAllowedProjectPath(input)) {
+function assertAllowedPath(input: string, t: Translator, roots?: readonly string[]): void {
+  // Local execution keeps the strict legacy /var/www allowlist; agent-assigned
+  // projects validate against the roots THAT agent reported (see
+  // allowedRootsForProject). Both re-run agent/local-side before restic.
+  const allowed = roots ? isPathUnderRoots(input, roots) : isAllowedProjectPath(input);
+  if (!allowed) {
     throw HttpError.badRequest(t('backups.error.pathNotAllowed', { path: input }));
   }
+}
+
+/**
+ * Resolve the path allowlist for a project: the assigned agent's reported
+ * roots, or `undefined` for local execution (strict /var/www). Exported for
+ * the scheduler's restore-enqueue validation.
+ */
+export async function allowedRootsForProject(
+  project: Pick<ProjectHydrated, 'agent'>,
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<string[] | undefined> {
+  if (!project.agent) return undefined;
+  const agent = await loadOwnedAgent(String(project.agent), userId, deps);
+  return allowedRootsForAgent(agent);
 }
 
 export interface CreateProjectDeps {
@@ -47,11 +66,13 @@ export async function createProject(
   deps: CreateProjectDeps = {},
 ): Promise<ProjectHydrated> {
   const t = deps.t ?? identityT;
-  assertAllowedPath(input.path, t);
-  for (const p of input.plan?.paths ?? []) assertAllowedPath(p, t);
-  for (const c of input.plan?.configs ?? []) assertAllowedPath(c, t);
-  // A create-time agent assignment must own the agent (mirrors updateProjectAgent).
-  if (input.agentId) await loadOwnedAgent(input.agentId, userId, deps);
+  // A create-time agent assignment must own the agent (mirrors updateProjectAgent);
+  // its reported roots become the allowlist for every path in the project.
+  const agent = input.agentId ? await loadOwnedAgent(input.agentId, userId, deps) : null;
+  const roots = agent ? allowedRootsForAgent(agent) : undefined;
+  assertAllowedPath(input.path, t, roots);
+  for (const p of input.plan?.paths ?? []) assertAllowedPath(p, t, roots);
+  for (const c of input.plan?.configs ?? []) assertAllowedPath(c, t, roots);
   const repoPasswordEnc = encryptSecret(input.repoPassword);
   const plan = input.plan ?? { paths: [input.path], databases: [], configs: [] };
   const project = await Project.create({
@@ -100,8 +121,9 @@ export async function updateProjectPlan(
 ): Promise<ProjectHydrated> {
   const t = deps.t ?? identityT;
   const project = await loadOwnedProject(projectId, userId, deps);
-  for (const p of plan.paths) assertAllowedPath(p, t);
-  for (const c of plan.configs) assertAllowedPath(c, t);
+  const roots = await allowedRootsForProject(project, userId, deps);
+  for (const p of plan.paths) assertAllowedPath(p, t, roots);
+  for (const c of plan.configs) assertAllowedPath(c, t, roots);
   project.plan = {
     paths: plan.paths,
     databases: plan.databases.map((d) => ({

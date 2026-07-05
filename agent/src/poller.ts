@@ -88,8 +88,13 @@ export class Poller {
   private lastHeartbeatAt: Date | null = null;
   private cachedSnapshot: AgentDiscoverySnapshot | null = null;
   private lastDiscoveryAt = 0;
+  private warnedOutdated = false;
 
   constructor(private readonly opts: PollerOptions) {}
+
+  private snapshotIsDegraded(snapshot: AgentDiscoverySnapshot): boolean {
+    return !snapshot.dockerAvailable || snapshot.errors.length > 0;
+  }
 
   /**
    * Return a snapshot for the heartbeat, recomputing at most once per
@@ -101,7 +106,14 @@ export class Poller {
     if (!this.opts.collectDiscovery) return undefined;
     const now = (this.opts.now ?? (() => Date.now()))();
     const intervalMs = this.opts.discoveryIntervalMs ?? 120_000;
-    if (force || this.cachedSnapshot === null || now - this.lastDiscoveryAt >= intervalMs) {
+    const cachedSnapshotIsDegraded =
+      this.cachedSnapshot !== null && this.snapshotIsDegraded(this.cachedSnapshot);
+    if (
+      force ||
+      this.cachedSnapshot === null ||
+      cachedSnapshotIsDegraded ||
+      now - this.lastDiscoveryAt >= intervalMs
+    ) {
       try {
         this.cachedSnapshot = await this.opts.collectDiscovery();
         this.lastDiscoveryAt = now;
@@ -139,6 +151,19 @@ export class Poller {
         ...(discovery ? { discovery } : {}),
       });
       this.lastHeartbeatAt = new Date();
+      // Warn ONCE per process when the server expects a newer daemon — the
+      // operator sees it in `docker logs` next to the install runbook.
+      if (
+        !this.warnedOutdated &&
+        response?.latestVersion &&
+        response.latestVersion !== this.opts.version
+      ) {
+        this.warnedOutdated = true;
+        this.opts.log.warn(
+          { running: this.opts.version, latest: response.latestVersion },
+          'agent is outdated — rerun: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate',
+        );
+      }
       // The server consumes the refresh request atomically (once), so this
       // can only fire once per operator request — safe to recurse.
       if (response?.refreshDiscovery && !force) {

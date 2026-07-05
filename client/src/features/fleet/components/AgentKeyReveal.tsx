@@ -7,6 +7,8 @@ import { AgentInstallCommand } from './AgentInstallCommand';
 
 interface Props {
   token: string;
+  /** Project directories chosen at registration; forwarded into the command. */
+  roots?: string[];
 }
 
 /**
@@ -15,7 +17,7 @@ interface Props {
  * by the register dialog and the rotate-key flow; the token stays
  * component-local and is discarded when the dialog closes.
  */
-export const AgentKeyReveal = ({ token }: Props) => {
+export const AgentKeyReveal = ({ token, roots }: Props) => {
   const { t } = useTranslation('common');
   const { copied, copy } = useCopyToClipboard();
 
@@ -35,7 +37,7 @@ export const AgentKeyReveal = ({ token }: Props) => {
           {copied ? t('fleet.dialog.copied') : t('fleet.dialog.copy')}
         </Button>
       </div>
-      <AgentInstallCommand token={token} />
+      <AgentInstallCommand token={token} roots={roots} />
     </div>
   );
 };

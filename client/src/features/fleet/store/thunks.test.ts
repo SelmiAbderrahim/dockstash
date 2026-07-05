@@ -23,6 +23,8 @@ const entry: FleetEntry = {
   host: 'vps1.example',
   status: 'online',
   lastSeenAt: null,
+  agentVersion: '0.2.0',
+  outdated: false,
   projectCount: 1,
   totalBytes: 10,
   snapshotCount: 2,
@@ -126,6 +128,8 @@ describe('registerAgent', () => {
         port: 7443,
         status: 'offline' as const,
         lastSeenAt: null,
+        agentVersion: '',
+        outdated: false,
       },
       token: 'dsa_0123456789abcdef01234567.sk',
     };
@@ -173,7 +177,7 @@ describe('registerAgent', () => {
 
 describe('rotateAgentKey', () => {
   const rotated = {
-    agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null },
+    agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null, agentVersion: '', outdated: false },
     token: 'dsa_0123456789abcdef01234567.new',
   };
 

@@ -64,10 +64,12 @@ export interface AgentDiscoveryView {
   folders: AgentFolder[];
   containers: AgentContainerGroup[];
   dockerAvailable: boolean;
+  /** The directories this agent scans (its DOCKSTASH_PROJECT_ROOTS allowlist). */
+  roots: string[];
   snapshotAt: string | null;
   /** True once the agent has ever sent a heartbeat; false means "never reported". */
   reported: boolean;
-  /** Reasons the snapshot came back empty/degraded (e.g. unreadable /var/www, Docker unreachable). */
+  /** Reasons the snapshot came back empty/degraded (e.g. unreadable root, Docker unreachable). */
   errors: string[];
 }
 

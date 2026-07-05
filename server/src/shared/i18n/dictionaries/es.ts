@@ -174,7 +174,7 @@ export const es: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'La ruta {{path}} no está dentro de la raíz permitida /var/www.',
+      pathNotAllowed: 'La ruta {{path}} no está dentro de los directorios de proyectos permitidos para este destino de respaldo.',
       projectNotFound: 'Proyecto no encontrado.',
       notOwner: 'No eres el propietario de este proyecto.',
       scanFailed: 'Fallo al escanear el proyecto: {{message}}',

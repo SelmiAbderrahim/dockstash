@@ -11,6 +11,7 @@ describe('loadConfig', () => {
       DOCKSTASH_POLL_INTERVAL_MS: '5000',
       DOCKSTASH_HEARTBEAT_INTERVAL_MS: '15000',
       DOCKER_HOST: 'tcp://custom-proxy:1234',
+      DOCKSTASH_PROJECT_ROOTS: '/var/www,/srv/apps/',
       RESTIC_BINARY: '/usr/bin/restic',
       RESTIC_CACHE_DIR: '/data/restic-cache',
       HEALTH_PORT: '8080',
@@ -21,6 +22,7 @@ describe('loadConfig', () => {
       DOCKSTASH_POLL_INTERVAL_MS: 5000,
       DOCKSTASH_HEARTBEAT_INTERVAL_MS: 15000,
       DOCKER_HOST: 'tcp://custom-proxy:1234',
+      DOCKSTASH_PROJECT_ROOTS: ['/var/www', '/srv/apps'],
       RESTIC_BINARY: '/usr/bin/restic',
       RESTIC_CACHE_DIR: '/data/restic-cache',
       HEALTH_PORT: 8080,
@@ -41,6 +43,27 @@ describe('loadConfig', () => {
     expect(config.RESTIC_BINARY).toBe('restic');
     expect(config.RESTIC_CACHE_DIR).toBe('/tmp/restic-cache');
     expect(config.HEALTH_PORT).toBe(9924);
+    expect(config.DOCKSTASH_PROJECT_ROOTS).toEqual(['/var/www']);
+  });
+
+  it('throws when a project root is invalid (denied prefix)', () => {
+    expect(() =>
+      loadConfig({
+        DOCKSTASH_URL: 'https://dockstash.com',
+        DOCKSTASH_AGENT_TOKEN: VALID_TOKEN,
+        DOCKSTASH_PROJECT_ROOTS: '/var/www,/etc/nginx',
+      }),
+    ).toThrow(/invalid project root/);
+  });
+
+  it('throws when the project roots list is effectively empty', () => {
+    expect(() =>
+      loadConfig({
+        DOCKSTASH_URL: 'https://dockstash.com',
+        DOCKSTASH_AGENT_TOKEN: VALID_TOKEN,
+        DOCKSTASH_PROJECT_ROOTS: ' , ,',
+      }),
+    ).toThrow(/at least one directory/);
   });
 
   it('strips trailing slashes from DOCKSTASH_URL', () => {

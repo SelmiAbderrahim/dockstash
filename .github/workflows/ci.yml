@@ -82,6 +82,35 @@ jobs:
         working-directory: client
         run: npm audit --audit-level=high
 
+  agent:
+    name: agent (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install (npm ci)
+        working-directory: agent
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: agent
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: agent
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: agent
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: agent
+        run: npm audit --audit-level=high
+
   # Docker parity: build + boot the compose stack in the CI container to catch
   # image drift before merge. Failure here means a Dockerfile change broke the
   # image build.
@@ -103,6 +132,17 @@ jobs:
   # Requires repo secrets DOCKERHUB_USERNAME + DOCKERHUB_TOKEN (write scope on the
   # selmiabderrahim account). The Docker Hub repo must be PUBLIC — the VPS install flow pulls
   # without docker login.
+  #
+  # MANUAL PUBLISH RUNBOOK (feature branches / incident recovery). This job only
+  # runs on master; while agent/ code lives on a feature branch, a stale
+  # `:latest` makes every remote agent silently skip new features (e.g. the
+  # 2026-07 incident: deployed agents never sent discovery snapshots, so the
+  # Add-Project picker looked empty). To publish by hand from a logged-in machine:
+  #   docker build -t selmiabderrahim/agent:latest \
+  #     -t selmiabderrahim/agent:$(node -p "require('./agent/package.json').version") \
+  #     -t selmiabderrahim/agent:$(git rev-parse HEAD) agent/
+  #   docker push --all-tags selmiabderrahim/agent
+  # Then bump EXPECTED_AGENT_VERSION (server) + AGENT_VERSION (agent) together.
   publish-agent:
     name: publish (selmiabderrahim/agent)
     runs-on: ubuntu-latest

@@ -11,7 +11,8 @@ import { Poller, type PollerLogger } from './poller.js';
 import { startHealthServer } from './health.js';
 import type { ClaimedJob, JobResult } from './types.js';
 
-export const AGENT_VERSION = '0.1.0';
+// Mirrored by the server's EXPECTED_AGENT_VERSION (agents.service.ts) — bump both.
+export const AGENT_VERSION = '0.2.0';
 
 export interface RunAgentDeps {
   env?: NodeJS.ProcessEnv;
@@ -38,7 +39,12 @@ export async function productionExecute(
     cacheDir: config.RESTIC_CACHE_DIR,
   });
   const docker = new HttpDockerClient({ dockerHost: config.DOCKER_HOST });
-  return executeJob(job, { restic, docker, log: pushLog });
+  return executeJob(job, {
+    restic,
+    docker,
+    roots: config.DOCKSTASH_PROJECT_ROOTS,
+    log: pushLog,
+  });
 }
 
 export interface RunningAgent {
@@ -62,7 +68,12 @@ export async function runAgent(deps: RunAgentDeps = {}): Promise<RunningAgent> {
   let collect = deps.collectDiscovery;
   if (!collect) {
     const discoveryDocker = new HttpDockerClient({ dockerHost: config.DOCKER_HOST });
-    collect = () => collectDiscovery({ dockerClient: discoveryDocker, log });
+    collect = () =>
+      collectDiscovery({
+        roots: config.DOCKSTASH_PROJECT_ROOTS,
+        dockerClient: discoveryDocker,
+        log,
+      });
   }
 
   const poller = new Poller({
@@ -82,7 +93,11 @@ export async function runAgent(deps: RunAgentDeps = {}): Promise<RunningAgent> {
 
   poller.start();
   log.info(
-    { url: config.DOCKSTASH_URL, healthPort: config.HEALTH_PORT },
+    {
+      url: config.DOCKSTASH_URL,
+      healthPort: config.HEALTH_PORT,
+      roots: config.DOCKSTASH_PROJECT_ROOTS,
+    },
     'dockstash-agent started',
   );
 

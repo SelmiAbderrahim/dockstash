@@ -174,7 +174,7 @@ export const zh: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: '路径 {{path}} 不在允许的 /var/www 根目录下。',
+      pathNotAllowed: '路径 {{path}} 不在此备份目标允许的项目目录内。',
       projectNotFound: '项目未找到。',
       notOwner: '您不是此项目的所有者。',
       scanFailed: '项目扫描失败：{{message}}',

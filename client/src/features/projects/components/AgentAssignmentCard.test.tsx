@@ -45,8 +45,8 @@ const baseProject = (over: Partial<Project> = {}): Project => ({
 });
 
 const agents: Agent[] = [
-  { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online', lastSeenAt: null },
-  { id: 'a2', name: 'db-1', host: 'vps2.example', port: 22, status: 'offline', lastSeenAt: null },
+  { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online', lastSeenAt: null, agentVersion: '', outdated: false },
+  { id: 'a2', name: 'db-1', host: 'vps2.example', port: 22, status: 'offline', lastSeenAt: null, agentVersion: '', outdated: false },
 ];
 
 beforeEach(() => {

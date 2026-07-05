@@ -51,12 +51,14 @@ services:
       DOCKSTASH_URL: https://dockstash.com
       DOCKSTASH_AGENT_TOKEN: dsa_<agentId>.<secret>
       DOCKER_HOST: tcp://docker-socket-proxy:2375
-    volumes: [/var/www:/var/www:ro]
+      DOCKSTASH_PROJECT_ROOTS: /var/www
+    volumes: [/var/www:/var/www:rw]
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
 EOF
-docker compose -f docker-compose.agent.yml up -d
+docker compose -f docker-compose.agent.yml pull
+docker compose -f docker-compose.agent.yml up -d --force-recreate
 ```
 
 - `DOCKSTASH_URL` — your Dockstash origin.
@@ -64,8 +66,27 @@ docker compose -f docker-compose.agent.yml up -d
 - The bundled **docker-socket-proxy** grants the agent exactly
   `CONTAINERS + EXEC` on the host Docker — the same least-privilege posture as
   the primary stack. The agent never touches the raw socket.
-- `/var/www:ro` is the backup-path root (matches the server's `/var/www/*`
-  allowlist). Mount read-only.
+
+### Project directories (`DOCKSTASH_PROJECT_ROOTS`)
+
+The agent discovers, backs up, and restores **only** inside the directories
+listed in `DOCKSTASH_PROJECT_ROOTS` (comma-separated absolute paths; default
+`/var/www`). The register/setup dialogs have a **Project directories** field
+that bakes your choice into the compose snippet. Rules:
+
+- Every root listed **must also be bind-mounted** (`- <root>:<root>:rw`) —
+  same path inside and outside the container. Mounts are `rw` because
+  **restores write files back**; backups only read.
+- Roots must be absolute and may not be `/` or live under `/proc`, `/sys`,
+  `/dev`, `/etc`, `/boot`, or `/run` — the agent refuses to start otherwise,
+  and the server independently ignores such roots.
+- The agent reports its roots on heartbeat; the server validates every project
+  path, plan path, and restore target for that agent against them. Both sides
+  re-check, so a tampered job can never escape the allowlist you chose.
+- To add a directory later (say `/opt/apps`), open the agent's **Setup**
+  dialog, add it to the Project directories field, and re-run the printed
+  compose command on the VPS. Compose groups whose folder is outside the
+  roots show an "Outside agent directories" badge in the Add-Project picker.
 
 ## How remote jobs run
 
@@ -115,6 +136,18 @@ it is never silently retried.
   docker-compose.agent.yml up -d`.
 - **Reinstall / move** — remove the agent in the UI, register a fresh one, and
   bring up the compose file with the new token.
+- **"Update available" badge on `/fleet`** — the daemon self-reports its
+  version on every heartbeat; the badge means it is older than the published
+  image. On the VPS run
+  `docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate`.
+  An outdated agent also logs `agent is outdated` in `docker logs`. Symptoms of
+  a stale image: heartbeats arrive (agent shows online) but the Add-Project
+  picker says the agent "hasn't reported yet" — old daemons never send
+  discovery snapshots at all.
+- **Stale duplicate container** — if you re-registered or rotated and see
+  periodic 401s in the server logs, an old agent container somewhere still
+  heartbeats with a revoked token. Find it (`docker ps | grep agent`) and take
+  it down (`docker compose -f <old-dir>/docker-compose.agent.yml down`).
 
 ### Troubleshooting empty folders
 
@@ -126,14 +159,17 @@ picker has three distinct causes, and the UI now tells you which:
 1. **Agent has never reported** — the picker shows "Agent hasn't reported
    yet" with a link to this Fleet page. Check the agent is online (see
    "Agent shows offline" above).
-2. **`/var/www` unreadable or not mounted** — the picker shows a discovery-
-   error banner ("`/var/www` is not readable from the agent container…").
-   SSH into the agent VPS and check the mount:
+2. **A project root unreadable or not mounted** — the picker shows a
+   discovery-error banner ("`/var/www` is not readable from the agent
+   container…"). SSH into the agent VPS and check the mount (repeat per root):
    ```bash
    docker compose -f docker-compose.agent.yml exec agent ls -la /var/www
    ```
-   An empty or missing listing means the `- /var/www:/var/www:ro` volume in
-   `docker-compose.agent.yml` isn't mounted (or the host path is empty).
+   An empty or missing listing means the `- /var/www:/var/www:rw` volume in
+   `docker-compose.agent.yml` isn't mounted (or the host path is empty). If
+   your projects live elsewhere, add that directory to
+   `DOCKSTASH_PROJECT_ROOTS` **and** the volumes list (see "Project
+   directories" above), then recreate the agent.
 3. **Docker socket unreachable** — the Docker tab shows a discovery-error
    banner instead of "Docker is not available." SSH in and check the proxy:
    ```bash

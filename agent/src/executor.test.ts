@@ -106,7 +106,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       kind: 'backup',
       plan: { paths: ['/var/www/app'], configs: [], databases: [] },
     });
-    const deps: ExecutorDeps = { restic, docker, log: vi.fn(), sleep: vi.fn() };
+    const deps: ExecutorDeps = { restic, docker, roots: ['/var/www'], log: vi.fn(), sleep: vi.fn() };
     const result = await executeJob(job, deps);
     expect(result.ok).toBe(true);
     expect(result.stats).toMatchObject({ totalRepoBytes: 100 });
@@ -116,7 +116,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const { restic, calls } = makeFakeRestic();
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'check' });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: true });
     expect(calls.check).toEqual([['check']]);
   });
@@ -128,7 +128,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       kind: 'prune',
       retention: { keepDaily: 7, keepWeekly: 4, keepMonthly: 6 },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: true });
     expect(calls.forget).toEqual([pruneArgs({ keepDaily: 7, keepWeekly: 4, keepMonthly: 6 })]);
   });
@@ -137,7 +137,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const { restic } = makeFakeRestic();
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'prune', retention: null, maxAttempts: 1 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'prune job missing retention policy' });
   });
 
@@ -148,7 +148,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       kind: 'restore',
       restore: { snapshotId: 'deadbeef', overwrite: true, targetPath: null },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: true });
     expect(calls.restore).toEqual([['restore', 'deadbeef', '--target', '/']]);
   });
@@ -160,7 +160,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       kind: 'restore',
       restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: '/var/www/app' },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: true });
     expect(calls.restore).toEqual([['restore', 'deadbeef', '--target', '/var/www/app']]);
   });
@@ -169,7 +169,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     const { restic } = makeFakeRestic();
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'restore', restore: null, maxAttempts: 1 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'restore job missing payload' });
   });
 
@@ -181,7 +181,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       maxAttempts: 1,
       restore: { snapshotId: '--insecure-no-password', overwrite: true, targetPath: null },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'invalid snapshot id: --insecure-no-password' });
     expect(calls.restore).toEqual([]);
   });
@@ -194,7 +194,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       maxAttempts: 1,
       restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: null },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'restore target not allowed: ' });
   });
 
@@ -206,7 +206,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
       maxAttempts: 1,
       restore: { snapshotId: 'deadbeef', overwrite: false, targetPath: '/etc/passwd' },
     });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'restore target not allowed: /etc/passwd' });
   });
 });
@@ -223,7 +223,7 @@ describe('executeJob: retry loop', () => {
     const docker = makeFakeDocker();
     const sleep = vi.fn(async () => {});
     const job = baseJob({ kind: 'check', maxAttempts: 2 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn(), sleep });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn(), sleep });
     expect(result).toEqual({ ok: true });
     expect(calls.check).toHaveLength(2);
     expect(calls.unlock).toBe(1);
@@ -245,7 +245,7 @@ describe('executeJob: retry loop', () => {
     const docker = makeFakeDocker();
     const sleep = vi.fn(async () => {});
     const job = baseJob({ kind: 'check', maxAttempts: 2 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn(), sleep });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn(), sleep });
     expect(result).toEqual({ ok: true });
     expect(calls.unlock).toBe(1);
   });
@@ -259,7 +259,7 @@ describe('executeJob: retry loop', () => {
     const docker = makeFakeDocker();
     const sleep = vi.fn(async () => {});
     const job = baseJob({ kind: 'check', maxAttempts: 3 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn(), sleep });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn(), sleep });
     expect(result).toEqual({ ok: false, error: 'always fails' });
     expect(sleep).toHaveBeenCalledTimes(2);
     expect(sleep).toHaveBeenNthCalledWith(1, 200);
@@ -274,7 +274,7 @@ describe('executeJob: retry loop', () => {
     });
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'check', maxAttempts: 1 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'raw string failure' });
   });
 
@@ -282,7 +282,7 @@ describe('executeJob: retry loop', () => {
     const { restic } = makeFakeRestic();
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'check', maxAttempts: 0 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn() });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: false, error: 'job failed' });
   });
 
@@ -296,7 +296,7 @@ describe('executeJob: retry loop', () => {
     });
     const docker = makeFakeDocker();
     const job = baseJob({ kind: 'check', maxAttempts: 2 });
-    const result = await executeJob(job, { restic, docker, log: vi.fn(), baseBackoffMs: 1 });
+    const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn(), baseBackoffMs: 1 });
     expect(result).toEqual({ ok: true });
     expect(attempts).toBe(2);
   });

@@ -25,6 +25,8 @@ const registered = {
     port: 7443,
     status: 'offline' as const,
     lastSeenAt: null,
+    agentVersion: '',
+    outdated: false,
   },
   token: 'dsa_0123456789abcdef01234567.abc',
 };
@@ -90,6 +92,43 @@ describe('RegisterAgentDialog form', () => {
     expect(submit.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Host'), { target: { value: 'vps1.example' } });
     expect(submit.disabled).toBe(false);
+  });
+
+  it('flags invalid project directories and disables submit', () => {
+    renderDialog();
+    fillForm();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '/var/www,/etc/nginx' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/\/etc\/nginx/);
+    expect(roots).toHaveAttribute('aria-describedby', 'agent-roots-error');
+    expect((screen.getByRole('button', { name: 'Register' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('requires at least one project directory', () => {
+    renderDialog();
+    fillForm();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '  ,  ' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/at least one project directory/i);
+    expect((screen.getByRole('button', { name: 'Register' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('bakes the chosen directories into the install command after registration', async () => {
+    mocked.registerAgentRequest.mockResolvedValue(registered);
+    renderDialog();
+    fillForm();
+    fireEvent.change(screen.getByLabelText('Project directories'), {
+      target: { value: '/var/www, /opt/apps' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(await screen.findByTestId('agent-api-key')).toBeInTheDocument();
+    const command = screen.getByText(/DOCKSTASH_PROJECT_ROOTS/).textContent ?? '';
+    expect(command).toContain('DOCKSTASH_PROJECT_ROOTS: /var/www,/opt/apps');
+    expect(command).toContain('- /opt/apps:/opt/apps:rw');
   });
 
   it('does not dispatch when the form is submitted while invalid', () => {

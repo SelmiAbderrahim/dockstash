@@ -108,6 +108,7 @@ const renderScreen = (opts: Options = {}) => {
         agentFolders: [],
         agentContainers: [],
         agentDockerAvailable: false,
+        agentRoots: ['/var/www'],
         agentSnapshotAt: null,
         agentDiscoveryStatus: 'idle' as const,
         agentReported: false,

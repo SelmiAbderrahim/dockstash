@@ -1,9 +1,10 @@
-// Collects a discovery snapshot (the agent host's /var/www folders + running
-// Docker containers) so the server can browse this host's projects. Ships RAW
-// container summaries; the server groups them (reusing groupByComposeProject).
+// Collects a discovery snapshot (folders under the configured project roots +
+// running Docker containers) so the server can browse this host's projects.
+// Ships RAW container summaries; the server groups them (reusing
+// groupByComposeProject).
 import path from 'node:path';
 import { readdir, access } from 'node:fs/promises';
-import { ALLOWED_PATH_ROOT, isAllowedProjectPath } from './paths.js';
+import { isAllowedProjectPath } from './paths.js';
 import type { DockerClient, DockerContainerSummary } from './docker-client.js';
 
 /** Compose filenames, in the precedence order Docker Compose resolves them. */
@@ -29,6 +30,8 @@ export interface AgentDiscoverySnapshot {
   folders: AgentDiscoveredFolder[];
   containers: DockerContainerSummary[];
   dockerAvailable: boolean;
+  /** The allowlist this agent scans — the server validates job paths against it. */
+  roots: string[];
   errors: string[];
 }
 
@@ -72,6 +75,8 @@ export interface DiscoveryLog {
 const NOOP_LOG: DiscoveryLog = { warn() {} };
 
 export interface CollectDiscoveryDeps {
+  /** Configured project roots (config.DOCKSTASH_PROJECT_ROOTS). */
+  roots: readonly string[];
   folderReader?: FolderReader;
   composeProbe?: ComposeProbe;
   dockerClient: Pick<DockerClient, 'listContainers'>;
@@ -80,39 +85,45 @@ export interface CollectDiscoveryDeps {
 }
 
 async function collectFolders(
+  roots: readonly string[],
   folderReader: FolderReader,
   composeProbe: ComposeProbe,
   log: DiscoveryLog,
-): Promise<{ folders: AgentDiscoveredFolder[]; error: string | null }> {
-  let entries: FolderEntry[];
-  try {
-    entries = await folderReader(ALLOWED_PATH_ROOT);
-  } catch (err) {
-    // /var/www may be absent or unreadable — an empty list is a valid snapshot.
-    log.warn(
-      { err: String(err), root: ALLOWED_PATH_ROOT },
-      'discovery: project root unreadable — is /var/www mounted into the agent container?',
-    );
-    return {
-      folders: [],
-      error: `${ALLOWED_PATH_ROOT} is not readable from the agent container — check that it is mounted (see docker-compose.agent.yml).`,
-    };
-  }
+): Promise<{ folders: AgentDiscoveredFolder[]; errors: string[] }> {
   const folders: AgentDiscoveredFolder[] = [];
-  for (const entry of entries) {
+  const errors: string[] = [];
+  for (const root of roots) {
+    let entries: FolderEntry[];
+    try {
+      entries = await folderReader(root);
+    } catch (err) {
+      // A root may be absent or unreadable — report it and keep scanning the
+      // rest, so one bad mount never blanks the whole picker.
+      log.warn(
+        { err: String(err), root },
+        'discovery: project root unreadable — is it mounted into the agent container?',
+      );
+      errors.push(
+        `${root} is not readable from the agent container — check that it is mounted (see docker-compose.agent.yml).`,
+      );
+      continue;
+    }
+    for (const entry of entries) {
+      if (folders.length >= MAX_FOLDERS) break;
+      if (!entry.isDirectory || entry.isSymbolicLink) continue;
+      if (!isAllowedProjectPath(entry.path, roots)) continue;
+      const composeFile = await composeProbe(entry.path);
+      folders.push({
+        name: entry.name,
+        path: entry.path,
+        hasCompose: composeFile !== null,
+        composeFile,
+      });
+    }
     if (folders.length >= MAX_FOLDERS) break;
-    if (!entry.isDirectory || entry.isSymbolicLink) continue;
-    if (!isAllowedProjectPath(entry.path)) continue;
-    const composeFile = await composeProbe(entry.path);
-    folders.push({
-      name: entry.name,
-      path: entry.path,
-      hasCompose: composeFile !== null,
-      composeFile,
-    });
   }
-  folders.sort((a, b) => a.name.localeCompare(b.name));
-  return { folders, error: null };
+  folders.sort((a, b) => a.path.localeCompare(b.path));
+  return { folders, errors };
 }
 
 /**
@@ -126,10 +137,9 @@ export async function collectDiscovery(
   const folderReader = deps.folderReader ?? defaultFolderReader;
   const composeProbe = deps.composeProbe ?? defaultComposeProbe;
   const log = deps.log ?? NOOP_LOG;
-  const errors: string[] = [];
+  const roots = [...deps.roots];
 
-  const { folders, error: folderError } = await collectFolders(folderReader, composeProbe, log);
-  if (folderError) errors.push(folderError);
+  const { folders, errors } = await collectFolders(roots, folderReader, composeProbe, log);
 
   let containers: DockerContainerSummary[] = [];
   let dockerAvailable = true;
@@ -148,5 +158,5 @@ export async function collectDiscovery(
     );
   }
 
-  return { folders, containers, dockerAvailable, errors };
+  return { folders, containers, dockerAvailable, roots, errors };
 }

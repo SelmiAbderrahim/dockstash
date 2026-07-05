@@ -174,7 +174,7 @@ export const ar: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'المسار {{path}} ليس ضمن الجذر المسموح /var/www.',
+      pathNotAllowed: 'المسار {{path}} ليس ضمن مجلدات المشاريع المسموح بها لهدف النسخ الاحتياطي هذا.',
       projectNotFound: 'المشروع غير موجود.',
       notOwner: 'أنت لا تملك هذا المشروع.',
       scanFailed: 'فشل مسح المشروع: {{message}}',

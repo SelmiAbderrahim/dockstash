@@ -3,7 +3,8 @@
 #
 #   DOCKSTASH_URL=https://dockstash.com \
 #   DOCKSTASH_AGENT_TOKEN=dsa_<agentId>.<secret> \
-#   docker compose -f docker-compose.agent.yml up -d
+#   docker compose -f docker-compose.agent.yml pull \
+#   && docker compose -f docker-compose.agent.yml up -d --force-recreate
 #
 # Same least-privilege posture as the main stack: the agent reaches Docker
 # only through a socket proxy that allows exactly CONTAINERS + EXEC.
@@ -33,12 +34,17 @@ services:
       DOCKSTASH_URL: ${DOCKSTASH_URL}
       DOCKSTASH_AGENT_TOKEN: ${DOCKSTASH_AGENT_TOKEN}
       DOCKER_HOST: tcp://docker-socket-proxy:2375
+      # Comma-separated directories the agent may discover/back up/restore.
+      # Every root listed here MUST also be bind-mounted below, same path
+      # inside and out.
+      DOCKSTASH_PROJECT_ROOTS: /var/www
     volumes:
-      # Backup-path root — matches the server-side /var/www/* allowlist.
-      # WARNING: removing/mis-mounting this breaks project discovery — the
+      # Project roots — one line per entry in DOCKSTASH_PROJECT_ROOTS.
+      # Mounted rw because restores write files back; backups only read.
+      # WARNING: removing/mis-mounting these breaks project discovery — the
       # Add-Project folder picker will show empty with no obvious cause. See
       # "Troubleshooting empty folders" in docs/fleet-agents.en.md.
-      - /var/www:/var/www:ro
+      - /var/www:/var/www:rw
     tmpfs:
       - /tmp
     security_opt:

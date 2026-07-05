@@ -25,13 +25,15 @@ const agent: FleetEntry = {
   host: 'vps1.example',
   status: 'online',
   lastSeenAt: null,
+  agentVersion: '0.2.0',
+  outdated: false,
   projectCount: 1,
   totalBytes: 10,
   snapshotCount: 2,
 };
 
 const rotated = {
-  agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null },
+  agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null, agentVersion: '', outdated: false },
   token: 'dsa_0123456789abcdef01234567.new',
 };
 
@@ -89,6 +91,24 @@ describe('AgentSetupDialog', () => {
     expect(screen.getByText('Agent setup')).toBeInTheDocument();
     expect(screen.getByText(/Replace <AGENT_TOKEN>/)).toBeInTheDocument();
     expect(screen.queryByTestId('agent-api-key')).not.toBeInTheDocument();
+  });
+
+  it('updates the install command as project directories change', () => {
+    renderDialog();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '/opt/apps' } });
+    const command = screen.getByText(/DOCKSTASH_PROJECT_ROOTS/).textContent ?? '';
+    expect(command).toContain('DOCKSTASH_PROJECT_ROOTS: /opt/apps');
+    expect(command).toContain('- /opt/apps:/opt/apps:rw');
+  });
+
+  it('flags invalid project directories inline', () => {
+    renderDialog();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '/proc/x' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/\/proc\/x/);
+    fireEvent.change(roots, { target: { value: ' , ' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/at least one project directory/i);
   });
 
   it('disables the rotate trigger while a rotation is in flight', () => {

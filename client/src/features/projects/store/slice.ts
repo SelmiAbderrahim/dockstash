@@ -48,6 +48,7 @@ export interface ProjectsState {
   agentFolders: AgentFolder[];
   agentContainers: AgentContainerGroup[];
   agentDockerAvailable: boolean;
+  agentRoots: string[];
   agentSnapshotAt: string | null;
   agentDiscoveryStatus: LoadState;
   agentReported: boolean;
@@ -76,6 +77,7 @@ const initialState: ProjectsState = {
   agentFolders: [],
   agentContainers: [],
   agentDockerAvailable: false,
+  agentRoots: ['/var/www'],
   agentSnapshotAt: null,
   agentDiscoveryStatus: 'idle',
   agentReported: false,
@@ -174,6 +176,11 @@ const projectsSlice = createSlice({
         state.agentFolders = action.payload.folders;
         state.agentContainers = action.payload.containers;
         state.agentDockerAvailable = action.payload.dockerAvailable;
+        // Older servers omit `roots` — keep the /var/www default in that case.
+        state.agentRoots =
+          action.payload.roots && action.payload.roots.length > 0
+            ? action.payload.roots
+            : ['/var/www'];
         state.agentSnapshotAt = action.payload.snapshotAt;
         state.agentReported = action.payload.reported;
         state.agentDiscoveryErrors = action.payload.errors;

@@ -30,7 +30,7 @@
   },
   "add": {
     "title": "Projekt hinzufügen",
-    "lede": "Wählen Sie einen Ordner, ein laufendes Docker-Compose-Projekt oder geben Sie einen Pfad ein.",
+    "lede": "Wählen Sie einen Ordner oder ein laufendes Docker-Compose-Projekt von einem Flotten-Agenten.",
     "scanning": "Wird gescannt…",
     "cancel": "Zurück zu Projekten",
     "select": "Auswählen",
@@ -39,16 +39,21 @@
       "label": "Sicherungsziel",
       "local": "Lokaler Server",
       "snapshotAt": "Zuletzt gemeldet {{at}}",
-      "noSnapshot": "Dieser Agent hat noch nichts gemeldet — bitte später erneut prüfen."
+      "noSnapshot": "Dieser Agent hat noch nichts gemeldet — bitte später erneut prüfen.",
+      "noAgentsTitle": "Keine Flotten-Agenten registriert.",
+      "noAgentsHint": "Registrieren Sie zuerst einen Flotten-Agenten und wählen Sie ihn dann hier aus, um ein Projekt zu erstellen.",
+      "noAgentsCta": "Flotte öffnen"
     },
     "agent": {
       "offlineBadge": "Offline",
+      "loading": "Agent-Snapshot wird geladen…",
       "refresh": "Jetzt aktualisieren",
       "refreshing": "Wird aktualisiert…",
       "notReportedTitle": "Agent hat noch nichts gemeldet",
       "notReportedHint": "Noch kein Snapshot erhalten — prüfen Sie auf der Flotten-Seite, ob der Agent online ist.",
       "errorsTitle": "Bei der Erkennung sind Probleme aufgetreten",
-      "fleetLink": "In der Flotte ansehen"
+      "fleetLink": "In der Flotte ansehen",
+      "notReportedTabHint": "Noch kein Snapshot von diesem Agenten. Wenn der Agent online ist und dies bestehen bleibt, läuft er wahrscheinlich mit einem veralteten Image — führen Sie auf dem Host aus: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, und klicken Sie dann auf „Jetzt aktualisieren“."
     },
     "tabs": {
       "aria": "Quelle wählen",
@@ -76,8 +81,10 @@
       "compose": "Compose",
       "plain": "Nur Dateien",
       "added": "Bereits hinzugefügt",
-      "notAddable": "Außerhalb von /var/www",
-      "standalone": "Eigenständig"
+      "notAddable": "Kein Ordnerpfad gemeldet",
+      "standalone": "Eigenständig",
+      "outsideRoots": "Außerhalb der Agent-Verzeichnisse",
+      "outsideRootsHint": "Der Ordner dieses Projekts liegt nicht in den Projektverzeichnissen des Agenten ({{roots}}). Führen Sie das Agent-Setup erneut aus und fügen Sie dieses Verzeichnis hinzu."
     },
     "review": {
       "title": "Prüfen und erstellen",

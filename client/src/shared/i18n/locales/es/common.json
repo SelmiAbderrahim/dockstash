@@ -79,7 +79,11 @@
       "copied": "Copiado",
       "done": "Hecho",
       "installTitle": "Instalar el agente",
-      "installIntro": "Ejecuta esto en la máquina que vas a añadir. Inicia el contenedor del agente Dockstash con el token incluido."
+      "installIntro": "Ejecuta esto en la máquina que vas a añadir. Inicia el contenedor del agente Dockstash con el token incluido.",
+      "roots": "Directorios de proyectos",
+      "rootsHint": "Rutas absolutas separadas por comas que el agente puede descubrir y respaldar (p. ej. /var/www, /opt/apps). Cada una se monta en el contenedor del agente.",
+      "rootsInvalid": "Directorios no válidos: {{entries}}. Use rutas absolutas fuera de /, /proc, /sys, /dev, /etc, /boot y /run.",
+      "rootsEmpty": "Introduzca al menos un directorio de proyectos."
     },
     "install": {
       "copy": "Copiar comando",
@@ -109,6 +113,10 @@
       "description": "¿Eliminar «{{name}}» de tu flota? Sus proyectos vuelven a copias locales y las tareas en cola se cancelan.",
       "confirm": "Eliminar",
       "cancel": "Cancelar"
+    },
+    "outdated": {
+      "badge": "Actualización disponible",
+      "hint": "Este agente ejecuta la versión {{version}}. Vuelva a ejecutar el comando de instalación en el host para actualizarlo."
     }
   }
 }

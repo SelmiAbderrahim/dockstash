@@ -8,6 +8,7 @@ import {
 } from '../backups/backups.discover.js';
 import type { DockerContainerSummary } from '../backups/backups.boundaries.js';
 import { matchAdapter } from '../backups/backups.adapters.js';
+import { DEFAULT_AGENT_ROOTS, isPathUnderRoots } from '../backups/backups.paths.js';
 import type { BackupPlan, DatabasePlan } from '../backups/backups.scan.js';
 
 const LABEL_PROJECT = 'com.docker.compose.project';
@@ -24,6 +25,8 @@ export interface StoredSnapshot {
   folders: SnapshotFolder[];
   containers: DockerContainerSummary[];
   dockerAvailable: boolean;
+  /** Agent-reported DOCKSTASH_PROJECT_ROOTS; absent/empty on pre-0.2.0 agents. */
+  roots?: string[];
   snapshotAt: Date | null;
   /**
    * Human-readable causes for an empty/degraded snapshot (older stored docs
@@ -47,10 +50,12 @@ export interface AgentDiscoveryView {
   folders: AgentFolderView[];
   containers: AgentContainerView[];
   dockerAvailable: boolean;
+  /** The allowlist this agent scans — shown so out-of-roots groups are explainable. */
+  roots: string[];
   snapshotAt: string | null;
   /** True once the agent has ever sent a heartbeat; false means "never reported". */
   reported: boolean;
-  /** Reasons the snapshot came back empty/degraded (e.g. unreadable /var/www, Docker unreachable). */
+  /** Reasons the snapshot came back empty/degraded (e.g. unreadable root, Docker unreachable). */
   errors: string[];
 }
 
@@ -58,6 +63,7 @@ const EMPTY_VIEW: AgentDiscoveryView = {
   folders: [],
   containers: [],
   dockerAvailable: false,
+  roots: [...DEFAULT_AGENT_ROOTS],
   snapshotAt: null,
   reported: false,
   errors: [],
@@ -72,6 +78,7 @@ function planForProject(
   project: string,
   workingDir: string,
   raw: DockerContainerSummary[],
+  roots: readonly string[],
 ): BackupPlan {
   const databases: DatabasePlan[] = [];
   const configs = new Set<string>();
@@ -85,7 +92,14 @@ function planForProject(
     if (/traefik/i.test(c.image)) configs.add('/etc/traefik');
     if (/nginx/i.test(c.image)) configs.add('/etc/nginx');
   }
-  return { paths: [workingDir], databases, configs: Array.from(configs) };
+  return {
+    paths: [workingDir],
+    databases,
+    // The agent can only read (and restic only back up) paths under its
+    // mounted roots — drop derived config dirs the agent could never reach,
+    // instead of shipping a plan that fails `path not allowed` at run time.
+    configs: Array.from(configs).filter((c) => isPathUnderRoots(c, roots)),
+  };
 }
 
 /**
@@ -96,18 +110,38 @@ function planForProject(
 export function buildAgentDiscoveryView(snapshot: StoredSnapshot | null): AgentDiscoveryView {
   if (!snapshot) return EMPTY_VIEW;
 
+  const roots =
+    snapshot.roots && snapshot.roots.length > 0 ? snapshot.roots : [...DEFAULT_AGENT_ROOTS];
+
+  // `addable` from grouping validates against the static local allowlist —
+  // re-derive it here against THIS agent's roots so a project under e.g.
+  // /srv/apps is addable when the agent mounts /srv/apps.
   const containers: AgentContainerView[] = groupByComposeProject(snapshot.containers).map(
-    (group) => ({
-      ...group,
-      plan:
-        group.addable && group.workingDir !== null
-          ? planForProject(group.project, group.workingDir, snapshot.containers)
-          : null,
-    }),
+    (group) => {
+      const addable =
+        !group.standalone &&
+        group.workingDir !== null &&
+        isPathUnderRoots(group.workingDir, roots);
+      return {
+        ...group,
+        addable,
+        plan:
+          addable && group.workingDir !== null
+            ? planForProject(group.project, group.workingDir, snapshot.containers, roots)
+            : null,
+      };
+    },
   );
 
+  // Map fields explicitly — `snapshot.folders` may be Mongoose subdocuments,
+  // whose data lives behind prototype getters. A `{...f}` spread would copy
+  // internal state (`__parentArray`, `_doc`) instead of `name`/`path` and ship
+  // it to the client as garbage folder entries.
   const folders: AgentFolderView[] = snapshot.folders.map((f) => ({
-    ...f,
+    name: f.name,
+    path: f.path,
+    hasCompose: f.hasCompose,
+    composeFile: f.composeFile,
     plan: { paths: [f.path], databases: [], configs: [] },
   }));
 
@@ -115,6 +149,7 @@ export function buildAgentDiscoveryView(snapshot: StoredSnapshot | null): AgentD
     folders,
     containers,
     dockerAvailable: snapshot.dockerAvailable,
+    roots,
     snapshotAt: snapshot.snapshotAt ? new Date(snapshot.snapshotAt).toISOString() : null,
     reported: true,
     errors: snapshot.discoveryErrors ?? [],

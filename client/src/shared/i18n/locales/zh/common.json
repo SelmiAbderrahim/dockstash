@@ -79,7 +79,11 @@
       "copied": "已复制",
       "done": "完成",
       "installTitle": "安装代理",
-      "installIntro": "在要添加的机器上运行此命令。它会启动内置令牌的 Dockstash 代理容器。"
+      "installIntro": "在要添加的机器上运行此命令。它会启动内置令牌的 Dockstash 代理容器。",
+      "roots": "项目目录",
+      "rootsHint": "代理可发现和备份的绝对路径，用逗号分隔（例如 /var/www、/opt/apps）。每个目录都会挂载到代理容器中。",
+      "rootsInvalid": "无效目录：{{entries}}。请使用 /、/proc、/sys、/dev、/etc、/boot 和 /run 之外的绝对路径。",
+      "rootsEmpty": "请至少输入一个项目目录。"
     },
     "install": {
       "copy": "复制命令",
@@ -109,6 +113,10 @@
       "description": "从你的机群中移除“{{name}}”？其项目将回退到本地备份，排队中的任务将被取消。",
       "confirm": "移除",
       "cancel": "取消"
+    },
+    "outdated": {
+      "badge": "有可用更新",
+      "hint": "此代理运行版本 {{version}}。请在主机上重新运行安装命令以更新。"
     }
   }
 }

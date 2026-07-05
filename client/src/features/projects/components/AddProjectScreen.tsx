@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Loader2, FolderIcon, ContainerIcon, PencilIcon, ArrowLeftIcon } from 'lucide-react';
+import { Loader2, FolderIcon, ContainerIcon, ArrowLeftIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { useTabParam } from '@shared/hooks/useTabParam';
@@ -13,20 +13,14 @@ import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Skeleton } from '@shared/ui/skeleton';
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
 } from '@shared/ui/empty';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { listAgentsRequest, type Agent } from '@features/fleet';
-import {
-  createProject,
-  discoverAgent,
-  discoverContainers,
-  discoverFolders,
-  refreshAgent,
-  scanProject,
-} from '../store/thunks';
+import { createProject, discoverAgent, refreshAgent } from '../store/thunks';
 import { resetAddFlow } from '../store/slice';
 import {
   selectAddError,
@@ -37,33 +31,22 @@ import {
   selectAgentFolders,
   selectAgentRefreshStatus,
   selectAgentReported,
+  selectAgentRoots,
   selectAgentSnapshotAt,
-  selectContainersStatus,
   selectCreateStatus,
-  selectDiscoveredContainers,
-  selectDiscoveredFolders,
-  selectDockerAvailable,
-  selectFoldersStatus,
   selectProjectPaths,
-  selectScanStatus,
 } from '../store/selectors';
 import type { ProjectPlan } from '../types';
 
-const TABS = ['folders', 'docker', 'manual'] as const;
-const LOCAL = 'local';
-const emptyPlan = (path: string): ProjectPlan => ({
-  paths: [path],
-  databases: [],
-  configs: [],
-});
+const TABS = ['folders', 'docker'] as const;
 
-// Local folders lack a plan (server scans on pick); agent folders carry one.
+// Agent folders carry a ready backup plan from the latest fleet snapshot.
 interface DisplayFolder {
   name: string;
   path: string;
   hasCompose: boolean;
   composeFile: string | null;
-  plan?: ProjectPlan;
+  plan: ProjectPlan;
 }
 interface DisplayContainer {
   project: string;
@@ -80,20 +63,15 @@ export const AddProjectScreen = () => {
   const navigate = useNavigate();
   const [tab, setTab] = useTabParam('folders', TABS);
 
-  const localFolders = useAppSelector(selectDiscoveredFolders);
-  const foldersStatus = useAppSelector(selectFoldersStatus);
-  const localContainers = useAppSelector(selectDiscoveredContainers);
-  const containersStatus = useAppSelector(selectContainersStatus);
-  const localDockerAvailable = useAppSelector(selectDockerAvailable);
   const agentFolders = useAppSelector(selectAgentFolders);
   const agentContainers = useAppSelector(selectAgentContainers);
   const agentDockerAvailable = useAppSelector(selectAgentDockerAvailable);
+  const agentRoots = useAppSelector(selectAgentRoots);
   const agentSnapshotAt = useAppSelector(selectAgentSnapshotAt);
   const agentDiscoveryStatus = useAppSelector(selectAgentDiscoveryStatus);
   const agentReported = useAppSelector(selectAgentReported);
   const agentDiscoveryErrors = useAppSelector(selectAgentDiscoveryErrors);
   const agentRefreshStatus = useAppSelector(selectAgentRefreshStatus);
-  const scanStatus = useAppSelector(selectScanStatus);
   const createStatus = useAppSelector(selectCreateStatus);
   const addError = useAppSelector(selectAddError);
   const addedPaths = useAppSelector(selectProjectPaths);
@@ -104,31 +82,53 @@ export const AddProjectScreen = () => {
   const [path, setPath] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [manualPath, setManualPath] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [target, setTarget] = useState<string>(LOCAL);
-  const isAgent = target !== LOCAL;
+  const [agentsLoaded, setAgentsLoaded] = useState(false);
+  const [target, setTarget] = useState<string>('');
+  const hasSelectedAgent = target.length > 0;
 
-  // Fleet agents for the target picker; self-gates to Local-only on error/lock.
+  // New projects must run on a fleet agent; the storage/local server is not a
+  // valid creation target.
   useEffect(() => {
-    void listAgentsRequest().then(setAgents, () => setAgents([]));
+    let active = true;
+    void listAgentsRequest()
+      .then((list) => {
+        // Unmount race guard — the effect runs once and cleanup flips `active`.
+        /* v8 ignore next */
+        if (!active) return;
+        setAgents(list);
+        setTarget(list[0]?.id ?? '');
+      })
+      .catch(() => {
+        /* v8 ignore next */
+        if (!active) return;
+        setAgents([]);
+        setTarget('');
+      })
+      .finally(() => {
+        if (active) setAgentsLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (isAgent) {
-      void dispatch(discoverAgent({ agentId: target }));
-      return;
-    }
-    if (tab === 'folders') void dispatch(discoverFolders());
-    else if (tab === 'docker') void dispatch(discoverContainers());
-  }, [tab, target, isAgent, dispatch]);
+    if (!hasSelectedAgent) return;
+    void dispatch(discoverAgent({ agentId: target }));
+  }, [target, hasSelectedAgent, dispatch]);
 
   useEffect(() => () => void dispatch(resetAddFlow()), [dispatch]);
 
-  const selectedAgent = isAgent ? (agents.find((a) => a.id === target) ?? null) : null;
+  // `target` is always drawn from `agents`, so `find` only misses when no
+  // agent is selected at all (`target === ''`).
+  const selectedAgent = agents.find((a) => a.id === target) ?? null;
   const agentOffline = selectedAgent?.status === 'offline';
 
   const handleRefreshAgent = async () => {
+    // Defensive only: the refresh button renders inside the selected-agent block.
+    /* v8 ignore next */
+    if (!hasSelectedAgent) return;
     await dispatch(refreshAgent({ agentId: target }));
     // The daemon's next heartbeat (within its usual interval) carries the
     // fresh snapshot — give it a moment before re-polling the read endpoint.
@@ -146,38 +146,28 @@ export const AddProjectScreen = () => {
     setPlan(nextPlan);
   };
 
-  // Compose sources on the LOCAL host scan for a plan (the server reads its own
-  // fs); plain local folders skip straight to a files-only plan.
-  const pickComposeSource = async (nextPath: string, nextName: string) => {
-    setPath(nextPath);
-    setName(nextName);
-    const res = await dispatch(scanProject({ path: nextPath }));
-    if (scanProject.fulfilled.match(res)) {
-      setPlan(res.payload);
-    }
-  };
-
-  // A folder carrying a plan (agent) goes straight to review; otherwise the
-  // local scan/files-only path applies.
   const pickFolder = (f: DisplayFolder) => {
-    if (f.plan) return toReview(f.path, f.name, f.plan);
-    if (f.hasCompose) return void pickComposeSource(f.path, f.name);
-    return toReview(f.path, f.name, emptyPlan(f.path));
+    toReview(f.path, f.name, f.plan);
   };
 
   const pickContainer = (c: DisplayContainer) => {
-    if (c.plan) return toReview(c.workingDir as string, c.project, c.plan);
-    return void pickComposeSource(c.workingDir as string, c.project);
+    // Defensive only: the Select button is disabled when plan/workingDir are missing.
+    /* v8 ignore next */
+    if (!c.plan || !c.workingDir) return;
+    toReview(c.workingDir, c.project, c.plan);
   };
 
   const submit = async (finalPlan: ProjectPlan) => {
+    // Defensive only: the review step is only reachable with an agent selected.
+    /* v8 ignore next */
+    if (!hasSelectedAgent) return;
     const res = await dispatch(
       createProject({
         name: name.trim(),
         path,
         repoPassword: password,
         plan: finalPlan,
-        agentId: isAgent ? target : null,
+        agentId: target,
       }),
     );
     if (createProject.fulfilled.match(res)) {
@@ -189,8 +179,6 @@ export const AddProjectScreen = () => {
     setPlan(null);
     dispatch(resetAddFlow());
   };
-
-  const scanning = scanStatus === 'loading';
 
   if (plan) {
     return (
@@ -209,13 +197,25 @@ export const AddProjectScreen = () => {
     );
   }
 
-  const folders: DisplayFolder[] = isAgent ? agentFolders : localFolders;
-  const containers: DisplayContainer[] = isAgent ? agentContainers : localContainers;
-  const dockerAvailable = isAgent ? agentDockerAvailable : localDockerAvailable;
-  const foldersLoading = (isAgent ? agentDiscoveryStatus : foldersStatus) === 'loading';
-  const foldersReady = (isAgent ? agentDiscoveryStatus : foldersStatus) === 'succeeded';
-  const dockerLoading = (isAgent ? agentDiscoveryStatus : containersStatus) === 'loading';
-  const dockerReady = (isAgent ? agentDiscoveryStatus : containersStatus) === 'succeeded';
+  const folders: DisplayFolder[] = hasSelectedAgent ? agentFolders : [];
+  const containers: DisplayContainer[] = hasSelectedAgent ? agentContainers : [];
+  const dockerAvailable = hasSelectedAgent && agentDockerAvailable;
+  const foldersLoading = hasSelectedAgent && agentDiscoveryStatus === 'loading';
+  // "Ready" additionally requires a snapshot to exist: for a never-reported
+  // agent the folders/docker empty states would misdiagnose the problem
+  // ("No folders found" / "Docker unavailable") — the real issue is that no
+  // snapshot arrived yet, and the not-reported guidance owns that message.
+  const snapshotReady = hasSelectedAgent && agentDiscoveryStatus === 'succeeded';
+  const foldersReady = snapshotReady && agentReported;
+  const dockerLoading = foldersLoading;
+  const dockerReady = foldersReady;
+  const notReported = snapshotReady && !agentReported;
+  const dockerUnavailableDetail =
+    agentDiscoveryErrors.find((error) => /docker/i.test(error)) ??
+    t('add.docker.unavailableHintAgent');
+  const isOutsideRoots = (workingDir: string | null): boolean =>
+    workingDir !== null &&
+    !agentRoots.some((root) => workingDir === root || workingDir.startsWith(`${root}/`));
 
   return (
     <section
@@ -233,29 +233,36 @@ export const AddProjectScreen = () => {
         <label className="text-sm font-medium" htmlFor="target-host">
           {t('add.target.label')}
         </label>
-        <select
-          id="target-host"
-          value={target}
-          onChange={(e) => setTarget(e.target.value)}
-          className="border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full max-w-sm rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
-        >
-          <option value={LOCAL}>{t('add.target.local')}</option>
-          {agents.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name} ({a.host})
-              {a.status === 'offline' ? ` — ${t('add.agent.offlineBadge')}` : ''}
-            </option>
-          ))}
-        </select>
-        {isAgent && (
+        {!agentsLoaded && <Skeleton className="h-9 w-full max-w-sm" />}
+        {agentsLoaded && agents.length > 0 && (
+          <select
+            id="target-host"
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            className="border-input bg-transparent focus-visible:border-ring focus-visible:ring-ring/50 h-9 w-full max-w-sm rounded-md border px-3 text-sm shadow-xs outline-none focus-visible:ring-[3px]"
+          >
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name} ({a.host})
+                {a.status === 'offline' ? ` — ${t('add.agent.offlineBadge')}` : ''}
+              </option>
+            ))}
+          </select>
+        )}
+        {hasSelectedAgent && (
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-muted-foreground text-xs">
-              {agentSnapshotAt
-                ? t('add.target.snapshotAt', {
-                    at: new Date(agentSnapshotAt).toLocaleString(i18n.language),
-                  })
-                : t('add.target.noSnapshot')}
-            </p>
+            {agentDiscoveryStatus === 'loading' && (
+              <p className="text-muted-foreground text-xs">{t('add.agent.loading')}</p>
+            )}
+            {agentDiscoveryStatus === 'succeeded' && (
+              <p className="text-muted-foreground text-xs">
+                {agentSnapshotAt
+                  ? t('add.target.snapshotAt', {
+                      at: new Date(agentSnapshotAt).toLocaleString(i18n.language),
+                    })
+                  : t('add.target.noSnapshot')}
+              </p>
+            )}
             {agentOffline && (
               <Badge variant="destructive">{t('add.agent.offlineBadge')}</Badge>
             )}
@@ -276,7 +283,7 @@ export const AddProjectScreen = () => {
             </Button>
           </div>
         )}
-        {isAgent && !agentReported && (
+        {hasSelectedAgent && agentDiscoveryStatus === 'succeeded' && !agentReported && (
           <Alert data-testid="agent-not-reported">
             <AlertDescription>
               {t('add.agent.notReportedHint')}{' '}
@@ -286,146 +293,94 @@ export const AddProjectScreen = () => {
             </AlertDescription>
           </Alert>
         )}
-        {isAgent && agentReported && agentDiscoveryErrors.length > 0 && (
-          <Alert variant="destructive" data-testid="agent-discovery-errors">
-            <AlertDescription>
-              <p className="font-medium">{t('add.agent.errorsTitle')}</p>
-              <ul className="list-disc ps-4">
-                {agentDiscoveryErrors.map((e) => (
-                  <li key={e}>{e}</li>
-                ))}
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
+        {hasSelectedAgent &&
+          agentDiscoveryStatus === 'succeeded' &&
+          agentReported &&
+          agentDiscoveryErrors.length > 0 && (
+            <Alert variant="destructive" data-testid="agent-discovery-errors">
+              <AlertDescription>
+                <p className="font-medium">{t('add.agent.errorsTitle')}</p>
+                <ul className="list-disc ps-4">
+                  {agentDiscoveryErrors.map((e) => (
+                    <li key={e}>{e}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
       </div>
 
-      {scanning && (
-        <p
-          role="status"
-          aria-live="polite"
-          className="text-muted-foreground inline-flex items-center gap-2 text-sm"
-        >
-          <Loader2 className="size-4 animate-spin" aria-hidden="true" /> {t('add.scanning')}
-        </p>
+      {agentsLoaded && !hasSelectedAgent && (
+        <Empty data-testid="agents-empty">
+          <EmptyHeader>
+            <EmptyTitle>{t('add.target.noAgentsTitle')}</EmptyTitle>
+            <EmptyDescription>{t('add.target.noAgentsHint')}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild>
+              <Link to="/fleet">{t('add.target.noAgentsCta')}</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       )}
 
-      {!scanning && addError && (
+      {addError && (
         <Alert variant="destructive">
           <AlertDescription>{addError}</AlertDescription>
         </Alert>
       )}
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-6">
-        <TabsList aria-label={t('add.tabs.aria')} data-tour="add-source-tabs">
-          <TabsTrigger value="folders" disabled={agentOffline}>
-            <FolderIcon className="size-4" aria-hidden="true" /> {t('add.tabs.folders')}
-          </TabsTrigger>
-          <TabsTrigger value="docker" disabled={agentOffline}>
-            <ContainerIcon className="size-4" aria-hidden="true" /> {t('add.tabs.docker')}
-          </TabsTrigger>
-          <TabsTrigger value="manual" disabled={isAgent}>
-            <PencilIcon className="size-4" aria-hidden="true" /> {t('add.tabs.manual')}
-          </TabsTrigger>
-        </TabsList>
+      {hasSelectedAgent && (
+        <Tabs value={tab} onValueChange={setTab} className="gap-6">
+          <TabsList aria-label={t('add.tabs.aria')} data-tour="add-source-tabs">
+            <TabsTrigger value="folders" disabled={agentOffline}>
+              <FolderIcon className="size-4" aria-hidden="true" /> {t('add.tabs.folders')}
+            </TabsTrigger>
+            <TabsTrigger value="docker" disabled={agentOffline}>
+              <ContainerIcon className="size-4" aria-hidden="true" /> {t('add.tabs.docker')}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="folders" className="flex flex-col gap-3">
-          {foldersLoading && <Skeleton className="h-24 w-full" />}
-          {foldersReady && folders.length === 0 && (
-            <Empty data-testid="folders-empty">
-              <EmptyHeader>
-                <EmptyTitle>{t('add.folders.emptyTitle')}</EmptyTitle>
-                <EmptyDescription>
-                  {t(isAgent ? 'add.folders.emptyHintAgent' : 'add.folders.emptyHint')}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-          {folders.map((f) => {
-            const added = isAdded(f.path);
-            return (
-              <Card key={f.path}>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{f.name}</span>
-                    <span className="text-muted-foreground font-mono text-xs break-all">
-                      {f.path}
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant={f.hasCompose ? 'default' : 'secondary'}>
-                        {f.hasCompose ? t('add.badges.compose') : t('add.badges.plain')}
-                      </Badge>
-                      {added && <Badge variant="outline">{t('add.badges.added')}</Badge>}
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={added || scanning}
-                    onClick={() => pickFolder(f)}
-                  >
-                    {t('add.select')}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </TabsContent>
-
-        <TabsContent value="docker" className="flex flex-col gap-3">
-          {dockerLoading && <Skeleton className="h-24 w-full" />}
-          {dockerReady && !dockerAvailable && (
-            <Empty data-testid="docker-unavailable">
-              <EmptyHeader>
-                <EmptyTitle>{t('add.docker.unavailableTitle')}</EmptyTitle>
-                <EmptyDescription>
-                  {t(isAgent ? 'add.docker.unavailableHintAgent' : 'add.docker.unavailableHint')}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-          {dockerReady && dockerAvailable && containers.length === 0 && (
-            <Empty data-testid="docker-empty">
-              <EmptyHeader>
-                <EmptyTitle>{t('add.docker.emptyTitle')}</EmptyTitle>
-                <EmptyDescription>{t('add.docker.emptyHint')}</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          )}
-          {dockerAvailable &&
-            containers.map((c) => {
-              const added = isAdded(c.workingDir);
-              const disabled = !c.addable || added || scanning;
+          <TabsContent value="folders" className="flex flex-col gap-3">
+            {foldersLoading && <Skeleton className="h-24 w-full" />}
+            {notReported && (
+              <Empty data-testid="folders-not-reported">
+                <EmptyHeader>
+                  <EmptyTitle>{t('add.agent.notReportedTitle')}</EmptyTitle>
+                  <EmptyDescription>{t('add.agent.notReportedTabHint')}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+            {foldersReady && folders.length === 0 && (
+              <Empty data-testid="folders-empty">
+                <EmptyHeader>
+                  <EmptyTitle>{t('add.folders.emptyTitle')}</EmptyTitle>
+                  <EmptyDescription>{t('add.folders.emptyHintAgent')}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+            {folders.map((f) => {
+              const added = isAdded(f.path);
               return (
-                <Card key={c.project}>
+                <Card key={f.path}>
                   <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
                     <div className="flex flex-col gap-1">
-                      <span className="font-medium">{c.project}</span>
-                      {c.workingDir && (
-                        <span className="text-muted-foreground font-mono text-xs break-all">
-                          {c.workingDir}
-                        </span>
-                      )}
-                      {c.services.length > 0 && (
-                        <span className="text-muted-foreground text-xs">
-                          {t('add.services')}: {c.services.join(', ')}
-                        </span>
-                      )}
+                      <span className="font-medium">{f.name}</span>
+                      <span className="text-muted-foreground font-mono text-xs break-all">
+                        {f.path}
+                      </span>
                       <div className="flex flex-wrap gap-2">
-                        {c.standalone && (
-                          <Badge variant="secondary">{t('add.badges.standalone')}</Badge>
-                        )}
-                        {!c.addable && !c.standalone && (
-                          <Badge variant="secondary">{t('add.badges.notAddable')}</Badge>
-                        )}
+                        <Badge variant={f.hasCompose ? 'default' : 'secondary'}>
+                          {f.hasCompose ? t('add.badges.compose') : t('add.badges.plain')}
+                        </Badge>
                         {added && <Badge variant="outline">{t('add.badges.added')}</Badge>}
                       </div>
                     </div>
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={disabled}
-                      onClick={() => pickContainer(c)}
+                      disabled={added}
+                      onClick={() => pickFolder(f)}
                     >
                       {t('add.select')}
                     </Button>
@@ -433,36 +388,88 @@ export const AddProjectScreen = () => {
                 </Card>
               );
             })}
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="manual">
-          <Card>
-            <CardContent className="py-4">
-              <form
-                className="flex flex-col gap-3"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void pickComposeSource(manualPath.trim(), basename(manualPath.trim()));
-                }}
-              >
-                <label className="flex flex-col gap-2 text-sm" htmlFor="manual-path">
-                  <span className="font-medium">{t('add.manual.label')}</span>
-                  <Input
-                    id="manual-path"
-                    value={manualPath}
-                    onChange={(e) => setManualPath(e.target.value)}
-                    placeholder="/var/www/my-app"
-                    className="font-mono"
-                  />
-                </label>
-                <Button type="submit" disabled={manualPath.trim().length === 0 || scanning}>
-                  {t('add.manual.scan')}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="docker" className="flex flex-col gap-3">
+            {dockerLoading && <Skeleton className="h-24 w-full" />}
+            {notReported && (
+              <Empty data-testid="docker-not-reported">
+                <EmptyHeader>
+                  <EmptyTitle>{t('add.agent.notReportedTitle')}</EmptyTitle>
+                  <EmptyDescription>{t('add.agent.notReportedTabHint')}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+            {dockerReady && !dockerAvailable && (
+              <Empty data-testid="docker-unavailable">
+                <EmptyHeader>
+                  <EmptyTitle>{t('add.docker.unavailableTitle')}</EmptyTitle>
+                  <EmptyDescription>{dockerUnavailableDetail}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+            {dockerReady && dockerAvailable && containers.length === 0 && (
+              <Empty data-testid="docker-empty">
+                <EmptyHeader>
+                  <EmptyTitle>{t('add.docker.emptyTitle')}</EmptyTitle>
+                  <EmptyDescription>{t('add.docker.emptyHint')}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+            {dockerAvailable &&
+              containers.map((c) => {
+                const added = isAdded(c.workingDir);
+                const disabled = !c.addable || !c.plan || added;
+                return (
+                  <Card key={c.project}>
+                    <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium">{c.project}</span>
+                        {c.workingDir && (
+                          <span className="text-muted-foreground font-mono text-xs break-all">
+                            {c.workingDir}
+                          </span>
+                        )}
+                        {c.services.length > 0 && (
+                          <span className="text-muted-foreground text-xs">
+                            {t('add.services')}: {c.services.join(', ')}
+                          </span>
+                        )}
+                        <div className="flex flex-wrap gap-2">
+                          {c.standalone && (
+                            <Badge variant="secondary">{t('add.badges.standalone')}</Badge>
+                          )}
+                          {!c.addable && !c.standalone && isOutsideRoots(c.workingDir) && (
+                            <Badge
+                              variant="secondary"
+                              title={t('add.badges.outsideRootsHint', {
+                                roots: agentRoots.join(', '),
+                              })}
+                            >
+                              {t('add.badges.outsideRoots')}
+                            </Badge>
+                          )}
+                          {!c.addable && !c.standalone && !isOutsideRoots(c.workingDir) && (
+                            <Badge variant="secondary">{t('add.badges.notAddable')}</Badge>
+                          )}
+                          {added && <Badge variant="outline">{t('add.badges.added')}</Badge>}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={disabled}
+                        onClick={() => pickContainer(c)}
+                      >
+                        {t('add.select')}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </TabsContent>
+        </Tabs>
+      )}
 
       <Button asChild variant="link" size="sm" className="h-auto self-start p-0">
         <Link to="/projects">
@@ -472,11 +479,6 @@ export const AddProjectScreen = () => {
     </section>
   );
 };
-
-function basename(p: string): string {
-  const parts = p.split('/').filter(Boolean);
-  return parts[parts.length - 1] ?? p;
-}
 
 interface ReviewProps {
   initialPlan: ProjectPlan;

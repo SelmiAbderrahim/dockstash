@@ -174,7 +174,7 @@ export const ru: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'Путь {{path}} не находится в разрешённом корне /var/www.',
+      pathNotAllowed: 'Путь {{path}} не находится в разрешённых каталогах проектов для этой цели резервного копирования.',
       projectNotFound: 'Проект не найден.',
       notOwner: 'Вы не являетесь владельцем этого проекта.',
       scanFailed: 'Не удалось просканировать проект: {{message}}',

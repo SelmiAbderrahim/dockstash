@@ -79,7 +79,11 @@
       "copied": "Copié",
       "done": "Terminé",
       "installTitle": "Installer l'agent",
-      "installIntro": "Exécutez ceci sur la machine à ajouter. Cela démarre le conteneur de l'agent Dockstash avec le jeton intégré."
+      "installIntro": "Exécutez ceci sur la machine à ajouter. Cela démarre le conteneur de l'agent Dockstash avec le jeton intégré.",
+      "roots": "Répertoires de projets",
+      "rootsHint": "Chemins absolus séparés par des virgules que l'agent peut découvrir et sauvegarder (ex. /var/www, /opt/apps). Chacun est monté dans le conteneur de l'agent.",
+      "rootsInvalid": "Répertoires invalides : {{entries}}. Utilisez des chemins absolus hors de /, /proc, /sys, /dev, /etc, /boot et /run.",
+      "rootsEmpty": "Saisissez au moins un répertoire de projets."
     },
     "install": {
       "copy": "Copier la commande",
@@ -109,6 +113,10 @@
       "description": "Supprimer « {{name}} » de votre flotte ? Ses projets basculent en sauvegardes locales et les tâches en attente sont annulées.",
       "confirm": "Supprimer",
       "cancel": "Annuler"
+    },
+    "outdated": {
+      "badge": "Mise à jour disponible",
+      "hint": "Cet agent exécute la version {{version}}. Relancez la commande d'installation sur l'hôte pour le mettre à jour."
     }
   }
 }

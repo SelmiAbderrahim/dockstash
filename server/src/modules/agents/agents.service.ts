@@ -6,6 +6,7 @@ import type { TranslationVars } from '../../shared/i18n/index.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { Project } from '../backups/backups.model.js';
+import { DEFAULT_AGENT_ROOTS } from '../backups/backups.paths.js';
 import { Agent, type AgentHydrated } from './agents.model.js';
 import { AgentJob } from './agent-jobs.model.js';
 import type { RegisterAgentInput } from './agents.schema.js';
@@ -16,6 +17,31 @@ const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars
 
 /** Composite token prefix — secret-scanner-friendly, embeds the agent id. */
 const TOKEN_PREFIX = 'dsa_';
+
+/**
+ * The daemon version the published image ships — mirrors AGENT_VERSION in
+ * agent/src/main.ts (bump both together). Returned on every heartbeat so a
+ * stale daemon warns in its own logs, and surfaced as `outdated` on the fleet
+ * API so the UI can tell the operator to rerun setup.
+ */
+export const EXPECTED_AGENT_VERSION = '0.2.0';
+
+/**
+ * The allowlist for an agent-assigned project: the roots the agent reported on
+ * its last discovery heartbeat (already sanitized by the heartbeat schema), or
+ * the legacy /var/www default for agents that never reported roots.
+ */
+export function allowedRootsForAgent(
+  agent: Pick<AgentHydrated, 'discovery'>,
+): string[] {
+  const roots = agent.discovery?.roots ?? [];
+  return roots.length > 0 ? [...roots] : [...DEFAULT_AGENT_ROOTS];
+}
+
+/** True when the daemon self-reported a version older than the published one. */
+export function isAgentOutdated(agent: Pick<AgentHydrated, 'agentVersion'>): boolean {
+  return agent.agentVersion !== '' && agent.agentVersion !== EXPECTED_AGENT_VERSION;
+}
 
 function mintSecret(): string {
   return randomBytes(24).toString('hex');
@@ -207,6 +233,9 @@ export interface AgentFleetEntry {
   host: string;
   status: string;
   lastSeenAt: string | null;
+  agentVersion: string;
+  /** Daemon self-reported a version behind EXPECTED_AGENT_VERSION — rerun setup. */
+  outdated: boolean;
   projectCount: number;
   totalBytes: number;
   snapshotCount: number;
@@ -227,6 +256,8 @@ export async function computeFleet(userId: string): Promise<AgentFleetEntry[]> {
       host: a.host,
       status: effectiveAgentStatus(a, now),
       lastSeenAt: a.lastSeenAt ? new Date(a.lastSeenAt).toISOString() : null,
+      agentVersion: a.agentVersion,
+      outdated: isAgentOutdated(a),
       projectCount: mine.length,
       totalBytes: mine.reduce((sum, p) => sum + p.totalRepoBytes, 0),
       snapshotCount: mine.reduce((sum, p) => sum + p.snapshotCount, 0),

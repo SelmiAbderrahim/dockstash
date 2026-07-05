@@ -28,7 +28,13 @@ import {
   neo4jAdapter,
   readServiceEnv,
 } from './backups.adapters.js';
-import { isAllowedProjectPath } from './backups.paths.js';
+import {
+  DEFAULT_AGENT_ROOTS,
+  isAllowedProjectPath,
+  isPathUnderRoots,
+  isSafeAbsolutePath,
+  normalizeProjectRoot,
+} from './backups.paths.js';
 import {
   detectProxyConfigs,
   resolveContainerName,
@@ -118,6 +124,54 @@ describe('backups: path allowlist', () => {
     expect(isAllowedProjectPath(42 as unknown)).toBe(false);
     expect(isAllowedProjectPath('/var/www/')).toBe(false);
     expect(isAllowedProjectPath('/var/www')).toBe(false);
+  });
+});
+
+describe('backups: multi-root (agent) path helpers', () => {
+  it('isSafeAbsolutePath enforces structure only', () => {
+    expect(isSafeAbsolutePath('/opt/app')).toBe(true);
+    expect(isSafeAbsolutePath('/var/www/app/')).toBe(true);
+    expect(isSafeAbsolutePath('relative')).toBe(false);
+    expect(isSafeAbsolutePath('')).toBe(false);
+    expect(isSafeAbsolutePath('   ')).toBe(false);
+    expect(isSafeAbsolutePath('/a/../b')).toBe(false);
+    expect(isSafeAbsolutePath('/a\0b')).toBe(false);
+    expect(isSafeAbsolutePath('/')).toBe(false);
+    expect(isSafeAbsolutePath(9 as unknown)).toBe(false);
+  });
+
+  it('isPathUnderRoots allows equal-to-root and nested, rejects boundary lookalikes', () => {
+    const roots = ['/opt/projects', '/srv'];
+    expect(isPathUnderRoots('/opt/projects', roots)).toBe(true);
+    expect(isPathUnderRoots('/opt/projects/shop', roots)).toBe(true);
+    expect(isPathUnderRoots('/srv/x', roots)).toBe(true);
+    expect(isPathUnderRoots('/opt/projectsx', roots)).toBe(false);
+    expect(isPathUnderRoots('/var/www/app', roots)).toBe(false);
+    expect(isPathUnderRoots('/opt/projects/../x', roots)).toBe(false);
+    expect(isPathUnderRoots('/opt/projects/shop', [])).toBe(false);
+  });
+
+  it('normalizeProjectRoot canonicalizes and rejects the denied system prefixes', () => {
+    expect(normalizeProjectRoot('/opt/projects/')).toBe('/opt/projects');
+    expect(normalizeProjectRoot('  /srv//apps ')).toBe('/srv/apps');
+    expect(normalizeProjectRoot('/')).toBeNull();
+    expect(normalizeProjectRoot('///')).toBeNull();
+    expect(normalizeProjectRoot('relative')).toBeNull();
+    expect(normalizeProjectRoot('/a/../b')).toBeNull();
+    expect(normalizeProjectRoot('/a\0b')).toBeNull();
+    expect(normalizeProjectRoot('')).toBeNull();
+    expect(normalizeProjectRoot(1 as unknown)).toBeNull();
+    for (const denied of ['/proc', '/sys', '/dev', '/etc', '/boot', '/run']) {
+      expect(normalizeProjectRoot(denied)).toBeNull();
+      expect(normalizeProjectRoot(`${denied}/nested`)).toBeNull();
+    }
+    // Lookalikes that only share characters are fine.
+    expect(normalizeProjectRoot('/etcetera')).toBe('/etcetera');
+    expect(normalizeProjectRoot('/devops')).toBe('/devops');
+  });
+
+  it('exposes the legacy default agent roots', () => {
+    expect(DEFAULT_AGENT_ROOTS).toEqual(['/var/www']);
   });
 });
 

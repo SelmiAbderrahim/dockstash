@@ -25,6 +25,8 @@ import { verifyApiSecret } from '../../shared/crypto/index.js';
 import { AgentJob } from './agent-jobs.model.js';
 import { Agent } from './agents.model.js';
 import {
+  EXPECTED_AGENT_VERSION,
+  allowedRootsForAgent,
   computeFleet,
   deleteAgent,
   effectiveAgentStatus,
@@ -388,6 +390,7 @@ describe('agents: discovery endpoint', () => {
       folders: [],
       containers: [],
       dockerAvailable: false,
+      roots: ['/var/www'],
       snapshotAt: null,
       reported: false,
       errors: [],
@@ -414,6 +417,7 @@ describe('agents: discovery endpoint', () => {
             },
           ],
           dockerAvailable: true,
+          roots: ['/var/www'],
           errors: [],
         },
       },
@@ -428,10 +432,14 @@ describe('agents: discovery endpoint', () => {
     expect(res.body.snapshotAt).toBe('2026-07-03T00:00:00.000Z');
     expect(res.body.reported).toBe(true);
     expect(res.body.errors).toEqual([]);
-    expect(res.body.folders[0].plan).toEqual({
-      paths: ['/var/www/app'],
-      databases: [],
-      configs: [],
+    // Folders must serialize as plain data even though they are stored as
+    // Mongoose subdocuments (regression: a spread once shipped __parentArray).
+    expect(res.body.folders[0]).toEqual({
+      name: 'app',
+      path: '/var/www/app',
+      hasCompose: true,
+      composeFile: 'docker-compose.yml',
+      plan: { paths: ['/var/www/app'], databases: [], configs: [] },
     });
     const group = res.body.containers.find((c: { project: string }) => c.project === 'app');
     expect(group.plan.databases[0]).toMatchObject({ type: 'postgres', container: 'app_db_1' });
@@ -686,5 +694,161 @@ describe('backups: create with agent assignment', () => {
       .send({ name: 'p', path: '/var/www/p', repoPassword: 'password1', agentId: String(agent._id) });
     expect(res.status).toBe(201);
     expect(res.body.project.agentId).toBe(String(agent._id));
+  });
+
+  it('accepts a path under the agent-reported roots and rejects one outside them', async () => {
+    const { id } = await seedUser('roots@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'roots.example' });
+    await touchAgentHeartbeat(String(agent._id), {
+      discovery: {
+        folders: [],
+        containers: [],
+        dockerAvailable: true,
+        roots: ['/opt/projects'],
+        errors: [],
+      },
+    });
+
+    const ok = await createProject(id, {
+      name: 'in-roots',
+      path: '/opt/projects/shop',
+      repoPassword: 'password1',
+      agentId: String(agent._id),
+    });
+    expect(ok.path).toBe('/opt/projects/shop');
+
+    await expect(
+      createProject(id, {
+        name: 'out-of-roots',
+        path: '/var/www/shop',
+        repoPassword: 'password1',
+        agentId: String(agent._id),
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('falls back to /var/www for agents that never reported roots', async () => {
+    const { id } = await seedUser('legacyroots@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'legacyroots.example' });
+
+    const ok = await createProject(id, {
+      name: 'legacy',
+      path: '/var/www/legacy',
+      repoPassword: 'password1',
+      agentId: String(agent._id),
+    });
+    expect(ok.path).toBe('/var/www/legacy');
+
+    await expect(
+      createProject(id, {
+        name: 'outside',
+        path: '/opt/projects/shop',
+        repoPassword: 'password1',
+        agentId: String(agent._id),
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('validates plan paths and configs against the agent roots too', async () => {
+    const { id } = await seedUser('planroots@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'planroots.example' });
+    await touchAgentHeartbeat(String(agent._id), {
+      discovery: {
+        folders: [],
+        containers: [],
+        dockerAvailable: true,
+        roots: ['/opt/projects'],
+        errors: [],
+      },
+    });
+    await expect(
+      createProject(id, {
+        name: 'smuggle',
+        path: '/opt/projects/shop',
+        repoPassword: 'password1',
+        agentId: String(agent._id),
+        plan: { paths: ['/opt/projects/shop'], databases: [], configs: ['/root/.ssh'] },
+      }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe('agents: heartbeat roots sanitization + version reporting', () => {
+  it('sanitizes agent-reported roots: normalizes, dedups, drops denied/invalid entries', () => {
+    const parsed = agentHeartbeatSchema.parse({
+      discovery: {
+        folders: [],
+        containers: [],
+        dockerAvailable: true,
+        roots: ['/opt/', '/opt', '/etc/nginx', 'relative', '/srv//apps/', '/'],
+      },
+    });
+    expect(parsed.discovery!.roots).toEqual(['/opt', '/srv/apps']);
+  });
+
+  it('defaults roots to [] when the agent omits the field (pre-0.2.0 daemons)', () => {
+    const parsed = agentHeartbeatSchema.parse({
+      discovery: { folders: [], containers: [], dockerAvailable: false },
+    });
+    expect(parsed.discovery!.roots).toEqual([]);
+  });
+
+  it('heartbeat response advertises the expected agent version', async () => {
+    const { id } = await seedUser('latest@t.com');
+    const { token } = await registerAgent(id, { name: 'v', host: 'latest.example' });
+    const hb = await request(app)
+      .post('/api/agent/heartbeat')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ version: '0.1.0', hostname: 'vps' });
+    expect(hb.status).toBe(200);
+    expect(hb.body.latestVersion).toBe(EXPECTED_AGENT_VERSION);
+  });
+
+  it('GET /api/agents flags an old daemon as outdated and a current one as not', async () => {
+    const { id, token: userToken } = await seedUser('outd@t.com');
+    const { agent: oldAgent } = await registerAgent(id, { name: 'old', host: 'old.example' });
+    const { agent: newAgent } = await registerAgent(id, { name: 'new', host: 'new.example' });
+    await touchAgentHeartbeat(String(oldAgent._id), { version: '0.1.0' });
+    await touchAgentHeartbeat(String(newAgent._id), { version: EXPECTED_AGENT_VERSION });
+
+    const res = await request(app).get('/api/agents').set('Authorization', `JWT ${userToken}`);
+    expect(res.status).toBe(200);
+    const byName = Object.fromEntries(
+      (res.body.agents as Array<{ name: string; agentVersion: string; outdated: boolean }>).map(
+        (a) => [a.name, a],
+      ),
+    );
+    expect(byName['old']).toMatchObject({ agentVersion: '0.1.0', outdated: true });
+    expect(byName['new']).toMatchObject({
+      agentVersion: EXPECTED_AGENT_VERSION,
+      outdated: false,
+    });
+  });
+
+  it('fleet rollup carries agentVersion + outdated; never-reported agents are not outdated', async () => {
+    const { id } = await seedUser('fleetv@t.com');
+    const { agent } = await registerAgent(id, { name: 'silent', host: 'silent.example' });
+    const fleet = await computeFleet(id);
+    expect(fleet[0]).toMatchObject({
+      id: String(agent._id),
+      agentVersion: '',
+      outdated: false,
+    });
+  });
+
+  it('allowedRootsForAgent returns reported roots or the /var/www default', async () => {
+    const { id } = await seedUser('rootsvc@t.com');
+    const { agent } = await registerAgent(id, { name: 'v', host: 'rootsvc.example' });
+    expect(allowedRootsForAgent(agent)).toEqual(['/var/www']);
+    const touched = await touchAgentHeartbeat(String(agent._id), {
+      discovery: {
+        folders: [],
+        containers: [],
+        dockerAvailable: true,
+        roots: ['/opt'],
+        errors: [],
+      },
+    });
+    expect(allowedRootsForAgent(touched!)).toEqual(['/opt']);
   });
 });

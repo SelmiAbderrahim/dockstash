@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { normalizeProjectRoot } from '../backups/backups.paths.js';
 
 // Discovery snapshot the daemon ships on heartbeat. Machine-supplied, so we still
 // enforce hard caps to keep a rogue/buggy agent from bloating the Agent doc — but
@@ -14,6 +15,7 @@ const MAX_NAMES = 20;
 const MAX_FOLDERS = 200;
 const MAX_CONTAINERS = 500;
 const MAX_ERRORS = 20;
+const MAX_ROOTS = 32;
 
 const discoveredFolderInput = z.object({
   name: z.string().transform(truncate(255)),
@@ -41,6 +43,23 @@ export const agentDiscoveryInput = z.object({
   folders: z.array(discoveredFolderInput).transform((a) => a.slice(0, MAX_FOLDERS)),
   containers: z.array(containerSummaryInput).transform((a) => a.slice(0, MAX_CONTAINERS)),
   dockerAvailable: z.boolean(),
+  // The allowlist this agent scans (DOCKSTASH_PROJECT_ROOTS). Machine-supplied:
+  // sanitize each entry with the same rules the agent enforces locally and DROP
+  // (never reject) anything unusable, so a hand-rolled agent can't store a root
+  // like `/etc` or blank the snapshot with one bad entry. Absent on pre-0.2.0
+  // agents — readers fall back to DEFAULT_AGENT_ROOTS.
+  roots: z
+    .array(z.string())
+    .transform((a) => {
+      const roots: string[] = [];
+      for (const entry of a.slice(0, MAX_ROOTS)) {
+        const normalized = normalizeProjectRoot(entry.slice(0, 1024));
+        if (normalized !== null && !roots.includes(normalized)) roots.push(normalized);
+      }
+      return roots;
+    })
+    .optional()
+    .default([]),
   errors: z
     .array(z.string().transform(truncate(512)))
     .transform((a) => a.slice(0, MAX_ERRORS))

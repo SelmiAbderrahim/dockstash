@@ -18,6 +18,7 @@ describe('buildAgentDiscoveryView', () => {
       folders: [],
       containers: [],
       dockerAvailable: false,
+      roots: ['/var/www'],
       snapshotAt: null,
       reported: false,
       errors: [],
@@ -112,7 +113,9 @@ describe('buildAgentDiscoveryView', () => {
         { service: 'mysql:8', type: 'mysql', container: 'shop_extra', enabled: true },
         { service: 'mo', type: 'mongo', container: 'shop_id_only', enabled: true },
       ],
-      configs: ['/etc/traefik'],
+      // /etc/traefik is detected but dropped: it is outside the agent's
+      // mounted roots, so the agent could never read it.
+      configs: [],
     });
 
     const infra = view.containers.find((c) => c.project === 'infra')!;
@@ -124,7 +127,7 @@ describe('buildAgentDiscoveryView', () => {
     expect(lonely.plan).toBeNull();
   });
 
-  it('detects nginx config paths for an addable project', () => {
+  it('drops derived nginx/traefik config dirs that sit outside the agent roots', () => {
     const snap: StoredSnapshot = {
       folders: [],
       dockerAvailable: true,
@@ -138,7 +141,55 @@ describe('buildAgentDiscoveryView', () => {
       ],
     };
     const web = buildAgentDiscoveryView(snap).containers[0]!;
-    expect(web.plan?.configs).toEqual(['/etc/nginx']);
+    expect(web.plan?.configs).toEqual([]);
     expect(web.plan?.databases).toEqual([]);
+  });
+
+  it('marks groups addable against the agent-reported roots, not the static default', () => {
+    const snap: StoredSnapshot = {
+      folders: [],
+      dockerAvailable: true,
+      snapshotAt: null,
+      roots: ['/opt'],
+      containers: [
+        container({
+          names: ['/infra_1'],
+          image: 'redis:7',
+          labels: composeLabels('infra', '/opt/infra', 'cache'),
+        }),
+        container({
+          names: ['/legacy_1'],
+          image: 'postgres:16',
+          labels: composeLabels('legacy', '/var/www/legacy', 'db'),
+        }),
+      ],
+    };
+    const view = buildAgentDiscoveryView(snap);
+    expect(view.roots).toEqual(['/opt']);
+    const infra = view.containers.find((c) => c.project === 'infra')!;
+    expect(infra.addable).toBe(true);
+    expect(infra.plan?.paths).toEqual(['/opt/infra']);
+    const legacy = view.containers.find((c) => c.project === 'legacy')!;
+    expect(legacy.addable).toBe(false);
+    expect(legacy.plan).toBeNull();
+  });
+
+  it('falls back to the /var/www default for legacy snapshots without roots', () => {
+    const snap: StoredSnapshot = {
+      folders: [],
+      dockerAvailable: true,
+      snapshotAt: null,
+      roots: [],
+      containers: [
+        container({
+          names: ['/shop_db_1'],
+          image: 'postgres:16',
+          labels: composeLabels('shop', '/var/www/shop', 'db'),
+        }),
+      ],
+    };
+    const view = buildAgentDiscoveryView(snap);
+    expect(view.roots).toEqual(['/var/www']);
+    expect(view.containers[0]!.addable).toBe(true);
   });
 });

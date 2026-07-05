@@ -92,7 +92,7 @@ describe('runAgent', () => {
       hostname: 'vps-test',
       execute,
       startHealth,
-      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false }),
+      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false, roots: ['/var/www'], errors: [] }),
     });
 
     // Immediate heartbeat is fired synchronously by poller.start().
@@ -136,7 +136,7 @@ describe('runAgent', () => {
       },
       execute,
       startHealth,
-      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false }),
+      collectDiscovery: async () => ({ folders: [], containers: [], dockerAvailable: false, roots: ['/var/www'], errors: [] }),
     });
 
     expect(running.poller).toBeDefined();
@@ -207,6 +207,6 @@ describe('productionExecute', () => {
 
 describe('AGENT_VERSION', () => {
   it('is a stable semantic version string', () => {
-    expect(AGENT_VERSION).toBe('0.1.0');
+    expect(AGENT_VERSION).toBe('0.2.0');
   });
 });

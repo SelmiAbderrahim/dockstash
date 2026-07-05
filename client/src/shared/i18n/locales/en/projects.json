@@ -30,7 +30,7 @@
   },
   "add": {
     "title": "Add a project",
-    "lede": "Pick a folder, a running Docker Compose project, or enter a path.",
+    "lede": "Pick a folder or a running Docker Compose project from a fleet agent.",
     "scanning": "Scanning…",
     "cancel": "Back to projects",
     "select": "Select",
@@ -39,16 +39,21 @@
       "label": "Backup target",
       "local": "Local server",
       "snapshotAt": "Last reported {{at}}",
-      "noSnapshot": "This agent hasn't reported yet — check back shortly."
+      "noSnapshot": "This agent hasn't reported yet — check back shortly.",
+      "noAgentsTitle": "No fleet agents registered.",
+      "noAgentsHint": "Register a fleet agent first, then choose it here to create a project.",
+      "noAgentsCta": "Open Fleet"
     },
     "agent": {
       "offlineBadge": "Offline",
+      "loading": "Loading agent snapshot…",
       "refresh": "Refresh now",
       "refreshing": "Refreshing…",
       "notReportedTitle": "Agent hasn't reported yet",
       "notReportedHint": "No snapshot received yet — check the Fleet page to confirm the agent is online.",
       "errorsTitle": "Discovery reported problems",
-      "fleetLink": "View in Fleet"
+      "fleetLink": "View in Fleet",
+      "notReportedTabHint": "No snapshot from this agent yet. If the agent is online but this persists, it is likely running an outdated image — on the host, run: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, then click Refresh now."
     },
     "tabs": {
       "aria": "Choose a source",
@@ -59,12 +64,12 @@
     "folders": {
       "emptyTitle": "No folders found.",
       "emptyHint": "No subdirectories under /var/www.",
-      "emptyHintAgent": "This agent reported no projects under /var/www — confirm your project is there and the agent can read it."
+      "emptyHintAgent": "This agent's /var/www snapshot is empty. On the agent host, run: docker compose -f docker-compose.agent.yml exec agent ls -la /var/www. Your projects must be mounted under /var/www."
     },
     "docker": {
       "unavailableTitle": "Docker is not available.",
       "unavailableHint": "No Docker socket is configured on this server.",
-      "unavailableHintAgent": "This agent can't reach Docker. Confirm the socket-proxy is running on the agent host.",
+      "unavailableHintAgent": "This agent's latest snapshot reports Docker unavailable. On the agent host, rerun setup with: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate. Then click Refresh now.",
       "emptyTitle": "No running containers.",
       "emptyHint": "Start a Compose project, then refresh."
     },
@@ -76,8 +81,10 @@
       "compose": "Compose",
       "plain": "Files only",
       "added": "Already added",
-      "notAddable": "Outside /var/www",
-      "standalone": "Standalone"
+      "notAddable": "No folder path reported",
+      "standalone": "Standalone",
+      "outsideRoots": "Outside agent directories",
+      "outsideRootsHint": "This project's folder is not covered by the agent's project directories ({{roots}}). Re-run the agent setup with this directory added."
     },
     "review": {
       "title": "Review and create",

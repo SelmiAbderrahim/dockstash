@@ -174,7 +174,7 @@ export const fr: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'Le chemin {{path}} n’est pas sous la racine autorisée /var/www.',
+      pathNotAllowed: 'Le chemin {{path}} n’est pas dans les répertoires de projets autorisés pour cette cible de sauvegarde.',
       projectNotFound: 'Projet introuvable.',
       notOwner: 'Vous n’êtes pas propriétaire de ce projet.',
       scanFailed: 'Échec de l’analyse du projet : {{message}}',

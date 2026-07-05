@@ -66,6 +66,7 @@ const projects: ProjectsState = {
   agentFolders: [{ name: 'a', path: '/var/www/a', hasCompose: true, composeFile: 'docker-compose.yml', plan: { paths: ['/var/www/a'], databases: [], configs: [] } }],
   agentContainers: [],
   agentDockerAvailable: true,
+  agentRoots: ['/var/www'],
   agentSnapshotAt: '2026-07-03T00:00:00Z',
   agentDiscoveryStatus: 'succeeded',
   agentReported: true,

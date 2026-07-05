@@ -42,6 +42,10 @@ const agentDiscoverySchema = new mongoose.Schema(
     folders: { type: [discoveredFolderSchema], default: [] },
     containers: { type: [discoveredContainerSchema], default: [] },
     dockerAvailable: { type: Boolean, default: false },
+    // The agent's configured DOCKSTASH_PROJECT_ROOTS (sanitized by the
+    // heartbeat schema). Empty on pre-0.2.0 agents → readers fall back to
+    // DEFAULT_AGENT_ROOTS.
+    roots: { type: [String], default: [] },
     snapshotAt: { type: Date, default: null },
     // Named `discoveryErrors`, not `errors` — `errors` is a reserved Mongoose
     // Document pathname (Document.prototype.errors) and collides silently.

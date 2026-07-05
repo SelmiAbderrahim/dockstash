@@ -1,11 +1,17 @@
 import { z } from 'zod';
-import { isAllowedProjectPath } from './backups.paths.js';
+import { isSafeAbsolutePath } from './backups.paths.js';
 import { DATABASE_TYPES } from './backups.model.js';
 
+// Structural validation only (absolute, no traversal/NUL, not `/`). WHICH
+// allowlist a path must live under depends on the project's execution target —
+// the local server's /var/www or the assigned agent's reported roots — so that
+// check lives in the service layer (assertAllowedPath / allowedRootsForAgent),
+// where the agent document is available. Every schema consumer below has a
+// matching service-layer assert; never rely on this refine alone.
 const projectPath = z
   .string()
   .min(1)
-  .refine(isAllowedProjectPath, { message: 'Path must be under /var/www/*' });
+  .refine(isSafeAbsolutePath, { message: 'Invalid project path' });
 
 const databaseLayerInput = z.object({
   service: z.string().min(1),
@@ -18,8 +24,9 @@ const planInput = z.object({
   paths: z.array(projectPath).default([]),
   databases: z.array(databaseLayerInput).default([]),
   // `configs` are backed up via the same restic argv as `paths`, so they MUST
-  // pass the same /var/www allowlist — otherwise an absolute path like
-  // /etc/passwd would be dumped into the tenant's repo (arbitrary file read).
+  // pass the same allowlist (asserted in the service layer) — otherwise an
+  // absolute path like /root/.ssh would be dumped into the tenant's repo
+  // (arbitrary file read).
   configs: z.array(projectPath).default([]),
 });
 

@@ -174,7 +174,7 @@ export const de: DictionaryShape = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'Pfad {{path}} liegt nicht unter dem erlaubten Root /var/www.',
+      pathNotAllowed: 'Pfad {{path}} liegt nicht innerhalb der erlaubten Projektverzeichnisse für dieses Backup-Ziel.',
       projectNotFound: 'Projekt nicht gefunden.',
       notOwner: 'Sie sind nicht Eigentümer dieses Projekts.',
       scanFailed: 'Projekt-Scan fehlgeschlagen: {{message}}',

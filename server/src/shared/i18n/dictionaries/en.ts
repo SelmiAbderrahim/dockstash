@@ -172,7 +172,7 @@ export const en = {
   },
   backups: {
     error: {
-      pathNotAllowed: 'Path {{path}} is not under the allowed /var/www root.',
+      pathNotAllowed: 'Path {{path}} is not inside the allowed project directories for this backup target.',
       projectNotFound: 'Project not found.',
       notOwner: 'You do not own this project.',
       scanFailed: 'Failed to scan project: {{message}}',

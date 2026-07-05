@@ -7,6 +7,10 @@ export interface Agent {
   port: number;
   status: AgentStatus;
   lastSeenAt: string | null;
+  /** Daemon self-reported version; '' until the first heartbeat. */
+  agentVersion: string;
+  /** True when the daemon runs an older version than the published image. */
+  outdated: boolean;
 }
 
 export interface FleetEntry {
@@ -15,6 +19,8 @@ export interface FleetEntry {
   host: string;
   status: AgentStatus;
   lastSeenAt: string | null;
+  agentVersion: string;
+  outdated: boolean;
   projectCount: number;
   totalBytes: number;
   snapshotCount: number;

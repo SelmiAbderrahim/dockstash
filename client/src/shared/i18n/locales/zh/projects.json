@@ -30,7 +30,7 @@
   },
   "add": {
     "title": "添加项目",
-    "lede": "选择一个目录、一个运行中的 Docker Compose 项目，或输入路径。",
+    "lede": "从车队代理中选择一个目录或运行中的 Docker Compose 项目。",
     "scanning": "扫描中…",
     "cancel": "返回项目",
     "select": "选择",
@@ -39,16 +39,21 @@
       "label": "备份目标",
       "local": "本地服务器",
       "snapshotAt": "最近上报 {{at}}",
-      "noSnapshot": "该代理尚未上报——请稍后再查看。"
+      "noSnapshot": "该代理尚未上报——请稍后再查看。",
+      "noAgentsTitle": "尚未注册车队代理。",
+      "noAgentsHint": "请先注册一个车队代理，然后在此选择它来创建项目。",
+      "noAgentsCta": "打开车队"
     },
     "agent": {
       "offlineBadge": "离线",
+      "loading": "正在加载代理快照…",
       "refresh": "立即刷新",
       "refreshing": "正在刷新…",
       "notReportedTitle": "代理尚未上报",
       "notReportedHint": "尚未收到任何快照——请在车队页面确认该代理在线。",
       "errorsTitle": "发现过程报告了问题",
-      "fleetLink": "在车队中查看"
+      "fleetLink": "在车队中查看",
+      "notReportedTabHint": "尚未收到此代理的快照。如果代理在线但此情况持续，它可能运行的是过时镜像 — 请在主机上运行：docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate，然后点击「立即刷新」。"
     },
     "tabs": {
       "aria": "选择来源",
@@ -76,8 +81,10 @@
       "compose": "Compose",
       "plain": "仅文件",
       "added": "已添加",
-      "notAddable": "在 /var/www 之外",
-      "standalone": "独立"
+      "notAddable": "未报告文件夹路径",
+      "standalone": "独立",
+      "outsideRoots": "不在代理目录内",
+      "outsideRootsHint": "此项目的文件夹不在代理的项目目录（{{roots}}）范围内。请重新运行代理安装命令并添加该目录。"
     },
     "review": {
       "title": "确认并创建",

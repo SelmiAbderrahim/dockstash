@@ -7,6 +7,8 @@ import { buildAgentInstallCommand, resolveAgentServerUrl } from '../install-comm
 interface Props {
   /** Real token bakes it into the command; omit for the `<AGENT_TOKEN>` placeholder. */
   token?: string;
+  /** Project directories to mount + allowlist; omit for the /var/www default. */
+  roots?: string[];
 }
 
 /**
@@ -14,10 +16,14 @@ interface Props {
  * Uses `useCopyToClipboard` (insecure-context safe) — never the raw clipboard
  * API, since fleet dashboards are reached over bare http.
  */
-export const AgentInstallCommand = ({ token }: Props) => {
+export const AgentInstallCommand = ({ token, roots }: Props) => {
   const { t } = useTranslation('common');
   const { copied, copy } = useCopyToClipboard();
-  const command = buildAgentInstallCommand({ token, serverUrl: resolveAgentServerUrl() });
+  const command = buildAgentInstallCommand({
+    token,
+    serverUrl: resolveAgentServerUrl(),
+    roots,
+  });
 
   return (
     <div className="flex flex-col gap-2 text-start" data-tour="agent-install-command">
