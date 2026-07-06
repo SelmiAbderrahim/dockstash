@@ -57,7 +57,6 @@ const PRICING_FAQ_KEYS = ['freeReally', 'yearly', 'project', 'downgrade'] as con
 
 export const Pricing = () => {
   const { t, locale } = useMarketingT();
-  const href = (path: string) => localeHref(path, locale);
   const [period, setPeriod] = useState<BillingPeriod>('monthly');
 
   const tiers: Tier[] = [
