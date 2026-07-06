@@ -5,6 +5,7 @@ import {
   discoverAgent,
   discoverContainers,
   discoverFolders,
+  fetchProjectJobs,
   fetchProjects,
   fetchSchedules,
   refreshAgent,
@@ -24,6 +25,7 @@ import type {
   DiscoveredFolder,
   PitrResolution,
   Project,
+  ProjectJob,
   ProjectPlan,
   Schedule,
 } from '../types';
@@ -49,6 +51,11 @@ export interface ProjectsState {
   planSaveStatus: LoadState;
   // Point-in-time restore flow
   pitr: PitrState;
+  // Fleet job history (per selected project)
+  jobs: ProjectJob[];
+  jobsProjectId: string | null;
+  jobsStatus: LoadState;
+  jobsError: string | null;
   // Alert webhook + mirror editors
   alertsSaveStatus: LoadState;
   alertsError: string | null;
@@ -94,6 +101,10 @@ const initialState: ProjectsState = {
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
   pitr: initialPitr,
+  jobs: [],
+  jobsProjectId: null,
+  jobsStatus: 'idle',
+  jobsError: null,
   alertsSaveStatus: 'idle',
   alertsError: null,
   mirrorSaveStatus: 'idle',
@@ -312,6 +323,24 @@ const projectsSlice = createSlice({
       .addCase(startPitrRestore.rejected, (state, action) => {
         state.pitr.restoreStatus = 'failed';
         state.pitr.error = action.payload ?? 'Could not start the restore.';
+      })
+      .addCase(fetchProjectJobs.pending, (state, action) => {
+        state.jobsStatus = 'loading';
+        state.jobsError = null;
+        // Switching projects must not flash the previous project's history.
+        if (state.jobsProjectId !== action.meta.arg.projectId) {
+          state.jobs = [];
+          state.jobsProjectId = action.meta.arg.projectId;
+        }
+      })
+      .addCase(fetchProjectJobs.fulfilled, (state, action) => {
+        state.jobsStatus = 'succeeded';
+        state.jobs = action.payload.jobs;
+        state.jobsProjectId = action.payload.projectId;
+      })
+      .addCase(fetchProjectJobs.rejected, (state, action) => {
+        state.jobsStatus = 'failed';
+        state.jobsError = action.payload ?? 'Could not load job history.';
       })
       .addCase(saveAlerts.pending, (state) => {
         state.alertsSaveStatus = 'loading';

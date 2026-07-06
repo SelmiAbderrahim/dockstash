@@ -12,6 +12,7 @@ import {
   savePlan,
   assignProjectAgent,
   runBackupNow,
+  fetchProjectJobs,
   fetchSchedules,
   saveSchedule,
   resolvePitr,
@@ -33,6 +34,7 @@ vi.mock('../api', () => ({
   updatePlanRequest: vi.fn(),
   assignProjectAgentRequest: vi.fn(),
   runBackupNowRequest: vi.fn(),
+  listProjectJobsRequest: vi.fn(),
   listSchedulesRequest: vi.fn(),
   createScheduleRequest: vi.fn(),
   updateScheduleRequest: vi.fn(),
@@ -200,6 +202,25 @@ describe('projects thunks', () => {
     const result = await makeStore().dispatch(runBackupNow({ projectId: 'p1' }));
     expect(runBackupNow.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('down');
+  });
+
+  it('fetchProjectJobs resolves jobs keyed to the project', async () => {
+    mocked.listProjectJobsRequest.mockResolvedValue([
+      { id: 'j1', kind: 'restore' } as never,
+    ]);
+    const result = await makeStore().dispatch(fetchProjectJobs({ projectId: 'p1' }));
+    expect(fetchProjectJobs.fulfilled.match(result)).toBe(true);
+    expect(result.payload).toEqual({
+      projectId: 'p1',
+      jobs: [{ id: 'j1', kind: 'restore' }],
+    });
+  });
+
+  it('fetchProjectJobs rejects with a message on failure', async () => {
+    mocked.listProjectJobsRequest.mockRejectedValue(new Error('nope'));
+    const result = await makeStore().dispatch(fetchProjectJobs({ projectId: 'p1' }));
+    expect(fetchProjectJobs.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('nope');
   });
 
   it('fetchSchedules resolves the schedule list', async () => {

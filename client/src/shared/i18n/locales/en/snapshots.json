@@ -30,5 +30,6 @@
     "confirm": "Restore",
     "cancel": "Cancel",
     "stream": "Restore output"
-  }
+  },
+  "viewHistory": "View restore history"
 }

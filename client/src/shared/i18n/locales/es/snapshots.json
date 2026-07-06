@@ -30,5 +30,6 @@
     "confirm": "Restaurar",
     "cancel": "Cancelar",
     "stream": "Salida de restauración"
-  }
+  },
+  "viewHistory": "Ver historial de restauraciones"
 }

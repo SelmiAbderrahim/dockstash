@@ -14,6 +14,7 @@ import * as api from '../api';
 vi.mock('../api', () => ({
   listProjectsRequest: vi.fn(async () => []),
   listSchedulesRequest: vi.fn(async () => []),
+  listProjectJobsRequest: vi.fn(async () => []),
   updatePlanRequest: vi.fn(async () => ({})),
   createScheduleRequest: vi.fn(async () => ({})),
   updateScheduleRequest: vi.fn(async () => ({})),
@@ -61,6 +62,9 @@ const baseProject = (over: Partial<Project> = {}): Project => ({
   lastDrillAt: null,
   lastDrillStatus: null,
   lastDrillDetail: '',
+  lastRestoreAt: null,
+  lastRestoreStatus: null,
+  lastRestoreDetail: '',
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
   ...over,
@@ -88,6 +92,10 @@ const baseState: ProjectsState = {
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
   pitr: { resolution: null, status: 'idle', error: null, restoreJobId: null, restoreStatus: 'idle' },
+  jobs: [],
+  jobsProjectId: null,
+  jobsStatus: 'idle',
+  jobsError: null,
   alertsSaveStatus: 'idle',
   alertsError: null,
   mirrorSaveStatus: 'idle',
@@ -169,6 +177,10 @@ describe('ProjectDetailScreen shell', () => {
 
     await user.click(screen.getByRole('tab', { name: /schedule/i }));
     expect(await screen.findByRole('button', { name: /save schedule/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /history/i }));
+    expect(await screen.findByRole('heading', { name: /job history/i })).toBeInTheDocument();
+    await waitFor(() => expect(mocked.listProjectJobsRequest).toHaveBeenCalledWith('p1'));
 
     await user.click(screen.getByRole('tab', { name: /restore drill/i }));
     expect(await screen.findByRole('heading', { name: /restore drill/i })).toBeInTheDocument();

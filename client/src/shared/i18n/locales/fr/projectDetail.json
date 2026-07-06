@@ -7,7 +7,8 @@
     "drill": "Test de restauration",
     "pitr": "Point dans le temps",
     "mirror": "Miroir",
-    "alerts": "Alertes"
+    "alerts": "Alertes",
+    "history": "Historique"
   },
   "plan": {
     "files": "Fichiers",
@@ -89,5 +90,45 @@
     "saving": "Enregistrement…",
     "saved": "Alertes enregistrées.",
     "clear": "Effacer"
+  },
+  "history": {
+    "heading": "Historique des tâches",
+    "lede": "Sauvegardes, vérifications, purges et restaurations exécutées pour ce projet.",
+    "tableLabel": "Historique des tâches",
+    "never": "Jamais",
+    "ok": "Succès",
+    "failed": "Échec",
+    "error": "Impossible de charger l'historique des tâches.",
+    "cards": {
+      "backup": "Dernière sauvegarde",
+      "restore": "Dernière restauration",
+      "drill": "Dernier exercice"
+    },
+    "kind": {
+      "backup": "Sauvegarde",
+      "check": "Vérification",
+      "prune": "Purge",
+      "restore": "Restauration"
+    },
+    "jobStatus": {
+      "pending": "En attente",
+      "leased": "En cours",
+      "succeeded": "Réussie",
+      "failed": "Échouée"
+    },
+    "columns": {
+      "kind": "Type",
+      "status": "Statut",
+      "started": "Début",
+      "finished": "Fin",
+      "snapshot": "Instantané",
+      "logs": "Journaux"
+    },
+    "showLogs": "Journaux",
+    "hideLogs": "Masquer",
+    "empty": {
+      "title": "Aucune tâche enregistrée",
+      "hint": "Les exécutions apparaissent ici dès que l'agent de flotte de ce projet exécute une tâche. Les tâches exécutées directement sur ce serveur diffusent leurs journaux en direct mais ne sont pas conservées."
+    }
   }
 }

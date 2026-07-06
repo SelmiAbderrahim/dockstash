@@ -7,7 +7,8 @@
     "drill": "Prueba de restauración",
     "pitr": "Punto en el tiempo",
     "mirror": "Réplica",
-    "alerts": "Alertas"
+    "alerts": "Alertas",
+    "history": "Historial"
   },
   "plan": {
     "files": "Archivos",
@@ -89,5 +90,45 @@
     "saving": "Guardando…",
     "saved": "Alertas guardadas.",
     "clear": "Borrar"
+  },
+  "history": {
+    "heading": "Historial de tareas",
+    "lede": "Copias de seguridad, verificaciones, purgas y restauraciones ejecutadas para este proyecto.",
+    "tableLabel": "Historial de tareas",
+    "never": "Nunca",
+    "ok": "Éxito",
+    "failed": "Fallida",
+    "error": "No se pudo cargar el historial de tareas.",
+    "cards": {
+      "backup": "Última copia",
+      "restore": "Última restauración",
+      "drill": "Último simulacro"
+    },
+    "kind": {
+      "backup": "Copia",
+      "check": "Verificación",
+      "prune": "Purga",
+      "restore": "Restauración"
+    },
+    "jobStatus": {
+      "pending": "En cola",
+      "leased": "En ejecución",
+      "succeeded": "Completada",
+      "failed": "Fallida"
+    },
+    "columns": {
+      "kind": "Tipo",
+      "status": "Estado",
+      "started": "Inicio",
+      "finished": "Fin",
+      "snapshot": "Instantánea",
+      "logs": "Registros"
+    },
+    "showLogs": "Registros",
+    "hideLogs": "Ocultar",
+    "empty": {
+      "title": "Sin tareas registradas",
+      "hint": "Las ejecuciones aparecen aquí cuando el agente de flota de este proyecto ejecuta una tarea. Las tareas ejecutadas directamente en este servidor transmiten sus registros en vivo pero no se almacenan."
+    }
   }
 }

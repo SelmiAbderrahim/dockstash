@@ -11,6 +11,7 @@ import {
   updatePlanRequest,
   assignProjectAgentRequest,
   runBackupNowRequest,
+  listProjectJobsRequest,
   listSchedulesRequest,
   createScheduleRequest,
   updateScheduleRequest,
@@ -257,6 +258,13 @@ describe('projects api wrappers', () => {
       body: { webhookUrl: 'https://x' },
     });
     expect(result).toEqual({ id: 'p1', alertWebhookUrl: 'https://x' });
+  });
+
+  it('listProjectJobsRequest GETs /agents/jobs and unwraps jobs', async () => {
+    apiClient.mockResolvedValue({ jobs: [{ id: 'j1' }] } as never);
+    const result = await listProjectJobsRequest('p1');
+    expect(apiClient).toHaveBeenCalledWith('/agents/jobs?projectId=p1', { auth: true });
+    expect(result).toEqual([{ id: 'j1' }]);
   });
 
   it('updateMirrorRequest PATCHes the mirror path and unwraps project', async () => {

@@ -5,6 +5,7 @@ import {
   deleteAgentHandler,
   fleetHandler,
   listAgentsHandler,
+  listProjectJobsHandler,
   registerAgentHandler,
   requestAgentDiscoveryRefreshHandler,
   rotateAgentKeyHandler,
@@ -16,6 +17,8 @@ agentsRouter.use(requireAuth);
 agentsRouter.get('/', listAgentsHandler);
 agentsRouter.post('/', registerAgentHandler);
 agentsRouter.get('/fleet', fleetHandler);
+// Literal path must register before the `/:agentId/*` param routes.
+agentsRouter.get('/jobs', listProjectJobsHandler);
 agentsRouter.get('/:agentId/discovery', agentDiscoveryHandler);
 agentsRouter.post('/:agentId/discovery/refresh', requestAgentDiscoveryRefreshHandler);
 agentsRouter.post('/:agentId/rotate-key', rotateAgentKeyHandler);

@@ -29,6 +29,7 @@ import {
   startPitrRestore,
 } from '../store/thunks';
 import { AgentAssignmentCard } from './AgentAssignmentCard';
+import { HistoryPanel } from './HistoryPanel';
 import {
   selectAlertsError,
   selectAlertsSaveStatus,
@@ -47,7 +48,7 @@ import {
 import { clearPitr, resetSaveStatus } from '../store/slice';
 import type { Project, ProjectPlan } from '../types';
 
-const TABS = ['plan', 'schedule', 'drill', 'pitr', 'mirror', 'alerts'] as const;
+const TABS = ['plan', 'schedule', 'history', 'drill', 'pitr', 'mirror', 'alerts'] as const;
 
 // Same classes as the schedule cron text input — the single mono input style
 // shared by every free-text field on this screen.
@@ -746,6 +747,9 @@ export const ProjectDetailScreen = () => {
         </TabsContent>
         <TabsContent value="schedule">
           <ScheduleEditor project={project} />
+        </TabsContent>
+        <TabsContent value="history">
+          <HistoryPanel project={project} />
         </TabsContent>
         <TabsContent value="drill">
           <DrillStatus project={project} />

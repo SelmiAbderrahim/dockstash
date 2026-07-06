@@ -5,6 +5,7 @@ import type {
   DiscoveredFolder,
   PitrResolution,
   Project,
+  ProjectJob,
   ProjectPlan,
   Schedule,
 } from './types';
@@ -129,6 +130,15 @@ export const pitrRestoreRequest = (input: {
       targetPath: input.targetPath,
     },
   }).then((r) => r.job.id);
+
+interface ProjectJobsResp {
+  jobs: ProjectJob[];
+}
+
+export const listProjectJobsRequest = (projectId: string) =>
+  apiClient<ProjectJobsResp>(`/agents/jobs?projectId=${encodeURIComponent(projectId)}`, {
+    auth: true,
+  }).then((r) => r.jobs);
 
 export const updateAlertsRequest = (projectId: string, webhookUrl: string) =>
   apiClient<ProjectResp>(`/backups/${projectId}/alerts`, {

@@ -7,7 +7,8 @@
     "drill": "Restore drill",
     "pitr": "Point-in-time",
     "mirror": "Mirror",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "history": "History"
   },
   "plan": {
     "files": "Files",
@@ -89,5 +90,45 @@
     "saving": "Saving…",
     "saved": "Alerts saved.",
     "clear": "Clear"
+  },
+  "history": {
+    "heading": "Job history",
+    "lede": "Backups, checks, prunes and restores executed for this project.",
+    "tableLabel": "Job history",
+    "never": "Never",
+    "ok": "Success",
+    "failed": "Failed",
+    "error": "Could not load job history.",
+    "cards": {
+      "backup": "Last backup",
+      "restore": "Last restore",
+      "drill": "Last drill"
+    },
+    "kind": {
+      "backup": "Backup",
+      "check": "Check",
+      "prune": "Prune",
+      "restore": "Restore"
+    },
+    "jobStatus": {
+      "pending": "Queued",
+      "leased": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
+    "columns": {
+      "kind": "Kind",
+      "status": "Status",
+      "started": "Started",
+      "finished": "Finished",
+      "snapshot": "Snapshot",
+      "logs": "Logs"
+    },
+    "showLogs": "Logs",
+    "hideLogs": "Hide",
+    "empty": {
+      "title": "No jobs recorded",
+      "hint": "Runs appear here once this project's fleet agent executes a job. Jobs run directly on this server stream live logs but are not stored."
+    }
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
@@ -184,6 +184,17 @@ export const SnapshotsScreen = () => {
           title={t('restore.stream')}
           onDone={() => dispatch(setActiveRestoreJob(null))}
         />
+      )}
+
+      {projectId && (
+        <p className="text-sm">
+          <Link
+            to={`/projects/${projectId}?tab=history`}
+            className="font-medium underline-offset-4 hover:underline"
+          >
+            {t('viewHistory')}
+          </Link>
+        </p>
       )}
 
       {target && project && (

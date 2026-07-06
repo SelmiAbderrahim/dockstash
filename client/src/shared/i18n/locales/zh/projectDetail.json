@@ -7,7 +7,8 @@
     "drill": "恢复演练",
     "pitr": "时间点",
     "mirror": "镜像",
-    "alerts": "告警"
+    "alerts": "告警",
+    "history": "历史"
   },
   "plan": {
     "files": "文件",
@@ -89,5 +90,45 @@
     "saving": "保存中…",
     "saved": "告警已保存。",
     "clear": "清除"
+  },
+  "history": {
+    "heading": "任务历史",
+    "lede": "此项目已执行的备份、校验、清理和恢复任务。",
+    "tableLabel": "任务历史",
+    "never": "从未",
+    "ok": "成功",
+    "failed": "失败",
+    "error": "无法加载任务历史。",
+    "cards": {
+      "backup": "上次备份",
+      "restore": "上次恢复",
+      "drill": "上次演练"
+    },
+    "kind": {
+      "backup": "备份",
+      "check": "校验",
+      "prune": "清理",
+      "restore": "恢复"
+    },
+    "jobStatus": {
+      "pending": "排队中",
+      "leased": "运行中",
+      "succeeded": "成功",
+      "failed": "失败"
+    },
+    "columns": {
+      "kind": "类型",
+      "status": "状态",
+      "started": "开始",
+      "finished": "结束",
+      "snapshot": "快照",
+      "logs": "日志"
+    },
+    "showLogs": "日志",
+    "hideLogs": "收起",
+    "empty": {
+      "title": "暂无任务记录",
+      "hint": "当此项目的舰队代理执行任务后，运行记录会显示在这里。直接在本服务器上运行的任务会实时流式输出日志，但不会被保存。"
+    }
   }
 }

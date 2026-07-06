@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { projectsReducer, clearActiveJob, resetSaveStatus, resetAddFlow, clearPitr } from './slice';
 import {
+  fetchProjectJobs,
   fetchProjects,
   fetchSchedules,
   assignProjectAgent,
@@ -40,6 +41,9 @@ const project: Project = {
   lastDrillAt: null,
   lastDrillStatus: null,
   lastDrillDetail: '',
+  lastRestoreAt: null,
+  lastRestoreStatus: null,
+  lastRestoreDetail: '',
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
 };
@@ -437,5 +441,45 @@ describe('projects slice', () => {
     expect(s.mirrorError).toBe('mirror boom');
     s = projectsReducer(initial(), { type: saveMirror.rejected.type });
     expect(s.mirrorError).toBe('Could not save mirror.');
+  });
+
+  it('fetchProjectJobs lifecycle keeps history scoped to one project', () => {
+    const job = { id: 'j1', kind: 'restore' } as never;
+    // First load.
+    let s = projectsReducer(initial(), fetchProjectJobs.pending('r1', { projectId: 'p1' }));
+    expect(s.jobsStatus).toBe('loading');
+    expect(s.jobsProjectId).toBe('p1');
+    s = projectsReducer(
+      s,
+      fetchProjectJobs.fulfilled({ projectId: 'p1', jobs: [job] }, 'r1', { projectId: 'p1' }),
+    );
+    expect(s.jobsStatus).toBe('succeeded');
+    expect(s.jobs).toEqual([job]);
+
+    // Refetch of the SAME project keeps the rows visible while loading.
+    s = projectsReducer(s, fetchProjectJobs.pending('r2', { projectId: 'p1' }));
+    expect(s.jobs).toEqual([job]);
+
+    // Switching projects clears the stale rows immediately.
+    s = projectsReducer(s, fetchProjectJobs.pending('r3', { projectId: 'p2' }));
+    expect(s.jobs).toEqual([]);
+    expect(s.jobsProjectId).toBe('p2');
+  });
+
+  it('fetchProjectJobs failure records the error (payload and fallback)', () => {
+    let s = projectsReducer(initial(), fetchProjectJobs.pending('r1', { projectId: 'p1' }));
+    s = projectsReducer(
+      s,
+      fetchProjectJobs.rejected(new Error('x'), 'r1', { projectId: 'p1' }, 'boom'),
+    );
+    expect(s.jobsStatus).toBe('failed');
+    expect(s.jobsError).toBe('boom');
+
+    let s2 = projectsReducer(initial(), fetchProjectJobs.pending('r2', { projectId: 'p1' }));
+    s2 = projectsReducer(s2, {
+      type: fetchProjectJobs.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s2.jobsError).toBe('Could not load job history.');
   });
 });

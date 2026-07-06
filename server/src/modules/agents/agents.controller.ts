@@ -3,7 +3,13 @@ import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
-import { registerAgentSchema, agentIdParamsSchema } from './agents.schema.js';
+import {
+  registerAgentSchema,
+  agentIdParamsSchema,
+  listJobsQuerySchema,
+} from './agents.schema.js';
+import { loadOwnedProject } from '../backups/backups.service.js';
+import { AgentJob, type AgentJobHydrated } from './agent-jobs.model.js';
 import {
   computeFleet,
   deleteAgent,
@@ -93,6 +99,45 @@ export const fleetHandler: RequestHandler = asyncHandler(async (req, res) => {
   await assertMultiVpsAllowed(userId, { t: req.t });
   const fleet = await computeFleet(userId);
   res.status(200).json({ fleet });
+});
+
+const JOB_HISTORY_LIMIT = 50;
+
+/** Public shape of a fleet job for the owner's history view — never secrets. */
+function serializeAgentJob(job: AgentJobHydrated) {
+  return {
+    id: String(job._id),
+    kind: job.kind,
+    status: job.status,
+    createdAt: new Date(job.createdAt).toISOString(),
+    startedAt: job.claimedAt ? new Date(job.claimedAt).toISOString() : null,
+    finishedAt: job.finishedAt ? new Date(job.finishedAt).toISOString() : null,
+    error: job.error,
+    restore: job.restorePayload
+      ? {
+          snapshotId: job.restorePayload.snapshotId,
+          overwrite: job.restorePayload.overwrite,
+          targetPath: job.restorePayload.targetPath ?? null,
+        }
+      : null,
+    logTail: [...job.logTail],
+  };
+}
+
+/**
+ * Owner-scoped job history for one project. Deliberately NOT gated by the
+ * multi-VPS entitlement — seeing what ran against your own project is basic
+ * observability, not a fleet feature. Local (agent-less) projects have no
+ * persisted jobs, so this returns [] for them.
+ */
+export const listProjectJobsHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const userId = requireUserId(req.user);
+  const { projectId } = listJobsQuerySchema.parse(req.query);
+  await loadOwnedProject(projectId, userId, { t: req.t });
+  const jobs = await AgentJob.find({ project: projectId })
+    .sort({ createdAt: -1 })
+    .limit(JOB_HISTORY_LIMIT);
+  res.status(200).json({ jobs: jobs.map(serializeAgentJob) });
 });
 
 export const agentDiscoveryHandler: RequestHandler = asyncHandler(async (req, res) => {

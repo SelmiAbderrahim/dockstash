@@ -32,6 +32,9 @@ import {
   selectPitrError,
   selectPitrRestoreJobId,
   selectPitrRestoreStatus,
+  selectProjectJobs,
+  selectProjectJobsStatus,
+  selectProjectJobsError,
   selectAlertsSaveStatus,
   selectAlertsError,
   selectMirrorSaveStatus,
@@ -53,6 +56,10 @@ const projects: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'loading',
   planSaveStatus: 'failed',
+  jobs: [{ id: 'j1' }] as never,
+  jobsProjectId: 'p1',
+  jobsStatus: 'succeeded',
+  jobsError: 'jobs oops',
   pitr: {
     resolution: {
       target: '2026-07-01T10:00:00.000Z',
@@ -144,6 +151,9 @@ describe('projects selectors', () => {
     expect(selectPitrError(state)).toBe('pitr oops');
     expect(selectPitrRestoreJobId(state)).toBe('j-9');
     expect(selectPitrRestoreStatus(state)).toBe('loading');
+    expect(selectProjectJobs(state)).toEqual([{ id: 'j1' }]);
+    expect(selectProjectJobsStatus(state)).toBe('succeeded');
+    expect(selectProjectJobsError(state)).toBe('jobs oops');
     expect(selectAlertsSaveStatus(state)).toBe('succeeded');
     expect(selectAlertsError(state)).toBe('alerts oops');
     expect(selectMirrorSaveStatus(state)).toBe('failed');

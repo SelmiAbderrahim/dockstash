@@ -30,5 +30,6 @@
     "confirm": "恢复",
     "cancel": "取消",
     "stream": "恢复输出"
-  }
+  },
+  "viewHistory": "查看恢复历史"
 }

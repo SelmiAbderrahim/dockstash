@@ -30,5 +30,6 @@
     "confirm": "Wiederherstellen",
     "cancel": "Abbrechen",
     "stream": "Wiederherstellungs-Ausgabe"
-  }
+  },
+  "viewHistory": "Wiederherstellungsverlauf anzeigen"
 }

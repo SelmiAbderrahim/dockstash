@@ -28,8 +28,24 @@ export interface Project {
   lastDrillAt: string | null;
   lastDrillStatus: PassFail;
   lastDrillDetail: string;
+  lastRestoreAt: string | null;
+  lastRestoreStatus: PassFail;
+  lastRestoreDetail: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** One persisted fleet-agent job, as served by GET /api/agents/jobs. */
+export interface ProjectJob {
+  id: string;
+  kind: 'backup' | 'check' | 'prune' | 'restore';
+  status: 'pending' | 'leased' | 'succeeded' | 'failed';
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  error: string;
+  restore: { snapshotId: string; overwrite: boolean; targetPath: string | null } | null;
+  logTail: string[];
 }
 
 export interface DiscoveredFolder {

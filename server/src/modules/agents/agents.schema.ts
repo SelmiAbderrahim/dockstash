@@ -10,3 +10,7 @@ export type RegisterAgentInput = z.infer<typeof registerAgentSchema>;
 export const agentIdParamsSchema = z.object({
   agentId: z.string().regex(/^[a-f0-9]{24}$/i, 'invalid agent id'),
 });
+
+export const listJobsQuerySchema = z.object({
+  projectId: z.string().regex(/^[a-f0-9]{24}$/i, 'invalid project id'),
+});

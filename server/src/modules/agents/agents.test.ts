@@ -852,3 +852,123 @@ describe('agents: heartbeat roots sanitization + version reporting', () => {
     expect(allowedRootsForAgent(touched!)).toEqual(['/opt']);
   });
 });
+
+describe('agents: project job history endpoint', () => {
+  it('requires auth', async () => {
+    const res = await request(app).get(
+      '/api/agents/jobs?projectId=507f1f77bcf86cd799439011',
+    );
+    expect(res.status).toBe(401);
+  });
+
+  it('rejects a malformed projectId', async () => {
+    const { token } = await seedUser('jobs-bad@t.com');
+    const res = await request(app)
+      .get('/api/agents/jobs?projectId=not-an-id')
+      .set('Authorization', `JWT ${token}`);
+    expect(res.status).toBe(400);
+  });
+
+  it('404s for a project that does not exist and 403s for a foreign project', async () => {
+    const { token } = await seedUser('jobs-owner@t.com');
+    const missing = await request(app)
+      .get('/api/agents/jobs?projectId=507f1f77bcf86cd799439011')
+      .set('Authorization', `JWT ${token}`);
+    expect(missing.status).toBe(404);
+
+    const other = await seedUser('jobs-other@t.com');
+    const project = await seedProject(other.id, null, 0, 0);
+    const foreign = await request(app)
+      .get(`/api/agents/jobs?projectId=${project._id}`)
+      .set('Authorization', `JWT ${token}`);
+    expect(foreign.status).toBe(403);
+  });
+
+  it('returns [] for an agent-less project (local jobs are not persisted)', async () => {
+    const { id, token } = await seedUser('jobs-local@t.com');
+    const project = await seedProject(id, null, 0, 0);
+    const res = await request(app)
+      .get(`/api/agents/jobs?projectId=${project._id}`)
+      .set('Authorization', `JWT ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.jobs).toEqual([]);
+  });
+
+  it('lists jobs newest-first with restore payload, lifecycle timestamps, and log tail', async () => {
+    const { id, token } = await seedUser('jobs-list@t.com');
+    const { agent } = await registerAgent(id, { name: 'j', host: 'jobs.example' });
+    const project = await seedProject(id, String(agent._id), 0, 0);
+
+    const older = await AgentJob.create({
+      owner: id,
+      agent: agent._id,
+      project: project._id,
+      kind: 'backup',
+      status: 'succeeded',
+      claimedAt: new Date('2026-07-01T00:00:01Z'),
+      finishedAt: new Date('2026-07-01T00:00:05Z'),
+      logTail: ['backup done'],
+      createdAt: new Date('2026-07-01T00:00:00Z'),
+    });
+    const newer = await AgentJob.create({
+      owner: id,
+      agent: agent._id,
+      project: project._id,
+      kind: 'restore',
+      status: 'failed',
+      error: 'restic restore exit 1',
+      restorePayload: { snapshotId: '5ad025be', overwrite: true, targetPath: null },
+      logTail: ['attempt 1/3 failed'],
+      createdAt: new Date('2026-07-02T00:00:00Z'),
+    });
+
+    const res = await request(app)
+      .get(`/api/agents/jobs?projectId=${project._id}`)
+      .set('Authorization', `JWT ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.jobs.map((j: { id: string }) => j.id)).toEqual([
+      String(newer._id),
+      String(older._id),
+    ]);
+    expect(res.body.jobs[0]).toMatchObject({
+      kind: 'restore',
+      status: 'failed',
+      error: 'restic restore exit 1',
+      restore: { snapshotId: '5ad025be', overwrite: true, targetPath: null },
+      logTail: ['attempt 1/3 failed'],
+      startedAt: null,
+      finishedAt: null,
+    });
+    expect(res.body.jobs[1]).toMatchObject({
+      kind: 'backup',
+      status: 'succeeded',
+      restore: null,
+      startedAt: '2026-07-01T00:00:01.000Z',
+      finishedAt: '2026-07-01T00:00:05.000Z',
+    });
+    // Secrets never appear in the history payload.
+    expect(JSON.stringify(res.body)).not.toContain('password');
+    expect(JSON.stringify(res.body)).not.toContain('privateKey');
+  });
+
+  it('caps the history at 50 jobs', async () => {
+    const { id, token } = await seedUser('jobs-cap@t.com');
+    const { agent } = await registerAgent(id, { name: 'c', host: 'cap.example' });
+    const project = await seedProject(id, String(agent._id), 0, 0);
+    await AgentJob.insertMany(
+      Array.from({ length: 55 }, (_, i) => ({
+        owner: id,
+        agent: agent._id,
+        project: project._id,
+        kind: 'backup',
+        status: 'succeeded',
+        createdAt: new Date(Date.UTC(2026, 0, 1, 0, i)),
+      })),
+    );
+    const res = await request(app)
+      .get(`/api/agents/jobs?projectId=${project._id}`)
+      .set('Authorization', `JWT ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.jobs).toHaveLength(50);
+  });
+});

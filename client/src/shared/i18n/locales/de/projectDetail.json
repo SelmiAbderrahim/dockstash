@@ -7,7 +7,8 @@
     "drill": "Restore-Test",
     "pitr": "Zeitpunkt",
     "mirror": "Spiegel",
-    "alerts": "Alarme"
+    "alerts": "Alarme",
+    "history": "Verlauf"
   },
   "plan": {
     "files": "Dateien",
@@ -89,5 +90,45 @@
     "saving": "Speichert…",
     "saved": "Alarme gespeichert.",
     "clear": "Leeren"
+  },
+  "history": {
+    "heading": "Auftragsverlauf",
+    "lede": "Backups, Prüfungen, Bereinigungen und Wiederherstellungen für dieses Projekt.",
+    "tableLabel": "Auftragsverlauf",
+    "never": "Nie",
+    "ok": "Erfolgreich",
+    "failed": "Fehlgeschlagen",
+    "error": "Auftragsverlauf konnte nicht geladen werden.",
+    "cards": {
+      "backup": "Letztes Backup",
+      "restore": "Letzte Wiederherstellung",
+      "drill": "Letzte Übung"
+    },
+    "kind": {
+      "backup": "Backup",
+      "check": "Prüfung",
+      "prune": "Bereinigung",
+      "restore": "Wiederherstellung"
+    },
+    "jobStatus": {
+      "pending": "Wartend",
+      "leased": "Läuft",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen"
+    },
+    "columns": {
+      "kind": "Art",
+      "status": "Status",
+      "started": "Gestartet",
+      "finished": "Beendet",
+      "snapshot": "Snapshot",
+      "logs": "Protokolle"
+    },
+    "showLogs": "Protokolle",
+    "hideLogs": "Ausblenden",
+    "empty": {
+      "title": "Keine Aufträge aufgezeichnet",
+      "hint": "Läufe erscheinen hier, sobald der Fleet-Agent dieses Projekts einen Auftrag ausführt. Direkt auf diesem Server ausgeführte Aufträge streamen ihre Protokolle live, werden aber nicht gespeichert."
+    }
   }
 }

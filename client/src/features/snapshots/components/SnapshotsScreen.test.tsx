@@ -63,6 +63,9 @@ const makeProject = (over: Partial<Project> = {}): Project =>
     lastDrillAt: null,
     lastDrillStatus: null,
     lastDrillDetail: '',
+    lastRestoreAt: null,
+    lastRestoreStatus: null,
+    lastRestoreDetail: '',
     createdAt: '',
     updatedAt: '',
     ...over,
@@ -103,6 +106,10 @@ const renderScreen = (opts: Options = {}) => {
           restoreJobId: null,
           restoreStatus: 'idle' as const,
         },
+        jobs: [],
+        jobsProjectId: null,
+        jobsStatus: 'idle' as const,
+        jobsError: null,
         alertsSaveStatus: 'idle' as const,
         alertsError: null,
         mirrorSaveStatus: 'idle' as const,
@@ -160,6 +167,12 @@ describe('SnapshotsScreen', () => {
   it('falls back to a default alert message when failed with no error', () => {
     renderScreen({ projects: [makeProject()], status: 'failed', error: null });
     expect(screen.getByRole('alert')).toHaveTextContent(/could not load/i);
+  });
+
+  it('links to the project history tab when a project is selected', () => {
+    renderScreen({ projects: [makeProject()], status: 'succeeded', byProject: { p1: [] } });
+    const link = screen.getByRole('link', { name: 'View restore history' });
+    expect(link).toHaveAttribute('href', '/projects/p1?tab=history');
   });
 
   it('shows the empty state when succeeded with no snapshots', () => {

@@ -42,6 +42,9 @@ export const selectPitrStatus = (state: RootState) => state.projects.pitr.status
 export const selectPitrError = (state: RootState) => state.projects.pitr.error;
 export const selectPitrRestoreJobId = (state: RootState) => state.projects.pitr.restoreJobId;
 export const selectPitrRestoreStatus = (state: RootState) => state.projects.pitr.restoreStatus;
+export const selectProjectJobs = (state: RootState) => state.projects.jobs;
+export const selectProjectJobsStatus = (state: RootState) => state.projects.jobsStatus;
+export const selectProjectJobsError = (state: RootState) => state.projects.jobsError;
 export const selectAlertsSaveStatus = (state: RootState) => state.projects.alertsSaveStatus;
 export const selectAlertsError = (state: RootState) => state.projects.alertsError;
 export const selectMirrorSaveStatus = (state: RootState) => state.projects.mirrorSaveStatus;

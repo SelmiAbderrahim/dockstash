@@ -7,6 +7,7 @@ import {
   discoverAgentRequest,
   discoverContainersRequest,
   discoverFoldersRequest,
+  listProjectJobsRequest,
   listProjectsRequest,
   listSchedulesRequest,
   pitrRestoreRequest,
@@ -25,6 +26,7 @@ import type {
   DiscoveredFolder,
   PitrResolution,
   Project,
+  ProjectJob,
   ProjectPlan,
   Schedule,
 } from '../types';
@@ -203,6 +205,19 @@ export const startPitrRestore = createAsyncThunk<
     return { jobId };
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not start the restore.'));
+  }
+});
+
+export const fetchProjectJobs = createAsyncThunk<
+  { projectId: string; jobs: ProjectJob[] },
+  { projectId: string },
+  { rejectValue: string }
+>('projects/fetchJobs', async ({ projectId }, { rejectWithValue }) => {
+  try {
+    const jobs = await listProjectJobsRequest(projectId);
+    return { projectId, jobs };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not load job history.'));
   }
 });
 
