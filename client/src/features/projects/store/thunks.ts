@@ -9,9 +9,13 @@ import {
   discoverFoldersRequest,
   listProjectsRequest,
   listSchedulesRequest,
+  pitrRestoreRequest,
   refreshAgentDiscoveryRequest,
+  resolvePitrRequest,
   runBackupNowRequest,
   scanProjectRequest,
+  updateAlertsRequest,
+  updateMirrorRequest,
   updatePlanRequest,
   updateScheduleRequest,
 } from '../api';
@@ -19,6 +23,7 @@ import type {
   AgentDiscoveryView,
   DiscoverContainersResult,
   DiscoveredFolder,
+  PitrResolution,
   Project,
   ProjectPlan,
   Schedule,
@@ -173,5 +178,54 @@ export const saveSchedule = createAsyncThunk<
     });
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not save schedule.'));
+  }
+});
+
+export const resolvePitr = createAsyncThunk<
+  PitrResolution,
+  { projectId: string; ts: string },
+  { rejectValue: string }
+>('projects/resolvePitr', async ({ projectId, ts }, { rejectWithValue }) => {
+  try {
+    return await resolvePitrRequest(projectId, ts);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not resolve the point in time.'));
+  }
+});
+
+export const startPitrRestore = createAsyncThunk<
+  { jobId: string },
+  { projectId: string; snapshotId: string; overwrite: boolean; targetPath?: string },
+  { rejectValue: string }
+>('projects/startPitrRestore', async (input, { rejectWithValue }) => {
+  try {
+    const jobId = await pitrRestoreRequest(input);
+    return { jobId };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not start the restore.'));
+  }
+});
+
+export const saveAlerts = createAsyncThunk<
+  Project,
+  { projectId: string; webhookUrl: string },
+  { rejectValue: string }
+>('projects/saveAlerts', async ({ projectId, webhookUrl }, { rejectWithValue }) => {
+  try {
+    return await updateAlertsRequest(projectId, webhookUrl);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not save alerts.'));
+  }
+});
+
+export const saveMirror = createAsyncThunk<
+  Project,
+  { projectId: string; enabled: boolean; sourcePath: string; targetPath: string },
+  { rejectValue: string }
+>('projects/saveMirror', async ({ projectId, enabled, sourcePath, targetPath }, { rejectWithValue }) => {
+  try {
+    return await updateMirrorRequest(projectId, { enabled, sourcePath, targetPath });
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not save mirror.'));
   }
 });

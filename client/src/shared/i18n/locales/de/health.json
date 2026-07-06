@@ -1,0 +1,59 @@
+{
+  "title": "Zustand",
+  "subtitle": "Backup-Zustand aller Projekte sowie ungelesene Warnmeldungen.",
+  "loading": "Zustandsdaten werden geladen…",
+  "error": "Zustandsdaten konnten nicht geladen werden.",
+  "tabs": {
+    "aria": "Zustandsbereiche",
+    "overview": "Übersicht",
+    "alerts": "Warnmeldungen"
+  },
+  "banner": {
+    "healthy": "Alle Projekte sind in gutem Zustand.",
+    "degraded": "Einige Projekte benötigen Aufmerksamkeit.",
+    "critical": "Mindestens ein Projekt hat ein kritisches Problem."
+  },
+  "project": {
+    "lastSuccess": "Letztes erfolgreiches Backup:",
+    "never": "Nie",
+    "agent": "Agent:",
+    "agentOnline": "Online",
+    "agentOffline": "Offline",
+    "noSchedule": "Kein Zeitplan aktiviert",
+    "paused": "Pausiert"
+  },
+  "reasons": {
+    "backupFailed": "Letztes Backup fehlgeschlagen",
+    "drillFailed": "Letzte Wiederherstellungsübung fehlgeschlagen",
+    "restoreFailed": "Letzte Wiederherstellung fehlgeschlagen",
+    "agentOffline": "Agent ist offline",
+    "backupStale": "Letztes erfolgreiches Backup ist veraltet",
+    "neverBackedUp": "Noch nie gesichert",
+    "checkFailed": "Letzte Integritätsprüfung fehlgeschlagen",
+    "noSchedule": "Kein Backup-Zeitplan aktiviert",
+    "paused": "Backups sind pausiert"
+  },
+  "status": {
+    "healthy": "Gesund",
+    "degraded": "Beeinträchtigt",
+    "critical": "Kritisch"
+  },
+  "alerts": {
+    "empty": "Keine Warnmeldungen. Alles sieht gut aus.",
+    "markAllRead": "Alle als gelesen markieren",
+    "marking": "Wird markiert…",
+    "marked": "Warnmeldungen als gelesen markiert.",
+    "unread": "Ungelesen",
+    "kind": {
+      "backup": "Backup",
+      "restore": "Wiederherstellung",
+      "drill": "Übung",
+      "mirror": "Spiegelung",
+      "heartbeat": "Heartbeat"
+    },
+    "severity": {
+      "warning": "Warnung",
+      "critical": "Kritisch"
+    }
+  }
+}

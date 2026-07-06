@@ -4,7 +4,10 @@
     "aria": "Project sections",
     "plan": "Plan",
     "schedule": "Schedule",
-    "drill": "Restore drill"
+    "drill": "Restore drill",
+    "pitr": "Point-in-time",
+    "mirror": "Mirror",
+    "alerts": "Alerts"
   },
   "plan": {
     "files": "Files",
@@ -22,6 +25,7 @@
     "preset": {
       "daily": "Daily at 03:00",
       "weekly": "Weekly (Sunday 03:00)",
+      "continuous": "Continuous (every 5 minutes)",
       "cron": "Custom cron"
     },
     "cronLabel": "Cron expression",
@@ -52,5 +56,38 @@
   "lastFailure": {
     "title": "Last backup failed",
     "hint": "The most recent backup run for this project did not complete. Details below:"
+  },
+  "pitr": {
+    "heading": "Point-in-time restore",
+    "pick": "Restore to moment",
+    "resolve": "Resolve snapshot",
+    "resolving": "Resolving…",
+    "result": "Closest snapshot",
+    "snapshot": "Snapshot",
+    "gap": "{{minutes}} minutes before your target",
+    "overwrite": "Overwrite the original location",
+    "targetPath": "Restore to path",
+    "restore": "Restore",
+    "restoring": "Restoring…",
+    "started": "Restore started.",
+    "none": "No snapshot resolved yet."
+  },
+  "mirror": {
+    "heading": "Mirror",
+    "enabled": "Enabled",
+    "sourcePath": "Source path",
+    "targetPath": "Target path",
+    "save": "Save mirror",
+    "saving": "Saving…",
+    "saved": "Mirror saved."
+  },
+  "alerts": {
+    "heading": "Failure alerts",
+    "webhook": "Webhook URL",
+    "hint": "We send a POST to this URL whenever a backup fails.",
+    "save": "Save alerts",
+    "saving": "Saving…",
+    "saved": "Alerts saved.",
+    "clear": "Clear"
   }
 }

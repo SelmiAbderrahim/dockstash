@@ -4,7 +4,10 @@
     "aria": "项目分区",
     "plan": "计划",
     "schedule": "计划任务",
-    "drill": "恢复演练"
+    "drill": "恢复演练",
+    "pitr": "时间点",
+    "mirror": "镜像",
+    "alerts": "告警"
   },
   "plan": {
     "files": "文件",
@@ -22,6 +25,7 @@
     "preset": {
       "daily": "每日 03:00",
       "weekly": "每周（周日 03:00）",
+      "continuous": "持续（每 5 分钟）",
       "cron": "自定义 cron"
     },
     "cronLabel": "cron 表达式",
@@ -52,5 +56,38 @@
   "lastFailure": {
     "title": "上次备份失败",
     "hint": "此项目最近一次备份运行未完成。详情如下："
+  },
+  "pitr": {
+    "heading": "时间点恢复",
+    "pick": "恢复到时刻",
+    "resolve": "查找快照",
+    "resolving": "查找中…",
+    "result": "最近的快照",
+    "snapshot": "快照",
+    "gap": "早于目标 {{minutes}} 分钟",
+    "overwrite": "覆盖原始位置",
+    "targetPath": "恢复到路径",
+    "restore": "恢复",
+    "restoring": "恢复中…",
+    "started": "恢复已启动。",
+    "none": "尚未解析到快照。"
+  },
+  "mirror": {
+    "heading": "镜像",
+    "enabled": "已启用",
+    "sourcePath": "源路径",
+    "targetPath": "目标路径",
+    "save": "保存镜像",
+    "saving": "保存中…",
+    "saved": "镜像已保存。"
+  },
+  "alerts": {
+    "heading": "失败告警",
+    "webhook": "Webhook 地址",
+    "hint": "备份失败时我们会向此地址发送 POST 请求。",
+    "save": "保存告警",
+    "saving": "保存中…",
+    "saved": "告警已保存。",
+    "clear": "清除"
   }
 }

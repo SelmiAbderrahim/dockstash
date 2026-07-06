@@ -12,6 +12,7 @@ import enWizard from './locales/en/wizard.json';
 import enMarketing from './locales/en/marketing.json';
 import enSuperadmin from './locales/en/superadmin.json';
 import enGuide from './locales/en/guide.json';
+import enHealth from './locales/en/health.json';
 import enProfile from './locales/en/profile.json';
 
 import arCommon from './locales/ar/common.json';
@@ -28,6 +29,7 @@ import arWizard from './locales/ar/wizard.json';
 import arMarketing from './locales/ar/marketing.json';
 import arSuperadmin from './locales/ar/superadmin.json';
 import arGuide from './locales/ar/guide.json';
+import arHealth from './locales/ar/health.json';
 import arProfile from './locales/ar/profile.json';
 
 import frCommon from './locales/fr/common.json';
@@ -44,6 +46,7 @@ import frWizard from './locales/fr/wizard.json';
 import frMarketing from './locales/fr/marketing.json';
 import frSuperadmin from './locales/fr/superadmin.json';
 import frGuide from './locales/fr/guide.json';
+import frHealth from './locales/fr/health.json';
 import frProfile from './locales/fr/profile.json';
 
 import deCommon from './locales/de/common.json';
@@ -60,6 +63,7 @@ import deWizard from './locales/de/wizard.json';
 import deMarketing from './locales/de/marketing.json';
 import deSuperadmin from './locales/de/superadmin.json';
 import deGuide from './locales/de/guide.json';
+import deHealth from './locales/de/health.json';
 import deProfile from './locales/de/profile.json';
 
 import esCommon from './locales/es/common.json';
@@ -76,6 +80,7 @@ import esWizard from './locales/es/wizard.json';
 import esMarketing from './locales/es/marketing.json';
 import esSuperadmin from './locales/es/superadmin.json';
 import esGuide from './locales/es/guide.json';
+import esHealth from './locales/es/health.json';
 import esProfile from './locales/es/profile.json';
 
 import ruCommon from './locales/ru/common.json';
@@ -92,6 +97,7 @@ import ruWizard from './locales/ru/wizard.json';
 import ruMarketing from './locales/ru/marketing.json';
 import ruSuperadmin from './locales/ru/superadmin.json';
 import ruGuide from './locales/ru/guide.json';
+import ruHealth from './locales/ru/health.json';
 import ruProfile from './locales/ru/profile.json';
 
 import zhCommon from './locales/zh/common.json';
@@ -108,6 +114,7 @@ import zhWizard from './locales/zh/wizard.json';
 import zhMarketing from './locales/zh/marketing.json';
 import zhSuperadmin from './locales/zh/superadmin.json';
 import zhGuide from './locales/zh/guide.json';
+import zhHealth from './locales/zh/health.json';
 import zhProfile from './locales/zh/profile.json';
 
 import type { Namespace, SupportedLocale } from './locales.js';
@@ -128,6 +135,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: enMarketing,
     superadmin: enSuperadmin,
     guide: enGuide,
+    health: enHealth,
     profile: enProfile,
   },
   ar: {
@@ -145,6 +153,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: arMarketing,
     superadmin: arSuperadmin,
     guide: arGuide,
+    health: arHealth,
     profile: arProfile,
   },
   fr: {
@@ -162,6 +171,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: frMarketing,
     superadmin: frSuperadmin,
     guide: frGuide,
+    health: frHealth,
     profile: frProfile,
   },
   de: {
@@ -179,6 +189,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: deMarketing,
     superadmin: deSuperadmin,
     guide: deGuide,
+    health: deHealth,
     profile: deProfile,
   },
   es: {
@@ -196,6 +207,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: esMarketing,
     superadmin: esSuperadmin,
     guide: esGuide,
+    health: esHealth,
     profile: esProfile,
   },
   ru: {
@@ -213,6 +225,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: ruMarketing,
     superadmin: ruSuperadmin,
     guide: ruGuide,
+    health: ruHealth,
     profile: ruProfile,
   },
   zh: {
@@ -230,6 +243,7 @@ export const RESOURCES: Record<SupportedLocale, Record<Namespace, unknown>> = {
     marketing: zhMarketing,
     superadmin: zhSuperadmin,
     guide: zhGuide,
+    health: zhHealth,
     profile: zhProfile,
   },
 };

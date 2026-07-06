@@ -15,6 +15,10 @@ export interface Project {
   /** Fleet agent this project runs on; null = the local/default server. */
   agentId: string | null;
   plan: ProjectPlan;
+  /** Webhook POSTed on backup failure; empty string = alerts disabled. */
+  alertWebhookUrl: string;
+  /** Secondary-location mirror settings for this project's repository. */
+  mirror: { enabled: boolean; sourcePath: string; targetPath: string };
   lastStatus: LastStatus | string;
   lastError: string;
   lastRunAt: string | null;
@@ -79,7 +83,20 @@ export interface Schedule {
   kind: string;
   cron: string;
   enabled: boolean;
-  retention: { keepDaily: number; keepWeekly: number; keepMonthly: number };
+  retention: {
+    keepDaily: number;
+    keepWeekly: number;
+    keepMonthly: number;
+    keepHourly: number;
+    keepLast: number;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+/** Result of resolving a point-in-time to the closest snapshot at or before it. */
+export interface PitrResolution {
+  target: string;
+  gapSeconds: number;
+  snapshot: { id: string; time: string };
 }

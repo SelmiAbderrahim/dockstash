@@ -21,5 +21,6 @@ export const APP_PREFIXES = [
   '/projects',
   '/snapshots',
   '/fleet',
+  '/health',
   '/superadmin',
 ];

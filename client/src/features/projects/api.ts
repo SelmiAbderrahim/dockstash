@@ -3,6 +3,7 @@ import type {
   AgentDiscoveryView,
   DiscoverContainersResult,
   DiscoveredFolder,
+  PitrResolution,
   Project,
   ProjectPlan,
   Schedule,
@@ -91,6 +92,7 @@ export const createScheduleRequest = (input: {
   kind: string;
   cron: string;
   enabled?: boolean;
+  preset?: 'continuous';
 }) =>
   apiClient<ScheduleResp>('/scheduler/schedules', {
     method: 'POST',
@@ -104,3 +106,43 @@ export const updateScheduleRequest = (scheduleId: string, patch: { cron?: string
     auth: true,
     body: patch,
   }).then((r) => r.schedule);
+
+export const resolvePitrRequest = (projectId: string, tsIso: string) =>
+  apiClient<PitrResolution>(`/backups/${projectId}/pitr?ts=${encodeURIComponent(tsIso)}`, {
+    auth: true,
+  });
+
+export const pitrRestoreRequest = (input: {
+  projectId: string;
+  snapshotId: string;
+  overwrite: boolean;
+  targetPath?: string;
+}) =>
+  apiClient<EnqueueResp>('/scheduler/enqueue', {
+    method: 'POST',
+    auth: true,
+    body: {
+      projectId: input.projectId,
+      kind: 'restore',
+      snapshotId: input.snapshotId,
+      overwrite: input.overwrite,
+      targetPath: input.targetPath,
+    },
+  }).then((r) => r.job.id);
+
+export const updateAlertsRequest = (projectId: string, webhookUrl: string) =>
+  apiClient<ProjectResp>(`/backups/${projectId}/alerts`, {
+    method: 'PATCH',
+    auth: true,
+    body: { webhookUrl },
+  }).then((r) => r.project);
+
+export const updateMirrorRequest = (
+  projectId: string,
+  mirror: { enabled: boolean; sourcePath: string; targetPath: string },
+) =>
+  apiClient<ProjectResp>(`/backups/${projectId}/mirror`, {
+    method: 'PATCH',
+    auth: true,
+    body: mirror,
+  }).then((r) => r.project);

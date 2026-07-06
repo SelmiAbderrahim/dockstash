@@ -14,8 +14,12 @@ import {
   runBackupNow,
   fetchSchedules,
   saveSchedule,
+  resolvePitr,
+  startPitrRestore,
+  saveAlerts,
+  saveMirror,
 } from './thunks';
-import type { Project, ProjectPlan, Schedule } from '../types';
+import type { PitrResolution, Project, ProjectPlan, Schedule } from '../types';
 import * as api from '../api';
 
 vi.mock('../api', () => ({
@@ -32,6 +36,10 @@ vi.mock('../api', () => ({
   listSchedulesRequest: vi.fn(),
   createScheduleRequest: vi.fn(),
   updateScheduleRequest: vi.fn(),
+  resolvePitrRequest: vi.fn(),
+  pitrRestoreRequest: vi.fn(),
+  updateAlertsRequest: vi.fn(),
+  updateMirrorRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -255,5 +263,70 @@ describe('projects thunks', () => {
     );
     expect(saveSchedule.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('boom');
+  });
+
+  it('resolvePitr resolves the closest snapshot / rejects with a message', async () => {
+    const resolution: PitrResolution = {
+      target: '2026-07-01T10:00:00.000Z',
+      gapSeconds: 90,
+      snapshot: { id: 'snap1', time: '2026-07-01T09:58:30.000Z' },
+    };
+    mocked.resolvePitrRequest.mockResolvedValue(resolution);
+    let result = await makeStore().dispatch(
+      resolvePitr({ projectId: 'p1', ts: '2026-07-01T10:00:00.000Z' }),
+    );
+    expect(resolvePitr.fulfilled.match(result)).toBe(true);
+    expect(mocked.resolvePitrRequest).toHaveBeenCalledWith('p1', '2026-07-01T10:00:00.000Z');
+    expect(result.payload).toEqual(resolution);
+
+    mocked.resolvePitrRequest.mockRejectedValue(new Error('no snapshot'));
+    result = await makeStore().dispatch(
+      resolvePitr({ projectId: 'p1', ts: '2026-07-01T10:00:00.000Z' }),
+    );
+    expect(resolvePitr.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('no snapshot');
+  });
+
+  it('startPitrRestore returns the enqueued jobId / rejects with a message', async () => {
+    mocked.pitrRestoreRequest.mockResolvedValue('j-9');
+    const input = { projectId: 'p1', snapshotId: 'snap1', overwrite: false, targetPath: '/dst' };
+    let result = await makeStore().dispatch(startPitrRestore(input));
+    expect(startPitrRestore.fulfilled.match(result)).toBe(true);
+    expect(mocked.pitrRestoreRequest).toHaveBeenCalledWith(input);
+    expect(result.payload).toEqual({ jobId: 'j-9' });
+
+    mocked.pitrRestoreRequest.mockRejectedValue(new Error('busy'));
+    result = await makeStore().dispatch(startPitrRestore(input));
+    expect(startPitrRestore.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('busy');
+  });
+
+  it('saveAlerts resolves the updated project / rejects with a message', async () => {
+    const updated = { ...project, alertWebhookUrl: 'https://x' } as Project;
+    mocked.updateAlertsRequest.mockResolvedValue(updated);
+    let result = await makeStore().dispatch(saveAlerts({ projectId: 'p1', webhookUrl: 'https://x' }));
+    expect(saveAlerts.fulfilled.match(result)).toBe(true);
+    expect(mocked.updateAlertsRequest).toHaveBeenCalledWith('p1', 'https://x');
+    expect(result.payload).toEqual(updated);
+
+    mocked.updateAlertsRequest.mockRejectedValue(new Error('alertsLocked'));
+    result = await makeStore().dispatch(saveAlerts({ projectId: 'p1', webhookUrl: 'https://x' }));
+    expect(saveAlerts.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('alertsLocked');
+  });
+
+  it('saveMirror resolves the updated project / rejects with a message', async () => {
+    const mirror = { enabled: true, sourcePath: '/src', targetPath: '/dst' };
+    const updated = { ...project, mirror } as Project;
+    mocked.updateMirrorRequest.mockResolvedValue(updated);
+    let result = await makeStore().dispatch(saveMirror({ projectId: 'p1', ...mirror }));
+    expect(saveMirror.fulfilled.match(result)).toBe(true);
+    expect(mocked.updateMirrorRequest).toHaveBeenCalledWith('p1', mirror);
+    expect(result.payload).toEqual(updated);
+
+    mocked.updateMirrorRequest.mockRejectedValue(new Error('mirrorLocked'));
+    result = await makeStore().dispatch(saveMirror({ projectId: 'p1', ...mirror }));
+    expect(saveMirror.rejected.match(result)).toBe(true);
+    expect(result.payload).toBe('mirrorLocked');
   });
 });

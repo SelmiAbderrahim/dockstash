@@ -30,6 +30,8 @@ const baseProject = (over: Partial<Project> = {}): Project => ({
   name: 'app',
   path: '/var/www/app',
   plan: { paths: [], databases: [], configs: [] },
+  alertWebhookUrl: '',
+  mirror: { enabled: false, sourcePath: '', targetPath: '' },
   lastStatus: 'idle',
   lastError: '',
   lastRunAt: null,

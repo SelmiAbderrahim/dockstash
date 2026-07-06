@@ -1,0 +1,59 @@
+{
+  "title": "Santé",
+  "subtitle": "L'état de santé des sauvegardes de chaque projet, avec les alertes non lues.",
+  "loading": "Chargement de l'état de santé…",
+  "error": "Impossible de charger les données de santé.",
+  "tabs": {
+    "aria": "Sections de santé",
+    "overview": "Vue d'ensemble",
+    "alerts": "Alertes"
+  },
+  "banner": {
+    "healthy": "Tous les projets sont en bonne santé.",
+    "degraded": "Certains projets nécessitent votre attention.",
+    "critical": "Au moins un projet présente un problème critique."
+  },
+  "project": {
+    "lastSuccess": "Dernière sauvegarde réussie :",
+    "never": "Jamais",
+    "agent": "Agent :",
+    "agentOnline": "En ligne",
+    "agentOffline": "Hors ligne",
+    "noSchedule": "Aucune planification activée",
+    "paused": "En pause"
+  },
+  "reasons": {
+    "backupFailed": "La dernière sauvegarde a échoué",
+    "drillFailed": "Le dernier exercice de restauration a échoué",
+    "restoreFailed": "La dernière restauration a échoué",
+    "agentOffline": "L'agent est hors ligne",
+    "backupStale": "La dernière sauvegarde réussie est obsolète",
+    "neverBackedUp": "Jamais sauvegardé",
+    "checkFailed": "La dernière vérification d'intégrité a échoué",
+    "noSchedule": "Aucune planification de sauvegarde activée",
+    "paused": "Les sauvegardes sont en pause"
+  },
+  "status": {
+    "healthy": "Sain",
+    "degraded": "Dégradé",
+    "critical": "Critique"
+  },
+  "alerts": {
+    "empty": "Aucune alerte. Tout semble en ordre.",
+    "markAllRead": "Tout marquer comme lu",
+    "marking": "Marquage…",
+    "marked": "Alertes marquées comme lues.",
+    "unread": "Non lue",
+    "kind": {
+      "backup": "Sauvegarde",
+      "restore": "Restauration",
+      "drill": "Exercice",
+      "mirror": "Miroir",
+      "heartbeat": "Signal de vie"
+    },
+    "severity": {
+      "warning": "Avertissement",
+      "critical": "Critique"
+    }
+  }
+}

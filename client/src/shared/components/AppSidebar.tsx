@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LucideIcon } from 'lucide-react';
 import {
+  ActivityIcon,
   ArchiveIcon,
   CreditCardIcon,
   FolderIcon,
@@ -45,7 +46,10 @@ interface NavGroup {
 const GROUPS: NavGroup[] = [
   {
     labelKey: 'sidebar.groups.overview',
-    items: [{ to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboardIcon }],
+    items: [
+      { to: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboardIcon },
+      { to: '/health', labelKey: 'nav.health', icon: ActivityIcon },
+    ],
   },
   {
     labelKey: 'sidebar.groups.backups',

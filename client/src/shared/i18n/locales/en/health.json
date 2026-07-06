@@ -1,0 +1,59 @@
+{
+  "title": "Health",
+  "subtitle": "Backup health across every project, plus unread alerts.",
+  "loading": "Loading health…",
+  "error": "Could not load health data.",
+  "tabs": {
+    "aria": "Health sections",
+    "overview": "Overview",
+    "alerts": "Alerts"
+  },
+  "banner": {
+    "healthy": "All projects are healthy.",
+    "degraded": "Some projects need attention.",
+    "critical": "At least one project has a critical problem."
+  },
+  "project": {
+    "lastSuccess": "Last successful backup:",
+    "never": "Never",
+    "agent": "Agent:",
+    "agentOnline": "Online",
+    "agentOffline": "Offline",
+    "noSchedule": "No schedule enabled",
+    "paused": "Paused"
+  },
+  "reasons": {
+    "backupFailed": "Last backup failed",
+    "drillFailed": "Last restore drill failed",
+    "restoreFailed": "Last restore failed",
+    "agentOffline": "Agent is offline",
+    "backupStale": "Last successful backup is stale",
+    "neverBackedUp": "Never backed up",
+    "checkFailed": "Last integrity check failed",
+    "noSchedule": "No backup schedule enabled",
+    "paused": "Backups are paused"
+  },
+  "status": {
+    "healthy": "Healthy",
+    "degraded": "Degraded",
+    "critical": "Critical"
+  },
+  "alerts": {
+    "empty": "No alerts. Everything looks good.",
+    "markAllRead": "Mark all read",
+    "marking": "Marking…",
+    "marked": "Alerts marked as read.",
+    "unread": "Unread",
+    "kind": {
+      "backup": "Backup",
+      "restore": "Restore",
+      "drill": "Drill",
+      "mirror": "Mirror",
+      "heartbeat": "Heartbeat"
+    },
+    "severity": {
+      "warning": "Warning",
+      "critical": "Critical"
+    }
+  }
+}

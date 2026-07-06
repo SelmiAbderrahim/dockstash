@@ -37,3 +37,12 @@ export const selectAgentReported = (state: RootState) => state.projects.agentRep
 export const selectAgentDiscoveryErrors = (state: RootState) =>
   state.projects.agentDiscoveryErrors;
 export const selectAgentRefreshStatus = (state: RootState) => state.projects.agentRefreshStatus;
+export const selectPitrResolution = (state: RootState) => state.projects.pitr.resolution;
+export const selectPitrStatus = (state: RootState) => state.projects.pitr.status;
+export const selectPitrError = (state: RootState) => state.projects.pitr.error;
+export const selectPitrRestoreJobId = (state: RootState) => state.projects.pitr.restoreJobId;
+export const selectPitrRestoreStatus = (state: RootState) => state.projects.pitr.restoreStatus;
+export const selectAlertsSaveStatus = (state: RootState) => state.projects.alertsSaveStatus;
+export const selectAlertsError = (state: RootState) => state.projects.alertsError;
+export const selectMirrorSaveStatus = (state: RootState) => state.projects.mirrorSaveStatus;
+export const selectMirrorError = (state: RootState) => state.projects.mirrorError;

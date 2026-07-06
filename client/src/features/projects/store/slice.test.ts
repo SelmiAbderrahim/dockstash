@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { projectsReducer, clearActiveJob, resetSaveStatus, resetAddFlow } from './slice';
+import { projectsReducer, clearActiveJob, resetSaveStatus, resetAddFlow, clearPitr } from './slice';
 import {
   fetchProjects,
   fetchSchedules,
@@ -13,8 +13,12 @@ import {
   refreshAgent,
   scanProject,
   createProject,
+  resolvePitr,
+  startPitrRestore,
+  saveAlerts,
+  saveMirror,
 } from './thunks';
-import type { Project, ProjectPlan, Schedule } from '../types';
+import type { PitrResolution, Project, ProjectPlan, Schedule } from '../types';
 
 const initial = () => projectsReducer(undefined, { type: 'unknown' });
 
@@ -25,6 +29,8 @@ const project: Project = {
   name: 'app',
   path: '/var/www/app',
   plan: { paths: ['/var/www/app'], databases: [], configs: [] },
+  alertWebhookUrl: '',
+  mirror: { enabled: false, sourcePath: '', targetPath: '' },
   lastStatus: 'idle',
   lastError: '',
   lastRunAt: null,
@@ -164,7 +170,7 @@ describe('projects slice', () => {
       kind: 'backup',
       cron: '0 3 * * *',
       enabled: true,
-      retention: { keepDaily: 7, keepWeekly: 4, keepMonthly: 6 },
+      retention: { keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepHourly: 0, keepLast: 0 },
       createdAt: '',
       updatedAt: '',
     };
@@ -317,10 +323,119 @@ describe('projects slice', () => {
   it('resetSaveStatus returns save statuses to idle', () => {
     let s = projectsReducer(initial(), { type: savePlan.pending.type });
     s = projectsReducer(s, { type: saveSchedule.pending.type });
+    s = projectsReducer(s, { type: saveAlerts.rejected.type, payload: 'a' });
+    s = projectsReducer(s, { type: saveMirror.rejected.type, payload: 'm' });
     expect(s.planSaveStatus).toBe('loading');
     expect(s.scheduleSaveStatus).toBe('loading');
+    expect(s.alertsSaveStatus).toBe('failed');
+    expect(s.mirrorSaveStatus).toBe('failed');
     s = projectsReducer(s, resetSaveStatus());
     expect(s.planSaveStatus).toBe('idle');
     expect(s.scheduleSaveStatus).toBe('idle');
+    expect(s.alertsSaveStatus).toBe('idle');
+    expect(s.alertsError).toBeNull();
+    expect(s.mirrorSaveStatus).toBe('idle');
+    expect(s.mirrorError).toBeNull();
+  });
+
+  it('resolvePitr lifecycle stores the resolution', () => {
+    const resolution: PitrResolution = {
+      target: '2026-07-01T10:00:00.000Z',
+      gapSeconds: 90,
+      snapshot: { id: 'snap1', time: '2026-07-01T09:58:30.000Z' },
+    };
+    let s = projectsReducer(initial(), { type: resolvePitr.pending.type });
+    expect(s.pitr.status).toBe('loading');
+    expect(s.pitr.resolution).toBeNull();
+    s = projectsReducer(s, { type: resolvePitr.fulfilled.type, payload: resolution });
+    expect(s.pitr.status).toBe('succeeded');
+    expect(s.pitr.resolution).toEqual(resolution);
+    s = projectsReducer(s, { type: resolvePitr.rejected.type, payload: 'no snapshot' });
+    expect(s.pitr.status).toBe('failed');
+    expect(s.pitr.error).toBe('no snapshot');
+    s = projectsReducer(initial(), { type: resolvePitr.rejected.type });
+    expect(s.pitr.error).toBe('Could not resolve the point in time.');
+  });
+
+  it('startPitrRestore lifecycle tracks the restore job', () => {
+    let s = projectsReducer(initial(), { type: startPitrRestore.pending.type });
+    expect(s.pitr.restoreStatus).toBe('loading');
+    s = projectsReducer(s, { type: startPitrRestore.fulfilled.type, payload: { jobId: 'j-9' } });
+    expect(s.pitr.restoreStatus).toBe('succeeded');
+    expect(s.pitr.restoreJobId).toBe('j-9');
+    s = projectsReducer(s, { type: startPitrRestore.rejected.type, payload: 'busy' });
+    expect(s.pitr.restoreStatus).toBe('failed');
+    expect(s.pitr.error).toBe('busy');
+    s = projectsReducer(initial(), { type: startPitrRestore.rejected.type });
+    expect(s.pitr.error).toBe('Could not start the restore.');
+  });
+
+  it('clearPitr resets the whole pitr flow', () => {
+    let s = projectsReducer(initial(), {
+      type: resolvePitr.fulfilled.type,
+      payload: {
+        target: '2026-07-01T10:00:00.000Z',
+        gapSeconds: 90,
+        snapshot: { id: 'snap1', time: '2026-07-01T09:58:30.000Z' },
+      },
+    });
+    s = projectsReducer(s, { type: startPitrRestore.fulfilled.type, payload: { jobId: 'j-9' } });
+    s = projectsReducer(s, clearPitr());
+    expect(s.pitr.resolution).toBeNull();
+    expect(s.pitr.status).toBe('idle');
+    expect(s.pitr.error).toBeNull();
+    expect(s.pitr.restoreJobId).toBeNull();
+    expect(s.pitr.restoreStatus).toBe('idle');
+  });
+
+  it('saveAlerts lifecycle updates the matching project in place', () => {
+    const seeded = projectsReducer(initial(), {
+      type: fetchProjects.fulfilled.type,
+      payload: [project],
+    });
+    let s = projectsReducer(seeded, { type: saveAlerts.pending.type });
+    expect(s.alertsSaveStatus).toBe('loading');
+    const updated = { ...project, alertWebhookUrl: 'https://x' };
+    s = projectsReducer(s, { type: saveAlerts.fulfilled.type, payload: updated });
+    expect(s.alertsSaveStatus).toBe('succeeded');
+    expect(s.items[0]?.alertWebhookUrl).toBe('https://x');
+    // Fulfilled for an unknown project id leaves items untouched.
+    s = projectsReducer(s, {
+      type: saveAlerts.fulfilled.type,
+      payload: { ...project, id: 'ghost', alertWebhookUrl: 'https://y' },
+    });
+    expect(s.items).toHaveLength(1);
+    s = projectsReducer(s, { type: saveAlerts.rejected.type, payload: 'alerts boom' });
+    expect(s.alertsSaveStatus).toBe('failed');
+    expect(s.alertsError).toBe('alerts boom');
+    s = projectsReducer(initial(), { type: saveAlerts.rejected.type });
+    expect(s.alertsError).toBe('Could not save alerts.');
+  });
+
+  it('saveMirror lifecycle updates the matching project in place', () => {
+    const seeded = projectsReducer(initial(), {
+      type: fetchProjects.fulfilled.type,
+      payload: [project],
+    });
+    let s = projectsReducer(seeded, { type: saveMirror.pending.type });
+    expect(s.mirrorSaveStatus).toBe('loading');
+    const updated = {
+      ...project,
+      mirror: { enabled: true, sourcePath: '/src', targetPath: '/dst' },
+    };
+    s = projectsReducer(s, { type: saveMirror.fulfilled.type, payload: updated });
+    expect(s.mirrorSaveStatus).toBe('succeeded');
+    expect(s.items[0]?.mirror.enabled).toBe(true);
+    // Fulfilled for an unknown project id leaves items untouched.
+    s = projectsReducer(s, {
+      type: saveMirror.fulfilled.type,
+      payload: { ...updated, id: 'ghost' },
+    });
+    expect(s.items).toHaveLength(1);
+    s = projectsReducer(s, { type: saveMirror.rejected.type, payload: 'mirror boom' });
+    expect(s.mirrorSaveStatus).toBe('failed');
+    expect(s.mirrorError).toBe('mirror boom');
+    s = projectsReducer(initial(), { type: saveMirror.rejected.type });
+    expect(s.mirrorError).toBe('Could not save mirror.');
   });
 });

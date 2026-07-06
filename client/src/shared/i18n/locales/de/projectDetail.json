@@ -4,7 +4,10 @@
     "aria": "Projektabschnitte",
     "plan": "Plan",
     "schedule": "Zeitplan",
-    "drill": "Restore-Test"
+    "drill": "Restore-Test",
+    "pitr": "Zeitpunkt",
+    "mirror": "Spiegel",
+    "alerts": "Alarme"
   },
   "plan": {
     "files": "Dateien",
@@ -22,6 +25,7 @@
     "preset": {
       "daily": "Täglich 03:00",
       "weekly": "Wöchentlich (So. 03:00)",
+      "continuous": "Kontinuierlich (alle 5 Minuten)",
       "cron": "Cron manuell"
     },
     "cronLabel": "Cron-Ausdruck",
@@ -52,5 +56,38 @@
   "lastFailure": {
     "title": "Letztes Backup fehlgeschlagen",
     "hint": "Der letzte Backup-Lauf für dieses Projekt wurde nicht abgeschlossen. Details unten:"
+  },
+  "pitr": {
+    "heading": "Zeitpunkt-Wiederherstellung",
+    "pick": "Auf Zeitpunkt wiederherstellen",
+    "resolve": "Snapshot ermitteln",
+    "resolving": "Wird ermittelt…",
+    "result": "Nächstgelegener Snapshot",
+    "snapshot": "Snapshot",
+    "gap": "{{minutes}} Minuten vor Ihrem Ziel",
+    "overwrite": "Ursprünglichen Speicherort überschreiben",
+    "targetPath": "In Pfad wiederherstellen",
+    "restore": "Wiederherstellen",
+    "restoring": "Wird wiederhergestellt…",
+    "started": "Wiederherstellung gestartet.",
+    "none": "Noch kein Snapshot ermittelt."
+  },
+  "mirror": {
+    "heading": "Spiegel",
+    "enabled": "Aktiv",
+    "sourcePath": "Quellpfad",
+    "targetPath": "Zielpfad",
+    "save": "Spiegel speichern",
+    "saving": "Speichert…",
+    "saved": "Spiegel gespeichert."
+  },
+  "alerts": {
+    "heading": "Fehler-Alarme",
+    "webhook": "Webhook-URL",
+    "hint": "Wir senden einen POST an diese URL, wenn ein Backup fehlschlägt.",
+    "save": "Alarme speichern",
+    "saving": "Speichert…",
+    "saved": "Alarme gespeichert.",
+    "clear": "Leeren"
   }
 }

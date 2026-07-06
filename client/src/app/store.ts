@@ -3,6 +3,7 @@ import { authReducer } from '@features/auth';
 import { billingReducer } from '@features/billing';
 import { fleetReducer } from '@features/fleet';
 import { guideReducer } from '@features/guide';
+import { healthReducer } from '@features/health';
 import { profileReducer } from '@features/profile';
 import { projectsReducer } from '@features/projects';
 import { snapshotsReducer } from '@features/snapshots';
@@ -14,6 +15,7 @@ const rootReducer = combineReducers({
   billing: billingReducer,
   fleet: fleetReducer,
   guide: guideReducer,
+  health: healthReducer,
   profile: profileReducer,
   projects: projectsReducer,
   snapshots: snapshotsReducer,

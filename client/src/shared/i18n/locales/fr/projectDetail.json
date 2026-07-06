@@ -4,7 +4,10 @@
     "aria": "Sections du projet",
     "plan": "Plan",
     "schedule": "Planning",
-    "drill": "Test de restauration"
+    "drill": "Test de restauration",
+    "pitr": "Point dans le temps",
+    "mirror": "Miroir",
+    "alerts": "Alertes"
   },
   "plan": {
     "files": "Fichiers",
@@ -22,6 +25,7 @@
     "preset": {
       "daily": "Quotidien à 03:00",
       "weekly": "Hebdo (dimanche 03:00)",
+      "continuous": "Continu (toutes les 5 minutes)",
       "cron": "Cron personnalisé"
     },
     "cronLabel": "Expression cron",
@@ -52,5 +56,38 @@
   "lastFailure": {
     "title": "Échec de la dernière sauvegarde",
     "hint": "La dernière sauvegarde de ce projet ne s'est pas terminée. Détails ci-dessous :"
+  },
+  "pitr": {
+    "heading": "Restauration à un point dans le temps",
+    "pick": "Restaurer au moment",
+    "resolve": "Trouver l'instantané",
+    "resolving": "Recherche…",
+    "result": "Instantané le plus proche",
+    "snapshot": "Instantané",
+    "gap": "{{minutes}} minutes avant votre cible",
+    "overwrite": "Écraser l'emplacement d'origine",
+    "targetPath": "Restaurer vers le chemin",
+    "restore": "Restaurer",
+    "restoring": "Restauration…",
+    "started": "Restauration lancée.",
+    "none": "Aucun instantané résolu pour le moment."
+  },
+  "mirror": {
+    "heading": "Miroir",
+    "enabled": "Activé",
+    "sourcePath": "Chemin source",
+    "targetPath": "Chemin cible",
+    "save": "Enregistrer le miroir",
+    "saving": "Enregistrement…",
+    "saved": "Miroir enregistré."
+  },
+  "alerts": {
+    "heading": "Alertes d'échec",
+    "webhook": "URL du webhook",
+    "hint": "Nous envoyons un POST à cette URL à chaque échec de sauvegarde.",
+    "save": "Enregistrer les alertes",
+    "saving": "Enregistrement…",
+    "saved": "Alertes enregistrées.",
+    "clear": "Effacer"
   }
 }

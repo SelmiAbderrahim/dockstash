@@ -1,0 +1,59 @@
+{
+  "title": "Salud",
+  "subtitle": "La salud de las copias de seguridad de cada proyecto, junto con las alertas no leídas.",
+  "loading": "Cargando datos de salud…",
+  "error": "No se pudieron cargar los datos de salud.",
+  "tabs": {
+    "aria": "Secciones de salud",
+    "overview": "Resumen",
+    "alerts": "Alertas"
+  },
+  "banner": {
+    "healthy": "Todos los proyectos están en buen estado.",
+    "degraded": "Algunos proyectos necesitan atención.",
+    "critical": "Al menos un proyecto tiene un problema crítico."
+  },
+  "project": {
+    "lastSuccess": "Última copia de seguridad correcta:",
+    "never": "Nunca",
+    "agent": "Agente:",
+    "agentOnline": "En línea",
+    "agentOffline": "Desconectado",
+    "noSchedule": "Sin programación activada",
+    "paused": "En pausa"
+  },
+  "reasons": {
+    "backupFailed": "La última copia de seguridad falló",
+    "drillFailed": "El último simulacro de restauración falló",
+    "restoreFailed": "La última restauración falló",
+    "agentOffline": "El agente está desconectado",
+    "backupStale": "La última copia de seguridad correcta está obsoleta",
+    "neverBackedUp": "Nunca se ha hecho una copia de seguridad",
+    "checkFailed": "La última verificación de integridad falló",
+    "noSchedule": "Sin programación de copias de seguridad activada",
+    "paused": "Las copias de seguridad están en pausa"
+  },
+  "status": {
+    "healthy": "Saludable",
+    "degraded": "Degradado",
+    "critical": "Crítico"
+  },
+  "alerts": {
+    "empty": "No hay alertas. Todo parece estar bien.",
+    "markAllRead": "Marcar todo como leído",
+    "marking": "Marcando…",
+    "marked": "Alertas marcadas como leídas.",
+    "unread": "No leída",
+    "kind": {
+      "backup": "Copia de seguridad",
+      "restore": "Restauración",
+      "drill": "Simulacro",
+      "mirror": "Réplica",
+      "heartbeat": "Latido"
+    },
+    "severity": {
+      "warning": "Advertencia",
+      "critical": "Crítica"
+    }
+  }
+}

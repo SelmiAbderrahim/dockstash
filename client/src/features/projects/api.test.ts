@@ -14,6 +14,10 @@ import {
   listSchedulesRequest,
   createScheduleRequest,
   updateScheduleRequest,
+  resolvePitrRequest,
+  pitrRestoreRequest,
+  updateAlertsRequest,
+  updateMirrorRequest,
 } from './api';
 import type { ProjectPlan } from './types';
 
@@ -171,5 +175,99 @@ describe('projects api wrappers', () => {
       body: patch,
     });
     expect(result).toEqual({ id: 's3' });
+  });
+
+  it('createScheduleRequest passes the continuous preset through in the body', async () => {
+    apiClient.mockResolvedValue({ schedule: { id: 's4' } } as never);
+    const input = {
+      projectId: 'p1',
+      kind: 'backup',
+      cron: '*/5 * * * *',
+      preset: 'continuous' as const,
+    };
+    const result = await createScheduleRequest(input);
+    expect(apiClient).toHaveBeenCalledWith('/scheduler/schedules', {
+      method: 'POST',
+      auth: true,
+      body: input,
+    });
+    expect(result).toEqual({ id: 's4' });
+  });
+
+  it('resolvePitrRequest GETs the pitr endpoint with the encoded timestamp', async () => {
+    const payload = {
+      target: '2026-07-01T10:00:00.000Z',
+      gapSeconds: 120,
+      snapshot: { id: 'snap1', time: '2026-07-01T09:58:00.000Z' },
+    };
+    apiClient.mockResolvedValue(payload as never);
+    const result = await resolvePitrRequest('p1', '2026-07-01T10:00:00.000Z');
+    expect(apiClient).toHaveBeenCalledWith(
+      '/backups/p1/pitr?ts=2026-07-01T10%3A00%3A00.000Z',
+      { auth: true },
+    );
+    expect(result).toEqual(payload);
+  });
+
+  it('pitrRestoreRequest enqueues a restore job and unwraps the job id', async () => {
+    apiClient.mockResolvedValue({ job: { id: 'j-9', kind: 'restore' } } as never);
+    const result = await pitrRestoreRequest({
+      projectId: 'p1',
+      snapshotId: 'snap1',
+      overwrite: false,
+      targetPath: '/restore/here',
+    });
+    expect(apiClient).toHaveBeenCalledWith('/scheduler/enqueue', {
+      method: 'POST',
+      auth: true,
+      body: {
+        projectId: 'p1',
+        kind: 'restore',
+        snapshotId: 'snap1',
+        overwrite: false,
+        targetPath: '/restore/here',
+      },
+    });
+    expect(result).toBe('j-9');
+  });
+
+  it('pitrRestoreRequest omits targetPath when overwriting in place', async () => {
+    apiClient.mockResolvedValue({ job: { id: 'j-10', kind: 'restore' } } as never);
+    const result = await pitrRestoreRequest({ projectId: 'p1', snapshotId: 'snap1', overwrite: true });
+    expect(apiClient).toHaveBeenCalledWith('/scheduler/enqueue', {
+      method: 'POST',
+      auth: true,
+      body: {
+        projectId: 'p1',
+        kind: 'restore',
+        snapshotId: 'snap1',
+        overwrite: true,
+        targetPath: undefined,
+      },
+    });
+    expect(result).toBe('j-10');
+  });
+
+  it('updateAlertsRequest PATCHes the alerts path and unwraps project', async () => {
+    apiClient.mockResolvedValue({ project: { id: 'p1', alertWebhookUrl: 'https://x' } } as never);
+    const result = await updateAlertsRequest('p1', 'https://x');
+    expect(apiClient).toHaveBeenCalledWith('/backups/p1/alerts', {
+      method: 'PATCH',
+      auth: true,
+      body: { webhookUrl: 'https://x' },
+    });
+    expect(result).toEqual({ id: 'p1', alertWebhookUrl: 'https://x' });
+  });
+
+  it('updateMirrorRequest PATCHes the mirror path and unwraps project', async () => {
+    const mirror = { enabled: true, sourcePath: '/src', targetPath: '/dst' };
+    apiClient.mockResolvedValue({ project: { id: 'p1', mirror } } as never);
+    const result = await updateMirrorRequest('p1', mirror);
+    expect(apiClient).toHaveBeenCalledWith('/backups/p1/mirror', {
+      method: 'PATCH',
+      auth: true,
+      body: mirror,
+    });
+    expect(result).toEqual({ id: 'p1', mirror });
   });
 });

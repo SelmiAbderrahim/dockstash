@@ -17,6 +17,19 @@ vi.mock('../api', () => ({
   updatePlanRequest: vi.fn(async () => ({})),
   createScheduleRequest: vi.fn(async () => ({})),
   updateScheduleRequest: vi.fn(async () => ({})),
+  resolvePitrRequest: vi.fn(async () => ({})),
+  pitrRestoreRequest: vi.fn(async () => 'j-9'),
+  updateAlertsRequest: vi.fn(async () => ({})),
+  updateMirrorRequest: vi.fn(async () => ({})),
+}));
+
+// Stub the log panel so no socket is opened; expose an onDone trigger.
+vi.mock('@shared/components/ResticLogPanel', () => ({
+  ResticLogPanel: ({ jobId, onDone }: { jobId: string; onDone?: (ok: boolean) => void }) => (
+    <button type="button" data-testid="log-done" onClick={() => onDone?.(true)}>
+      panel:{jobId}
+    </button>
+  ),
 }));
 
 // AgentAssignmentCard self-gates on the fleet: it renders nothing once
@@ -37,6 +50,8 @@ const baseProject = (over: Partial<Project> = {}): Project => ({
   name: 'app',
   path: '/var/www/app',
   plan: { paths: [], databases: [], configs: [] },
+  alertWebhookUrl: '',
+  mirror: { enabled: false, sourcePath: '', targetPath: '' },
   lastStatus: 'idle',
   lastError: '',
   lastRunAt: null,
@@ -57,7 +72,7 @@ const schedule = (over: Partial<Schedule> = {}): Schedule => ({
   kind: 'backup',
   cron: '0 5 * * *',
   enabled: true,
-  retention: { keepDaily: 7, keepWeekly: 4, keepMonthly: 6 },
+  retention: { keepDaily: 7, keepWeekly: 4, keepMonthly: 6, keepHourly: 0, keepLast: 0 },
   createdAt: '',
   updatedAt: '',
   ...over,
@@ -72,6 +87,11 @@ const baseState: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
+  pitr: { resolution: null, status: 'idle', error: null, restoreJobId: null, restoreStatus: 'idle' },
+  alertsSaveStatus: 'idle',
+  alertsError: null,
+  mirrorSaveStatus: 'idle',
+  mirrorError: null,
   folders: [],
   foldersStatus: 'idle',
   containers: [],
@@ -152,6 +172,17 @@ describe('ProjectDetailScreen shell', () => {
 
     await user.click(screen.getByRole('tab', { name: /restore drill/i }));
     expect(await screen.findByRole('heading', { name: /restore drill/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /point-in-time/i }));
+    expect(
+      await screen.findByRole('heading', { name: /point-in-time restore/i }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /mirror/i }));
+    expect(await screen.findByRole('button', { name: /save mirror/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /alerts/i }));
+    expect(await screen.findByRole('button', { name: /save alerts/i })).toBeInTheDocument();
   });
 
   it('surfaces the last backup failure reason when the project is failed', async () => {
@@ -262,6 +293,14 @@ describe('ScheduleEditor', () => {
     expect((screen.getByLabelText(/cron expression/i) as HTMLInputElement).value).toBe('0 3 * * *');
   });
 
+  it('applies the continuous preset cron', () => {
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=schedule' });
+    fireEvent.click(screen.getByRole('radio', { name: /continuous/i }));
+    expect((screen.getByLabelText(/cron expression/i) as HTMLInputElement).value).toBe(
+      '*/5 * * * *',
+    );
+  });
+
   it('populates from and updates an existing schedule', async () => {
     // The mount fetch must resolve to the same schedule so it is not wiped.
     mocked.listSchedulesRequest.mockResolvedValue([schedule({ cron: '0 5 * * *' })]);
@@ -344,5 +383,217 @@ describe('DrillStatus', () => {
       entry: '/projects/p1?tab=drill',
     });
     expect(screen.getByText('Failed')).toBeInTheDocument();
+  });
+});
+
+const pitrResolution = {
+  target: '2026-07-01T10:00:00.000Z',
+  gapSeconds: 180,
+  snapshot: { id: 'snap1', time: '2026-07-01T09:57:00.000Z' },
+};
+
+describe('PitrPanel', () => {
+  it('resolves a point in time, restores to a target path and clears on done', async () => {
+    mocked.resolvePitrRequest.mockResolvedValue(pitrResolution);
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=pitr' });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+
+    expect(screen.getByText(/no snapshot resolved yet/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/restore to moment/i), {
+      target: { value: '2026-07-01T10:00' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /resolve snapshot/i }));
+    await waitFor(() =>
+      expect(mocked.resolvePitrRequest).toHaveBeenCalledWith(
+        'p1',
+        new Date('2026-07-01T10:00').toISOString(),
+      ),
+    );
+
+    expect(await screen.findByText('snap1')).toBeInTheDocument();
+    expect(screen.getByText(/3 minutes before your target/i)).toBeInTheDocument();
+
+    // Overwrite is unchecked by default, so a target path is required.
+    fireEvent.change(screen.getByLabelText(/restore to path/i), {
+      target: { value: '/restore/here' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^restore$/i }));
+    await waitFor(() =>
+      expect(mocked.pitrRestoreRequest).toHaveBeenCalledWith({
+        projectId: 'p1',
+        snapshotId: 'snap1',
+        overwrite: false,
+        targetPath: '/restore/here',
+      }),
+    );
+
+    expect(await screen.findByTestId('log-done')).toHaveTextContent('panel:j-9');
+    expect(screen.getByText(/restore started/i)).toBeInTheDocument();
+
+    // The log panel's onDone resets the whole pitr flow.
+    fireEvent.click(screen.getByTestId('log-done'));
+    await waitFor(() => expect(screen.queryByTestId('log-done')).not.toBeInTheDocument());
+    expect(screen.getByText(/no snapshot resolved yet/i)).toBeInTheDocument();
+  });
+
+  it('hides the target path and overwrites in place when the checkbox is ticked', async () => {
+    mocked.resolvePitrRequest.mockResolvedValue(pitrResolution);
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=pitr' });
+
+    fireEvent.change(screen.getByLabelText(/restore to moment/i), {
+      target: { value: '2026-07-01T10:00' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /resolve snapshot/i }));
+    await screen.findByText('snap1');
+
+    fireEvent.click(screen.getByLabelText(/overwrite the original location/i));
+    expect(screen.queryByLabelText(/restore to path/i)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^restore$/i }));
+    await waitFor(() =>
+      expect(mocked.pitrRestoreRequest).toHaveBeenCalledWith({
+        projectId: 'p1',
+        snapshotId: 'snap1',
+        overwrite: true,
+        targetPath: undefined,
+      }),
+    );
+  });
+
+  it('surfaces a resolve failure (e.g. no snapshot or plan-locked)', async () => {
+    mocked.resolvePitrRequest.mockRejectedValue(new Error('pitrLocked'));
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=pitr' });
+
+    fireEvent.change(screen.getByLabelText(/restore to moment/i), {
+      target: { value: '2026-07-01T10:00' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /resolve snapshot/i }));
+    expect(await screen.findByText('pitrLocked')).toBeInTheDocument();
+    expect(screen.queryByText(/no snapshot resolved yet/i)).not.toBeInTheDocument();
+  });
+
+  it('reflects the resolving state', () => {
+    renderDetail({
+      projects: {
+        items: [baseProject()],
+        pitr: {
+          resolution: null,
+          status: 'loading',
+          error: null,
+          restoreJobId: null,
+          restoreStatus: 'idle',
+        },
+      },
+      entry: '/projects/p1?tab=pitr',
+    });
+    expect(screen.getByRole('button', { name: /resolving/i })).toBeDisabled();
+    expect(screen.queryByText(/no snapshot resolved yet/i)).not.toBeInTheDocument();
+  });
+
+  it('reflects the restoring state', () => {
+    renderDetail({
+      projects: {
+        items: [baseProject()],
+        pitr: {
+          resolution: pitrResolution,
+          status: 'succeeded',
+          error: null,
+          restoreJobId: null,
+          restoreStatus: 'loading',
+        },
+      },
+      entry: '/projects/p1?tab=pitr',
+    });
+    expect(screen.getByRole('button', { name: /restoring/i })).toBeDisabled();
+  });
+});
+
+describe('MirrorEditor', () => {
+  it('prefills from the project and saves the mirror settings', async () => {
+    const current = baseProject({
+      mirror: { enabled: false, sourcePath: '/old', targetPath: '' },
+    });
+    mocked.updateMirrorRequest.mockResolvedValue(
+      baseProject({ mirror: { enabled: true, sourcePath: '/src', targetPath: '/dst' } }),
+    );
+    renderDetail({ projects: { items: [current] }, entry: '/projects/p1?tab=mirror' });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+
+    const src = screen.getByLabelText(/source path/i) as HTMLInputElement;
+    expect(src.value).toBe('/old');
+
+    fireEvent.click(screen.getByLabelText(/enabled/i));
+    fireEvent.change(src, { target: { value: '/src' } });
+    fireEvent.change(screen.getByLabelText(/target path/i), { target: { value: '/dst' } });
+    fireEvent.click(screen.getByRole('button', { name: /save mirror/i }));
+    await waitFor(() =>
+      expect(mocked.updateMirrorRequest).toHaveBeenCalledWith('p1', {
+        enabled: true,
+        sourcePath: '/src',
+        targetPath: '/dst',
+      }),
+    );
+    expect(await screen.findByText(/mirror saved/i)).toBeInTheDocument();
+  });
+
+  it('renders the entitlement error when the save is rejected', async () => {
+    mocked.updateMirrorRequest.mockRejectedValue(new Error('Mirroring requires Business.'));
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=mirror' });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: /save mirror/i }));
+    expect(await screen.findByText('Mirroring requires Business.')).toBeInTheDocument();
+  });
+
+  it('reflects the saving state', () => {
+    renderDetail({
+      projects: { items: [baseProject()], mirrorSaveStatus: 'loading' },
+      entry: '/projects/p1?tab=mirror',
+    });
+    expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
+  });
+});
+
+describe('AlertsEditor', () => {
+  it('saves the webhook url and clears it back to empty', async () => {
+    mocked.updateAlertsRequest
+      .mockResolvedValueOnce(baseProject({ alertWebhookUrl: 'https://hooks.example/x' }))
+      .mockResolvedValueOnce(baseProject({ alertWebhookUrl: '' }));
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=alerts' });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+
+    fireEvent.change(screen.getByLabelText(/webhook url/i), {
+      target: { value: 'https://hooks.example/x' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /save alerts/i }));
+    await waitFor(() =>
+      expect(mocked.updateAlertsRequest).toHaveBeenCalledWith('p1', 'https://hooks.example/x'),
+    );
+    expect(await screen.findByText(/alerts saved/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /clear/i }));
+    await waitFor(() => expect(mocked.updateAlertsRequest).toHaveBeenCalledWith('p1', ''));
+    await waitFor(() =>
+      expect((screen.getByLabelText(/webhook url/i) as HTMLInputElement).value).toBe(''),
+    );
+  });
+
+  it('renders the entitlement error when the save is rejected', async () => {
+    mocked.updateAlertsRequest.mockRejectedValue(new Error('Alerts require Pro.'));
+    renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=alerts' });
+    await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: /save alerts/i }));
+    expect(await screen.findByText('Alerts require Pro.')).toBeInTheDocument();
+  });
+
+  it('reflects the saving state on both buttons', () => {
+    renderDetail({
+      projects: { items: [baseProject()], alertsSaveStatus: 'loading' },
+      entry: '/projects/p1?tab=alerts',
+    });
+    expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /clear/i })).toBeDisabled();
   });
 });

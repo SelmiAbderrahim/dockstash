@@ -27,6 +27,15 @@ import {
   selectAgentReported,
   selectAgentDiscoveryErrors,
   selectAgentRefreshStatus,
+  selectPitrResolution,
+  selectPitrStatus,
+  selectPitrError,
+  selectPitrRestoreJobId,
+  selectPitrRestoreStatus,
+  selectAlertsSaveStatus,
+  selectAlertsError,
+  selectMirrorSaveStatus,
+  selectMirrorError,
 } from './selectors';
 import type { ProjectsState } from './slice';
 import type { Project, Schedule } from '../types';
@@ -44,6 +53,21 @@ const projects: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'loading',
   planSaveStatus: 'failed',
+  pitr: {
+    resolution: {
+      target: '2026-07-01T10:00:00.000Z',
+      gapSeconds: 90,
+      snapshot: { id: 'snap1', time: '2026-07-01T09:58:30.000Z' },
+    },
+    status: 'succeeded',
+    error: 'pitr oops',
+    restoreJobId: 'j-9',
+    restoreStatus: 'loading',
+  },
+  alertsSaveStatus: 'succeeded',
+  alertsError: 'alerts oops',
+  mirrorSaveStatus: 'failed',
+  mirrorError: 'mirror oops',
   folders: [{ name: 'app', path: '/var/www/app', hasCompose: true, composeFile: 'docker-compose.yml' }],
   foldersStatus: 'succeeded',
   containers: [
@@ -112,6 +136,18 @@ describe('projects selectors', () => {
     expect(selectCreateStatus(state)).toBe('idle');
     expect(selectAddError(state)).toBe('add oops');
     expect(selectProjectPaths(state)).toEqual(['/var/www/app']);
+  });
+
+  it('reads the pitr, alerts and mirror slices', () => {
+    expect(selectPitrResolution(state)?.snapshot.id).toBe('snap1');
+    expect(selectPitrStatus(state)).toBe('succeeded');
+    expect(selectPitrError(state)).toBe('pitr oops');
+    expect(selectPitrRestoreJobId(state)).toBe('j-9');
+    expect(selectPitrRestoreStatus(state)).toBe('loading');
+    expect(selectAlertsSaveStatus(state)).toBe('succeeded');
+    expect(selectAlertsError(state)).toBe('alerts oops');
+    expect(selectMirrorSaveStatus(state)).toBe('failed');
+    expect(selectMirrorError(state)).toBe('mirror oops');
   });
 
   it('reads the agent discovery slices', () => {

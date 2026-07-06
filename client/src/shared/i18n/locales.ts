@@ -16,6 +16,7 @@ export const NAMESPACES = [
   'email',
   'language',
   'guide',
+  'health',
   'profile',
   'projects',
   'projectDetail',

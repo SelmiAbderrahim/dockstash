@@ -8,22 +8,35 @@ import {
   fetchProjects,
   fetchSchedules,
   refreshAgent,
+  resolvePitr,
   runBackupNow,
+  saveAlerts,
+  saveMirror,
   savePlan,
   saveSchedule,
   scanProject,
+  startPitrRestore,
 } from './thunks';
 import type {
   AgentContainerGroup,
   AgentFolder,
   DiscoveredContainerGroup,
   DiscoveredFolder,
+  PitrResolution,
   Project,
   ProjectPlan,
   Schedule,
 } from '../types';
 
 export type LoadState = 'idle' | 'loading' | 'succeeded' | 'failed';
+
+export interface PitrState {
+  resolution: PitrResolution | null;
+  status: LoadState;
+  error: string | null;
+  restoreJobId: string | null;
+  restoreStatus: LoadState;
+}
 
 export interface ProjectsState {
   items: Project[];
@@ -34,6 +47,13 @@ export interface ProjectsState {
   schedulesStatus: LoadState;
   scheduleSaveStatus: LoadState;
   planSaveStatus: LoadState;
+  // Point-in-time restore flow
+  pitr: PitrState;
+  // Alert webhook + mirror editors
+  alertsSaveStatus: LoadState;
+  alertsError: string | null;
+  mirrorSaveStatus: LoadState;
+  mirrorError: string | null;
   // Add-project discovery flow
   folders: DiscoveredFolder[];
   foldersStatus: LoadState;
@@ -56,6 +76,14 @@ export interface ProjectsState {
   agentRefreshStatus: LoadState;
 }
 
+const initialPitr: PitrState = {
+  resolution: null,
+  status: 'idle',
+  error: null,
+  restoreJobId: null,
+  restoreStatus: 'idle',
+};
+
 const initialState: ProjectsState = {
   items: [],
   status: 'idle',
@@ -65,6 +93,11 @@ const initialState: ProjectsState = {
   schedulesStatus: 'idle',
   scheduleSaveStatus: 'idle',
   planSaveStatus: 'idle',
+  pitr: initialPitr,
+  alertsSaveStatus: 'idle',
+  alertsError: null,
+  mirrorSaveStatus: 'idle',
+  mirrorError: null,
   folders: [],
   foldersStatus: 'idle',
   containers: [],
@@ -95,6 +128,13 @@ const projectsSlice = createSlice({
     resetSaveStatus(state) {
       state.planSaveStatus = 'idle';
       state.scheduleSaveStatus = 'idle';
+      state.alertsSaveStatus = 'idle';
+      state.alertsError = null;
+      state.mirrorSaveStatus = 'idle';
+      state.mirrorError = null;
+    },
+    clearPitr(state) {
+      state.pitr = initialPitr;
     },
     resetAddFlow(state) {
       state.scannedPlan = null;
@@ -247,9 +287,60 @@ const projectsSlice = createSlice({
       .addCase(saveSchedule.rejected, (state, action) => {
         state.scheduleSaveStatus = 'failed';
         state.error = action.payload ?? 'Could not save schedule.';
+      })
+      .addCase(resolvePitr.pending, (state) => {
+        state.pitr.status = 'loading';
+        state.pitr.error = null;
+        state.pitr.resolution = null;
+      })
+      .addCase(resolvePitr.fulfilled, (state, action) => {
+        state.pitr.status = 'succeeded';
+        state.pitr.resolution = action.payload;
+      })
+      .addCase(resolvePitr.rejected, (state, action) => {
+        state.pitr.status = 'failed';
+        state.pitr.error = action.payload ?? 'Could not resolve the point in time.';
+      })
+      .addCase(startPitrRestore.pending, (state) => {
+        state.pitr.restoreStatus = 'loading';
+        state.pitr.error = null;
+      })
+      .addCase(startPitrRestore.fulfilled, (state, action) => {
+        state.pitr.restoreStatus = 'succeeded';
+        state.pitr.restoreJobId = action.payload.jobId;
+      })
+      .addCase(startPitrRestore.rejected, (state, action) => {
+        state.pitr.restoreStatus = 'failed';
+        state.pitr.error = action.payload ?? 'Could not start the restore.';
+      })
+      .addCase(saveAlerts.pending, (state) => {
+        state.alertsSaveStatus = 'loading';
+        state.alertsError = null;
+      })
+      .addCase(saveAlerts.fulfilled, (state, action) => {
+        state.alertsSaveStatus = 'succeeded';
+        const idx = state.items.findIndex((p) => p.id === action.payload.id);
+        if (idx >= 0) state.items[idx] = action.payload;
+      })
+      .addCase(saveAlerts.rejected, (state, action) => {
+        state.alertsSaveStatus = 'failed';
+        state.alertsError = action.payload ?? 'Could not save alerts.';
+      })
+      .addCase(saveMirror.pending, (state) => {
+        state.mirrorSaveStatus = 'loading';
+        state.mirrorError = null;
+      })
+      .addCase(saveMirror.fulfilled, (state, action) => {
+        state.mirrorSaveStatus = 'succeeded';
+        const idx = state.items.findIndex((p) => p.id === action.payload.id);
+        if (idx >= 0) state.items[idx] = action.payload;
+      })
+      .addCase(saveMirror.rejected, (state, action) => {
+        state.mirrorSaveStatus = 'failed';
+        state.mirrorError = action.payload ?? 'Could not save mirror.';
       });
   },
 });
 
-export const { clearActiveJob, resetSaveStatus, resetAddFlow } = projectsSlice.actions;
+export const { clearActiveJob, resetSaveStatus, resetAddFlow, clearPitr } = projectsSlice.actions;
 export const projectsReducer = projectsSlice.reducer;
