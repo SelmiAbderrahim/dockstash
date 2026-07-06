@@ -255,7 +255,10 @@ export const Pricing = () => {
                 >
                   <Link
                     to={
-                      tier.cta.to === '/register'
+                      // App-shell destinations (/register, /billing…) are never
+                      // locale-prefixed — /ar/billing would 404 into the SSR
+                      // splat. Only marketing paths go through href().
+                      tier.cta.to === '/register' || tier.cta.to.startsWith('/billing')
                         ? tier.cta.to
                         : href(tier.cta.to)
                     }
