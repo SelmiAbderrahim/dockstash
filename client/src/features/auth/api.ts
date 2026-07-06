@@ -4,6 +4,7 @@ import type {
   LoginRequest,
   LoginResponse,
   MessageResponse,
+  OAuthProviders,
   OtpVerifyRequest,
   RegisterRequest,
 } from './types';
@@ -31,3 +32,9 @@ export const verifyEmailRequest = (token: string): Promise<MessageResponse> =>
 
 export const resendVerificationRequest = (email: string): Promise<MessageResponse> =>
   apiClient<MessageResponse>('/auth/resend-verification', { method: 'POST', body: { email } });
+
+export const oauthProvidersRequest = (): Promise<OAuthProviders> =>
+  apiClient<OAuthProviders>('/auth/providers');
+
+export const refreshRequest = (): Promise<AuthResponse> =>
+  apiClient<AuthResponse>('/auth/refresh', { method: 'POST', body: {}, auth: true });

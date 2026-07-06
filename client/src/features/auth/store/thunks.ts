@@ -4,13 +4,21 @@ import { loadCookie, removeCookie, saveCookie } from '@shared/utils/cookies';
 import {
   forgotPasswordRequest,
   loginRequest,
+  oauthProvidersRequest,
+  refreshRequest,
   registerRequest,
   resendVerificationRequest,
   resetPasswordRequest,
   verifyEmailRequest,
   verifyLoginOtpRequest,
 } from '../api';
-import type { AuthUser, LoginRequest, OtpVerifyRequest, RegisterRequest } from '../types';
+import type {
+  AuthUser,
+  LoginRequest,
+  OAuthProviders,
+  OtpVerifyRequest,
+  RegisterRequest,
+} from '../types';
 
 /**
  * Cookie attributes for the auth token/user cookies. `sameSite: 'strict'`
@@ -113,6 +121,46 @@ export const resendVerification = createAsyncThunk<string, string, { rejectValue
       return data.message;
     } catch (err) {
       return rejectWithValue(messageFromError(err, 'Could not resend verification email.'));
+    }
+  },
+);
+
+/**
+ * Complete an OAuth sign-in: the callback page hands over the fragment token,
+ * we persist it and hydrate the user via /auth/refresh (the fragment carries
+ * only the token — no PII in the URL). Mirrors the loginUser cookie handling.
+ */
+export const completeOAuthLogin = createAsyncThunk<
+  { emailVerified: boolean; role: string },
+  { token: string },
+  { rejectValue: string }
+>('auth/completeOAuthLogin', async ({ token }, { rejectWithValue }) => {
+  try {
+    saveCookie('token', token, authCookieOptions());
+    const data = await refreshRequest();
+    saveCookie('token', data.token, authCookieOptions());
+    saveCookie('user', data.user, authCookieOptions());
+    return {
+      emailVerified: data.user.emailVerified ?? false,
+      role: data.user.role ?? '',
+    };
+  } catch (err) {
+    removeCookie('token', { path: '/' });
+    return rejectWithValue(messageFromError(err, 'Login failed.'));
+  }
+});
+
+/**
+ * Capability probe for the login/register pages. Fail-closed: a network or
+ * server error just means no OAuth buttons — never an error banner.
+ */
+export const fetchOAuthProviders = createAsyncThunk<OAuthProviders, void>(
+  'auth/fetchOAuthProviders',
+  async () => {
+    try {
+      return await oauthProvidersRequest();
+    } catch {
+      return { google: false, github: false };
     }
   },
 );

@@ -69,6 +69,8 @@ describe('buildAgentInstallCommand', () => {
       true,
     );
     expect(command).toContain('image: selmiabderrahim/agent:latest');
+    // DB restores bounce the target container — the proxy must allow restarts.
+    expect(command).toContain('ALLOW_RESTARTS: 1');
   });
 
   it('mounts /var/www rw and lists it in DOCKSTASH_PROJECT_ROOTS by default', () => {

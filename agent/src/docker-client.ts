@@ -1,7 +1,8 @@
 // Vendored from server/src/modules/backups/backups.docker-client.ts — keep in sync manually.
-// Only change: the DockerClient interface is declared locally (no boundaries module).
+// Only change: the DockerClient interface (and its result types) are declared
+// locally (no boundaries module).
 import * as http from 'node:http';
-import { PassThrough, type Readable } from 'node:stream';
+import { PassThrough, type Duplex, type Readable } from 'node:stream';
 
 /**
  * A running container as surfaced by `GET /containers/json` — the subset the
@@ -15,9 +16,37 @@ export interface DockerContainerSummary {
   labels: Record<string, string>;
 }
 
+/** A completed `docker exec` with both channels buffered + the exit code. */
+export interface DockerExecResult {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+}
+
+/**
+ * `docker inspect` subset. `env` is Config.Env (`["KEY=VAL"]`) — the
+ * credential source for DB restores; `image` the configured image reference.
+ */
+export interface DockerInspectResult {
+  id: string;
+  running: boolean;
+  env: string[];
+  image: string;
+}
+
 export interface DockerClient {
   exec(container: string, argv: string[]): Promise<Readable>;
-  inspect(container: string): Promise<{ id: string; running: boolean }>;
+  /** Exec to completion; buffers stdout/stderr and reports the exit code. */
+  execCollect(container: string, argv: string[]): Promise<DockerExecResult>;
+  /** Exec with `stdin` streamed to the process (`docker exec -i` equivalent). */
+  execWithStdin(
+    container: string,
+    argv: string[],
+    stdin: Readable,
+  ): Promise<{ exitCode: number; stderr: string }>;
+  /** `POST /containers/{id}/restart` — needs ALLOW_RESTARTS=1 on the socket proxy. */
+  restart(container: string): Promise<void>;
+  inspect(container: string): Promise<DockerInspectResult>;
   /** List running containers (read-only) for local Compose-project discovery. */
   listContainers(): Promise<DockerContainerSummary[]>;
 }
@@ -34,6 +63,17 @@ export type DockerStreamRequestFn = (opts: {
   path: string;
   body: unknown;
 }) => Promise<Readable>;
+
+/**
+ * Hijacked (`Connection: Upgrade` / `Upgrade: tcp`) exec-start request — the
+ * only Engine API shape that attaches stdin. The returned duplex carries our
+ * stdin bytes in and the multiplexed stdout/stderr frames back out.
+ * Injectable for tests.
+ */
+export type DockerHijackRequestFn = (opts: {
+  path: string;
+  body: unknown;
+}) => Promise<{ socket: Duplex }>;
 
 interface DockerEndpoint {
   host: string;
@@ -116,9 +156,50 @@ function makeHttpStreamRequest(endpoint: DockerEndpoint): DockerStreamRequestFn 
     });
 }
 
+function makeHttpHijackRequest(endpoint: DockerEndpoint): DockerHijackRequestFn {
+  return ({ path, body }) =>
+    new Promise((resolve, reject) => {
+      const payload = JSON.stringify(body);
+      const req = http.request({
+        host: endpoint.host,
+        port: endpoint.port,
+        method: 'POST',
+        path,
+        headers: {
+          'content-type': 'application/json',
+          'content-length': Buffer.byteLength(payload),
+          connection: 'Upgrade',
+          upgrade: 'tcp',
+        },
+      });
+      req.on('upgrade', (_res, socket, head) => {
+        // Bytes the parser read past the 101 headers belong to the stream.
+        if (head.length > 0) socket.unshift(head);
+        resolve({ socket });
+      });
+      req.on('response', (res) => {
+        // The daemon answered without upgrading — an error status + JSON body.
+        const chunks: Buffer[] = [];
+        res.on('data', (c: Buffer) => chunks.push(c));
+        res.on('end', () =>
+          reject(
+            new Error(
+              `docker exec start (stdin) failed (${res.statusCode}): ${Buffer.concat(chunks).toString().trim()}`,
+            ),
+          ),
+        );
+      });
+      req.on('error', reject);
+      req.write(payload);
+      req.end();
+    });
+}
+
 /**
  * Demultiplex the Docker attach stream framing (8-byte header: stream type,
  * 3 reserved bytes, 4-byte big-endian length) into a plain stdout byte stream.
+ * stderr frames are collected and surfaced as an error suffix if the source
+ * errors; for dumps we only forward stdout.
  */
 export function demuxDockerStream(source: Readable): Readable {
   const out = new PassThrough();
@@ -143,50 +224,177 @@ export function demuxDockerStream(source: Readable): Readable {
   return out;
 }
 
+/**
+ * Demux a Docker attach stream to completion, keeping BOTH channels — unlike
+ * demuxDockerStream (which forwards stdout only), this buffers stdout and
+ * stderr so callers can check output and surface a stderr tail alongside the
+ * exec exit code.
+ */
+export function collectDockerStream(
+  source: Readable,
+): Promise<{ stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    let pending = Buffer.alloc(0);
+    const out: Buffer[] = [];
+    const err: Buffer[] = [];
+    source.on('data', (chunk: Buffer) => {
+      pending = Buffer.concat([pending, chunk]);
+      while (pending.length >= 8) {
+        const type = pending[0];
+        const len = pending.readUInt32BE(4);
+        if (pending.length < 8 + len) break;
+        const payload = pending.subarray(8, 8 + len);
+        pending = pending.subarray(8 + len);
+        if (type === 1) out.push(payload);
+        else if (type === 2) err.push(payload);
+      }
+    });
+    source.on('end', () =>
+      resolve({
+        stdout: Buffer.concat(out).toString(),
+        stderr: Buffer.concat(err).toString(),
+      }),
+    );
+    source.on('error', reject);
+  });
+}
+
 export interface HttpDockerClientOptions {
   dockerHost: string;
   requestFn?: DockerRequestFn;
   streamRequestFn?: DockerStreamRequestFn;
+  hijackRequestFn?: DockerHijackRequestFn;
 }
 
 /**
  * DockerClient over the Engine HTTP API — reaches Docker only through the
  * least-privilege socket proxy (`DOCKER_HOST=tcp://docker-socket-proxy:2375`),
- * which allows exactly CONTAINERS + EXEC. Argv-only exec (never a shell).
+ * which allows exactly CONTAINERS + EXEC. No dockerode dependency; argv-only
+ * exec (never a shell string).
  */
 export class HttpDockerClient implements DockerClient {
   private readonly request: DockerRequestFn;
   private readonly streamRequest: DockerStreamRequestFn;
+  private readonly hijackRequest: DockerHijackRequestFn;
 
   constructor(opts: HttpDockerClientOptions) {
     const endpoint = parseDockerHost(opts.dockerHost);
     this.request = opts.requestFn ?? makeHttpRequest(endpoint);
     this.streamRequest = opts.streamRequestFn ?? makeHttpStreamRequest(endpoint);
+    this.hijackRequest = opts.hijackRequestFn ?? makeHttpHijackRequest(endpoint);
   }
 
-  async exec(container: string, argv: string[]): Promise<Readable> {
+  private async createExec(
+    container: string,
+    argv: string[],
+    attachStdin: boolean,
+  ): Promise<string> {
     const create = await this.request({
       method: 'POST',
       path: `/containers/${encodeURIComponent(container)}/exec`,
-      body: { AttachStdout: true, AttachStderr: true, Cmd: argv },
+      body: {
+        ...(attachStdin ? { AttachStdin: true } : {}),
+        AttachStdout: true,
+        AttachStderr: true,
+        Cmd: argv,
+      },
     });
     if (create.status !== 201) {
       throw new Error(
         `docker exec create failed (${create.status}): ${create.body.toString().trim()}`,
       );
     }
-    let execId: string;
     try {
-      execId = (JSON.parse(create.body.toString()) as { Id: string }).Id;
+      return (JSON.parse(create.body.toString()) as { Id: string }).Id;
     } catch {
       throw new Error('docker exec create returned malformed JSON');
     }
+  }
+
+  /** `GET /exec/{id}/json` → ExitCode. The proxy's EXEC scope covers it. */
+  private async execExitCode(execId: string): Promise<number> {
+    const res = await this.request({ method: 'GET', path: `/exec/${execId}/json` });
+    if (res.status !== 200) {
+      throw new Error(
+        `docker exec inspect failed (${res.status}): ${res.body.toString().trim()}`,
+      );
+    }
+    let parsed: { ExitCode?: number };
+    try {
+      parsed = JSON.parse(res.body.toString()) as typeof parsed;
+    } catch {
+      throw new Error('docker exec inspect returned malformed JSON');
+    }
+    return typeof parsed.ExitCode === 'number' ? parsed.ExitCode : -1;
+  }
+
+  async exec(container: string, argv: string[]): Promise<Readable> {
+    const execId = await this.createExec(container, argv, false);
     const raw = await this.streamRequest({
       method: 'POST',
       path: `/exec/${execId}/start`,
       body: { Detach: false, Tty: false },
     });
     return demuxDockerStream(raw);
+  }
+
+  /** Run to completion, buffering both channels, and report the exit code. */
+  async execCollect(container: string, argv: string[]): Promise<DockerExecResult> {
+    const execId = await this.createExec(container, argv, false);
+    const raw = await this.streamRequest({
+      method: 'POST',
+      path: `/exec/${execId}/start`,
+      body: { Detach: false, Tty: false },
+    });
+    const { stdout, stderr } = await collectDockerStream(raw);
+    const exitCode = await this.execExitCode(execId);
+    return { exitCode, stdout, stderr };
+  }
+
+  /**
+   * Run argv with `stdin` streamed to the process (`docker exec -i`
+   * equivalent). The hijacked socket is half-closed when `stdin` ends —
+   * that half-close IS the container-side EOF; without it the process
+   * (psql, mongorestore, dd, …) waits forever.
+   */
+  async execWithStdin(
+    container: string,
+    argv: string[],
+    stdin: Readable,
+  ): Promise<{ exitCode: number; stderr: string }> {
+    const execId = await this.createExec(container, argv, true);
+    const { socket } = await this.hijackRequest({
+      path: `/exec/${execId}/start`,
+      body: { Detach: false, Tty: false },
+    });
+    const collected = collectDockerStream(socket);
+    stdin.on('error', (err) => {
+      socket.destroy(err instanceof Error ? err : new Error(String(err)));
+    });
+    // pipe() ends the socket's write side when stdin ends (the half-close).
+    stdin.pipe(socket);
+    const { stderr } = await collected;
+    const exitCode = await this.execExitCode(execId);
+    return { exitCode, stderr };
+  }
+
+  /**
+   * `POST /containers/{id}/restart` — requires `ALLOW_RESTARTS: 1` on the
+   * docker-socket-proxy; the 403 hint tells an operator exactly that.
+   */
+  async restart(container: string, timeoutSeconds = 10): Promise<void> {
+    const res = await this.request({
+      method: 'POST',
+      path: `/containers/${encodeURIComponent(container)}/restart?t=${timeoutSeconds}`,
+    });
+    if (res.status === 204) return;
+    const detail = res.body.toString().trim();
+    if (res.status === 403) {
+      throw new Error(
+        `docker restart denied (403): the docker-socket-proxy must set ALLOW_RESTARTS=1 — ${detail}`,
+      );
+    }
+    throw new Error(`docker restart failed (${res.status}): ${detail}`);
   }
 
   async listContainers(): Promise<DockerContainerSummary[]> {
@@ -230,7 +438,7 @@ export class HttpDockerClient implements DockerClient {
     });
   }
 
-  async inspect(container: string): Promise<{ id: string; running: boolean }> {
+  async inspect(container: string): Promise<DockerInspectResult> {
     const res = await this.request({
       method: 'GET',
       path: `/containers/${encodeURIComponent(container)}/json`,
@@ -240,12 +448,27 @@ export class HttpDockerClient implements DockerClient {
         `docker inspect failed (${res.status}): ${res.body.toString().trim()}`,
       );
     }
-    let parsed: { Id?: string; State?: { Running?: boolean } };
+    let parsed: {
+      Id?: string;
+      State?: { Running?: boolean };
+      Config?: { Env?: unknown; Image?: string };
+    };
     try {
       parsed = JSON.parse(res.body.toString()) as typeof parsed;
     } catch {
       throw new Error('docker inspect returned malformed JSON');
     }
-    return { id: parsed.Id ?? container, running: Boolean(parsed.State?.Running) };
+    // Config.Env is a ["KEY=VAL"] array — exactly the ComposeService
+    // environment shape the adapters' readServiceEnv accepts. It is the
+    // credential source for DB restores.
+    const env = Array.isArray(parsed.Config?.Env)
+      ? parsed.Config.Env.filter((e): e is string => typeof e === 'string')
+      : [];
+    return {
+      id: parsed.Id ?? container,
+      running: Boolean(parsed.State?.Running),
+      env,
+      image: parsed.Config?.Image ?? '',
+    };
   }
 }

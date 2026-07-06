@@ -24,6 +24,10 @@ vi.mock('../api', () => ({
   resetPasswordRequest: vi.fn(),
   verifyEmailRequest: vi.fn(),
   resendVerificationRequest: vi.fn(),
+  // OAuthButtons probes this on mount inside Login/Register; unresolved =
+  // buttons stay hidden, which keeps the pre-OAuth assertions stable.
+  oauthProvidersRequest: vi.fn(() => new Promise(() => undefined)),
+  refreshRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -45,6 +49,8 @@ const makeStore = (auth: Partial<AuthState> = {}) =>
         role: '',
         otpChallengeId: '',
         pendingVerificationEmail: '',
+        providers: { google: false, github: false },
+        providersLoaded: false,
         error: '',
         message: '',
         ...auth,

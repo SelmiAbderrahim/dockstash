@@ -18,7 +18,9 @@ import {
 } from '../scheduler/scheduler.controller.js';
 import { MemoryQueue } from '../scheduler/scheduler.queue.memory.js';
 import { allowAllEntitlements } from '../scheduler/scheduler.entitlements.js';
+import { PassThrough } from 'node:stream';
 import type { ResticRunnerExt } from '../scheduler/scheduler.boundaries.js';
+import type { DockerClient, DockerInspectResult } from './backups.boundaries.js';
 import { createProject } from './backups.service.js';
 import { runRestore } from './backups.restore.service.js';
 import { Project } from './backups.model.js';
@@ -47,6 +49,10 @@ function stubRunner(overrides: Partial<ResticRunnerExt> = {}): ResticRunnerExt {
     snapshots: vi.fn(async () => []),
     check: vi.fn(async () => {}),
     restore: vi.fn(async () => {}),
+    snapshotsDetailed: vi.fn(async () => []),
+    dump: vi.fn(async (): Promise<never> => {
+      throw new Error('dump not stubbed');
+    }),
     unlock: vi.fn(async () => {}),
     forget: vi.fn(async () => {}),
     ...overrides,
@@ -148,14 +154,24 @@ describe('runRestore', () => {
       path: '/var/www/app',
       repoPassword: 'pw',
     });
-    const runner = stubRunner();
+    const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+      ]),
+    });
     const result = await runRestore(
       String(project._id),
       id,
       { snapshotId: 'deadbeef', overwrite: true },
       { resticRunner: runner },
     );
-    expect(runner.restore).toHaveBeenCalledWith(['restore', 'deadbeef', '--target', '/']);
+    // Overwrite resolves the snapshot record and restores the FULL id.
+    expect(runner.restore).toHaveBeenCalledWith([
+      'restore',
+      'deadbeefcafe',
+      '--target',
+      '/',
+    ]);
     expect(result.target).toBe('/');
   });
 
@@ -231,6 +247,9 @@ describe('runRestore', () => {
       repoPassword: 'pw',
     });
     const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+      ]),
       restore: vi.fn(async () => {
         throw new Error('snapshot not found');
       }),
@@ -256,6 +275,9 @@ describe('runRestore', () => {
       repoPassword: 'pw',
     });
     const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+      ]),
       restore: vi.fn(async () => {
         throw 'weird failure';
       }),
@@ -281,7 +303,11 @@ describe('dispatchJob: restore kind', () => {
       path: '/var/www/app',
       repoPassword: 'pw',
     });
-    const runner = stubRunner();
+    const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+      ]),
+    });
     await dispatchJob(
       {
         id: 'j1',
@@ -295,7 +321,12 @@ describe('dispatchJob: restore kind', () => {
       },
       { resticRunner: runner },
     );
-    expect(runner.restore).toHaveBeenCalledWith(['restore', 'deadbeef', '--target', '/']);
+    expect(runner.restore).toHaveBeenCalledWith([
+      'restore',
+      'deadbeefcafe',
+      '--target',
+      '/',
+    ]);
   });
 
   it('throws when a restore job carries no payload', async () => {
@@ -401,5 +432,274 @@ describe('serializeProject: restore stamps', () => {
     expect(stamped.lastRestoreAt).toBe('2026-07-01T00:00:00.000Z');
     expect(stamped.lastRestoreStatus).toBe('pass');
     expect(stamped.lastRestoreDetail).toBe('ok');
+  });
+});
+
+describe('runRestore: overwrite classification (paths pre-flight + DB restore)', () => {
+  const REDIS_SNAP = [
+    { id: '5ad025be1234', short_id: '5ad025be', time: 't1', paths: ['/redis-dump.rdb'] },
+  ];
+
+  interface DockerStubState {
+    docker: DockerClient;
+    execCalls: Array<{ container: string; argv: string[] }>;
+    stdinCalls: Array<{ container: string; argv: string[] }>;
+    restartCalls: string[];
+  }
+
+  function stubDocker(opts: {
+    inspect?: DockerInspectResult;
+    stdinResult?: { exitCode: number; stderr: string };
+  } = {}): DockerStubState {
+    const execCalls: Array<{ container: string; argv: string[] }> = [];
+    const stdinCalls: Array<{ container: string; argv: string[] }> = [];
+    const restartCalls: string[] = [];
+    const docker: DockerClient = {
+      async exec() {
+        throw new Error('unused');
+      },
+      async execCollect(container, argv) {
+        execCalls.push({ container, argv });
+        return { exitCode: 0, stdout: '', stderr: '' };
+      },
+      async execWithStdin(container, argv) {
+        stdinCalls.push({ container, argv });
+        return opts.stdinResult ?? { exitCode: 0, stderr: '' };
+      },
+      async restart(container) {
+        restartCalls.push(container);
+      },
+      async inspect(container) {
+        return opts.inspect ?? { id: container, running: true, env: [], image: 'redis:7-alpine' };
+      },
+      async listContainers() {
+        return [];
+      },
+    };
+    return { docker, execCalls, stdinCalls, restartCalls };
+  }
+
+  function dumpingRunner(overrides: Partial<ResticRunnerExt> = {}): ResticRunnerExt {
+    return stubRunner({
+      snapshotsDetailed: vi.fn(async () => REDIS_SNAP),
+      dump: vi.fn(async () => {
+        const stream = new PassThrough();
+        stream.end('rdb-bytes');
+        return { stream, done: Promise.resolve() };
+      }),
+      ...overrides,
+    });
+  }
+
+  async function seedRedisProject(): Promise<{ id: string; projectId: string }> {
+    const { id } = await seedUser('db@t.com');
+    const project = await createProject(id, {
+      name: 'thakaatprodapi',
+      path: '/var/www/thakaat',
+      repoPassword: 'pw',
+    });
+    project.plan.databases = [
+      { service: 'redis', type: 'redis', container: 'thakaatprodredis', enabled: true },
+    ] as typeof project.plan.databases;
+    await project.save();
+    return { id, projectId: String(project._id) };
+  }
+
+  it('streams a redis artifact snapshot back into the container (the prod 5ad025be case)', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = dumpingRunner();
+    const { docker, execCalls, stdinCalls, restartCalls } = stubDocker();
+    const result = await runRestore(
+      projectId,
+      id,
+      { snapshotId: '5ad025be', overwrite: true },
+      { resticRunner: runner, dockerClient: docker },
+    );
+    expect(result).toEqual({ status: 'pass', snapshotId: '5ad025be', target: 'thakaatprodredis' });
+    // Never a filesystem restore for a DB artifact.
+    expect(runner.restore).not.toHaveBeenCalled();
+    expect(runner.dump).toHaveBeenCalledWith(['dump', '5ad025be1234', '/redis-dump.rdb']);
+    expect(execCalls.map((c) => c.argv[0])).toEqual([
+      'redis-cli',
+      'redis-cli',
+      'redis-cli',
+      'mv',
+      'mkdir',
+      'cp',
+      'rm',
+      'mv',
+    ]);
+    expect(stdinCalls[0]).toMatchObject({
+      container: 'thakaatprodredis',
+      argv: ['dd', 'of=/data/dump.rdb.dockstash-restore'],
+    });
+    expect(restartCalls).toEqual(['thakaatprodredis']);
+    const row = await Project.findById(projectId);
+    expect(row?.lastRestoreStatus).toBe('pass');
+  });
+
+  it('tolerates a snapshot record with no paths field (vacuous pre-flight)', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1' },
+      ]),
+    });
+    const result = await runRestore(
+      projectId,
+      id,
+      { snapshotId: 'deadbeef', overwrite: true },
+      { resticRunner: runner, dockerClient: stubDocker().docker },
+    );
+    expect(result.target).toBe('/');
+    expect(runner.restore).toHaveBeenCalledWith(['restore', 'deadbeefcafe', '--target', '/']);
+  });
+
+  it('falls back to the plan type when inspect reports no image', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = dumpingRunner();
+    const { docker, restartCalls } = stubDocker({
+      inspect: { id: 'thakaatprodredis', running: true, env: [], image: '' },
+    });
+    await runRestore(
+      projectId,
+      id,
+      { snapshotId: '5ad025be', overwrite: true },
+      { resticRunner: runner, dockerClient: docker },
+    );
+    expect(restartCalls).toEqual(['thakaatprodredis']);
+  });
+
+  it('rejects an unknown snapshot id with a 400 and no failure stamp', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = stubRunner({ snapshotsDetailed: vi.fn(async () => []) });
+    await expect(
+      runRestore(
+        projectId,
+        id,
+        { snapshotId: 'deadbeef', overwrite: true },
+        { resticRunner: runner, dockerClient: stubDocker().docker },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    const row = await Project.findById(projectId);
+    expect(row?.lastRestoreStatus ?? null).toBeNull();
+  });
+
+  it('resolves `latest` to the newest snapshot and accepts full-id prefixes', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const snaps = [
+      { id: 'aaaa1111aaaa', short_id: 'aaaa1111', time: '2026-07-01T00:00:00Z', paths: ['/redis-dump.rdb'] },
+      { id: 'bbbb2222bbbb', short_id: 'bbbb2222', time: '2026-07-05T00:00:00Z', paths: ['/redis-dump.rdb'] },
+    ];
+    const runner = dumpingRunner({ snapshotsDetailed: vi.fn(async () => snaps) });
+    const { docker } = stubDocker();
+    await runRestore(
+      projectId,
+      id,
+      { snapshotId: 'latest', overwrite: true },
+      { resticRunner: runner, dockerClient: docker },
+    );
+    expect(runner.dump).toHaveBeenCalledWith(['dump', 'bbbb2222bbbb', '/redis-dump.rdb']);
+
+    await runRestore(
+      projectId,
+      id,
+      { snapshotId: 'aaaa1111aa', overwrite: true },
+      { resticRunner: runner, dockerClient: docker },
+    );
+    expect(runner.dump).toHaveBeenCalledWith(['dump', 'aaaa1111aaaa', '/redis-dump.rdb']);
+  });
+
+  it('fails with a stamped 500 when no dockerClient is wired for a DB restore', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = dumpingRunner();
+    await expect(
+      runRestore(projectId, id, { snapshotId: '5ad025be', overwrite: true }, { resticRunner: runner }),
+    ).rejects.toMatchObject({ status: 500 });
+    const row = await Project.findById(projectId);
+    expect(row?.lastRestoreStatus).toBe('fail');
+  });
+
+  it('refuses a stopped target container with a 400', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = dumpingRunner();
+    const { docker } = stubDocker({
+      inspect: { id: 'thakaatprodredis', running: false, env: [], image: 'redis:7-alpine' },
+    });
+    await expect(
+      runRestore(
+        projectId,
+        id,
+        { snapshotId: '5ad025be', overwrite: true },
+        { resticRunner: runner, dockerClient: docker },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('refuses an unsupported engine with a 400 pointing at restore-to-path', async () => {
+    const { id } = await seedUser('ch@t.com');
+    const project = await createProject(id, {
+      name: 'chproj',
+      path: '/var/www/ch',
+      repoPassword: 'pw',
+    });
+    project.plan.databases = [
+      { service: 'ch', type: 'clickhouse', container: 'c-ch', enabled: true },
+    ] as typeof project.plan.databases;
+    await project.save();
+    const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'abcd1234abcd', short_id: 'abcd1234', time: 't1', paths: ['/ch.tar'] },
+      ]),
+    });
+    const { docker } = stubDocker({
+      inspect: { id: 'c-ch', running: true, env: [], image: 'clickhouse/clickhouse-server:24' },
+    });
+    await expect(
+      runRestore(
+        String(project._id),
+        id,
+        { snapshotId: 'abcd1234', overwrite: true },
+        { resticRunner: runner, dockerClient: docker },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('refuses a paths overwrite whose snapshot paths fall outside the allowlist (old Fatal failure mode)', async () => {
+    const { id, projectId } = await seedRedisProject();
+    // A stray root-level file that matches no plan artifact → classified as
+    // paths, then rejected by the pre-flight instead of hitting restic Fatal.
+    const runner = stubRunner({
+      snapshotsDetailed: vi.fn(async () => [
+        { id: 'ffff0000ffff', short_id: 'ffff0000', time: 't1', paths: ['/stray-file.bin'] },
+      ]),
+    });
+    await expect(
+      runRestore(
+        projectId,
+        id,
+        { snapshotId: 'ffff0000', overwrite: true },
+        { resticRunner: runner, dockerClient: stubDocker().docker },
+      ),
+    ).rejects.toMatchObject({ status: 400 });
+    expect(runner.restore).not.toHaveBeenCalled();
+  });
+
+  it('stamps failure + 500 with the per-engine message when the DB restore fails', async () => {
+    const { id, projectId } = await seedRedisProject();
+    const runner = dumpingRunner();
+    const { docker } = stubDocker({ stdinResult: { exitCode: 1, stderr: 'dd: no space' } });
+    await expect(
+      runRestore(
+        projectId,
+        id,
+        { snapshotId: '5ad025be', overwrite: true },
+        { resticRunner: runner, dockerClient: docker },
+      ),
+    ).rejects.toMatchObject({ status: 500 });
+    const row = await Project.findById(projectId);
+    expect(row?.lastRestoreStatus).toBe('fail');
+    expect(row?.lastRestoreDetail).toContain('restore redis (redis) in thakaatprodredis');
+    expect(row?.lastRestoreDetail).toContain('dd: no space');
   });
 });

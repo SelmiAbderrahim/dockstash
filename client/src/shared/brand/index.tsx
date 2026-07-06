@@ -4,8 +4,8 @@ import { cn } from '@shared/lib/utils';
 export const BRAND_NAME = 'Dockstash';
 export const BRAND_TAGLINE = 'One-click, verified backups for any Docker project.';
 export const BRAND_SOCIAL_HANDLE = '@dockstash';
-export const BRAND_THEME_COLOR = '#0f1113';
-export const BRAND_PRIMARY_COLOR = '#2f6fed';
+export const BRAND_THEME_COLOR = '#111113';
+export const BRAND_PRIMARY_COLOR = BRAND_THEME_COLOR;
 
 export const BRAND_ASSETS = {
   favicon: '/favicon.svg',
@@ -18,6 +18,7 @@ export const BRAND_ASSETS = {
   favicon32: '/icons/favicon-32.png',
   icon192: '/icons/icon-192.png',
   icon512: '/icons/icon-512.png',
+  maskableIcon512: '/icons/maskable-512.png',
   ogDefault: '/og/default.png',
   ogLogo: '/og/logo.png',
 } as const;
@@ -44,30 +45,22 @@ export const BrandLogo = ({ className, markOnly = false, style }: BrandLogoProps
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="64" height="64" rx="14" fill="#0f1113" />
+      <rect width="64" height="64" rx="14" fill="currentColor" />
+      <rect x="13" y="13" width="38" height="10" rx="3" fill="var(--background)" />
+      <rect x="13" y="27" width="38" height="10" rx="3" fill="var(--muted)" />
+      <rect x="13" y="41" width="38" height="10" rx="3" fill="var(--background)" />
       <path
-        d="M13 16a4 4 0 0 1 4-4h25a7 7 0 0 1 7 7v18H17a4 4 0 0 1-4-4V16Z"
-        fill="#2f6fed"
-      />
-      <path
-        d="M18 20h22M18 27h22M18 34h13"
-        stroke="#0f1113"
-        strokeWidth="3.5"
+        d="M20 18h19M20 32h15M20 46h13"
+        stroke="currentColor"
+        strokeOpacity="0.56"
+        strokeWidth="2.5"
         strokeLinecap="round"
       />
-      <rect x="22" y="33" width="29" height="9" rx="3.5" fill="#f8fafc" />
-      <rect x="22" y="43" width="29" height="9" rx="3.5" fill="#f8fafc" />
+      <circle cx="49" cy="46.5" r="9.5" fill="var(--background)" />
       <path
-        d="M27 42h19M27 52h15"
-        stroke="#0f1113"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <circle cx="49" cy="48" r="8.5" fill="#62dca5" />
-      <path
-        d="m45 48 3 3 6-7"
+        d="m44.5 46.7 3 3 6.8-7.2"
         fill="none"
-        stroke="#0f1113"
+        stroke="currentColor"
         strokeWidth="3"
         strokeLinecap="round"
         strokeLinejoin="round"

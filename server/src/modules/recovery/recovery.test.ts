@@ -90,6 +90,12 @@ function makeRestic(overrides: Partial<ResticRunner> = {}): ResticRunner & {
     },
     async check() {},
     async restore() {},
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
   };
   return Object.assign(inst, overrides);
 }
@@ -214,6 +220,12 @@ describe('recovery: self-backup', () => {
       },
       async check() {},
       async restore() {},
+      async snapshotsDetailed() {
+        return [];
+      },
+      async dump(): Promise<never> {
+        throw new Error('dump not stubbed');
+      },
     };
     const result = await runSelfBackup({ resticRunner: restic, mongoDump: dump });
     expect(result.status).toBe('failed');

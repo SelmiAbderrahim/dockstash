@@ -372,3 +372,165 @@ describe('ProcessResticRunner: edge branches', () => {
     ).not.toThrow();
   });
 });
+
+describe('ProcessResticRunner.dump', () => {
+  async function collectStream(stream: NodeJS.ReadableStream): Promise<string> {
+    const chunks: Buffer[] = [];
+    for await (const c of stream) chunks.push(c as Buffer);
+    return Buffer.concat(chunks).toString();
+  }
+
+  it('streams stdout and resolves done on exit 0', async () => {
+    const cap = makeSpawnCapture();
+    const runner = makeRunner(cap);
+    const handle = await runner.dump(['dump', 'deadbeef', '/redis-dump.rdb']);
+    expect(cap.calls[0]!.argv).toEqual([
+      '-r',
+      'sftp:backup@host:/backups/u/p',
+      '--cache-dir',
+      '/tmp/cache',
+      'dump',
+      'deadbeef',
+      '/redis-dump.rdb',
+    ]);
+    const collected = collectStream(handle.stream);
+    cap.controls[0]!.emitStdout('rdb-bytes');
+    cap.controls[0]!.close(0);
+    await expect(handle.done).resolves.toBeUndefined();
+    await expect(collected).resolves.toBe('rdb-bytes');
+  });
+
+  it('rejects done on a non-zero exit (stream may already have EOFed cleanly)', async () => {
+    const cap = makeSpawnCapture();
+    const runner = makeRunner(cap);
+    const handle = await runner.dump(['dump', 'deadbeef', '/x']);
+    const collected = collectStream(handle.stream);
+    cap.controls[0]!.emitStderr('repo does not exist');
+    cap.controls[0]!.close(1);
+    // stdout EOF usually precedes the exit event, so the byte stream can end
+    // cleanly even when restic failed — done is the failure authority. This is
+    // exactly why performDbRestore awaits done alongside the consumer.
+    await expect(handle.done).rejects.toThrow('restic dump exit 1: repo does not exist');
+    await collected.catch(() => '');
+  });
+
+  it('labels the error with an empty command when args are empty', async () => {
+    const cap = makeSpawnCapture();
+    const runner = makeRunner(cap);
+    const handle = await runner.dump([]);
+    cap.controls[0]!.emitStderr('bad usage');
+    cap.controls[0]!.close(1);
+    await expect(handle.done).rejects.toThrow('restic  exit 1: bad usage');
+  });
+
+  it('rejects done and destroys a still-open stream on a spawn error', async () => {
+    const cap = makeSpawnCapture();
+    const runner = makeRunner(cap);
+    const handle = await runner.dump(['dump', 'deadbeef', '/x']);
+    const collected = collectStream(handle.stream);
+    cap.controls[0]!.fail(new Error('spawn ENOENT'));
+    await expect(handle.done).rejects.toThrow('spawn ENOENT');
+    await expect(collected).rejects.toThrow('spawn ENOENT');
+  });
+
+  it('ends the stream immediately when the child exposes no stdout', async () => {
+    const cap = makeSpawnCapture();
+    const noStdoutSpawn: SpawnImpl = (binary, argv, options) => {
+      const fake = cap.spawnImpl(binary, argv, options);
+      return { ...fake, stdout: null };
+    };
+    const runner = new ProcessResticRunner({
+      repoUrl: 'local:/repo',
+      password: 'pw',
+      binary: 'restic-test',
+      cacheDir: '/tmp/cache',
+      spawnImpl: noStdoutSpawn,
+    });
+    const handle = await runner.dump(['dump', 'deadbeef', '/x']);
+    await expect(collectStream(handle.stream)).resolves.toBe('');
+    cap.controls[0]!.close(0);
+    await expect(handle.done).resolves.toBeUndefined();
+  });
+
+  it('SFTP: passes sftp.args and keeps the key files until done settles', async () => {
+    const cap = makeSpawnCapture();
+    let cleaned = false;
+    const trackingKeys: KeyMaterializer = {
+      async withKeyFiles(_material, run) {
+        const result = await run({
+          keyPath: '/tmp/fake-key',
+          knownHostsPath: '/tmp/fake-known-hosts',
+        });
+        cleaned = true;
+        return result;
+      },
+    };
+    const runner = new ProcessResticRunner({
+      repoUrl: 'sftp:backup@host:/backups/u/p',
+      password: 'pw',
+      binary: 'restic-test',
+      cacheDir: '/tmp/cache',
+      spawnImpl: cap.spawnImpl,
+      keyMaterializer: trackingKeys,
+      ssh: { privateKey: 'PRIVATE', hostKeyLine: 'host ssh-ed25519 AAAA' },
+    });
+    const handle = await runner.dump(['dump', 'deadbeef', '/x']);
+    const sftpOpt = cap.calls[0]!.argv.find((a) => a.startsWith('sftp.args='));
+    expect(sftpOpt).toContain('StrictHostKeyChecking=yes');
+    // dump() resolved but the process is still running — keys must survive.
+    expect(cleaned).toBe(false);
+    cap.controls[0]!.close(0);
+    await handle.done;
+    await new Promise((r) => setImmediate(r));
+    expect(cleaned).toBe(true);
+  });
+
+  it('SFTP: key-file cleanup still runs when the dump fails (done rejects, no unhandled rejection)', async () => {
+    const cap = makeSpawnCapture();
+    let cleaned = false;
+    const trackingKeys: KeyMaterializer = {
+      async withKeyFiles(_material, run) {
+        const result = await run({
+          keyPath: '/tmp/fake-key',
+          knownHostsPath: '/tmp/fake-known-hosts',
+        });
+        cleaned = true;
+        return result;
+      },
+    };
+    const runner = new ProcessResticRunner({
+      repoUrl: 'sftp:backup@host:/backups/u/p',
+      password: 'pw',
+      binary: 'restic-test',
+      cacheDir: '/tmp/cache',
+      spawnImpl: cap.spawnImpl,
+      keyMaterializer: trackingKeys,
+      ssh: { privateKey: 'PRIVATE', hostKeyLine: 'host ssh-ed25519 AAAA' },
+    });
+    const handle = await runner.dump(['dump', 'deadbeef', '/x']);
+    cap.controls[0]!.emitStderr('boom');
+    cap.controls[0]!.close(3);
+    await expect(handle.done).rejects.toThrow('restic dump exit 3: boom');
+    await new Promise((r) => setImmediate(r));
+    expect(cleaned).toBe(true);
+  });
+
+  it('SFTP: a key-materializer setup failure rejects dump() itself', async () => {
+    const failingKeys: KeyMaterializer = {
+      async withKeyFiles() {
+        throw new Error('mkdtemp failed');
+      },
+    };
+    const cap = makeSpawnCapture();
+    const runner = new ProcessResticRunner({
+      repoUrl: 'sftp:backup@host:/backups/u/p',
+      password: 'pw',
+      binary: 'restic-test',
+      cacheDir: '/tmp/cache',
+      spawnImpl: cap.spawnImpl,
+      keyMaterializer: failingKeys,
+      ssh: { privateKey: 'PRIVATE', hostKeyLine: 'host ssh-ed25519 AAAA' },
+    });
+    await expect(runner.dump(['dump', 'deadbeef', '/x'])).rejects.toThrow('mkdtemp failed');
+  });
+});

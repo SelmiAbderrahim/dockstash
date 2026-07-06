@@ -52,6 +52,27 @@ export const envSchema = z.object({
     z.string().min(12).optional(),
   ),
 
+  // OAuth sign-in (Google / GitHub) — optional. A provider is enabled only
+  // when BOTH its client id and secret are set; the client hides the buttons
+  // otherwise. Compose passes `${VAR:-}` (empty string), so map '' back to
+  // undefined before validating, mirroring SUPERADMIN_* above.
+  GOOGLE_CLIENT_ID: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().optional(),
+  ),
+  GOOGLE_CLIENT_SECRET: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().optional(),
+  ),
+  GITHUB_CLIENT_ID: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().optional(),
+  ),
+  GITHUB_CLIENT_SECRET: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().optional(),
+  ),
+
   // Alerting — optional with a sane default (see IDEA.md).
   ALERT_HEARTBEAT_HOURS: z.coerce.number().int().positive().default(24),
 

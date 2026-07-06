@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -60,6 +61,11 @@ function stubRunner(): ResticRunnerExt {
     snapshots: vi.fn(async () => []),
     check: vi.fn(async () => {}),
     restore: vi.fn(async () => {}),
+    snapshotsDetailed: vi.fn(async () => []),
+    dump: vi.fn(async () => ({
+      stream: Readable.from(['bytes']),
+      done: Promise.resolve(),
+    })),
     unlock: vi.fn(async () => {}),
     forget: vi.fn(async () => {}),
   };
@@ -81,6 +87,8 @@ describe('placeholderResticRunner', () => {
     await expect(r.init()).rejects.toThrow('restic runner not wired');
     await expect(r.backup([])).rejects.toThrow('restic runner not wired');
     await expect(r.snapshots()).rejects.toThrow('restic runner not wired');
+    await expect(r.snapshotsDetailed()).rejects.toThrow('restic runner not wired');
+    await expect(r.dump([])).rejects.toThrow('restic runner not wired');
     await expect(r.check([])).rejects.toThrow('restic runner not wired');
     await expect(r.restore([])).rejects.toThrow('restic runner not wired');
     await expect(r.unlock()).rejects.toThrow('restic runner not wired');
@@ -160,8 +168,10 @@ describe('makeResticRunnerFor', () => {
     await lazy.init();
     await lazy.backup(['backup', '/var/www/app']);
     await lazy.snapshots();
+    await lazy.snapshotsDetailed();
     await lazy.check(['check']);
     await lazy.restore(['restore']);
+    await lazy.dump(['dump', 'deadbeef', '/x']);
     await lazy.unlock();
     await lazy.forget(['forget']);
     expect(build).toHaveBeenCalledTimes(1);

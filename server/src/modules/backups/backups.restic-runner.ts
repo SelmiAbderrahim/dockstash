@@ -2,9 +2,10 @@ import { spawn as nodeSpawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { Readable } from 'node:stream';
+import { PassThrough, type Readable } from 'node:stream';
 import { env } from '../../config/env.js';
 import { normalizePrivateKey } from '../../shared/utils/ssh-key.js';
+import type { ResticDumpHandle } from './backups.boundaries.js';
 import type { ResticRunnerExt } from '../scheduler/scheduler.boundaries.js';
 
 /** Narrow child-process surface so tests can inject an EventEmitter stub. */
@@ -188,6 +189,71 @@ export class ProcessResticRunner implements ResticRunnerExt {
 
   async restore(args: string[]): Promise<void> {
     await this.run(args);
+  }
+
+  /**
+   * Stream a single file out of a snapshot (`restic dump <snap> <path>`).
+   * Returns as soon as the process starts; `done` settles with the exit and
+   * MUST be awaited alongside the stream consumer — a mid-stream failure
+   * destroys `stream` AND rejects `done`. For SFTP repos the key files stay
+   * materialized until `done` settles.
+   */
+  async dump(args: string[]): Promise<ResticDumpHandle> {
+    const start = (sshArgs: string[]): ResticDumpHandle => {
+      const argv = ['-r', this.repoUrl, '--cache-dir', this.cacheDir, ...sshArgs, ...args];
+      const child = this.spawnImpl(this.binary, argv, {
+        env: {
+          ...process.env,
+          RESTIC_PASSWORD: this.password,
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const stream = new PassThrough();
+      // A failed dump destroys `stream` with the error. If the consumer has
+      // not attached yet (or already detached), that would raise an uncaught
+      // 'error' — this no-op listener absorbs it; real consumers still get
+      // their own 'error' events, and `done` carries the failure anyway.
+      stream.on('error', () => {});
+      if (child.stdout) child.stdout.pipe(stream);
+      else stream.end();
+      let stderr = '';
+      child.stderr?.on('data', (b: Buffer) => {
+        stderr += b.toString();
+      });
+      const done = new Promise<void>((resolve, reject) => {
+        child.on('error', (err) => {
+          stream.destroy(err);
+          reject(err);
+        });
+        child.on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            const err = new Error(`restic ${args[0] ?? ''} exit ${code}: ${stderr.trim()}`);
+            stream.destroy(err);
+            reject(err);
+          }
+        });
+      });
+      return { stream, done };
+    };
+
+    if (!this.ssh) return start([]);
+    return new Promise((resolve, reject) => {
+      this.keys
+        .withKeyFiles(this.ssh as NonNullable<typeof this.ssh>, ({ keyPath, knownHostsPath }) => {
+          const handle = start([
+            '-o',
+            `sftp.args=-i ${keyPath} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=${knownHostsPath} -o BatchMode=yes`,
+          ]);
+          resolve(handle);
+          // Hold the key files open until the process exits; the rejection is
+          // delivered through handle.done, so swallow it here to avoid an
+          // unhandled rejection inside withKeyFiles.
+          return handle.done.catch(() => {});
+        })
+        .catch(reject);
+    });
   }
 
   async unlock(): Promise<void> {

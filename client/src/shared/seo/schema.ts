@@ -16,7 +16,7 @@ type JsonLd = Record<string, unknown>;
  * datasets carry a finer-grained `lastReviewed` (YYYY-MM) that overrides this
  * per page via `monthToIso`.
  */
-export const SITE_LAST_UPDATED = '2026-07-05';
+export const SITE_LAST_UPDATED = '2026-07-06';
 
 /** Expand a "YYYY-MM" review month to an ISO date at the first of the month. */
 export function monthToIso(month: string): string {

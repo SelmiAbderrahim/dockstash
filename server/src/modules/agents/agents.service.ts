@@ -24,7 +24,7 @@ const TOKEN_PREFIX = 'dsa_';
  * stale daemon warns in its own logs, and surfaced as `outdated` on the fleet
  * API so the UI can tell the operator to rerun setup.
  */
-export const EXPECTED_AGENT_VERSION = '0.2.2';
+export const EXPECTED_AGENT_VERSION = '0.3.0';
 
 /**
  * The allowlist for an agent-assigned project: the roots the agent reported on

@@ -2,7 +2,7 @@ import { PassThrough, type Readable } from 'node:stream';
 import { describe, expect, it, vi } from 'vitest';
 import { executeJob, pruneArgs, type ExecutorDeps } from './executor.js';
 import type { DockerClient } from './docker-client.js';
-import type { ResticRunnerExt, ResticStats } from './restic-runner.js';
+import type { ResticRunnerExt, ResticSnapshotDetail, ResticStats } from './restic-runner.js';
 import type { ClaimedJob } from './types.js';
 
 interface FakeResticOptions {
@@ -11,6 +11,7 @@ interface FakeResticOptions {
   forget?(args: string[]): Promise<void>;
   unlock?(): Promise<void>;
   stats?: ResticStats;
+  snapshotsDetailed?: ResticSnapshotDetail[];
 }
 
 function makeFakeRestic(opts: FakeResticOptions = {}): {
@@ -25,7 +26,7 @@ function makeFakeRestic(opts: FakeResticOptions = {}): {
       return [];
     },
     async snapshotsDetailed() {
-      return [];
+      return opts.snapshotsDetailed ?? [];
     },
     async stats() {
       return opts.stats ?? {};
@@ -46,6 +47,9 @@ function makeFakeRestic(opts: FakeResticOptions = {}): {
       calls.forget.push(args);
       if (opts.forget) await opts.forget(args);
     },
+    async dump() {
+      throw new Error('dump not stubbed');
+    },
   };
   return { restic, calls };
 }
@@ -57,8 +61,17 @@ function makeFakeDocker(): DockerClient {
       stream.end();
       return stream;
     },
+    async execCollect() {
+      throw new Error('execCollect not stubbed');
+    },
+    async execWithStdin() {
+      throw new Error('execWithStdin not stubbed');
+    },
+    async restart() {
+      throw new Error('restart not stubbed');
+    },
     async inspect(container) {
-      return { id: container, running: true };
+      return { id: container, running: true, env: [], image: '' };
     },
     async listContainers() {
       return [];
@@ -141,8 +154,12 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     expect(result).toEqual({ ok: false, error: 'prune job missing retention policy' });
   });
 
-  it('restore: overwrite targets "/"', async () => {
-    const { restic, calls } = makeFakeRestic();
+  it('restore: overwrite of a path snapshot targets "/" with the full id', async () => {
+    const { restic, calls } = makeFakeRestic({
+      snapshotsDetailed: [
+        { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+      ],
+    });
     const docker = makeFakeDocker();
     const job = baseJob({
       kind: 'restore',
@@ -150,7 +167,7 @@ describe('executeJob: kind dispatch (single attempt, success)', () => {
     });
     const result = await executeJob(job, { restic, docker, roots: ['/var/www'], log: vi.fn() });
     expect(result).toEqual({ ok: true });
-    expect(calls.restore).toEqual([['restore', 'deadbeef', '--target', '/']]);
+    expect(calls.restore).toEqual([['restore', 'deadbeefcafe', '--target', '/']]);
   });
 
   it('restore: non-overwrite targets the allowed project path', async () => {

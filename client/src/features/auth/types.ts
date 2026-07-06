@@ -12,6 +12,12 @@ export interface AuthUser {
   profile?: AuthUserProfile;
 }
 
+/** Which OAuth sign-in providers the server has credentials for. */
+export interface OAuthProviders {
+  google: boolean;
+  github: boolean;
+}
+
 export interface AuthState {
   authenticated: boolean;
   emailVerified: boolean;
@@ -21,6 +27,9 @@ export interface AuthState {
   pendingVerificationEmail: string;
   error: string;
   message: string;
+  providers: OAuthProviders;
+  /** True once /auth/providers has answered — buttons stay hidden until then. */
+  providersLoaded: boolean;
 }
 
 export interface LoginRequest {

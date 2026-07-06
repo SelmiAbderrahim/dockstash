@@ -46,7 +46,6 @@ vi.mock('./backups.adapters.js', async (importOriginal) => {
         if (mockDumpThrow !== null) throw mockDumpThrow;
         return mockArgv;
       },
-      restoreCmd: () => [],
     }),
   };
 });
@@ -62,6 +61,12 @@ function makeRestic(overrides: Partial<ResticRunner> = {}): ResticRunner {
     },
     async check() {},
     async restore() {},
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
     ...overrides,
   };
 }
@@ -71,8 +76,17 @@ function makeDocker(overrides: Partial<DockerClient> = {}): DockerClient {
     async exec() {
       return Readable.from(['dump-bytes']);
     },
+    async execCollect() {
+      throw new Error('execCollect not stubbed');
+    },
+    async execWithStdin() {
+      throw new Error('execWithStdin not stubbed');
+    },
+    async restart() {
+      throw new Error('restart not stubbed');
+    },
     async inspect(container) {
-      return { id: container, running: true };
+      return { id: container, running: true, env: [], image: '' };
     },
     async listContainers() {
       return [];
@@ -482,6 +496,11 @@ describe('runRestore: alert transport explosion is swallowed', () => {
         {
           resticRunner: {
             ...makeRestic(),
+            // Overwrite resolves the snapshot record first; give it a path
+            // snapshot inside the allowlist so it reaches the restic call.
+            snapshotsDetailed: async () => [
+              { id: 'deadbeefcafe', short_id: 'deadbeef', time: 't1', paths: ['/var/www/app'] },
+            ],
             restore: async () => {
               throw new Error('restic restore blew up');
             },

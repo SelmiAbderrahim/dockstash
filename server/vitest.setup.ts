@@ -26,6 +26,12 @@ delete process.env.POLAR_BUSINESS_PRODUCT_ID;
 delete process.env.MAILGUN_PRIVATE_KEY;
 delete process.env.MAILGUN_DOMAIN;
 delete process.env.STRIPE_SECRET_KEY;
+// OAuth creds: tests assert unconfigured-by-default behavior and enable
+// providers per-case by mutating `env` directly.
+delete process.env.GOOGLE_CLIENT_ID;
+delete process.env.GOOGLE_CLIENT_SECRET;
+delete process.env.GITHUB_CLIENT_ID;
+delete process.env.GITHUB_CLIENT_SECRET;
 // Prompt 11: raise the auth-limiter cap in the test env so integration suites
 // (auth, billing) don't collide with the module-level in-memory bucket. The
 // security-middleware integration test exercises the 429 path via a scoped

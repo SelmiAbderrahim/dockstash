@@ -14,6 +14,7 @@
 // Math.random and NO Date here: output depends only on the input data.
 
 import type { Competitor, ServiceGuide, UseCaseApp } from '../types';
+import type { GuideCopyBundle } from './locale/types';
 
 /**
  * Small deterministic string hash (FNV-1a style). Stable across runs and
@@ -53,62 +54,50 @@ function humanJoin(items: string[]): string {
 }
 
 /**
- * Answer-first intro for a service backup guide (40–60 words). Rotates between
- * five opener structures seeded by the guide slug, and always states the dump
- * command plus the "don't copy live files" rule in the service's own terms.
+ * Interpolate a copy-bundle template. Slots are `{{name}}`-style; every slot
+ * present in the template MUST resolve — an unresolved slot throws so a typo
+ * in a locale bundle fails tests instead of shipping "{{name}}" to a page.
  */
-export function guideIntro(guide: ServiceGuide): string {
-  const name = guide.serviceName;
-  const cmd = guide.dumpCmd;
-  const livePath = guide.liveDataPaths[0] ?? 'the live data directory';
-  const alias = guide.aliases[0] ?? name;
-
-  const templates = [
-    `To back up ${name} in Docker, dump it from the running container with \`${cmd}\`, then hand the dump to restic for encrypted, off-site storage. Never restic ${livePath} directly: ${consistencyNote(guide)} A live-file copy captured mid-write is torn and will not restore.`,
-    `The correct way to back up a ${name} container is a logical dump, not a file copy. Run \`${cmd}\` inside the container and back up its output. Copying ${livePath} while ${alias} is writing produces an inconsistent snapshot; ${consistencyNote(guide)}`,
-    `Backing up ${name} safely means one rule: dump, don't copy. \`${cmd}\` produces a consistent, restorable dump from the running container, which restic then encrypts off-site. ${consistencyNote(guide)} Anything that copies ${livePath} live risks an unrestorable backup.`,
-    `${name} needs a consistent dump before it touches restic. Dockstash runs \`${cmd}\` inside the container, captures the output, and stores it encrypted off-site — it never copies ${livePath} live, because ${consistencyNote(guide).charAt(0).toLowerCase()}${consistencyNote(guide).slice(1)}`,
-    `Want a ${name} backup that actually restores? Dump it with \`${cmd}\` from inside the container instead of copying ${livePath}. ${consistencyNote(guide)} Dockstash then restics the dump for encrypted, deduplicated, off-site snapshots.`,
-  ];
-
-  return pick(guide.slug, templates);
+export function fill(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+    const value = vars[key];
+    if (value === undefined) {
+      throw new Error(`Unresolved template slot {{${key}}}`);
+    }
+    return value;
+  });
 }
 
 /**
- * Service-specific consistency explanation. Chosen by the engine family so the
- * sentence describes the real mechanism (Postgres MVCC snapshot vs MySQL
- * single-transaction vs Mongo oplog vs Redis RDB vs SQLite WAL, etc.), not a
- * generic line. Falls back to the guide's own consistencyNote field.
+ * Answer-first intro for a service backup guide (40–60 words). Rotates between
+ * the locale's five opener structures seeded by the guide slug, and always
+ * states the dump command plus the "don't copy live files" rule in the
+ * service's own terms. Sentence banks live in the per-locale copy bundle;
+ * commands and paths interpolate untranslated.
  */
-export function consistencyNote(guide: ServiceGuide): string {
-  switch (guide.slug) {
-    case 'postgres':
-      return 'pg_dumpall reads a consistent MVCC snapshot, so every database is captured at one point in time without blocking writers.';
-    case 'mysql':
-    case 'mariadb':
-      return '--single-transaction wraps the dump in one InnoDB transaction, capturing every table at a single consistent point without a write lock.';
-    case 'mongodb':
-      return '--oplog records operations during the dump so mongorestore --oplogReplay can rebuild a point-in-time-consistent snapshot.';
-    case 'redis':
-    case 'valkey':
-      return 'a SAVE/BGSAVE forks a point-in-time RDB snapshot to disk, so you back up the finished dump.rdb (plus the AOF if enabled) rather than volatile in-memory state.';
-    case 'sqlite':
-      return 'the SQLite online backup API (sqlite3 ".backup" or VACUUM INTO) reads a consistent copy that respects WAL and in-flight transactions, which a raw file copy cannot.';
-    case 'clickhouse':
-      return 'the native BACKUP statement freezes table parts consistently, because ClickHouse merges and mutates parts in the background where a raw copy would tear.';
-    case 'elasticsearch':
-      return 'the snapshot API captures a consistent, incremental point-in-time view of each index while Lucene segments keep merging underneath.';
-    case 'rabbitmq':
-      return 'exporting definitions captures the full broker topology as JSON, the durable part of RabbitMQ, while the live Mnesia message store is not point-in-time consistent under load.';
-    case 'minio':
-      return 'mc mirror copies each object atomically through the S3 API, preserving metadata that a raw /data copy can miss during in-flight multipart uploads.';
-    case 'influxdb':
-      return 'the backup command snapshots TSM shards and metadata through the engine, so background compaction never leaves you with a torn on-disk copy.';
-    case 'neo4j':
-      return 'neo4j-admin dump (or the Enterprise online backup) produces a consistent store snapshot, since the live graph store and transaction logs are written continuously.';
-    default:
-      return guide.consistencyNote;
-  }
+export function guideIntro(guide: ServiceGuide, copy: GuideCopyBundle): string {
+  const consistency = consistencyNote(guide, copy);
+  const template = pick(guide.slug, copy.templates.intro);
+  return fill(template, {
+    name: guide.serviceName,
+    cmd: guide.dumpCmd,
+    livePath: guide.liveDataPaths[0] ?? 'the live data directory',
+    alias: guide.aliases[0] ?? guide.serviceName,
+    consistency,
+    consistencyLower: lowerFirst(consistency),
+  });
+}
+
+/**
+ * Service-specific consistency explanation, localized. The sentence describes
+ * the real mechanism (Postgres MVCC snapshot vs MySQL single-transaction vs
+ * Mongo oplog vs Redis RDB vs SQLite WAL, etc.), not a generic line. Falls
+ * back to the guide's own (English) consistencyNote fact for a slug missing
+ * from the bundle — content tests keep that branch unreachable for shipped
+ * guides.
+ */
+export function consistencyNote(guide: ServiceGuide, copy: GuideCopyBundle): string {
+  return copy.templates.consistency[guide.slug] ?? guide.consistencyNote;
 }
 
 /**

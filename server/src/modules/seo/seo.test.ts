@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../app.js';
-import { localizedUrl, DEFAULT_LOCALE } from './seo.data.js';
+import { localizedUrl, isTranslatedPath, DEFAULT_LOCALE } from './seo.data.js';
 
 const app = createApp();
 
@@ -18,6 +18,25 @@ describe('seo.data.localizedUrl', () => {
 
   it('prefixes non-default locales with the locale segment', () => {
     expect(localizedUrl('https://x.io', 'ar', '/pricing')).toBe('https://x.io/ar/pricing');
+  });
+});
+
+describe('seo.data.isTranslatedPath', () => {
+  it('flags translated core paths', () => {
+    expect(isTranslatedPath('/')).toBe(true);
+    expect(isTranslatedPath('/pricing')).toBe(true);
+    expect(isTranslatedPath('/guides')).toBe(true);
+  });
+
+  it('flags every guide article path (service and platform)', () => {
+    expect(isTranslatedPath('/guides/backup-postgres-docker')).toBe(true);
+    expect(isTranslatedPath('/guides/connect-fleet-agent')).toBe(true);
+  });
+
+  it('rejects untranslated programmatic paths', () => {
+    expect(isTranslatedPath('/privacy')).toBe(false);
+    expect(isTranslatedPath('/backup/wordpress-docker')).toBe(false);
+    expect(isTranslatedPath('/alternatives/backrest')).toBe(false);
   });
 });
 
@@ -108,14 +127,33 @@ describe('seo module', () => {
     expect(privacy).toContain('<lastmod>');
   });
 
-  it('serves the guides urlset without hreflang alternates (untranslated pages)', async () => {
+  it('serves the guides urlset with hreflang alternates for every guide', async () => {
     const res = await request(app).get('/sitemap-guides.xml');
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toMatch(/xml/);
     expect(res.text).toContain('<urlset');
     expect(res.text).toContain('backup-postgres-docker');
-    expect(res.text).not.toContain('<xhtml:link');
+    // Platform guides live in the same urlset.
+    expect(res.text).toContain('/guides/connect-fleet-agent</loc>');
+    expect(res.text).toContain('/guides/troubleshooting-backups</loc>');
+
+    // 13 service guides + 8 platform guides = 21 URLs, each with
+    // 7 locale alternates + x-default = 8 xhtml:link lines.
+    expect(res.text.match(/<loc>/g)).toHaveLength(21);
+    expect(res.text.match(/<xhtml:link/g)).toHaveLength(21 * 8);
+    expect(res.text).toContain('hreflang="ar"');
+    expect(res.text).toContain('hreflang="x-default"');
+  });
+
+  it('lists the platform guides in llms.txt', async () => {
+    const res = await request(app).get('/llms.txt');
+
+    expect(res.status).toBe(200);
+    expect(res.text).toContain('## Platform guides');
+    expect(res.text).toContain('/guides/connect-fleet-agent');
+    expect(res.text).toContain('[Run restore drills](');
+    expect(res.text).toContain('[Alerts and notifications](');
   });
 
   it('serves the alternatives and use-case urlsets without hreflang alternates', async () => {

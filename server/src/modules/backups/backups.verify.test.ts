@@ -106,6 +106,12 @@ function makeResticSpy(overrides: Partial<{
       spy.restoreArgs.push(args);
       return spy.restoreFn(args);
     },
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
   };
   return spy;
 }

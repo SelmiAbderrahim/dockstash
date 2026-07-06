@@ -183,6 +183,48 @@ describe.skipIf(!RESTIC_AVAILABLE)('backups: real restic integration', () => {
     expect(res.mismatches).toBe(0);
   });
 
+  it('stdin DB artifact round-trip: backup --stdin --tag, classify via snapshots, dump bytes back', async () => {
+    const { Readable } = await import('node:stream');
+    const payload = 'pg_dumpall-bytes-' + 'x'.repeat(1024);
+    await runner.backup(
+      ['backup', '--stdin', '--stdin-filename', 'pg.dump', '--tag', 'db:pg:postgres'],
+      { stdin: Readable.from([payload]) },
+    );
+    const snaps = await (runner as ProcessResticRunner).snapshotsDetailed();
+    const artifact = snaps.find((s) => (s.paths ?? []).some((sp) => sp.endsWith('/pg.dump')));
+    expect(artifact).toBeDefined();
+    expect(artifact?.tags).toContain('db:pg:postgres');
+    // The snapshot stores the stdin file at an absolute root-level path — the
+    // exact shape the prod /redis-dump.rdb failure came from.
+    expect(artifact?.paths?.[0]).toBe('/pg.dump');
+
+    const handle = await (runner as ProcessResticRunner).dump([
+      'dump',
+      artifact?.id as string,
+      '/pg.dump',
+    ]);
+    const chunks: Buffer[] = [];
+    for await (const c of handle.stream) chunks.push(c as Buffer);
+    await handle.done;
+    expect(Buffer.concat(chunks).toString()).toBe(payload);
+  });
+
+  it('dump of a missing path rejects `done` with the restic error', async () => {
+    const snaps = await (runner as ProcessResticRunner).snapshotsDetailed();
+    const handle = await (runner as ProcessResticRunner).dump([
+      'dump',
+      snaps[0]?.id as string,
+      '/does-not-exist.bin',
+    ]);
+    const consumed = (async () => {
+      for await (const _c of handle.stream) {
+        void _c;
+      }
+    })().catch(() => {});
+    await expect(handle.done).rejects.toThrow(/restic dump exit/);
+    await consumed;
+  });
+
   it('a concurrent second run detects the lock surface (or completes cleanly)', async () => {
     // Kick off two parallel operations. Restic itself serializes/locks the
     // repo — at least one succeeds; if the other fails, the error mentions

@@ -39,7 +39,7 @@ services:
   docker-socket-proxy:
     image: tecnativa/docker-socket-proxy:0.3.0
     restart: unless-stopped
-    environment: { CONTAINERS: 1, EXEC: 1, POST: 1, INFO: 1 }
+    environment: { CONTAINERS: 1, EXEC: 1, POST: 1, INFO: 1, ALLOW_RESTARTS: 1 }
     volumes: [/var/run/docker.sock:/var/run/docker.sock:ro]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
@@ -64,8 +64,15 @@ docker compose -f docker-compose.agent.yml up -d --force-recreate
 - `DOCKSTASH_URL` — your Dockstash origin.
 - `DOCKSTASH_AGENT_TOKEN` — the one-time token from registration.
 - The bundled **docker-socket-proxy** grants the agent exactly
-  `CONTAINERS + EXEC` on the host Docker — the same least-privilege posture as
-  the primary stack. The agent never touches the raw socket.
+  `CONTAINERS + EXEC + ALLOW_RESTARTS` on the host Docker — the same
+  least-privilege posture as the primary stack. The agent never touches the
+  raw socket. `ALLOW_RESTARTS` (agent ≥ 0.3.0) lets a database restore bounce
+  the target container after placing the restored artifact.
+- **Upgrading from an agent < 0.3.0?** Add `ALLOW_RESTARTS: 1` to the
+  `docker-socket-proxy` environment in your existing
+  `docker-compose.agent.yml`, then re-run the `pull` + `up -d
+  --force-recreate` commands above — without it, database restores fail with
+  a `docker restart denied (403)` error.
 
 ### Project directories (`DOCKSTASH_PROJECT_ROOTS`)
 

@@ -17,7 +17,7 @@ import {
   createWebhookRateLimiter,
 } from './shared/middleware/rate-limit.js';
 import { issueCsrfToken } from './shared/middleware/csrf.js';
-import { authRouter, requireVerified } from './modules/auth/index.js';
+import { authRouter, oauthPublicRouter, requireVerified } from './modules/auth/index.js';
 import { requireAuth } from './shared/middleware/require-auth.js';
 import { billingRouter, billingPublicRouter, webhookHandler } from './modules/billing/index.js';
 import { communicationRouter } from './modules/communication/index.js';
@@ -96,6 +96,10 @@ export function createApp(): Express {
   // Backup-health dashboard + alert center (mounted after the legacy projects
   // list so `GET /api/health/projects` keeps its handler; see health.routes).
   app.use('/api/health', backupHealthRouter);
+  // OAuth capability probe mounted BEFORE the rate limiter: the client asks
+  // it on every login/register render, and inside the 10-req/15-min auth
+  // budget it would starve real login attempts. Read-only, leaks nothing.
+  app.use('/api/auth', oauthPublicRouter);
   // Auth routes are rate-limited: sustained cracking attempts hit 429 well
   // before they can enumerate accounts. The limiter is idempotent across
   // hot-reload restarts.

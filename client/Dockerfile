@@ -4,6 +4,10 @@
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
 
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core \
+ && rm -rf /var/lib/apt/lists/*
+
 # Vite build-time env — sourced from compose build args, never literal.
 ARG VITE_API_BASE_URL
 ARG VITE_SOCKET_URL
@@ -17,6 +21,8 @@ RUN npm ci
 
 COPY tsconfig.json tsconfig.node.json vite.config.ts index.html server.js app-paths.mjs app-paths.d.mts ./
 COPY public ./public
+COPY scripts ./scripts
+RUN npm run assets:brand
 COPY src ./src
 
 # Produces dist/client (browser bundle + index.html) and dist/server (SSR bundle).

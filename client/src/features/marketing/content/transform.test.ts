@@ -1,16 +1,30 @@
 import { describe, it, expect } from 'vitest';
 import { SERVICE_GUIDES, SERVICE_GUIDE_SLUGS, getServiceGuide } from './guides';
+import {
+  PLATFORM_GUIDES,
+  PLATFORM_GUIDE_SLUGS,
+  getPlatformGuide,
+} from './platform-guides';
 import { USE_CASES, USE_CASE_SLUGS, getUseCase } from './use-cases';
 import { COMPETITORS, getCompetitor } from './competitors';
-import { guideIntro, useCaseIntro, altIntro, hashSlug, pick, consistencyNote } from './transform';
+import {
+  guideIntro,
+  useCaseIntro,
+  altIntro,
+  hashSlug,
+  pick,
+  fill,
+  consistencyNote,
+} from './transform';
+import { GUIDE_COPY } from './locale/guides.en';
 import type { Competitor, ServiceGuide, UseCaseApp } from '../types';
 
 describe('transform: determinism', () => {
   it('guideIntro returns the same output for the same slug across calls', () => {
     for (const guide of Object.values(SERVICE_GUIDES)) {
-      const first = guideIntro(guide);
-      const second = guideIntro(guide);
-      const third = guideIntro(guide);
+      const first = guideIntro(guide, GUIDE_COPY);
+      const second = guideIntro(guide, GUIDE_COPY);
+      const third = guideIntro(guide, GUIDE_COPY);
       expect(first).toBe(second);
       expect(second).toBe(third);
       expect(first.length).toBeGreaterThan(0);
@@ -34,19 +48,31 @@ describe('transform: determinism', () => {
   });
 });
 
+describe('transform: fill', () => {
+  it('interpolates every slot', () => {
+    expect(fill('a {{x}} and {{y}}', { x: '1', y: '2' })).toBe('a 1 and 2');
+  });
+
+  it('throws on an unresolved slot', () => {
+    expect(() => fill('hello {{missing}}', {})).toThrow(
+      /Unresolved template slot \{\{missing\}\}/,
+    );
+  });
+});
+
 describe('transform: consistencyNote', () => {
-  it('returns the engine-specific note for a known slug', () => {
-    const note = consistencyNote(SERVICE_GUIDES.postgres!);
+  it('returns the localized engine-specific note for a known slug', () => {
+    const note = consistencyNote(SERVICE_GUIDES.postgres!, GUIDE_COPY);
     expect(note).toContain('MVCC');
   });
 
-  it('falls back to the guide consistencyNote for an unknown slug', () => {
+  it('falls back to the guide consistencyNote fact for an unknown slug', () => {
     const guide = {
       ...SERVICE_GUIDES.postgres!,
       slug: 'totally-unknown-engine',
       consistencyNote: 'custom fallback note',
     } as ServiceGuide;
-    expect(consistencyNote(guide)).toBe('custom fallback note');
+    expect(consistencyNote(guide, GUIDE_COPY)).toBe('custom fallback note');
   });
 });
 
@@ -83,10 +109,10 @@ describe('transform: humanJoin via useCaseIntro', () => {
 
 describe('transform: guideIntro fallbacks', () => {
   it('falls back when liveDataPaths and aliases are empty', () => {
-    // Cover the `?? 'the live data directory'` and `?? name` arms.
+    // Cover the `?? 'the live data directory'` and `?? serviceName` arms.
     for (const guide of Object.values(SERVICE_GUIDES)) {
       const bare = { ...guide, liveDataPaths: [], aliases: [] } as ServiceGuide;
-      expect(guideIntro(bare).length).toBeGreaterThan(0);
+      expect(guideIntro(bare, GUIDE_COPY).length).toBeGreaterThan(0);
     }
   });
 });
@@ -120,6 +146,13 @@ describe('content: slug getters', () => {
     expect(getServiceGuide('nope')).toBeUndefined();
   });
 
+  it('getPlatformGuide returns a guide for a known slug and undefined otherwise', () => {
+    expect(getPlatformGuide('connect-fleet-agent')).toBe(
+      PLATFORM_GUIDES['connect-fleet-agent'],
+    );
+    expect(getPlatformGuide('nope')).toBeUndefined();
+  });
+
   it('getUseCase returns an app for a known slug and undefined otherwise', () => {
     expect(getUseCase('wordpress')).toBe(USE_CASES.wordpress);
     expect(getUseCase('nope')).toBeUndefined();
@@ -133,13 +166,15 @@ describe('content: slug getters', () => {
 
 describe('transform: variance across slugs', () => {
   it('two different service slugs produce different guide intros', () => {
-    const a = guideIntro(SERVICE_GUIDES.postgres!);
-    const b = guideIntro(SERVICE_GUIDES.mongodb!);
+    const a = guideIntro(SERVICE_GUIDES.postgres!, GUIDE_COPY);
+    const b = guideIntro(SERVICE_GUIDES.mongodb!, GUIDE_COPY);
     expect(a).not.toBe(b);
   });
 
   it('the guide corpus is majority-unique (mostly distinct intros)', () => {
-    const intros = Object.values(SERVICE_GUIDES).map(guideIntro);
+    const intros = Object.values(SERVICE_GUIDES).map((guide) =>
+      guideIntro(guide, GUIDE_COPY),
+    );
     const unique = new Set(intros);
     // Every service names itself in its intro, so all should differ.
     expect(unique.size).toBe(intros.length);
@@ -166,16 +201,28 @@ describe('transform: variance across slugs', () => {
 });
 
 describe('content: required fields are present and non-empty', () => {
-  it('every service guide has a dump command and consistency data', () => {
+  it('every service guide has a dump command, consistency data, and step skeletons', () => {
     expect(SERVICE_GUIDE_SLUGS.length).toBeGreaterThanOrEqual(13);
     for (const guide of Object.values(SERVICE_GUIDES)) {
       expect(guide.dumpCmd.trim().length).toBeGreaterThan(0);
       expect(guide.restoreCmd.trim().length).toBeGreaterThan(0);
       expect(guide.consistencyNote.trim().length).toBeGreaterThan(0);
       expect(guide.liveDataPaths.length).toBeGreaterThan(0);
-      expect(guide.gotchas.length).toBeGreaterThan(0);
-      expect(guide.faq.length).toBeGreaterThanOrEqual(3);
+      expect(guide.walkthrough.length).toBeGreaterThanOrEqual(8);
+      expect(guide.restoreVerify.length).toBeGreaterThanOrEqual(3);
       expect(guide.lastReviewed).toBe('2026-07');
+    }
+  });
+
+  it('every platform guide has steps, related links, and no service-URL collision', () => {
+    expect(PLATFORM_GUIDE_SLUGS.length).toBeGreaterThanOrEqual(8);
+    for (const guide of Object.values(PLATFORM_GUIDES)) {
+      expect(guide.steps.length).toBeGreaterThanOrEqual(4);
+      expect(guide.relatedPlatformGuides.length).toBeGreaterThan(0);
+      expect(guide.relatedServices.length).toBeGreaterThan(0);
+      expect(guide.lastReviewed).toBe('2026-07');
+      // The backup-<slug>-docker URL shape is reserved for service guides.
+      expect(guide.slug).not.toMatch(/^backup-.*-docker$/);
     }
   });
 

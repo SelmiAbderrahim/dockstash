@@ -377,8 +377,10 @@ export const ComparisonTable = ({
   );
 };
 
+// dir="ltr": shell commands are LTR text and must not be reordered when the
+// surrounding document is RTL (Arabic guides).
 export const CodeBlock = ({ children }: { children: string }) => (
-  <code className={codeClass}>{children}</code>
+  <code dir="ltr" className={codeClass}>{children}</code>
 );
 
 export interface LegalSectionDef {

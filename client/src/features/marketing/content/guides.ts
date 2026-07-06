@@ -1,7 +1,16 @@
-// Per-service backup guide dataset. Every field maps to the real Dockstash
-// adapter behavior so pages are structurally unique by construction. The
-// dump/restore commands are the correct, consistent way to back up each
-// engine from inside a running container — never a live data-directory copy.
+// Per-service backup guide dataset — the UNIVERSAL facts layer. Every field
+// maps to the real Dockstash adapter behavior so pages are structurally
+// unique by construction. The dump/restore commands are the correct,
+// consistent way to back up each engine from inside a running container —
+// never a live data-directory copy.
+//
+// Localized prose (walkthrough step titles/bodies, gotchas, troubleshooting,
+// FAQ) lives in content/locale/guides.<locale>.ts, keyed by the slug and the
+// step ids declared here. Commands stay in this file and are never
+// translated.
+//
+// The `slug: 'x',` line format is load-bearing: server/src/modules/seo/
+// seo.parity.test.ts extracts slugs by regex to keep the sitemap in sync.
 
 import type { ServiceGuide } from '../types';
 
@@ -18,32 +27,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 5432,
     envKeysDetected: ['POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB'],
     liveDataPaths: ['/var/lib/postgresql/data'],
-    gotchas: [
-      'Never restic the live /var/lib/postgresql/data directory — a heap page copied mid-write is torn and unrestorable.',
-      'pg_dumpall captures roles and all databases; a single pg_dump misses global objects like roles and tablespaces.',
-      'Extensions (PostGIS, pgvector) must be installed in the target image before restore or the SQL will error.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <postgres-container> sh -c \'pg_dumpall -U "$POSTGRES_USER"\' | head -n 20',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Why pg_dumpall instead of copying the data directory?',
-        answer:
-          'A live Postgres data directory is being written to constantly. Copying it captures a torn, inconsistent state that will not start. pg_dumpall reads a consistent MVCC snapshot from the running server, producing a dump that restores cleanly.',
+        id: 'verify-data',
+        cmd: 'docker exec <postgres-container> sh -c \'psql -U "$POSTGRES_USER" -c "\\l"\'',
       },
-      {
-        question: 'Does Dockstash lock the database during backup?',
-        answer:
-          'No. pg_dumpall uses MVCC snapshots, so reads are consistent without blocking writes. Your application keeps serving traffic during the dump.',
-      },
-      {
-        question: 'How do I restore a single database instead of all of them?',
-        answer:
-          'A pg_dumpall archive is plain SQL; you can restore the whole cluster with psql, or use per-database pg_dump/pg_restore if you only need one. Dockstash restores the full consistent snapshot by default.',
-      },
-      {
-        question: 'What about extensions like PostGIS or pgvector?',
-        answer:
-          'The dump references CREATE EXTENSION but does not ship the extension binaries. Make sure the restore-target image has the same extensions available before restoring.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['mysql', 'mariadb', 'mongodb'],
     relatedUseCases: ['n8n', 'supabase', 'directus', 'plausible', 'metabase'],
@@ -62,32 +66,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 3306,
     envKeysDetected: ['MYSQL_ROOT_PASSWORD', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD'],
     liveDataPaths: ['/var/lib/mysql'],
-    gotchas: [
-      'Never restic the live /var/lib/mysql directory — InnoDB tablespaces copied mid-write are inconsistent and will fail recovery.',
-      '--single-transaction only gives a consistent snapshot for transactional (InnoDB) tables; MyISAM tables are not covered and need a lock.',
-      'Add --routines and --triggers or stored procedures and triggers are silently dropped from the dump.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <mysql-container> sh -c \'mysqldump --all-databases --single-transaction -uroot -p"$MYSQL_ROOT_PASSWORD"\' | head -n 20',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Why is --single-transaction important?',
-        answer:
-          'Without it, mysqldump reads tables one at a time and a write between tables produces an inconsistent dump. --single-transaction wraps everything in one InnoDB transaction so the whole dump reflects a single point in time, with no write lock.',
+        id: 'verify-data',
+        cmd: 'docker exec <mysql-container> sh -c \'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW DATABASES;"\'',
       },
-      {
-        question: 'Does the dump include stored procedures and triggers?',
-        answer:
-          'Only if you pass --routines and --triggers, which Dockstash includes. A default mysqldump omits them, which is a common cause of a "restored but broken" database.',
-      },
-      {
-        question: 'Can I back up MySQL by copying /var/lib/mysql?',
-        answer:
-          'No. The InnoDB tablespace and redo logs are written continuously; a file copy mid-write is inconsistent. Dockstash runs mysqldump inside the container instead.',
-      },
-      {
-        question: 'What if I use MyISAM tables?',
-        answer:
-          '--single-transaction does not make MyISAM consistent because it is non-transactional. If you rely on MyISAM, a brief lock (--lock-tables) is required — migrating those tables to InnoDB is the durable fix.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['mariadb', 'postgres', 'mongodb'],
     relatedUseCases: ['wordpress', 'matomo', 'umami', 'nextcloud'],
@@ -106,32 +105,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 3306,
     envKeysDetected: ['MARIADB_ROOT_PASSWORD', 'MYSQL_ROOT_PASSWORD', 'MARIADB_DATABASE', 'MARIADB_USER'],
     liveDataPaths: ['/var/lib/mysql'],
-    gotchas: [
-      'Never restic the live /var/lib/mysql directory — a mid-write InnoDB copy is unrestorable.',
-      'Newer images ship mariadb-dump; older ones use mysqldump. Dockstash detects which binary the image provides.',
-      'MariaDB accepts either MARIADB_ROOT_PASSWORD or the legacy MYSQL_ROOT_PASSWORD env key, so both are detected.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <mariadb-container> sh -c \'mariadb-dump --all-databases --single-transaction -uroot -p"$MARIADB_ROOT_PASSWORD"\' | head -n 20',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Is MariaDB backed up the same way as MySQL?',
-        answer:
-          'Almost identically. Both use --single-transaction for a consistent InnoDB snapshot. The difference is the client binary: recent MariaDB images ship mariadb-dump (mysqldump is a compatibility symlink). Dockstash picks the right one.',
+        id: 'verify-data',
+        cmd: 'docker exec <mariadb-container> sh -c \'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" -e "SHOW DATABASES;"\'',
       },
-      {
-        question: 'Which root password env key does Dockstash detect?',
-        answer:
-          'Both MARIADB_ROOT_PASSWORD and the older MYSQL_ROOT_PASSWORD are recognized, since MariaDB images accept either depending on version.',
-      },
-      {
-        question: 'Can I restore a MariaDB dump into MySQL or vice versa?',
-        answer:
-          'Often, but not always — feature and syntax drift between the two can break edge cases. Restore into the same engine family the dump came from for a reliable result.',
-      },
-      {
-        question: 'Why not just snapshot the volume?',
-        answer:
-          'The /var/lib/mysql volume is written continuously. A snapshot mid-write is inconsistent. A logical dump via mariadb-dump is the restorable path.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['mysql', 'postgres', 'mongodb'],
     relatedUseCases: ['appwrite', 'wordpress', 'nextcloud'],
@@ -150,32 +144,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 27017,
     envKeysDetected: ['MONGO_INITDB_ROOT_USERNAME', 'MONGO_INITDB_ROOT_PASSWORD', 'MONGO_INITDB_DATABASE'],
     liveDataPaths: ['/data/db'],
-    gotchas: [
-      'Never restic the live /data/db WiredTiger files — copied mid-checkpoint they are inconsistent and often unrecoverable.',
-      '--oplog requires the server to be a replica-set member (even a single-node replica set); on a standalone mongod it is a no-op with no point-in-time guarantee.',
-      'On restore, --oplogReplay must accompany --oplog dumps or the point-in-time consistency is lost.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <mongo-container> sh -c \'mongodump --archive --oplog\' | wc -c',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'What does --oplog actually do?',
-        answer:
-          'It records the operations log entries that occur while mongodump runs and stores them in the archive. On restore, --oplogReplay applies them so the dump reflects a single consistent point in time rather than a smear across the dump window.',
+        id: 'verify-data',
+        cmd: 'docker exec <mongo-container> mongosh --quiet --eval "db.adminCommand({ listDatabases: 1 })"',
       },
-      {
-        question: 'Do I need a replica set for consistent backups?',
-        answer:
-          'For point-in-time consistency, yes — --oplog only works on a replica-set member. Many single-node deployments run as a one-member replica set specifically to get this guarantee.',
-      },
-      {
-        question: 'Why not copy /data/db directly?',
-        answer:
-          'WiredTiger writes checkpoints continuously. A file copy mid-checkpoint captures an inconsistent state that frequently will not start. mongodump reads a logical, restorable snapshot.',
-      },
-      {
-        question: 'How do I restore into a clean database?',
-        answer:
-          'mongorestore --archive --oplogReplay --drop drops existing collections before restoring so you do not merge old and new data. Dockstash restores to a staging target first by default.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['postgres', 'redis', 'elasticsearch'],
     relatedUseCases: ['n8n'],
@@ -194,32 +183,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 6379,
     envKeysDetected: ['REDIS_PASSWORD', 'REDIS_ARGS'],
     liveDataPaths: ['/data', '/data/dump.rdb', '/data/appendonly.aof'],
-    gotchas: [
-      'Copying an in-progress dump.rdb while Redis rewrites it yields a truncated file; trigger SAVE (or BGSAVE) first, then back up the finished RDB.',
-      'If AOF persistence is enabled, back up the appendonly.aof file(s) too — the RDB alone may lag behind the latest writes.',
-      'Redis restore requires the server to be stopped or restarted to load the RDB; you cannot hot-swap dump.rdb into a running instance.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <redis-container> redis-cli BGSAVE',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Is Redis worth backing up at all?',
-        answer:
-          'It depends on your use. As a pure cache, a lost Redis is repopulated automatically. As a primary store (queues, sessions, sorted-set data), yes — back up the RDB, and the AOF if enabled.',
+        id: 'verify-data',
+        cmd: 'docker exec <redis-container> redis-cli PING',
       },
-      {
-        question: 'SAVE vs BGSAVE — which does Dockstash use?',
-        answer:
-          'BGSAVE forks and snapshots in the background without blocking; SAVE blocks until done. Dockstash prefers a background save and then backs up the finished dump.rdb once it is written.',
-      },
-      {
-        question: 'What about AOF (append-only file)?',
-        answer:
-          'If appendonly is enabled, the AOF holds the most recent writes that the RDB may not yet reflect. Dockstash captures both /data/dump.rdb and appendonly.aof so no recent data is lost.',
-      },
-      {
-        question: 'Can I copy dump.rdb while Redis is running?',
-        answer:
-          'Only after a completed SAVE/BGSAVE. Copying while a rewrite is in progress can grab a partial file. Dockstash triggers the save and waits for it to finish before backing up.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['valkey', 'mongodb', 'postgres'],
     relatedUseCases: ['mattermost', 'nocodb'],
@@ -238,32 +222,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 6379,
     envKeysDetected: ['VALKEY_PASSWORD', 'VALKEY_ARGS', 'REDIS_PASSWORD'],
     liveDataPaths: ['/data', '/data/dump.rdb', '/data/appendonly.aof'],
-    gotchas: [
-      'As with Redis, never grab a dump.rdb mid-rewrite — trigger SAVE/BGSAVE first and back up the finished file.',
-      'valkey-cli is the client binary; on some compatibility images redis-cli is symlinked, so Dockstash detects whichever is present.',
-      'Enable and capture the AOF when you need the freshest writes; the RDB alone can trail behind.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <valkey-container> valkey-cli BGSAVE',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'How is backing up Valkey different from Redis?',
-        answer:
-          'It is not, meaningfully. Valkey forked from Redis and keeps the same RDB and AOF persistence model. The only practical difference is the client binary name (valkey-cli), which Dockstash detects automatically.',
+        id: 'verify-data',
+        cmd: 'docker exec <valkey-container> valkey-cli PING',
       },
-      {
-        question: 'Can I restore a Redis RDB into Valkey?',
-        answer:
-          'Yes for current versions — the RDB format is shared across the fork point. As the projects diverge, keep restores within the same engine to be safe.',
-      },
-      {
-        question: 'Does Dockstash detect Valkey automatically?',
-        answer:
-          'Yes. The valkey/valkey images and the valkey-cli binary are recognized, and both VALKEY_PASSWORD and the legacy REDIS_PASSWORD env keys are picked up.',
-      },
-      {
-        question: 'Should I capture the AOF as well?',
-        answer:
-          'If appendonly is enabled and you cannot afford to lose the most recent seconds of writes, yes. Dockstash backs up both the RDB and the AOF files.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['redis', 'mongodb', 'postgres'],
     relatedUseCases: ['mattermost'],
@@ -282,32 +261,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 0,
     envKeysDetected: ['DATABASE_PATH', 'DATABASE_URL', 'DB_PATH'],
     liveDataPaths: ['/data/app.db', '/data/app.db-wal', '/data/app.db-shm'],
-    gotchas: [
-      'Never copy a live .db file while the app is running under WAL mode — you will miss the -wal/-shm sidecar files and capture a torn, unrestorable database.',
-      'Use sqlite3 ".backup" or "VACUUM INTO", both of which use the online backup API and handle WAL correctly.',
-      'A checkpoint (PRAGMA wal_checkpoint(TRUNCATE)) before a raw copy is not a substitute for the backup API under concurrent writes.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <app-container> sqlite3 /data/app.db ".backup \'/tmp/app-backup.db\'"',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Can I just copy the .db file?',
-        answer:
-          'Not safely while the app is writing. In WAL mode the newest data lives in the -wal sidecar; a plain cp of only the .db captures a stale, torn state. Use sqlite3 ".backup" or "VACUUM INTO" which read a consistent copy through the online backup API.',
+        id: 'verify-data',
+        cmd: 'docker exec <app-container> sqlite3 /tmp/app-backup.db "PRAGMA integrity_check;"',
       },
-      {
-        question: 'What is VACUUM INTO?',
-        answer:
-          'VACUUM INTO \'file.db\' writes a fresh, defragmented, transactionally consistent copy of the database to a new file. It is a clean way to snapshot a live SQLite database without stopping the app.',
-      },
-      {
-        question: 'Do I need to back up the -wal and -shm files?',
-        answer:
-          'If you use the backup API you do not — it consolidates the WAL into the copy. If you insist on a raw file copy (not recommended live), you must include -wal and -shm, but that is still race-prone.',
-      },
-      {
-        question: 'How do I restore a SQLite backup?',
-        answer:
-          'Stop the app, replace the database file with the .backup output, and start the app. Because the backup is a single consistent file, there are no sidecars to reconcile.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['postgres', 'mysql'],
     relatedUseCases: ['pocketbase', 'vaultwarden', 'uptime-kuma', 'gitea', 'ghost'],
@@ -326,32 +300,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 8123,
     envKeysDetected: ['CLICKHOUSE_USER', 'CLICKHOUSE_PASSWORD', 'CLICKHOUSE_DB'],
     liveDataPaths: ['/var/lib/clickhouse'],
-    gotchas: [
-      'Never restic the live /var/lib/clickhouse/store directory — parts are merged and mutated in the background, so a raw copy is inconsistent.',
-      'The BACKUP/RESTORE SQL requires a configured backup disk in the server config; without it, use the clickhouse-backup tool which freezes parts via hardlinks.',
-      'Large MergeTree tables produce large backups; incremental restic dedup helps but the initial BACKUP can be sizeable.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <clickhouse-container> clickhouse-client --query "SHOW DATABASES"',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'What is the correct way to back up ClickHouse?',
-        answer:
-          'Use the native BACKUP statement (BACKUP DATABASE ... TO Disk(...)) or the clickhouse-backup tool. Both produce a consistent snapshot of table parts. Dockstash then restics the resulting backup directory.',
+        id: 'verify-data',
+        cmd: 'docker exec <clickhouse-container> clickhouse-client --query "SELECT count() FROM system.tables"',
       },
-      {
-        question: 'Can I copy /var/lib/clickhouse instead?',
-        answer:
-          'No. ClickHouse continuously merges and mutates parts in the background, so a live directory copy is inconsistent. The BACKUP statement or clickhouse-backup freeze the parts safely.',
-      },
-      {
-        question: 'BACKUP statement or clickhouse-backup — which should I use?',
-        answer:
-          'The native BACKUP statement is simplest when a backup disk is configured. clickhouse-backup is handy for freezing parts via hardlinks and shipping them, especially on older versions. Dockstash supports either output.',
-      },
-      {
-        question: 'Are ClickHouse backups incremental?',
-        answer:
-          'The BACKUP statement supports incremental backups against a base, and restic adds its own deduplication on top, so repeated snapshots stay compact.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['postgres', 'elasticsearch', 'influxdb'],
     relatedUseCases: ['plausible'],
@@ -370,32 +339,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 9200,
     envKeysDetected: ['ELASTIC_PASSWORD', 'ELASTICSEARCH_USERNAME', 'discovery.type'],
     liveDataPaths: ['/usr/share/elasticsearch/data'],
-    gotchas: [
-      'Never restic the live data directory — Lucene segments are written and merged continuously, so a file copy is inconsistent.',
-      'You must register a snapshot repository (a shared fs path or object store) before the first snapshot; a bind-mounted path shared with the container is the simplest fs repo.',
-      'Restoring an index that already exists requires closing or deleting it first, or the restore is rejected.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <es-container> curl -s http://localhost:9200/_cluster/health?pretty',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Why use the snapshot API instead of copying the data folder?',
-        answer:
-          'Elasticsearch writes and merges Lucene segments constantly, so a live directory copy is inconsistent and may not open. The snapshot API captures a consistent, incremental point-in-time view of each index.',
+        id: 'verify-data',
+        cmd: 'docker exec <es-container> curl -s "http://localhost:9200/_cat/indices?v"',
       },
-      {
-        question: 'How do I register a snapshot repository?',
-        answer:
-          'Configure a filesystem repository pointing at a path both Elasticsearch and Dockstash can read (or an object store), then register it with a PUT _snapshot call. Dockstash restics that repository directory.',
-      },
-      {
-        question: 'Are Elasticsearch snapshots incremental?',
-        answer:
-          'Yes. Within a repository, each snapshot only stores segments not already present, so repeated snapshots are cheap. restic deduplication compounds this.',
-      },
-      {
-        question: 'Does this work for OpenSearch too?',
-        answer:
-          'Yes — OpenSearch forked from Elasticsearch and uses the same snapshot API model. Register a repository and snapshot the same way.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['clickhouse', 'mongodb', 'influxdb'],
     relatedUseCases: [],
@@ -414,32 +378,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 5672,
     envKeysDetected: ['RABBITMQ_DEFAULT_USER', 'RABBITMQ_DEFAULT_PASS', 'RABBITMQ_DEFAULT_VHOST'],
     liveDataPaths: ['/var/lib/rabbitmq/mnesia'],
-    gotchas: [
-      'Back up broker definitions (topology) via export_definitions — this is the durable, restorable part of RabbitMQ.',
-      'The Mnesia message store holds in-flight messages and is not safe to copy live; treat persisted messages as transient and rely on producers/consumers to recover.',
-      'Restoring definitions recreates topology but not the messages that were in queues at backup time.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <rabbitmq-container> rabbitmqctl export_definitions /tmp/definitions.json',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'What part of RabbitMQ should I back up?',
-        answer:
-          'The definitions: vhosts, exchanges, queues, bindings, users, and policies. Exporting them as JSON captures your entire broker topology, which is what you actually need to rebuild after a loss.',
+        id: 'verify-data',
+        cmd: 'docker exec <rabbitmq-container> rabbitmqctl list_queues',
       },
-      {
-        question: 'Can I back up the messages sitting in queues?',
-        answer:
-          'Not reliably while the broker runs. The Mnesia store is not point-in-time consistent under load, and messages are meant to be transient. Design consumers to tolerate replay rather than relying on a message backup.',
-      },
-      {
-        question: 'How do I restore a RabbitMQ broker?',
-        answer:
-          'Stand up a fresh broker and run rabbitmqctl import_definitions with your exported JSON. The full topology — exchanges, queues, bindings, users, policies — is recreated.',
-      },
-      {
-        question: 'Is copying /var/lib/rabbitmq/mnesia a valid backup?',
-        answer:
-          'No. Mnesia is written continuously and a live copy is inconsistent. Export definitions instead; that is the supported, restorable backup path.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['redis', 'mongodb'],
     relatedUseCases: [],
@@ -458,32 +417,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 9000,
     envKeysDetected: ['MINIO_ROOT_USER', 'MINIO_ROOT_PASSWORD', 'MINIO_ACCESS_KEY', 'MINIO_SECRET_KEY'],
     liveDataPaths: ['/data'],
-    gotchas: [
-      'Prefer mc mirror over copying the raw /data directory — MinIO stores objects plus xl.meta metadata, and a raw copy can miss in-flight multipart uploads.',
-      'Mirror through the S3 API so object metadata, versions, and tags are preserved consistently.',
-      'For versioned buckets, replicate versions explicitly or you capture only the latest object state.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <minio-container> mc ls local',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'Should I back up MinIO with mc mirror or a file copy?',
-        answer:
-          'Use mc mirror. It reads objects through the S3 API so each object and its metadata are captured atomically. A raw /data copy can catch in-flight multipart uploads or miss metadata layout.',
+        id: 'verify-data',
+        cmd: 'docker exec <minio-container> mc ls local/<bucket>',
       },
-      {
-        question: 'Does mc mirror preserve versions and tags?',
-        answer:
-          'It preserves object metadata and tags. For versioned buckets you need to mirror versions explicitly, otherwise only the current version of each object is captured.',
-      },
-      {
-        question: 'Can I restore into a fresh MinIO instance?',
-        answer:
-          'Yes. Point mc at the new instance, create the target bucket, and mirror the backup directory back. Dockstash restics the mirrored objects between steps.',
-      },
-      {
-        question: 'Is copying /data ever acceptable?',
-        answer:
-          'Only with MinIO fully stopped and no writes in flight, and even then metadata layout must be preserved exactly. The API-level mirror is the safer, supported approach.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['postgres', 'elasticsearch'],
     relatedUseCases: ['supabase'],
@@ -502,32 +456,27 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 8086,
     envKeysDetected: ['DOCKER_INFLUXDB_INIT_USERNAME', 'DOCKER_INFLUXDB_INIT_PASSWORD', 'DOCKER_INFLUXDB_INIT_ORG', 'INFLUXDB_HTTP_AUTH_ENABLED'],
     liveDataPaths: ['/var/lib/influxdb2', '/var/lib/influxdb'],
-    gotchas: [
-      'Never restic the live TSM/WAL directory — shards are compacted in the background so a raw copy is inconsistent.',
-      'InfluxDB v2 uses `influx backup` (HTTP API + token); v1 uses `influxd backup -portable`. Dockstash detects the major version.',
-      'v2 backups need an operator token with read access; without it the backup call is unauthorized.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      {
+        id: 'test-dump',
+        cmd: 'docker exec <influxdb-container> influx backup /tmp/influx-test',
+      },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
       {
-        question: 'What command backs up InfluxDB correctly?',
-        answer:
-          'For v2, `influx backup` against the HTTP API with an operator token. For v1, `influxd backup -portable`. Both snapshot TSM shards and metadata consistently. Dockstash detects the version and runs the right one.',
+        id: 'verify-data',
+        cmd: 'docker exec <influxdb-container> influx bucket list',
       },
-      {
-        question: 'Can I copy the shard files directly?',
-        answer:
-          'No. InfluxDB compacts TSM shards in the background, so a live directory copy is inconsistent. Use the backup command, which coordinates a consistent snapshot through the engine.',
-      },
-      {
-        question: 'What token does the v2 backup need?',
-        answer:
-          'An operator (all-access) token with read permission on the buckets. Dockstash detects the init token env keys; supply a token if auth is enabled.',
-      },
-      {
-        question: 'How do I restore a time series backup?',
-        answer:
-          'Use `influx restore` (v2) or `influxd restore -portable` (v1) against a fresh instance. Dockstash restores to a staging instance first before any overwrite.',
-      },
+      { id: 'promote' },
     ],
     relatedServices: ['clickhouse', 'elasticsearch', 'postgres'],
     relatedUseCases: [],
@@ -546,32 +495,21 @@ export const SERVICE_GUIDES: Record<string, ServiceGuide> = {
     defaultPort: 7687,
     envKeysDetected: ['NEO4J_AUTH', 'NEO4J_dbms_default__database', 'NEO4J_PLUGINS'],
     liveDataPaths: ['/data', '/data/databases', '/data/transactions'],
-    gotchas: [
-      'On Community edition, `neo4j-admin database dump` requires the database to be stopped — dumping a live store is not supported and copying /data live is inconsistent.',
-      'Enterprise edition supports online hot backups via `neo4j-admin database backup`; Community must schedule a brief stop or dump a secondary.',
-      'The Bolt port (7687) is for clients; backups run through neo4j-admin inside the container, not over Bolt.',
+    walkthrough: [
+      { id: 'add-server' },
+      { id: 'add-project' },
+      { id: 'review-detection' },
+      { id: 'test-dump' },
+      { id: 'choose-destination' },
+      { id: 'schedule' },
+      { id: 'run-first-backup' },
+      { id: 'confirm-snapshot' },
     ],
-    faq: [
-      {
-        question: 'Can I back up Neo4j without stopping it?',
-        answer:
-          'On Enterprise, yes — use `neo4j-admin database backup` for an online hot backup. On Community, the `database dump` command needs the database stopped, so Dockstash schedules a brief stop or dumps a replica.',
-      },
-      {
-        question: 'Why not copy the /data/databases directory?',
-        answer:
-          'The graph store and transaction logs are written continuously. A live copy is inconsistent and may not load. neo4j-admin dump/backup produce a consistent, restorable artifact.',
-      },
-      {
-        question: 'How do I restore a Neo4j dump?',
-        answer:
-          'Use `neo4j-admin database load ... --overwrite-destination=true` against a stopped target, then start Neo4j. Dockstash loads into a staging database before any overwrite.',
-      },
-      {
-        question: 'Does the backup include installed plugins?',
-        answer:
-          'No — plugins (APOC, GDS) are part of the image/config, not the database dump. Ensure the restore-target image has the same plugins before loading.',
-      },
+    restoreVerify: [
+      { id: 'pick-snapshot' },
+      { id: 'restore-scratch' },
+      { id: 'verify-data' },
+      { id: 'promote' },
     ],
     relatedServices: ['mongodb', 'postgres', 'elasticsearch'],
     relatedUseCases: [],

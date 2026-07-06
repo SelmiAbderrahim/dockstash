@@ -8,6 +8,8 @@ import {
   resetPasswordRequest,
   verifyEmailRequest,
   resendVerificationRequest,
+  oauthProvidersRequest,
+  refreshRequest,
 } from './api';
 
 vi.mock('@shared/api/client', () => ({ apiClient: vi.fn() }));
@@ -67,6 +69,20 @@ describe('auth api wrappers', () => {
     expect(apiClient).toHaveBeenCalledWith('/auth/resend-verification', {
       method: 'POST',
       body: { email: 'a@b.co' },
+    });
+  });
+
+  it('oauthProvidersRequest probes the capability endpoint', async () => {
+    await oauthProvidersRequest();
+    expect(apiClient).toHaveBeenCalledWith('/auth/providers');
+  });
+
+  it('refreshRequest posts with auth to rehydrate the session', async () => {
+    await refreshRequest();
+    expect(apiClient).toHaveBeenCalledWith('/auth/refresh', {
+      method: 'POST',
+      body: {},
+      auth: true,
     });
   });
 });

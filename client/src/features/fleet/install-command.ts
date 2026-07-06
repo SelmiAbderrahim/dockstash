@@ -101,6 +101,8 @@ export function buildAgentInstallCommand({
     '      EXEC: 1',
     '      POST: 1',
     '      INFO: 1',
+    // DB restores bounce the target container after placing the artifact.
+    '      ALLOW_RESTARTS: 1',
     '    volumes:',
     '      - /var/run/docker.sock:/var/run/docker.sock:ro',
     '    security_opt: [no-new-privileges:true]',

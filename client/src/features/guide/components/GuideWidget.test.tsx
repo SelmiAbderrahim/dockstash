@@ -19,6 +19,8 @@ const renderWidget = (authenticated: boolean, enabled: boolean) => {
         role: '',
         otpChallengeId: '',
         pendingVerificationEmail: '',
+        providers: { google: false, github: false },
+        providersLoaded: false,
         error: '',
         message: '',
       },

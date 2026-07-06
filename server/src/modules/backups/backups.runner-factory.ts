@@ -27,8 +27,10 @@ export function placeholderResticRunner(): ResticRunnerExt {
     init: notWired,
     backup: notWired,
     snapshots: notWired,
+    snapshotsDetailed: notWired,
     check: notWired,
     restore: notWired,
+    dump: notWired,
     unlock: notWired,
     forget: notWired,
   };
@@ -85,8 +87,10 @@ export function makeResticRunnerFor(
     init: async () => (await get()).init(),
     backup: async (args, opts) => (await get()).backup(args, opts),
     snapshots: async () => (await get()).snapshots(),
+    snapshotsDetailed: async () => (await get()).snapshotsDetailed(),
     check: async (args) => (await get()).check(args),
     restore: async (args) => (await get()).restore(args),
+    dump: async (args) => (await get()).dump(args),
     unlock: async () => (await get()).unlock(),
     forget: async (args) => (await get()).forget(args),
   };

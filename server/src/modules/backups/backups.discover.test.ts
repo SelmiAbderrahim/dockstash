@@ -205,7 +205,16 @@ describe('discoverContainers', () => {
       exec: async () => {
         throw new Error('unused');
       },
-      inspect: async () => ({ id: '', running: false }),
+      execCollect: async () => {
+        throw new Error('unused');
+      },
+      execWithStdin: async () => {
+        throw new Error('unused');
+      },
+      restart: async () => {
+        throw new Error('unused');
+      },
+      inspect: async () => ({ id: '', running: false, env: [], image: '' }),
       listContainers: async () => {
         if (list instanceof Error) throw list;
         return list;
@@ -246,7 +255,16 @@ describe('discoverContainers', () => {
       exec: async () => {
         throw new Error('unused');
       },
-      inspect: async () => ({ id: '', running: false }),
+      execCollect: async () => {
+        throw new Error('unused');
+      },
+      execWithStdin: async () => {
+        throw new Error('unused');
+      },
+      restart: async () => {
+        throw new Error('unused');
+      },
+      inspect: async () => ({ id: '', running: false, env: [], image: '' }),
       listContainers: async () => {
         throw 'nope';
       },

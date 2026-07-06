@@ -58,6 +58,12 @@ function makeRestic(overrides: Partial<ResticRunnerExt> = {}): ResticRunnerExt {
     },
     async check() {},
     async restore() {},
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
     async unlock() {},
     async forget() {},
   };
@@ -69,8 +75,17 @@ function makeDocker(): DockerClient {
     async exec() {
       return Readable.from(['dump-bytes']);
     },
+    async execCollect() {
+      throw new Error('execCollect not stubbed');
+    },
+    async execWithStdin() {
+      throw new Error('execWithStdin not stubbed');
+    },
+    async restart() {
+      throw new Error('restart not stubbed');
+    },
     async inspect(container) {
-      return { id: container, running: true };
+      return { id: container, running: true, env: [], image: '' };
     },
     async listContainers() {
       return [];

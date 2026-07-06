@@ -42,6 +42,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // OAuth provider subject ids. Sparse-unique: absent on password-only
+    // accounts, at most one account per provider identity. OAuth-only users
+    // still get a random bcrypt password (see findOrCreateOAuthUser) so the
+    // required password invariant holds.
+    googleId: {
+      type: String,
+      index: { unique: true, sparse: true },
+    },
+    githubId: {
+      type: String,
+      index: { unique: true, sparse: true },
+    },
     profile: {
       firstName: { type: String, default: '' },
       lastName: { type: String, default: '' },

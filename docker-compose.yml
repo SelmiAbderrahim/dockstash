@@ -60,6 +60,9 @@ services:
       CONTAINERS: 1
       EXEC: 1
       INFO: 1
+      # Container restart only (no stop/start/kill scope beyond it) — DB
+      # restores bounce the target container after placing the artifact.
+      ALLOW_RESTARTS: 1
       # Everything else denied.
       IMAGES: 0
       NETWORKS: 0
@@ -137,6 +140,13 @@ services:
       # mounted but never actually consumed by the app.
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM: ${RESEND_FROM}
+      # OAuth sign-in (Google / GitHub). Must be plain env vars — env.ts reads
+      # process.env directly. '' is preprocessed to undefined, which disables
+      # the provider and hides its button on the client.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       # Superadmin bootstrap — consumed by the entrypoint seeder. The `:-`
       # default yields '' when unset; env.ts preprocesses '' → undefined so
       # the free / self-host tier still boots.

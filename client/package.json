@@ -12,6 +12,7 @@
     "build:server": "vite build --ssr src/entry-server.tsx --outDir dist/server",
     "start": "NODE_ENV=production node server.js",
     "preview": "vite preview",
+    "assets:brand": "node scripts/generate-brand-assets.mjs",
     "assets:og": "node scripts/optimize-og-image.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,scss}\"",

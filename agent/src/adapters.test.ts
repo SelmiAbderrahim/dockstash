@@ -75,7 +75,6 @@ describe('readServiceEnvAny (via mariadbAdapter)', () => {
       '-uroot',
       '-pm',
     ]);
-    expect(mariadbAdapter.restoreCmd(legacy)).toEqual(['mariadb', '-uroot', '-pm']);
   });
 
   it('falls back to an empty password when neither key is present', () => {
@@ -88,7 +87,6 @@ describe('readServiceEnvAny (via mariadbAdapter)', () => {
       '-uroot',
       '-p',
     ]);
-    expect(mariadbAdapter.restoreCmd({})).toEqual(['mariadb', '-uroot', '-p']);
   });
 });
 
@@ -96,16 +94,18 @@ describe('postgresAdapter', () => {
   it('uses the configured POSTGRES_USER, defaulting to postgres', () => {
     expect(postgresAdapter.dumpCmd({ environment: { POSTGRES_USER: 'app' } })).toEqual([
       'pg_dumpall',
+      '--clean',
+      '--if-exists',
       '-U',
       'app',
     ]);
-    expect(postgresAdapter.restoreCmd({ environment: { POSTGRES_USER: 'app' } })).toEqual([
-      'psql',
+    expect(postgresAdapter.dumpCmd({})).toEqual([
+      'pg_dumpall',
+      '--clean',
+      '--if-exists',
       '-U',
-      'app',
+      'postgres',
     ]);
-    expect(postgresAdapter.dumpCmd({})).toEqual(['pg_dumpall', '-U', 'postgres']);
-    expect(postgresAdapter.restoreCmd({})).toEqual(['psql', '-U', 'postgres']);
   });
 });
 
@@ -120,11 +120,6 @@ describe('mysqlAdapter', () => {
       '-uroot',
       '-ps3cret',
     ]);
-    expect(mysqlAdapter.restoreCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual([
-      'mysql',
-      '-uroot',
-      '-ps3cret',
-    ]);
     expect(mysqlAdapter.dumpCmd({})).toEqual([
       'mysqldump',
       '--single-transaction',
@@ -134,19 +129,12 @@ describe('mysqlAdapter', () => {
       '-uroot',
       '-p',
     ]);
-    expect(mysqlAdapter.restoreCmd({})).toEqual(['mysql', '-uroot', '-p']);
   });
 });
 
 describe('mongoAdapter', () => {
-  it('dumps and restores via mongodump/mongorestore', () => {
+  it('dumps via mongodump --archive --oplog', () => {
     expect(mongoAdapter.dumpCmd({})).toEqual(['mongodump', '--archive', '--oplog']);
-    expect(mongoAdapter.restoreCmd({})).toEqual([
-      'mongorestore',
-      '--archive',
-      '--oplogReplay',
-      '--drop',
-    ]);
   });
 });
 
@@ -219,9 +207,6 @@ describe('file-artifact adapters', () => {
       expect(a.artifactType).toBe(kind);
       expect(a.dumpCmd({})).toEqual(dump);
       expect(a.dumpArtifactPath({})).toBe(artifact);
-      const restore = a.restoreCmd({});
-      expect(Array.isArray(restore)).toBe(true);
-      expect(restore.every((tok) => typeof tok === 'string' && !tok.includes('\0'))).toBe(true);
     }
   });
 
@@ -234,15 +219,16 @@ describe('file-artifact adapters', () => {
 });
 
 describe('ADAPTER_REGISTRY', () => {
-  it('contains exactly one adapter per DatabaseType, each with a working match/dumpCmd/restoreCmd', () => {
+  it('contains exactly one adapter per DatabaseType, each with a working match/dumpCmd', () => {
     expect(ADAPTER_REGISTRY).toHaveLength(13);
     const seen = new Set<string>();
     for (const adapter of ADAPTER_REGISTRY) {
       expect(seen.has(adapter.type)).toBe(false);
       seen.add(adapter.type);
       expect(typeof adapter.match('some-image:tag')).toBe('boolean');
-      expect(Array.isArray(adapter.dumpCmd({}))).toBe(true);
-      expect(Array.isArray(adapter.restoreCmd({}))).toBe(true);
+      const dump = adapter.dumpCmd({});
+      expect(Array.isArray(dump)).toBe(true);
+      expect(dump.every((tok) => typeof tok === 'string' && !tok.includes('\0'))).toBe(true);
       if (adapter.mode === 'file') {
         expect(typeof adapter.dumpArtifactPath({})).toBe('string');
       }

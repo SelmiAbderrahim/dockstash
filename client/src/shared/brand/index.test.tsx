@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import { BrandLogo, BRAND_NAME, BRAND_ASSETS } from './index';
+import {
+  BrandLogo,
+  BRAND_ASSETS,
+  BRAND_NAME,
+  BRAND_PRIMARY_COLOR,
+  BRAND_THEME_COLOR,
+} from './index';
 
 describe('BrandLogo', () => {
   it('renders the full logo (mark + text) by default with an extra class', () => {
@@ -21,5 +27,7 @@ describe('BrandLogo', () => {
 
   it('exposes the brand asset manifest', () => {
     expect(BRAND_ASSETS.ogDefault).toBe('/og/default.png');
+    expect(BRAND_ASSETS.maskableIcon512).toBe('/icons/maskable-512.png');
+    expect(BRAND_PRIMARY_COLOR).toBe(BRAND_THEME_COLOR);
   });
 });

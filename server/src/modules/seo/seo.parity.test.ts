@@ -8,6 +8,7 @@ import {
   COMPETITOR_SLUGS,
   CORE_PATHS,
   GUIDE_SLUGS,
+  PLATFORM_GUIDE_SLUGS,
   SEO_LASTMOD,
   USECASE_SLUGS,
 } from './seo.data.js';
@@ -31,6 +32,12 @@ describe('client ↔ server SEO parity', () => {
     expect(new Set(extractSlugs('features/marketing/content/guides.ts'))).toEqual(
       new Set(GUIDE_SLUGS),
     );
+  });
+
+  it('platform guide slugs match client content', () => {
+    expect(
+      new Set(extractSlugs('features/marketing/content/platform-guides.ts')),
+    ).toEqual(new Set(PLATFORM_GUIDE_SLUGS));
   });
 
   it('use-case slugs match client content', () => {

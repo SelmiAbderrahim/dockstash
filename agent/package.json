@@ -1,6 +1,6 @@
 {
   "name": "dockstash-agent",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Dockstash fleet agent — pull-based backup daemon for remote VPS hosts",

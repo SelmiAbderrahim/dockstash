@@ -103,6 +103,12 @@ function makeRestic(): ResticRunnerExt {
     },
     async check() {},
     async restore() {},
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
     async unlock() {},
     async forget() {},
   };

@@ -18,6 +18,8 @@ const base = (over: Partial<AuthState> = {}): AuthState => ({
   role: '',
   otpChallengeId: '',
   pendingVerificationEmail: '',
+  providers: { google: false, github: false },
+  providersLoaded: false,
   error: '',
   message: '',
   ...over,
@@ -145,6 +147,8 @@ describe('auth slice', () => {
         role: 'Superadmin',
         otpChallengeId: 'ch1',
         pendingVerificationEmail: 'a@b.co',
+        providers: { google: false, github: false },
+        providersLoaded: false,
       }),
       { type: logoutUser.fulfilled.type, payload: 'bye' },
     );

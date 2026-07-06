@@ -10,6 +10,7 @@ import { makeStore } from './app/store';
 import { marketingRoutes } from '@features/marketing';
 import { createServerI18n } from '@shared/i18n/server';
 import { resolveMarketingRoute } from '@features/marketing/useMarketingRoute';
+import { isGuidePath, loadGuideCopy } from '@features/marketing/content';
 import { SsrStatusProvider, type SsrStatusRef } from '@shared/seo';
 
 export interface RenderResult {
@@ -30,7 +31,13 @@ const handler = createStaticHandler(marketingRoutes);
 /** Render a marketing URL to HTML for the SSR server. */
 export async function render(url: string): Promise<RenderResult> {
   const fullUrl = new URL(url, 'http://ssr.local');
-  const { locale } = resolveMarketingRoute(fullUrl.pathname);
+  const { locale, basePath } = resolveMarketingRoute(fullUrl.pathname);
+
+  // Guide pages read their locale's copy bundle synchronously during render —
+  // await it here (deterministic dynamic import) so renderToString sees it.
+  if (isGuidePath(basePath)) {
+    await loadGuideCopy(locale);
+  }
 
   const context = await handler.query(new Request(fullUrl));
 

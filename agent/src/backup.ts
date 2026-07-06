@@ -2,6 +2,7 @@
 // (server/src/modules/backups/backups.service.ts:198-247) — keep semantics in sync.
 import path from 'node:path';
 import { matchAdapter, type ComposeService, type FileAdapter } from './adapters.js';
+import { dbSnapshotTag } from './restore-plan.js';
 import type { DockerClient } from './docker-client.js';
 import type { ResticRunnerExt } from './restic-runner.js';
 import { isAllowedProjectPath } from './paths.js';
@@ -123,12 +124,28 @@ export async function runBackupJob(
         assertArgvSafe(readArgv);
         const artifact = await deps.docker.exec(db.container, readArgv);
         await deps.restic.backup(
-          ['backup', '--stdin', '--stdin-filename', stdinFilename],
+          [
+            'backup',
+            '--stdin',
+            '--stdin-filename',
+            stdinFilename,
+            // Tag DB-layer snapshots so restore can classify them without
+            // the filename heuristic (see classifySnapshot).
+            '--tag',
+            dbSnapshotTag(db.service, adapter.type),
+          ],
           { stdin: artifact as never },
         );
       } else {
         await deps.restic.backup(
-          ['backup', '--stdin', '--stdin-filename', `${db.service}.dump`],
+          [
+            'backup',
+            '--stdin',
+            '--stdin-filename',
+            `${db.service}.dump`,
+            '--tag',
+            dbSnapshotTag(db.service, adapter.type),
+          ],
           { stdin: stream as never },
         );
       }

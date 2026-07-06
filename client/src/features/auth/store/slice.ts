@@ -2,6 +2,8 @@ import { createSlice } from '@reduxjs/toolkit';
 import { loadCookie } from '@shared/utils/cookies';
 import type { AuthState, AuthUser } from '../types';
 import {
+  completeOAuthLogin,
+  fetchOAuthProviders,
   loginUser,
   logoutUser,
   performPasswordReset,
@@ -20,6 +22,8 @@ const initialState: AuthState = {
   pendingVerificationEmail: '',
   error: '',
   message: '',
+  providers: { google: false, github: false },
+  providersLoaded: false,
 };
 
 const authSlice = createSlice({
@@ -35,6 +39,13 @@ const authSlice = createSlice({
     cancelOtp(state) {
       state.otpChallengeId = '';
       state.error = '';
+    },
+    /** OAuth callback for a superadmin: adopt the emailed-OTP challenge and
+     * let the Login page's existing OTP form take over. */
+    beginOtpChallenge(state, action: { payload: string }) {
+      state.otpChallengeId = action.payload;
+      state.error = '';
+      state.message = '';
     },
   },
   extraReducers: (builder) => {
@@ -69,6 +80,22 @@ const authSlice = createSlice({
       .addCase(verifyLoginOtp.rejected, (state, action) => {
         // Keep the challenge so the user can retry the code.
         state.error = action.payload ?? 'Verification failed.';
+      })
+      .addCase(completeOAuthLogin.fulfilled, (state, action) => {
+        state.authenticated = true;
+        state.emailVerified = action.payload.emailVerified;
+        state.role = action.payload.role;
+        state.otpChallengeId = '';
+        state.error = '';
+        state.message = '';
+      })
+      .addCase(completeOAuthLogin.rejected, (state, action) => {
+        state.authenticated = false;
+        state.error = action.payload ?? 'Login failed.';
+      })
+      .addCase(fetchOAuthProviders.fulfilled, (state, action) => {
+        state.providers = action.payload;
+        state.providersLoaded = true;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.authenticated = true;
@@ -120,5 +147,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearMessage, cancelOtp } = authSlice.actions;
+export const { clearError, clearMessage, cancelOtp, beginOtpChallenge } = authSlice.actions;
 export const authReducer = authSlice.reducer;

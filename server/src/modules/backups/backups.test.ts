@@ -84,8 +84,14 @@ function makeMocks(): {
     async snapshots() {
       return [];
     },
+    async snapshotsDetailed() {
+      return [];
+    },
     async check() {},
     async restore() {},
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
   };
   const docker = {
     calls: [] as Array<{ container: string; argv: string[] }>,
@@ -93,8 +99,17 @@ function makeMocks(): {
       docker.calls.push({ container, argv });
       return Readable.from(['dump-bytes']);
     },
+    async execCollect(): Promise<never> {
+      throw new Error('execCollect not stubbed');
+    },
+    async execWithStdin(): Promise<never> {
+      throw new Error('execWithStdin not stubbed');
+    },
+    async restart(): Promise<never> {
+      throw new Error('restart not stubbed');
+    },
     async inspect(container: string) {
-      return { id: container, running: true };
+      return { id: container, running: true, env: [] as string[], image: '' };
     },
     async listContainers() {
       return [];
@@ -201,12 +216,15 @@ describe('backups: adapters', () => {
     const svc = { environment: { POSTGRES_USER: 'app' } };
     const pg = postgresAdapter.dumpCmd(svc);
     expect(Array.isArray(pg)).toBe(true);
-    expect(pg).toEqual(['pg_dumpall', '-U', 'app']);
-    expect(postgresAdapter.restoreCmd(svc)).toEqual(['psql', '-U', 'app']);
-    expect(postgresAdapter.dumpCmd({})).toEqual(['pg_dumpall', '-U', 'postgres']);
-    expect(postgresAdapter.restoreCmd({})).toEqual(['psql', '-U', 'postgres']);
-    expect(mysqlAdapter.restoreCmd({})).toEqual(['mysql', '-uroot', '-p']);
-    expect(mariadbAdapter.restoreCmd({})).toEqual(['mariadb', '-uroot', '-p']);
+    // --clean --if-exists so a restore replay truly overwrites (see restore-plan).
+    expect(pg).toEqual(['pg_dumpall', '--clean', '--if-exists', '-U', 'app']);
+    expect(postgresAdapter.dumpCmd({})).toEqual([
+      'pg_dumpall',
+      '--clean',
+      '--if-exists',
+      '-U',
+      'postgres',
+    ]);
 
     const mysqlArgs = mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] });
     expect(mysqlArgs).toEqual([
@@ -215,11 +233,6 @@ describe('backups: adapters', () => {
       '--routines',
       '--triggers',
       '--all-databases',
-      '-uroot',
-      '-ps3cret',
-    ]);
-    expect(mysqlAdapter.restoreCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual([
-      'mysql',
       '-uroot',
       '-ps3cret',
     ]);
@@ -256,7 +269,6 @@ describe('backups: adapters', () => {
       '-uroot',
       '-pm',
     ]);
-    expect(mariadbAdapter.restoreCmd(mariaLegacy)).toEqual(['mariadb', '-uroot', '-pm']);
     expect(mariadbAdapter.dumpCmd({})).toEqual([
       'mariadb-dump',
       '--single-transaction',
@@ -268,12 +280,6 @@ describe('backups: adapters', () => {
     ]);
 
     expect(mongoAdapter.dumpCmd({})).toEqual(['mongodump', '--archive', '--oplog']);
-    expect(mongoAdapter.restoreCmd({})).toEqual([
-      'mongorestore',
-      '--archive',
-      '--oplogReplay',
-      '--drop',
-    ]);
   });
 
   it('file-artifact adapters expose mode + artifactType + artifact path + argv commands', () => {
@@ -343,10 +349,10 @@ describe('backups: adapters', () => {
       expect(a.artifactType).toBe(kind);
       expect(a.dumpCmd({})).toEqual(dump);
       expect(a.dumpArtifactPath({})).toBe(artifact);
-      // restoreCmd is always an argv array (never a shell string)
-      const restore = a.restoreCmd({});
-      expect(Array.isArray(restore)).toBe(true);
-      expect(restore.every((tok) => typeof tok === 'string' && !tok.includes('\0'))).toBe(true);
+      // dumpCmd is always an argv array (never a shell string)
+      expect(a.dumpCmd({}).every((tok) => typeof tok === 'string' && !tok.includes('\0'))).toBe(
+        true,
+      );
     }
     // stdin adapters have no artifact path (discriminated union enforces this)
     expect(postgresAdapter.mode).toBe('stdin');
@@ -770,7 +776,7 @@ describe('backups: runBackup orchestration', () => {
     expect(result.status).toBe('success');
     expect(docker.calls[0]).toMatchObject({
       container: 'p_pg_1',
-      argv: ['pg_dumpall', '-U', 'app'],
+      argv: ['pg_dumpall', '--clean', '--if-exists', '-U', 'app'],
     });
     // no `sh -c` — argv-only
     expect(docker.calls[0]?.argv).not.toContain('sh');
@@ -779,6 +785,8 @@ describe('backups: runBackup orchestration', () => {
       '--stdin',
       '--stdin-filename',
       'pg.dump',
+      '--tag',
+      'db:pg:postgres',
     ]);
     expect(restic.calls[0]?.hasStdin).toBe(true);
     expect(restic.calls[1]?.args).toEqual([
@@ -816,6 +824,8 @@ describe('backups: runBackup orchestration', () => {
       '--stdin',
       '--stdin-filename',
       'cache-dump.rdb',
+      '--tag',
+      'db:cache:redis',
     ]);
     expect(restic.calls[0]?.hasStdin).toBe(true);
     // Regression: the bare in-container path only exists inside the container,
@@ -852,6 +862,8 @@ describe('backups: runBackup orchestration', () => {
       '--stdin',
       '--stdin-filename',
       'objects.tar',
+      '--tag',
+      'db:objects:minio',
     ]);
     expect(restic.calls[0]?.hasStdin).toBe(true);
   });
@@ -874,8 +886,17 @@ describe('backups: runBackup orchestration', () => {
           },
         });
       },
+      async execCollect(): Promise<never> {
+        throw new Error('execCollect not stubbed');
+      },
+      async execWithStdin(): Promise<never> {
+        throw new Error('execWithStdin not stubbed');
+      },
+      async restart(): Promise<never> {
+        throw new Error('restart not stubbed');
+      },
       async inspect() {
-        return { id: '', running: true };
+        return { id: '', running: true, env: [], image: '' };
       },
       async listContainers() {
         return [];
@@ -902,8 +923,17 @@ describe('backups: runBackup orchestration', () => {
       async exec() {
         throw new Error('docker down');
       },
+      async execCollect(): Promise<never> {
+        throw new Error('execCollect not stubbed');
+      },
+      async execWithStdin(): Promise<never> {
+        throw new Error('execWithStdin not stubbed');
+      },
+      async restart(): Promise<never> {
+        throw new Error('restart not stubbed');
+      },
       async inspect() {
-        return { id: '', running: false };
+        return { id: '', running: false, env: [], image: '' };
       },
       async listContainers() {
         return [];
@@ -935,8 +965,14 @@ describe('backups: runBackup orchestration', () => {
       async snapshots() {
         return [];
       },
+      async snapshotsDetailed() {
+        return [];
+      },
       async check() {},
       async restore() {},
+      async dump(): Promise<never> {
+        throw new Error('dump not stubbed');
+      },
     };
     await expect(
       runBackup(projectId, userId, {

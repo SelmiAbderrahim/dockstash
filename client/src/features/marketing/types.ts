@@ -10,6 +10,17 @@ export interface FaqItem {
   answer: string;
 }
 
+/**
+ * One step in a guide walkthrough. The step is a locale-independent skeleton:
+ * `id` keys into the per-locale copy bundle for the translated title/body,
+ * and `cmd` (when present) is a universal shell command rendered verbatim
+ * in a CodeBlock — commands are never translated.
+ */
+export interface GuideStep {
+  id: string;
+  cmd?: string;
+}
+
 /** Rows for a side-by-side comparison table on competitor pages. */
 export interface ComparisonRow {
   /** Feature / dimension being compared, e.g. "Docker-aware DB dumps". */
@@ -84,14 +95,39 @@ export interface ServiceGuide {
   envKeysDetected: string[];
   /** On-disk data paths that must NOT be backed up live. */
   liveDataPaths: string[];
-  /** Service-specific gotchas (the "why live-copy fails" warnings). */
-  gotchas: string[];
-  /** Page FAQ. */
-  faq: FaqItem[];
+  /**
+   * Beginner walkthrough skeleton (8–10 steps). Step ids key into the
+   * per-locale copy bundle (ServiceGuideCopy.walkthrough); optional cmds are
+   * universal. Prose (titles/bodies/gotchas/FAQ) lives in the copy bundles,
+   * not here.
+   */
+  walkthrough: GuideStep[];
+  /** Restore-and-verify skeleton (3–4 steps), same id/cmd contract. */
+  restoreVerify: GuideStep[];
   /** Related service guide slugs (same-silo lateral links). */
   relatedServices: string[];
   /** Related use-case slugs that use this service. */
   relatedUseCases: string[];
+  /** ISO month last reviewed (recency signal). */
+  lastReviewed: string;
+}
+
+/**
+ * A platform guide (programmatic — /guides/<slug>). Covers using Dockstash
+ * itself (connect an agent, schedule backups, restore, drills, …) rather
+ * than a specific database engine. Locale-independent skeleton only: all
+ * prose lives in the per-locale copy bundles; titles/descriptions live in
+ * the `marketing` i18n namespace under `guides.platform.<slug>`.
+ */
+export interface PlatformGuide {
+  /** URL slug, e.g. "connect-fleet-agent". Must never match /^backup-.*-docker$/. */
+  slug: string;
+  /** Ordered step skeleton; ids key into PlatformGuideCopy.steps. */
+  steps: GuideStep[];
+  /** Related platform guide slugs. */
+  relatedPlatformGuides: string[];
+  /** Related service guide slugs. */
+  relatedServices: string[];
   /** ISO month last reviewed (recency signal). */
   lastReviewed: string;
 }

@@ -96,6 +96,8 @@ export async function dispatchJob(job: Job, deps: DispatchDeps): Promise<void> {
       await runRestore(projectId, owner, payload, {
         t,
         resticRunner: deps.resticRunner,
+        // Optional: only overwrite restores of DB dump snapshots need Docker.
+        dockerClient: deps.dockerClient,
       });
       return;
     }

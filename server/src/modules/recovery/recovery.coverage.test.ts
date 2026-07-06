@@ -68,6 +68,12 @@ function makeRestic(): ResticRunner {
     },
     async check() {},
     async restore() {},
+    async snapshotsDetailed() {
+      return [];
+    },
+    async dump(): Promise<never> {
+      throw new Error('dump not stubbed');
+    },
   };
 }
 
@@ -320,6 +326,12 @@ describe('recovery coverage: DB-backed branches', () => {
       },
       async check() {},
       async restore() {},
+      async snapshotsDetailed() {
+        return [];
+      },
+      async dump(): Promise<never> {
+        throw new Error('dump not stubbed');
+      },
     };
     const result = await runSelfBackup({ resticRunner: restic, mongoDump: dump });
     expect(result.status).toBe('failed');

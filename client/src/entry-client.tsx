@@ -5,7 +5,11 @@ import { App } from './App';
 import { store } from './app/store';
 import { createAppRouter } from './app/router';
 import { initI18n } from '@shared/i18n';
-import { MARKETING_LOCALE_PREFIXES } from '@features/marketing/useMarketingRoute';
+import {
+  MARKETING_LOCALE_PREFIXES,
+  resolveMarketingRoute,
+} from '@features/marketing/useMarketingRoute';
+import { isGuidePath, loadGuideCopy } from '@features/marketing/content';
 // Self-hosted fonts (bundled locally by Vite — no external CDN request).
 // Variable-weight Inter (latin) for UI; JetBrains Mono for code blocks.
 import '@fontsource-variable/inter/wght.css';
@@ -22,10 +26,13 @@ declare global {
   }
 }
 
-const container = document.getElementById('root');
-if (!container) {
+const rootContainer = document.getElementById('root');
+if (!rootContainer) {
   throw new Error('Root container #root not found in index.html');
 }
+// Narrowed alias — TS does not carry the throw-guard narrowing into the
+// async boot() closure below.
+const container: HTMLElement = rootContainer;
 
 // If the URL carries a locale prefix (a server-rendered marketing page),
 // force i18n to that locale so hydration matches; otherwise fall back to the
@@ -44,8 +51,20 @@ const tree = (
   </StrictMode>
 );
 
-if (window.__SSR__) {
-  hydrateRoot(container, tree);
-} else {
-  createRoot(container).render(tree);
+// A server-rendered guide page was rendered WITH its locale's copy bundle in
+// the registry cache. Hydration must see the same bundle synchronously or the
+// client renders the loading skeleton over real SSR HTML (hydration
+// mismatch). Await the (cached-chunk) import before hydrating.
+async function boot(): Promise<void> {
+  if (window.__SSR__) {
+    const { locale, basePath } = resolveMarketingRoute(window.location.pathname);
+    if (isGuidePath(basePath)) {
+      await loadGuideCopy(locale);
+    }
+    hydrateRoot(container, tree);
+  } else {
+    createRoot(container).render(tree);
+  }
 }
+
+void boot();

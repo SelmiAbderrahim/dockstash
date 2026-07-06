@@ -20,6 +20,7 @@ import type {
 } from './backups.boundaries.js';
 import { MIN_FREE_BYTES_DEFAULT } from './backups.boundaries.js';
 import { matchAdapter, type ComposeService, type FileAdapter } from './backups.adapters.js';
+import { dbSnapshotTag } from './backups.restore-plan.js';
 import type { CreateProjectInput } from './backups.schema.js';
 import path from 'node:path';
 
@@ -320,13 +321,29 @@ export async function runBackup(
           assertArgvSafe(readArgv);
           const artifact = await deps.dockerClient.exec(db.container, readArgv);
           await deps.resticRunner.backup(
-            ['backup', '--stdin', '--stdin-filename', stdinFilename],
+            [
+              'backup',
+              '--stdin',
+              '--stdin-filename',
+              stdinFilename,
+              // Tag DB-layer snapshots so restore can classify them without
+              // the filename heuristic (see classifySnapshot).
+              '--tag',
+              dbSnapshotTag(db.service, adapter.type),
+            ],
             { stdin: artifact },
           );
         } else {
           // stdin engines stream their dump straight into restic (no disk hop).
           await deps.resticRunner.backup(
-            ['backup', '--stdin', '--stdin-filename', `${db.service}.dump`],
+            [
+              'backup',
+              '--stdin',
+              '--stdin-filename',
+              `${db.service}.dump`,
+              '--tag',
+              dbSnapshotTag(db.service, adapter.type),
+            ],
             { stdin: stream },
           );
         }

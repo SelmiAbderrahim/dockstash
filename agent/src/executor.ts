@@ -1,10 +1,10 @@
 // Kind dispatch + local retry loop — mirrors the server dispatcher's
 // 3-attempt/backoff convention (scheduler.dispatcher.ts processJob), with
 // `restic unlock` between attempts (recoverStaleLockIfOrphaned's intent).
-import { isAllowedProjectPath } from './paths.js';
 import type { ResticRunnerExt } from './restic-runner.js';
 import type { DockerClient } from './docker-client.js';
 import { runBackupJob } from './backup.js';
+import { runRestoreJob } from './restore.js';
 import type { ClaimedJob, JobResult } from './types.js';
 
 export interface ExecutorDeps {
@@ -21,12 +21,6 @@ const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-
-/**
- * A restic snapshot id is a hex id or the alias `latest`. Validate before it
- * enters the restic argv so a value like `--flag` cannot be parsed as an option.
- */
-const SNAPSHOT_ID_RE = /^([0-9a-f]{8,64}|latest)$/i;
 
 /** Retention policy → restic `forget --prune` argv (parity with pruneArgs). */
 export function pruneArgs(retention: NonNullable<ClaimedJob['retention']>): string[] {
@@ -60,26 +54,11 @@ async function dispatchKind(job: ClaimedJob, deps: ExecutorDeps): Promise<JobRes
       return { ok: true };
     }
     case 'restore': {
-      if (!job.restore) {
-        throw new Error('restore job missing payload');
-      }
-      if (!SNAPSHOT_ID_RE.test(job.restore.snapshotId)) {
-        throw new Error(`invalid snapshot id: ${job.restore.snapshotId}`);
-      }
-      let target: string;
-      if (job.restore.overwrite) {
-        // Restic snapshots store absolute paths; `--target /` puts them back.
-        target = '/';
-      } else {
-        if (
-          !job.restore.targetPath ||
-          !isAllowedProjectPath(job.restore.targetPath, deps.roots)
-        ) {
-          throw new Error(`restore target not allowed: ${job.restore.targetPath ?? ''}`);
-        }
-        target = job.restore.targetPath;
-      }
-      await deps.restic.restore(['restore', job.restore.snapshotId, '--target', target]);
+      // NOTE: the retry loop below re-runs a destructive restore. The restore
+      // plan steps are idempotent (mongorestore --drop, mysqldump's DROP TABLE
+      // IF EXISTS replay, RDB staging file + atomic mv), so a retry converges
+      // on the same end state.
+      await runRestoreJob(job, deps);
       return { ok: true };
     }
   }

@@ -721,5 +721,123 @@
       "body": "Der Spiegelmodus ist in Business enthalten. Quelle und Ziel konfigurieren, Zeitplan hinzufügen.",
       "button": "Loslegen"
     }
+  },
+  "guides": {
+    "breadcrumb": "Guides",
+    "hub": {
+      "eyebrow": "Guides",
+      "title": "Docker-Backup-Guides",
+      "answer": "Diese Guides zeigen den richtigen Weg, jede Datenbank und App unter Docker zu sichern — die Datenbank aus dem laufenden Container dumpen (nie eine Live-Datei-Kopie), Daten-Volumes und Config erfassen und verschlüsselte Off-Site-Restic-Snapshots speichern — plus die Nutzung jeder Dockstash-Funktion. Wählen Sie unten einen Plattform-Guide, Ihre Datenbank-Engine oder Ihre App.",
+      "seoTitle": "Docker-Backup-Guides für jede Datenbank & App",
+      "seoDescription": "Schritt-für-Schritt-Guides zum Sichern jeder Datenbank oder App unter Docker — PostgreSQL, MySQL, MongoDB, Redis und Stacks wie WordPress und n8n — mit konsistenten Dumps, verifizierten Restores und Plattform-Anleitungen.",
+      "platformEyebrow": "Dockstash nutzen",
+      "platformTitle": "Dockstash einrichten und betreiben",
+      "databaseEyebrow": "Nach Datenbank",
+      "databaseTitle": "Eine Datenbank unter Docker sichern",
+      "appEyebrow": "Nach App-Stack",
+      "appTitle": "Einen App-Stack unter Docker sichern",
+      "cardBackup": "{{name}} unter Docker sichern",
+      "faq": {
+        "volumeCopy": {
+          "question": "Warum kann ich nicht einfach das Datenbank-Volume kopieren?",
+          "answer": "Eine laufende Datenbank schreibt ständig in ihr Datenverzeichnis. Eine Kopie mitten im Schreibvorgang erfasst einen zerrissenen, inkonsistenten Zustand, der meist nicht wiederherstellt. Das richtige Backup ist ein logischer Dump (pg_dumpall, mysqldump --single-transaction, mongodump --oplog) aus dem laufenden Container."
+        },
+        "guideVsUseCase": {
+          "question": "Was unterscheidet einen Guide von einer Use-Case-Seite?",
+          "answer": "Ein Guide behandelt eine Datenbank-Engine (wie man PostgreSQL, MySQL, Redis usw. sichert). Eine Use-Case-Seite behandelt einen ganzen App-Stack (WordPress, n8n, Supabase) — welche Datenbanken er fährt, welche Volumes Dateien halten und den vollständigen, geordneten Backup-Plan."
+        },
+        "automation": {
+          "question": "Automatisiert Dockstash das alles?",
+          "answer": "Ja. Dockstash scannt Ihr Compose-Projekt, erkennt Datenbanken, Volumes und Config, führt den richtigen Dump pro Engine aus und speichert verschlüsselte Restic-Snapshots off-site — und drill-testet dann den Restore, damit Sie wissen, dass er funktioniert."
+        }
+      }
+    },
+    "article": {
+      "seoTitle": "Einen Docker-Container mit {{name}} sichern (2026)",
+      "seoDescription": "So sichern Sie {{name}} unter Docker: ein konsistenter Dump aus dem laufenden Container, verschlüsselte Off-Site-Restic-Snapshots und ein verifizierter Restore.",
+      "headline": "So sichern Sie einen {{name}}-Docker-Container (2026)",
+      "howToName": "So sichern Sie einen {{name}}-Docker-Container",
+      "detectionEyebrow": "Erkennung",
+      "detectionTitle": "Was Dockstash erkennt",
+      "envKeys": "Erkannte Env-Keys",
+      "defaultPort": "Standard-Port",
+      "livePaths": "Live-Datenpfade (nie im Betrieb kopiert)",
+      "images": "Beispiel-Images",
+      "walkthroughEyebrow": "Schritt für Schritt",
+      "walkthroughTitle": "{{name}} mit Dockstash sichern, Schritt für Schritt",
+      "commandsEyebrow": "Befehle",
+      "dumpTitle": "Der Dump-Befehl",
+      "restoreTitle": "Der Restore-Befehl",
+      "restoreVerifyEyebrow": "Wiederherstellen & prüfen",
+      "restoreVerifyTitle": "Ein {{name}}-Backup wiederherstellen und beweisen, dass es funktioniert",
+      "gotchasEyebrow": "Die Stolperfallen",
+      "gotchasTitle": "Stolperfallen vermeiden",
+      "troubleshootingEyebrow": "Fehlerbehebung",
+      "troubleshootingTitle": "Häufige {{name}}-Backup-Probleme",
+      "symptom": "Symptom",
+      "cause": "Ursache",
+      "fix": "Lösung",
+      "ctaTitle": "Mit Dockstash in einem Klick",
+      "ctaBody": "Dockstash führt exakt den obigen Dump aus, übergibt ihn off-site an restic und drill-testet den Restore automatisch — kein Skript zu pflegen.",
+      "startFree": "Kostenlos starten",
+      "allGuides": "Alle Guides",
+      "relatedTitle": "Verwandte Themen",
+      "loading": "Guide wird geladen…",
+      "notFound": {
+        "seoTitle": "Guide nicht gefunden",
+        "seoDescription": "Dieser Docker-Backup-Guide wurde nicht gefunden. Durchstöbern Sie alle Datenbank- und App-Backup-Guides im Guides-Hub.",
+        "title": "Guide nicht gefunden",
+        "body": "Wir konnten diesen Guide nicht finden.",
+        "link": "Alle Docker-Backup-Guides ansehen"
+      }
+    },
+    "platformArticle": {
+      "eyebrow": "Plattform-Guide",
+      "stepsEyebrow": "Schritt für Schritt",
+      "stepsTitle": "So geht's",
+      "relatedTitle": "Verwandte Guides"
+    },
+    "platform": {
+      "connect-fleet-agent": {
+        "title": "Einen Fleet-Agenten verbinden",
+        "seoTitle": "Einen Fleet-Agenten verbinden und einen weiteren VPS sichern",
+        "description": "Betreiben Sie einen kleinen, nur ausgehend kommunizierenden Agenten auf jedem VPS und sichern Sie dessen Container aus einem Dashboard — Registrierung, Installation, Projektverzeichnisse und erste Zuweisung."
+      },
+      "schedule-backups": {
+        "title": "Automatische Backups planen",
+        "seoTitle": "Automatische Docker-Backups planen",
+        "description": "Tägliches Backup, wöchentliches Prune mit Retention, Integritätschecks und Restore-Drills — validierter Cron, ein Job pro Repository, Live-Logs."
+      },
+      "restore-a-backup": {
+        "title": "Ein Backup wiederherstellen",
+        "seoTitle": "Ein Docker-Backup sicher wiederherstellen",
+        "description": "Snapshot wählen, Projektnamen zur Bestätigung tippen, standardmäßig an einen neuen Ort wiederherstellen und validieren, bevor irgendetwas überschrieben wird."
+      },
+      "restore-drills": {
+        "title": "Restore-Drills ausführen",
+        "seoTitle": "Restore-Drills — beweisen Sie, dass Ihre Backups wiederherstellen",
+        "description": "Den neuesten Snapshot automatisch in einen isolierten Arbeitsbereich wiederherstellen, byte- und zeilenweise gegen die Quelle vergleichen und ein Bestanden/Fehlgeschlagen-Badge erhalten."
+      },
+      "notifications-alerts": {
+        "title": "Alerts & Benachrichtigungen einrichten",
+        "seoTitle": "Backup-Alerts, Heartbeats und Webhooks",
+        "description": "Fehler-Mails, ein Dead-Man's-Switch-Heartbeat gegen stille Ausfälle, Webhook-Verteilung an Slack oder PagerDuty und ein unveränderlicher Audit-Trail."
+      },
+      "retention-policy": {
+        "title": "Eine Aufbewahrungsrichtlinie festlegen",
+        "seoTitle": "Backup-Aufbewahrung und Pruning",
+        "description": "N tägliche, wöchentliche und monatliche Snapshots behalten und das geplante Prune Ihre Richtlinie direkt auf restic forget --prune abbilden lassen."
+      },
+      "storage-destinations": {
+        "title": "Speicherziele konfigurieren",
+        "seoTitle": "Wo Dockstash Ihre Backups speichert",
+        "description": "Dockstash per SSH auf Ihren eigenen Storage-VPS richten, das einmalig angezeigte Verschlüsselungspasswort sichern und die Totalverlust-Wiederherstellung planen."
+      },
+      "troubleshooting-backups": {
+        "title": "Fehlgeschlagene Backups beheben",
+        "seoTitle": "Fehlgeschlagene Docker-Backups beheben",
+        "description": "Live-restic-Logs lesen, veraltete Locks sich selbst heilen lassen, Offline-Agenten wiederbeleben und Heartbeat-Alerts verstehen."
+      }
+    }
   }
 }

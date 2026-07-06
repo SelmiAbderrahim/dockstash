@@ -721,5 +721,123 @@
       "body": "El modo espejo está incluido en Business. Configura fuente y destino y añade una programación.",
       "button": "Empezar"
     }
+  },
+  "guides": {
+    "breadcrumb": "Guías",
+    "hub": {
+      "eyebrow": "Guías",
+      "title": "Guías de respaldo Docker",
+      "answer": "Estas guías muestran la forma correcta de respaldar cada base de datos y aplicación en Docker — volcar la base desde su contenedor en marcha (nunca una copia de archivos en caliente), capturar los volúmenes de datos y la config, y guardar instantáneas Restic cifradas fuera del servidor — más cómo usar cada función de Dockstash. Elige abajo una guía de plataforma, tu motor de base de datos o tu aplicación.",
+      "seoTitle": "Guías de respaldo Docker para cada base de datos y aplicación",
+      "seoDescription": "Guías paso a paso para respaldar cualquier base de datos o aplicación en Docker — PostgreSQL, MySQL, MongoDB, Redis y stacks como WordPress y n8n — con volcados consistentes, restauraciones verificadas y guías de plataforma.",
+      "platformEyebrow": "Usar Dockstash",
+      "platformTitle": "Configura y opera Dockstash",
+      "databaseEyebrow": "Por base de datos",
+      "databaseTitle": "Respaldar una base de datos en Docker",
+      "appEyebrow": "Por stack de aplicación",
+      "appTitle": "Respaldar un stack de aplicación en Docker",
+      "cardBackup": "Respaldar {{name}} en Docker",
+      "faq": {
+        "volumeCopy": {
+          "question": "¿Por qué no puedo simplemente copiar el volumen de la base de datos?",
+          "answer": "Una base en marcha escribe constantemente en su directorio de datos. Copiarlo en plena escritura captura un estado roto e inconsistente que normalmente no se restaurará. El respaldo correcto es un volcado lógico (pg_dumpall, mysqldump --single-transaction, mongodump --oplog) tomado desde el contenedor en marcha."
+        },
+        "guideVsUseCase": {
+          "question": "¿Qué diferencia hay entre una guía y una página de caso de uso?",
+          "answer": "Una guía cubre un motor de base de datos (cómo respaldar PostgreSQL, MySQL, Redis, etc.). Una página de caso de uso cubre un stack completo (WordPress, n8n, Supabase) — qué bases ejecuta, qué volúmenes guardan archivos y el plan de respaldo ordenado completo."
+        },
+        "automation": {
+          "question": "¿Dockstash automatiza todo esto?",
+          "answer": "Sí. Dockstash escanea tu proyecto Compose, detecta bases, volúmenes y config, ejecuta el volcado correcto por motor y guarda instantáneas Restic cifradas fuera del servidor — y luego prueba la restauración con un simulacro para que sepas que funciona."
+        }
+      }
+    },
+    "article": {
+      "seoTitle": "Respaldar un contenedor Docker de {{name}} (2026)",
+      "seoDescription": "Cómo respaldar {{name}} en Docker: un volcado consistente desde el contenedor en marcha, instantáneas Restic cifradas fuera del servidor y una restauración verificada.",
+      "headline": "Cómo respaldar un contenedor Docker de {{name}} (2026)",
+      "howToName": "Cómo respaldar un contenedor Docker de {{name}}",
+      "detectionEyebrow": "Detección",
+      "detectionTitle": "Qué detecta Dockstash",
+      "envKeys": "Claves de entorno detectadas",
+      "defaultPort": "Puerto por defecto",
+      "livePaths": "Rutas de datos vivas (nunca copiadas en caliente)",
+      "images": "Imágenes de ejemplo",
+      "walkthroughEyebrow": "Paso a paso",
+      "walkthroughTitle": "Respalda {{name}} con Dockstash, paso a paso",
+      "commandsEyebrow": "Comandos",
+      "dumpTitle": "El comando de volcado",
+      "restoreTitle": "El comando de restauración",
+      "restoreVerifyEyebrow": "Restaurar y verificar",
+      "restoreVerifyTitle": "Restaura un respaldo de {{name}} y prueba que funciona",
+      "gotchasEyebrow": "Las trampas",
+      "gotchasTitle": "Trampas a evitar",
+      "troubleshootingEyebrow": "Solución de problemas",
+      "troubleshootingTitle": "Problemas comunes al respaldar {{name}}",
+      "symptom": "Síntoma",
+      "cause": "Causa",
+      "fix": "Solución",
+      "ctaTitle": "Hazlo en un clic con Dockstash",
+      "ctaBody": "Dockstash ejecuta exactamente el volcado de arriba, lo entrega a restic fuera del servidor y prueba la restauración con un simulacro automáticamente — sin script que mantener.",
+      "startFree": "Empieza gratis",
+      "allGuides": "Todas las guías",
+      "relatedTitle": "Relacionado",
+      "loading": "Cargando la guía…",
+      "notFound": {
+        "seoTitle": "Guía no encontrada",
+        "seoDescription": "Esta guía de respaldo Docker no se encontró. Explora todas las guías de respaldo de bases y aplicaciones desde el hub de guías.",
+        "title": "Guía no encontrada",
+        "body": "No pudimos encontrar esa guía.",
+        "link": "Ver todas las guías de respaldo Docker"
+      }
+    },
+    "platformArticle": {
+      "eyebrow": "Guía de plataforma",
+      "stepsEyebrow": "Paso a paso",
+      "stepsTitle": "Cómo hacerlo",
+      "relatedTitle": "Guías relacionadas"
+    },
+    "platform": {
+      "connect-fleet-agent": {
+        "title": "Conectar un agente de flota",
+        "seoTitle": "Conecta un agente de flota para respaldar otro VPS",
+        "description": "Ejecuta un pequeño agente solo-saliente en cualquier VPS y respalda sus contenedores desde un solo panel — registro, instalación, directorios de proyectos y primera asignación."
+      },
+      "schedule-backups": {
+        "title": "Programar respaldos automáticos",
+        "seoTitle": "Programa respaldos Docker automáticos",
+        "description": "Configura un respaldo diario, un prune semanal con retención, verificaciones de integridad y simulacros de restauración — cron validado, un job por repositorio, logs en vivo."
+      },
+      "restore-a-backup": {
+        "title": "Restaurar un respaldo",
+        "seoTitle": "Restaura un respaldo Docker con seguridad",
+        "description": "Elige una instantánea, confirma tecleando el nombre del proyecto, restaura por defecto a una nueva ubicación y valida antes de sobrescribir nada."
+      },
+      "restore-drills": {
+        "title": "Ejecutar simulacros de restauración",
+        "seoTitle": "Simulacros de restauración — prueba que tus respaldos se restauran",
+        "description": "Restaura automáticamente la última instantánea en un espacio aislado, compárala byte a byte y fila a fila con la fuente y recibe una insignia de éxito/fallo."
+      },
+      "notifications-alerts": {
+        "title": "Configurar alertas y notificaciones",
+        "seoTitle": "Alertas de respaldo, heartbeats y webhooks",
+        "description": "Correos de fallo, un heartbeat tipo dead-man's switch que atrapa las paradas silenciosas, difusión por webhook a Slack o PagerDuty y un registro de auditoría inmutable."
+      },
+      "retention-policy": {
+        "title": "Definir una política de retención",
+        "seoTitle": "Retención de respaldos y pruning",
+        "description": "Conserva N instantáneas diarias, semanales y mensuales y deja que el prune programado proyecte tu política directamente sobre restic forget --prune."
+      },
+      "storage-destinations": {
+        "title": "Configurar destinos de almacenamiento",
+        "seoTitle": "Dónde guarda Dockstash tus respaldos",
+        "description": "Apunta Dockstash a tu propio VPS de almacenamiento por SSH, guarda la contraseña de cifrado que se muestra una sola vez y planifica la recuperación ante pérdida total."
+      },
+      "troubleshooting-backups": {
+        "title": "Solucionar respaldos fallidos",
+        "seoTitle": "Soluciona respaldos Docker fallidos",
+        "description": "Lee logs restic en vivo, deja que los candados obsoletos se arreglen solos, revive agentes fuera de línea y entiende las alertas de heartbeat."
+      }
+    }
   }
 }

@@ -53,6 +53,9 @@ function makeFakeRestic(opts: FakeResticOptions = {}): {
     async restore(args) {
       calls.push({ op: 'restore', args });
     },
+    async dump() {
+      throw new Error('dump not stubbed');
+    },
     async unlock() {
       calls.push({ op: 'unlock' });
     },
@@ -80,8 +83,17 @@ function makeFakeDocker(opts: FakeDockerOptions = {}): {
       stream.end('dump-output');
       return stream;
     },
+    async execCollect() {
+      throw new Error('execCollect not stubbed');
+    },
+    async execWithStdin() {
+      throw new Error('execWithStdin not stubbed');
+    },
+    async restart() {
+      throw new Error('restart not stubbed');
+    },
     async inspect(container) {
-      return { id: container, running: true };
+      return { id: container, running: true, env: [], image: '' };
     },
     async listContainers() {
       return [];
@@ -189,11 +201,11 @@ describe('runBackupJob', () => {
       },
     });
     const stats = await runBackupJob(job, makeDeps(restic, docker));
-    expect(dockerCalls[0]).toEqual({ container: 'c1', argv: ['pg_dumpall', '-U', 'postgres'] });
+    expect(dockerCalls[0]).toEqual({ container: 'c1', argv: ['pg_dumpall', '--clean', '--if-exists', '-U', 'postgres'] });
     const backupCall = resticCalls.find((c) => c.op === 'backup');
     expect(backupCall).toMatchObject({
       op: 'backup',
-      args: ['backup', '--stdin', '--stdin-filename', 'db.dump'],
+      args: ['backup', '--stdin', '--stdin-filename', 'db.dump', '--tag', 'db:db:postgres'],
     });
     expect(backupCall && 'stdin' in backupCall && backupCall.stdin).toBeDefined();
     expect(stats).toEqual({ snapshotCount: 0 });
@@ -220,7 +232,14 @@ describe('runBackupJob', () => {
     const backupCall = resticCalls.find((c) => c.op === 'backup');
     expect(backupCall).toMatchObject({
       op: 'backup',
-      args: ['backup', '--stdin', '--stdin-filename', 'cache-dump.rdb'],
+      args: [
+        'backup',
+        '--stdin',
+        '--stdin-filename',
+        'cache-dump.rdb',
+        '--tag',
+        'db:cache:redis',
+      ],
     });
     expect(backupCall && 'stdin' in backupCall && backupCall.stdin).toBeDefined();
     // Regression: restic must NEVER receive the bare in-container artifact path
@@ -252,7 +271,14 @@ describe('runBackupJob', () => {
     const backupCall = resticCalls.find((c) => c.op === 'backup');
     expect(backupCall).toMatchObject({
       op: 'backup',
-      args: ['backup', '--stdin', '--stdin-filename', 'objects.tar'],
+      args: [
+        'backup',
+        '--stdin',
+        '--stdin-filename',
+        'objects.tar',
+        '--tag',
+        'db:objects:minio',
+      ],
     });
   });
 
@@ -271,7 +297,7 @@ describe('runBackupJob', () => {
     });
     await runBackupJob(job, makeDeps(restic, docker));
     expect(dockerCalls).toEqual([
-      { container: 'c-pg', argv: ['pg_dumpall', '-U', 'postgres'] },
+      { container: 'c-pg', argv: ['pg_dumpall', '--clean', '--if-exists', '-U', 'postgres'] },
       { container: 'c-redis', argv: ['redis-cli', 'SAVE'] },
       { container: 'c-redis', argv: ['cat', '/data/dump.rdb'] },
     ]);

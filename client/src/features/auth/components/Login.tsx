@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@shared/ui/card';
+import { OAuthButtons } from './OAuthButtons';
 import { loginUser, verifyLoginOtp } from '../store/thunks';
 import { cancelOtp, clearError } from '../store/slice';
 import {
@@ -191,6 +192,7 @@ export const Login = () => {
           <Button asChild variant="link" className="mt-2 px-0">
             <Link to="/forgot-password">{t('login.forgot')}</Link>
           </Button>
+          <OAuthButtons />
         </CardContent>
         )}
       </Card>

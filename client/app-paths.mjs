@@ -13,6 +13,7 @@ export const APP_PREFIXES = [
   '/login',
   '/register',
   '/logout',
+  '/oauth',
   '/forgot-password',
   '/reset-password',
   '/verify-email',

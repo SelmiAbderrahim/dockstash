@@ -13,5 +13,7 @@
   "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
   "emailRequired": "Introduce un correo",
   "passwordRequired": "Introduce una contraseña",
-  "otpCodeInvalid": "Introduce el código de 6 dígitos."
+  "otpCodeInvalid": "Introduce el código de 6 dígitos.",
+  "firstNameRequired": "Introduce un nombre",
+  "lastNameRequired": "Introduce un apellido"
 }

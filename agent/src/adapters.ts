@@ -69,7 +69,6 @@ interface AdapterBase {
   readonly type: DatabaseType;
   match(image: string): boolean;
   dumpCmd(svc: ComposeService): string[];
-  restoreCmd(svc: ComposeService): string[];
 }
 
 export interface StdinAdapter extends AdapterBase {
@@ -102,11 +101,9 @@ export const postgresAdapter: StdinAdapter = {
   match: (image) => /postgres/i.test(image),
   dumpCmd: (svc) => {
     const user = readServiceEnv(svc, 'POSTGRES_USER') ?? 'postgres';
-    return ['pg_dumpall', '-U', user];
-  },
-  restoreCmd: (svc) => {
-    const user = readServiceEnv(svc, 'POSTGRES_USER') ?? 'postgres';
-    return ['psql', '-U', user];
+    // --clean --if-exists so a restore replay drops-and-recreates instead of
+    // append-conflicting into a non-empty cluster (see restore-plan module).
+    return ['pg_dumpall', '--clean', '--if-exists', '-U', user];
   },
 };
 
@@ -125,10 +122,6 @@ export const mysqlAdapter: StdinAdapter = {
       '-uroot',
       `-p${pw}`,
     ];
-  },
-  restoreCmd: (svc) => {
-    const pw = readServiceEnv(svc, 'MYSQL_ROOT_PASSWORD') ?? '';
-    return ['mysql', '-uroot', `-p${pw}`];
   },
 };
 
@@ -152,14 +145,6 @@ export const mariadbAdapter: StdinAdapter = {
       `-p${pw}`,
     ];
   },
-  restoreCmd: (svc) => {
-    const pw = readServiceEnvAny(
-      svc,
-      ['MARIADB_ROOT_PASSWORD', 'MYSQL_ROOT_PASSWORD'],
-      '',
-    );
-    return ['mariadb', '-uroot', `-p${pw}`];
-  },
 };
 
 export const mongoAdapter: StdinAdapter = {
@@ -167,7 +152,6 @@ export const mongoAdapter: StdinAdapter = {
   mode: 'stdin',
   match: (image) => /mongo/i.test(image),
   dumpCmd: () => ['mongodump', '--archive', '--oplog'],
-  restoreCmd: () => ['mongorestore', '--archive', '--oplogReplay', '--drop'],
 };
 
 export const redisAdapter: FileAdapter = {
@@ -177,7 +161,6 @@ export const redisAdapter: FileAdapter = {
   match: (image) => /redis/i.test(image),
   dumpCmd: () => ['redis-cli', 'SAVE'],
   dumpArtifactPath: () => '/data/dump.rdb',
-  restoreCmd: () => ['redis-cli', 'SHUTDOWN', 'NOSAVE'],
 };
 
 export const valkeyAdapter: FileAdapter = {
@@ -187,7 +170,6 @@ export const valkeyAdapter: FileAdapter = {
   match: (image) => /valkey/i.test(image),
   dumpCmd: () => ['valkey-cli', 'SAVE'],
   dumpArtifactPath: () => '/data/dump.rdb',
-  restoreCmd: () => ['valkey-cli', 'SHUTDOWN', 'NOSAVE'],
 };
 
 export const sqliteAdapter: FileAdapter = {
@@ -197,7 +179,6 @@ export const sqliteAdapter: FileAdapter = {
   match: (image) => /sqlite/i.test(image),
   dumpCmd: () => ['sqlite3', '/data/app.db', '.backup /backup/app-backup.db'],
   dumpArtifactPath: () => '/backup/app-backup.db',
-  restoreCmd: () => ['sqlite3', '/data/app.db', '.restore /backup/app-backup.db'],
 };
 
 export const clickhouseAdapter: FileAdapter = {
@@ -211,11 +192,6 @@ export const clickhouseAdapter: FileAdapter = {
     "BACKUP DATABASE default TO Disk('backups', 'snapshot')",
   ],
   dumpArtifactPath: () => '/var/lib/clickhouse/backups/snapshot',
-  restoreCmd: () => [
-    'clickhouse-client',
-    '--query',
-    "RESTORE DATABASE default FROM Disk('backups', 'snapshot')",
-  ],
 };
 
 export const elasticsearchAdapter: FileAdapter = {
@@ -231,13 +207,6 @@ export const elasticsearchAdapter: FileAdapter = {
     'http://localhost:9200/_snapshot/dockstash/snapshot?wait_for_completion=true',
   ],
   dumpArtifactPath: () => '/usr/share/elasticsearch/snapshots',
-  restoreCmd: () => [
-    'curl',
-    '-fsS',
-    '-X',
-    'POST',
-    'http://localhost:9200/_snapshot/dockstash/snapshot/_restore',
-  ],
 };
 
 export const rabbitmqAdapter: FileAdapter = {
@@ -247,7 +216,6 @@ export const rabbitmqAdapter: FileAdapter = {
   match: (image) => /rabbitmq/i.test(image),
   dumpCmd: () => ['rabbitmqctl', 'export_definitions', '/tmp/definitions.json'],
   dumpArtifactPath: () => '/tmp/definitions.json',
-  restoreCmd: () => ['rabbitmqctl', 'import_definitions', '/tmp/definitions.json'],
 };
 
 export const minioAdapter: FileAdapter = {
@@ -257,7 +225,6 @@ export const minioAdapter: FileAdapter = {
   match: (image) => /minio/i.test(image),
   dumpCmd: () => ['mc', 'mirror', '--overwrite', 'local', '/backup/minio'],
   dumpArtifactPath: () => '/backup/minio',
-  restoreCmd: () => ['mc', 'mirror', '--overwrite', '/backup/minio', 'local'],
 };
 
 export const influxdbAdapter: FileAdapter = {
@@ -267,7 +234,6 @@ export const influxdbAdapter: FileAdapter = {
   match: (image) => /influxdb/i.test(image),
   dumpCmd: () => ['influx', 'backup', '/backup/influx'],
   dumpArtifactPath: () => '/backup/influx',
-  restoreCmd: () => ['influx', 'restore', '/backup/influx'],
 };
 
 export const neo4jAdapter: FileAdapter = {
@@ -277,14 +243,6 @@ export const neo4jAdapter: FileAdapter = {
   match: (image) => /neo4j/i.test(image),
   dumpCmd: () => ['neo4j-admin', 'database', 'dump', 'neo4j', '--to-path=/backup'],
   dumpArtifactPath: () => '/backup/neo4j.dump',
-  restoreCmd: () => [
-    'neo4j-admin',
-    'database',
-    'load',
-    'neo4j',
-    '--from-path=/backup',
-    '--overwrite-destination=true',
-  ],
 };
 
 /** Order matters: more specific matchers precede generic ones. */

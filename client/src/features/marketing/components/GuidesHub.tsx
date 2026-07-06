@@ -1,11 +1,12 @@
 import { Seo, schema } from '@shared/seo';
 import {
+  PLATFORM_GUIDE_SLUGS,
   SERVICE_GUIDES,
   SERVICE_GUIDE_SLUGS,
   USE_CASES,
   USE_CASE_SLUGS,
 } from '@features/marketing/content';
-import { useMarketingRoute, localeHref } from '../useMarketingRoute';
+import { localeHref } from '../useMarketingRoute';
 import {
   Breadcrumbs,
   Container,
@@ -16,86 +17,93 @@ import {
   h1Class,
   h2Class,
   sectionClass,
+  useMarketingT,
 } from './shared';
 import { Reveal } from '../useReveal';
-import type { FaqItem } from '../types';
 
-const ANSWER =
-  'These guides show the correct way to back up each database and app in Docker: dump the database from its running container (never a live file copy), capture the data volumes and config, and store encrypted off-site Restic snapshots. Pick your database engine or your specific app below.';
-
-const HUB_FAQ: FaqItem[] = [
-  {
-    question: 'Why can’t I just copy the database volume?',
-    answer:
-      'A running database writes to its data directory constantly. Copying it mid-write captures a torn, inconsistent state that usually will not restore. The correct backup is a logical dump (pg_dumpall, mysqldump --single-transaction, mongodump --oplog) taken from the running container.',
-  },
-  {
-    question: 'What is the difference between a guide and a use-case page?',
-    answer:
-      'A guide covers one database engine (how to back up PostgreSQL, MySQL, Redis, and so on). A use-case page covers a whole app stack (WordPress, n8n, Supabase) — which databases it runs, which volumes hold files, and the full ordered backup plan.',
-  },
-  {
-    question: 'Does Dockstash automate all of this?',
-    answer:
-      'Yes. Dockstash scans your Compose project, detects the databases, volumes, and config, runs the correct dump per engine, and stores encrypted Restic snapshots off-site — then drill-tests the restore so you know it works.',
-  },
-];
+const HUB_FAQ_KEYS = ['volumeCopy', 'guideVsUseCase', 'automation'] as const;
 
 export const GuidesHub = () => {
-  const { locale } = useMarketingRoute();
+  const { t, locale } = useMarketingT();
   const href = (path: string) => localeHref(path, locale);
 
+  const hubFaq = HUB_FAQ_KEYS.map((key) => ({
+    question: t(`guides.hub.faq.${key}.question`),
+    answer: t(`guides.hub.faq.${key}.answer`),
+  }));
+
+  const platformEntries = PLATFORM_GUIDE_SLUGS.map((slug) => ({
+    name: t(`guides.platform.${slug}.title`),
+    path: localeHref(`/guides/${slug}`, locale),
+  }));
   const guideEntries = SERVICE_GUIDE_SLUGS.map((slug) => ({
-    name: `Back up ${SERVICE_GUIDES[slug]!.serviceName} in Docker`,
+    name: t('guides.hub.cardBackup', { name: SERVICE_GUIDES[slug]!.serviceName }),
     path: localeHref(`/guides/backup-${slug}-docker`, locale),
   }));
   const useCaseEntries = USE_CASE_SLUGS.map((slug) => ({
-    name: `Back up ${USE_CASES[slug]!.appName} in Docker`,
+    name: t('guides.hub.cardBackup', { name: USE_CASES[slug]!.appName }),
     path: localeHref(`/backup/${slug}-docker`, locale),
   }));
 
   const jsonLd = schema.graph(
     ...schema.siteEntities(),
-    schema.itemList([...guideEntries, ...useCaseEntries]),
+    schema.itemList([...platformEntries, ...guideEntries, ...useCaseEntries]),
     schema.breadcrumbList([
-      { name: 'Home', path: localeHref('/', locale) },
-      { name: 'Guides', path: localeHref('/guides', locale) },
+      { name: t('shared.home'), path: localeHref('/', locale) },
+      { name: t('guides.breadcrumb'), path: localeHref('/guides', locale) },
     ]),
-    schema.faqPage(HUB_FAQ),
+    schema.faqPage(hubFaq),
   );
 
   return (
     <>
       <Seo
-        title="Docker backup guides for every database & app"
-        description="Step-by-step guides to back up any database or app in Docker — PostgreSQL, MySQL, MongoDB, Redis, and app stacks like WordPress and n8n — with consistent dumps and verified restores."
+        title={t('guides.hub.seoTitle')}
+        description={t('guides.hub.seoDescription')}
         basePath="/guides"
         locale={locale}
-        localized={false}
         jsonLd={jsonLd}
       />
 
       <Container>
         <Breadcrumbs
-          crumbs={[{ label: 'Home', basePath: '/' }, { label: 'Guides' }]}
+          crumbs={[
+            { label: t('shared.home'), basePath: '/' },
+            { label: t('guides.breadcrumb') },
+          ]}
           locale={locale}
         />
       </Container>
 
       <section className={sectionClass}>
         <Container>
-          <Eyebrow>Guides</Eyebrow>
-          <h1 className={h1Class}>Docker backup guides</h1>
-          <p className={answerClass}>
-            {ANSWER}
-          </p>
+          <Eyebrow>{t('guides.hub.eyebrow')}</Eyebrow>
+          <h1 className={h1Class}>{t('guides.hub.title')}</h1>
+          <p className={answerClass}>{t('guides.hub.answer')}</p>
         </Container>
       </section>
 
       <Reveal as="section" className={sectionClass}>
         <Container>
-          <Eyebrow>By database</Eyebrow>
-          <h2 className={h2Class}>Back up a database in Docker</h2>
+          <Eyebrow>{t('guides.hub.platformEyebrow')}</Eyebrow>
+          <h2 className={h2Class}>{t('guides.hub.platformTitle')}</h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {PLATFORM_GUIDE_SLUGS.map((slug) => (
+              <LinkCard
+                key={slug}
+                to={href(`/guides/${slug}`)}
+                title={t(`guides.platform.${slug}.title`)}
+                description={t(`guides.platform.${slug}.description`)}
+              />
+            ))}
+          </div>
+        </Container>
+      </Reveal>
+
+      <Reveal as="section" className={sectionClass}>
+        <Container>
+          <Eyebrow>{t('guides.hub.databaseEyebrow')}</Eyebrow>
+          <h2 className={h2Class}>{t('guides.hub.databaseTitle')}</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {SERVICE_GUIDE_SLUGS.map((slug) => {
               const guide = SERVICE_GUIDES[slug]!;
@@ -104,7 +112,9 @@ export const GuidesHub = () => {
                   key={slug}
                   to={href(`/guides/backup-${slug}-docker`)}
                   title={guide.serviceName}
-                  description={`Back up ${guide.serviceName} in Docker`}
+                  description={t('guides.hub.cardBackup', {
+                    name: guide.serviceName,
+                  })}
                 />
               );
             })}
@@ -114,8 +124,8 @@ export const GuidesHub = () => {
 
       <Reveal as="section" className={sectionClass}>
         <Container>
-          <Eyebrow>By app stack</Eyebrow>
-          <h2 className={h2Class}>Back up an app stack in Docker</h2>
+          <Eyebrow>{t('guides.hub.appEyebrow')}</Eyebrow>
+          <h2 className={h2Class}>{t('guides.hub.appTitle')}</h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {USE_CASE_SLUGS.map((slug) => {
               const app = USE_CASES[slug]!;
@@ -132,7 +142,7 @@ export const GuidesHub = () => {
         </Container>
       </Reveal>
 
-      <FaqSection faqs={HUB_FAQ} />
+      <FaqSection faqs={hubFaq} />
     </>
   );
 };

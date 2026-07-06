@@ -721,5 +721,123 @@
       "body": "镜像模式包含在 Business 中。配置源与目标并添加计划即可。",
       "button": "开始使用"
     }
+  },
+  "guides": {
+    "breadcrumb": "指南",
+    "hub": {
+      "eyebrow": "指南",
+      "title": "Docker 备份指南",
+      "answer": "这些指南展示在 Docker 中备份每种数据库和应用的正确方式——从运行中的容器转储数据库（绝不热复制文件）、捕获数据卷和配置、存储加密的异地 Restic 快照——外加 Dockstash 每项功能的用法。在下方选择平台指南、你的数据库引擎或你的应用。",
+      "seoTitle": "覆盖每种数据库与应用的 Docker 备份指南",
+      "seoDescription": "在 Docker 中备份任何数据库或应用的分步指南——PostgreSQL、MySQL、MongoDB、Redis 以及 WordPress、n8n 等技术栈——一致的转储、经验证的还原和平台操作指南。",
+      "platformEyebrow": "使用 Dockstash",
+      "platformTitle": "配置并运行 Dockstash",
+      "databaseEyebrow": "按数据库",
+      "databaseTitle": "在 Docker 中备份数据库",
+      "appEyebrow": "按应用栈",
+      "appTitle": "在 Docker 中备份应用栈",
+      "cardBackup": "在 Docker 中备份 {{name}}",
+      "faq": {
+        "volumeCopy": {
+          "question": "为什么不能直接复制数据库卷？",
+          "answer": "运行中的数据库不停写入其数据目录。写入途中复制会捕获撕裂、不一致、通常无法还原的状态。正确的备份是从运行中的容器做逻辑转储（pg_dumpall、mysqldump --single-transaction、mongodump --oplog）。"
+        },
+        "guideVsUseCase": {
+          "question": "指南和使用场景页有什么区别？",
+          "answer": "指南覆盖一种数据库引擎（如何备份 PostgreSQL、MySQL、Redis 等）。使用场景页覆盖整个应用栈（WordPress、n8n、Supabase）——它运行哪些数据库、哪些卷存文件，以及完整的有序备份计划。"
+        },
+        "automation": {
+          "question": "Dockstash 会自动完成这一切吗？",
+          "answer": "会。Dockstash 扫描你的 Compose 项目，检测数据库、卷和配置，按引擎执行正确的转储，把加密的 Restic 快照存到异地——再用演练测试还原，让你确知它有效。"
+        }
+      }
+    },
+    "article": {
+      "seoTitle": "备份 {{name}} Docker 容器（2026）",
+      "seoDescription": "如何在 Docker 中备份 {{name}}：从运行中的容器做一致转储、加密的异地 Restic 快照和经验证的还原。",
+      "headline": "如何备份 {{name}} Docker 容器（2026）",
+      "howToName": "如何备份 {{name}} Docker 容器",
+      "detectionEyebrow": "检测",
+      "detectionTitle": "Dockstash 检测什么",
+      "envKeys": "检测到的环境变量",
+      "defaultPort": "默认端口",
+      "livePaths": "实时数据路径（绝不热复制）",
+      "images": "示例镜像",
+      "walkthroughEyebrow": "分步操作",
+      "walkthroughTitle": "用 Dockstash 分步备份 {{name}}",
+      "commandsEyebrow": "命令",
+      "dumpTitle": "转储命令",
+      "restoreTitle": "还原命令",
+      "restoreVerifyEyebrow": "还原与验证",
+      "restoreVerifyTitle": "还原 {{name}} 备份并证明它有效",
+      "gotchasEyebrow": "注意事项",
+      "gotchasTitle": "要避开的坑",
+      "troubleshootingEyebrow": "故障排查",
+      "troubleshootingTitle": "{{name}} 备份常见问题",
+      "symptom": "症状",
+      "cause": "原因",
+      "fix": "解决",
+      "ctaTitle": "用 Dockstash 一键完成",
+      "ctaBody": "Dockstash 执行的正是上面的转储，把它经 restic 存到异地，并自动演练测试还原——无需维护任何脚本。",
+      "startFree": "免费开始",
+      "allGuides": "全部指南",
+      "relatedTitle": "相关内容",
+      "loading": "指南加载中…",
+      "notFound": {
+        "seoTitle": "未找到指南",
+        "seoDescription": "找不到这篇 Docker 备份指南。请从指南中心浏览全部数据库与应用备份指南。",
+        "title": "未找到指南",
+        "body": "我们找不到那篇指南。",
+        "link": "查看全部 Docker 备份指南"
+      }
+    },
+    "platformArticle": {
+      "eyebrow": "平台指南",
+      "stepsEyebrow": "分步操作",
+      "stepsTitle": "怎么做",
+      "relatedTitle": "相关指南"
+    },
+    "platform": {
+      "connect-fleet-agent": {
+        "title": "接入舰队代理",
+        "seoTitle": "接入舰队代理，备份另一台 VPS",
+        "description": "在任何 VPS 上运行一个只出站的小代理，从一个控制台备份它的容器——注册、安装、项目目录与首次指派。"
+      },
+      "schedule-backups": {
+        "title": "排程自动备份",
+        "seoTitle": "排程自动的 Docker 备份",
+        "description": "设置每日备份、带保留策略的每周 prune、完整性校验与还原演练——校验过的 cron、每仓库单任务、实时日志。"
+      },
+      "restore-a-backup": {
+        "title": "还原备份",
+        "seoTitle": "安全地还原 Docker 备份",
+        "description": "选择快照、键入项目名确认、默认还原到新位置，并在覆盖任何东西之前先验证。"
+      },
+      "restore-drills": {
+        "title": "运行还原演练",
+        "seoTitle": "还原演练——证明你的备份能还原",
+        "description": "自动把最新快照还原到隔离工作区，与源做字节级和行级比对，并获得通过/失败徽章。"
+      },
+      "notifications-alerts": {
+        "title": "设置警报与通知",
+        "seoTitle": "备份警报、心跳与 webhook",
+        "description": "失败邮件、抓住沉默停摆的「死人开关」心跳、通往 Slack 或 PagerDuty 的 webhook 分发，以及不可变的审计日志。"
+      },
+      "retention-policy": {
+        "title": "设定保留策略",
+        "seoTitle": "备份保留与修剪",
+        "description": "保留 N 个每日、每周和每月快照，让排程的 prune 把策略直接映射到 restic forget --prune。"
+      },
+      "storage-destinations": {
+        "title": "配置存储目的地",
+        "seoTitle": "Dockstash 把你的备份存在哪里",
+        "description": "把 Dockstash 经 SSH 指向你自己的存储 VPS，保存只显示一次的加密密码，并为全损恢复做好计划。"
+      },
+      "troubleshooting-backups": {
+        "title": "排查失败的备份",
+        "seoTitle": "排查失败的 Docker 备份",
+        "description": "阅读实时 restic 日志、让陈旧锁自愈、唤醒离线代理并理解心跳警报。"
+      }
+    }
   }
 }
