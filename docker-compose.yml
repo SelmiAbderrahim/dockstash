@@ -1,6 +1,6 @@
 # Dockstash control plane — see docs/running-with-docker.md.
-# Secrets (MASTER_ENCRYPTION_KEY, POLAR_*, RESEND_API_KEY) are injected via env
-# or Docker secrets — never baked into images.
+# Secrets (MASTER_ENCRYPTION_KEY, POLAR_*, RESEND_API_KEY) are injected from the
+# root .env via `environment:` below — never baked into images.
 
 name: dockstash
 
@@ -11,16 +11,6 @@ networks:
 volumes:
   mongo-data:
   redis-data:
-
-secrets:
-  master_encryption_key:
-    file: ./secrets/master_encryption_key
-  polar_access_token:
-    file: ./secrets/polar_access_token
-  polar_webhook_secret:
-    file: ./secrets/polar_webhook_secret
-  resend_api_key:
-    file: ./secrets/resend_api_key
 
 services:
   mongo:
@@ -119,15 +109,14 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SESSION_SECRET: ${SESSION_SECRET}
       # Required by config/env.ts (zod-validated at boot; parses process.env
-      # directly — no /run/secrets reader yet, so it must be an env var). The
-      # secrets: mount below stays for a future *_FILE loader.
+      # directly), so it must be a plain env var from the root .env.
       MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
-      # Polar credentials + product catalog. env.ts reads process.env directly
-      # (the polar_* secrets mounted below are NOT consumed), so these must be
-      # plain env vars or checkout stays unconfigured and every plan renders
-      # "unavailable". Empty values are treated as unset by env.ts / polar-config.
+      # Polar credentials + product catalog. env.ts reads process.env directly,
+      # so these must be plain env vars or checkout stays unconfigured and every
+      # plan renders "unavailable". Empty values are treated as unset by
+      # env.ts / polar-config.
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
       POLAR_SERVER: ${POLAR_SERVER:-production}
@@ -135,9 +124,7 @@ services:
       POLAR_BUSINESS_PRODUCT_ID: ${POLAR_BUSINESS_PRODUCT_ID:-}
       POLAR_PRO_YEARLY_PRODUCT_ID: ${POLAR_PRO_YEARLY_PRODUCT_ID:-}
       POLAR_BUSINESS_YEARLY_PRODUCT_ID: ${POLAR_BUSINESS_YEARLY_PRODUCT_ID:-}
-      # env.ts reads process.env directly (no /run/secrets reader yet), so
-      # these must be plain env vars — the `resend_api_key` secret below is
-      # mounted but never actually consumed by the app.
+      # env.ts reads process.env directly, so these must be plain env vars.
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM: ${RESEND_FROM}
       # OAuth sign-in (Google / GitHub). Must be plain env vars — env.ts reads
@@ -159,11 +146,6 @@ services:
       RESTIC_CACHE_DIR: /tmp/restic-cache
       # Contact-form recipient (falls back to a placeholder when unset).
       CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
-    secrets:
-      - master_encryption_key
-      - polar_access_token
-      - polar_webhook_secret
-      - resend_api_key
     volumes:
       # Read-mostly view of the deploy target's site tree for backup scans.
       - /var/www:/var/www:ro
@@ -199,6 +181,7 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL}
         VITE_SITE_URL: ${VITE_SITE_URL}
+        VITE_GA_ID: ${VITE_GA_ID}
     restart: unless-stopped
     networks: [dockstash]
     depends_on:

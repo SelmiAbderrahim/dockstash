@@ -36,25 +36,27 @@ backup scans.
 
 ## Secrets
 
-Secrets are **never baked into images** and never live in `.env`. Populate the
-files listed under `secrets:` in `docker-compose.yml`:
+Secrets are **never baked into images**. They come from the root `.env` only —
+`config/env.ts` reads `process.env` directly (zod-validated at boot), so Compose
+forwards them straight into the `api` runtime `environment:`:
 
 ```
-./secrets/master_encryption_key
-./secrets/polar_access_token
-./secrets/polar_webhook_secret
-./secrets/resend_api_key
+MASTER_ENCRYPTION_KEY
+POLAR_ACCESS_TOKEN
+POLAR_WEBHOOK_SECRET
+RESEND_API_KEY
 ```
 
-Compose mounts them into the api container as Docker secrets at
-`/run/secrets/<name>`.
+There is no `./secrets/` directory and no `/run/secrets/` reader — a
+`secrets:`-file mount would only bind files the app never consumes.
 
 ## Bring the stack up
 
 ```bash
 cp .env.example .env
-# fill in JWT_SECRET, SESSION_SECRET, MONGODB_URI, REDIS_URL, CLIENT_URL,
-# SERVER_URL, VITE_API_BASE_URL, VITE_SOCKET_URL — plus the ./secrets/ files.
+# fill in MASTER_ENCRYPTION_KEY, JWT_SECRET, SESSION_SECRET, MONGODB_URI,
+# REDIS_URL, CLIENT_URL, SERVER_URL, VITE_API_BASE_URL, VITE_SOCKET_URL —
+# plus POLAR_* / RESEND_API_KEY if you enable payments/email.
 
 docker compose up -d --build
 docker compose ps           # all five services should report `healthy`
