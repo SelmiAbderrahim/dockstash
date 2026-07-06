@@ -92,7 +92,8 @@ export const Pricing = () => {
       features: [
         t('pricing.tiers.pro.features.projects', PLAN_FACTS),
         t('pricing.tiers.pro.features.retention', PLAN_FACTS),
-        t('pricing.tiers.pro.features.hourly'),
+        t('pricing.tiers.pro.features.continuous'),
+        t('pricing.tiers.pro.features.pitr'),
         t('pricing.tiers.pro.features.schedules'),
         t('pricing.tiers.pro.features.alerts'),
         t('pricing.tiers.pro.features.drills'),
@@ -112,6 +113,7 @@ export const Pricing = () => {
         t('pricing.tiers.business.features.projects'),
         t('pricing.tiers.business.features.retention', PLAN_FACTS),
         t('pricing.tiers.business.features.cron'),
+        t('pricing.tiers.business.features.mirror'),
         t('pricing.tiers.business.features.priority'),
         t('pricing.tiers.business.features.fleet'),
         t('pricing.tiers.business.features.metering'),

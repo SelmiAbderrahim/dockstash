@@ -28,7 +28,10 @@
         "backupPostgres": "Respaldar Postgres",
         "backupWordpress": "Respaldar WordPress",
         "privacy": "Política de privacidad",
-        "terms": "Términos del servicio"
+        "terms": "Términos del servicio",
+        "continuousBackup": "Copia de seguridad continua",
+        "backupMonitoring": "Supervisión de copias",
+        "mirror": "Modo espejo"
       },
       "copyright": "© 2026 Dockstash"
     }
@@ -124,6 +127,14 @@
         "alerts": {
           "title": "Heartbeats y alertas",
           "body": "La muerte silenciosa del cron es el fallo clásico de los respaldos. Dockstash te avisa cuando una copia deja de ejecutarse."
+        },
+        "continuous": {
+          "title": "Copia continua",
+          "body": "Una instantánea cada cinco minutos con el preajuste continuo — y restauración a cualquier punto en el tiempo."
+        },
+        "mirror": {
+          "title": "Modo espejo",
+          "body": "Replicación unidireccional de directorios a través del repositorio cifrado: versionada, verificada y en tu calendario."
         }
       }
     },
@@ -255,7 +266,9 @@
           "hourly": "Copias cada hora",
           "schedules": "Programaciones personalizadas",
           "alerts": "Alertas por correo + heartbeat de hombre muerto",
-          "drills": "Verificación automatizada con simulacros de restauración"
+          "drills": "Verificación automatizada con simulacros de restauración",
+          "continuous": "Copia continua (cada 5 minutos)",
+          "pitr": "Restauración a un punto en el tiempo"
         },
         "cta": "Elegir Pro"
       },
@@ -271,7 +284,8 @@
           "cron": "Cualquier programación cron",
           "priority": "Soporte prioritario",
           "fleet": "Vista de flota multi-VPS",
-          "metering": "Medición por proyecto"
+          "metering": "Medición por proyecto",
+          "mirror": "Modo espejo unidireccional"
         },
         "cta": "Elegir Business"
       }
@@ -498,6 +512,214 @@
       "heading": "Run one dashboard for your whole fleet",
       "body": "Multi-VPS fleet view is on the Business plan.",
       "button": "See pricing"
+    }
+  },
+  "continuousBackup": {
+    "breadcrumb": "Copia de seguridad continua",
+    "eyebrow": "Copia casi continua",
+    "seo": {
+      "title": "Copias de seguridad Docker continuas cada cinco minutos — Dockstash",
+      "description": "Activa el preajuste continuo y Dockstash toma una instantánea de tu proyecto Docker cada cinco minutos: almacenamiento restic deduplicado, retención por niveles y restauración a cualquier punto en el tiempo."
+    },
+    "hero": {
+      "titleLead": "Una instantánea cada",
+      "titleAccent": "cinco minutos",
+      "subtitle": "El preajuste continuo respalda tu proyecto cada cinco minutos. La deduplicación de restic mantiene cada instantánea diminuta, la retención por niveles compacta la serie en conservaciones horarias y diarias, y la restauración elige la instantánea más cercana a cualquier marca de tiempo.",
+      "ctaPrimary": "Ver precios",
+      "ctaSecondary": "Cómo funciona la supervisión"
+    },
+    "features": {
+      "heading": "Diseñado para un RPO mínimo",
+      "cadence": {
+        "title": "Cadencia de 5 minutos",
+        "body": "Las programaciones bajan hasta cada cinco minutos con Pro: protección casi continua sin agente de streaming."
+      },
+      "dedup": {
+        "title": "Almacenamiento deduplicado",
+        "body": "Restic solo sube bloques modificados; una cadencia de 5 minutos cuesta una fracción de instantáneas completas repetidas."
+      },
+      "pitr": {
+        "title": "Restauración a un punto en el tiempo",
+        "body": "Elige una marca de tiempo; Dockstash resuelve la instantánea más cercana anterior y la restaura con un clic."
+      },
+      "retention": {
+        "title": "Retención por niveles",
+        "body": "Las conservaciones keep-last, horarias, diarias, semanales y mensuales compactan la serie automáticamente."
+      }
+    },
+    "how": {
+      "heading": "Cómo funciona",
+      "enable": {
+        "title": "Activa el preajuste",
+        "body": "Un clic fija el cron de cada cinco minutos y una política de retención ajustada en tu proyecto."
+      },
+      "accumulate": {
+        "title": "Las instantáneas se acumulan",
+        "body": "Cada cinco minutos corre el pipeline de volcado e instantánea; cualquier fallo te alerta al instante."
+      },
+      "restore": {
+        "title": "Restaura a un momento",
+        "body": "Introduce una marca de tiempo en la pestaña PITR, confirma la instantánea resuelta y restaura."
+      }
+    },
+    "faq": {
+      "heading": "Preguntas",
+      "rpo": {
+        "question": "¿Qué RPO me da la copia continua?",
+        "answer": "Con el preajuste de 5 minutos, la ventana máxima de pérdida es de cinco minutos más la duración del volcado. Los planes Business bajan hasta un minuto."
+      },
+      "cost": {
+        "question": "¿No dispara el almacenamiento una cadencia de 5 minutos?",
+        "answer": "No. Restic deduplica a nivel de bloque: los datos sin cambios nunca se vuelven a subir, y la retención por niveles poda la serie en conservaciones horarias y diarias."
+      },
+      "restore": {
+        "question": "¿Cómo restauro a una hora concreta?",
+        "answer": "Abre la pestaña PITR del proyecto y elige una marca de tiempo. Dockstash resuelve la instantánea más reciente anterior y muestra el desfase exacto antes de confirmar."
+      }
+    },
+    "cta": {
+      "heading": "Reduce tu ventana de copia a minutos",
+      "body": "La copia continua está incluida en Pro. Activa el preajuste en cualquier proyecto con un clic.",
+      "button": "Empezar"
+    }
+  },
+  "monitoring": {
+    "breadcrumb": "Supervisión de copias",
+    "eyebrow": "Salud de las copias",
+    "seo": {
+      "title": "Supervisión y alertas de copias de seguridad para Docker — Dockstash",
+      "description": "Un panel de salud para cada copia: puntuación sana/degradada/crítica por proyecto, centro de alertas integrado, y alertas por correo y webhook en cuanto falla una copia, restauración o simulacro."
+    },
+    "hero": {
+      "titleLead": "Ten la certeza de que tus copias",
+      "titleAccent": "funcionan de verdad",
+      "subtitle": "Las copias fallan en silencio. Dockstash puntúa cada proyecto con señales reales — última ejecución, simulacros de restauración, verificaciones del repositorio, programaciones y estado de los agentes — y avisa al primer desvío.",
+      "ctaPrimary": "Ver precios",
+      "ctaSecondary": "Sobre la copia continua"
+    },
+    "features": {
+      "heading": "Vigilantes en cada capa",
+      "dashboard": {
+        "title": "Panel de salud",
+        "body": "Cada proyecto se puntúa como sano, degradado o crítico con señales reales: última ejecución, simulacros, verificaciones del repo, programaciones y estado del agente."
+      },
+      "alertCenter": {
+        "title": "Centro de alertas",
+        "body": "Cada fallo y cada parón silencioso queda registrado en la app con estado leído/no leído: ninguna alerta se pierde en un buzón."
+      },
+      "channels": {
+        "title": "Correo + webhooks",
+        "body": "Las alertas de fallo llegan a tu correo y a cualquier webhook por proyecto: conecta Slack, Discord o PagerDuty en minutos."
+      },
+      "heartbeat": {
+        "title": "Hombre muerto",
+        "body": "Si un proyecto queda mudo más allá de su ventana de latido, Dockstash te avisa aunque nada haya «fallado» explícitamente."
+      }
+    },
+    "states": {
+      "heading": "Tres estados, cero ambigüedad",
+      "body": "El banner de flota muestra siempre el peor proyecto: un vistazo responde la única pregunta que importa.",
+      "healthy": {
+        "title": "Sano",
+        "body": "Copia reciente correcta, simulacros en verde, programación activa."
+      },
+      "degraded": {
+        "title": "Degradado",
+        "body": "Algo requiere atención: verificación del repo fallida, programación ausente o un proyecto que nunca se ha ejecutado."
+      },
+      "critical": {
+        "title": "Crítico",
+        "body": "Copia, simulacro o restauración fallidos, proyecto pasado de su ventana de latido o agente desconectado."
+      }
+    },
+    "faq": {
+      "heading": "Preguntas",
+      "signals": {
+        "question": "¿Qué señales alimentan la puntuación de salud?",
+        "answer": "Resultado y antigüedad de la última copia, resultados de simulacros y verificaciones del repositorio, presencia de programación, estado de pausa y vivacidad del agente asignado."
+      },
+      "channels": {
+        "question": "¿Qué canales de alerta se admiten?",
+        "answer": "Alertas en la app en todos los planes, más correo y webhooks por proyecto en Pro y Business. Los webhooks envían JSON: Slack, Discord y PagerDuty están a una URL."
+      },
+      "silent": {
+        "question": "¿Y los fallos silenciosos en los que no corre nada?",
+        "answer": "Un barrido de hombre muerto te avisa cuando un proyecto no ha tenido ninguna copia correcta dentro de su ventana de latido: el modo de fallo que casi ninguna supervisión detecta."
+      }
+    },
+    "cta": {
+      "heading": "Deja de confiar. Empieza a saber.",
+      "body": "La puntuación de salud y el centro de alertas vienen integrados; las alertas por correo y webhook se incluyen con Pro.",
+      "button": "Empezar"
+    }
+  },
+  "mirror": {
+    "breadcrumb": "Modo espejo",
+    "eyebrow": "Sincronización unidireccional",
+    "seo": {
+      "title": "Espejo de directorios unidireccional sobre copias cifradas — Dockstash",
+      "description": "Replica un directorio en una sola dirección: la fuente se captura en tu repositorio restic cifrado y se restaura en el destino en cada ejecución programada — versionado, verificado y con lista de permitidos."
+    },
+    "hero": {
+      "titleLead": "Replica un directorio,",
+      "titleAccent": "conserva cada versión",
+      "subtitle": "El modo espejo reproduce tu directorio fuente en una ruta destino a través del repositorio cifrado. A diferencia de rsync, cada ciclo es una instantánea completa y versionada — y el historial de copias viene incluido.",
+      "ctaPrimary": "Ver precios",
+      "ctaSecondary": "Cómo se mantiene seguro"
+    },
+    "features": {
+      "heading": "Una sincronización sin sorpresas",
+      "oneWay": {
+        "title": "Estrictamente unidireccional",
+        "body": "De la fuente al destino a través del repositorio: sin resolución de conflictos ni sincronización inversa accidental."
+      },
+      "pointInTime": {
+        "title": "Copias a un punto en el tiempo",
+        "body": "Cada ciclo restaura una instantánea completa: el destino es un momento coherente, nunca un árbol a medio copiar."
+      },
+      "allowlist": {
+        "title": "Rutas en lista de permitidos",
+        "body": "Fuente y destino deben vivir en la lista de raíces del proyecto — se comprueba al guardar y en cada ejecución."
+      },
+      "scheduled": {
+        "title": "En tu calendario",
+        "body": "Corre como un trabajo programado normal, con los mismos reintentos, registros en vivo y alertas de fallo que las copias."
+      }
+    },
+    "how": {
+      "heading": "Cómo funciona",
+      "configure": {
+        "title": "Apunta a dos rutas",
+        "body": "Define un directorio fuente y uno destino en el proyecto — ambos validados contra la lista de permitidos."
+      },
+      "schedule": {
+        "title": "Añade una programación",
+        "body": "El espejo es un tipo de trabajo programable: horario, diario o cualquier cadencia que permita tu plan."
+      },
+      "replicate": {
+        "title": "Dockstash replica",
+        "body": "Cada ejecución captura la fuente bajo una etiqueta espejo y restaura la más reciente en el destino."
+      }
+    },
+    "faq": {
+      "heading": "Preguntas",
+      "twoWay": {
+        "question": "¿Dockstash admite sincronización bidireccional?",
+        "answer": "No, y es deliberado. La bidireccional exige resolver conflictos y puede propagar errores en ambos sentidos. El espejo unidireccional con historial completo es más seguro y predecible."
+      },
+      "deletes": {
+        "question": "¿Cómo se propagan los borrados?",
+        "answer": "Cada instantánea espejo es completa: un archivo eliminado en la fuente falta en la siguiente instantánea — y sigue siendo recuperable desde las anteriores."
+      },
+      "plan": {
+        "question": "¿Qué plan incluye el modo espejo?",
+        "answer": "El modo espejo es una función del plan Business, junto a los agentes multi-VPS y la programación a cualquier cadencia."
+      }
+    },
+    "cta": {
+      "heading": "Cada versión, una sola dirección",
+      "body": "El modo espejo está incluido en Business. Configura fuente y destino y añade una programación.",
+      "button": "Empezar"
     }
   }
 }

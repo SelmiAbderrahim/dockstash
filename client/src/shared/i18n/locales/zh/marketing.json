@@ -28,7 +28,10 @@
         "backupPostgres": "备份 Postgres",
         "backupWordpress": "备份 WordPress",
         "privacy": "隐私政策",
-        "terms": "服务条款"
+        "terms": "服务条款",
+        "continuousBackup": "持续备份",
+        "backupMonitoring": "备份监控",
+        "mirror": "镜像模式"
       },
       "copyright": "© 2026 Dockstash"
     }
@@ -124,6 +127,14 @@
         "alerts": {
           "title": "心跳与告警",
           "body": "定时任务无声死亡是最经典的备份故障。备份一旦停止执行，Dockstash 立即提醒您。"
+        },
+        "continuous": {
+          "title": "持续备份",
+          "body": "开启持续预设后每五分钟一个快照——并可恢复到任意时间点。"
+        },
+        "mirror": {
+          "title": "镜像模式",
+          "body": "经加密仓库的单向目录复制：带版本、经验证、按你的计划运行。"
         }
       }
     },
@@ -255,7 +266,9 @@
           "hourly": "每小时备份",
           "schedules": "自定义计划",
           "alerts": "邮件告警 + 失联开关心跳",
-          "drills": "自动化恢复演练验证"
+          "drills": "自动化恢复演练验证",
+          "continuous": "持续备份（每 5 分钟）",
+          "pitr": "时间点恢复"
         },
         "cta": "选择 Pro"
       },
@@ -271,7 +284,8 @@
           "cron": "任意 cron 计划",
           "priority": "优先支持",
           "fleet": "多 VPS 舰队视图",
-          "metering": "按项目计量"
+          "metering": "按项目计量",
+          "mirror": "单向镜像模式"
         },
         "cta": "选择 Business"
       }
@@ -498,6 +512,214 @@
       "heading": "Run one dashboard for your whole fleet",
       "body": "Multi-VPS fleet view is on the Business plan.",
       "button": "See pricing"
+    }
+  },
+  "continuousBackup": {
+    "breadcrumb": "持续备份",
+    "eyebrow": "近乎持续的备份",
+    "seo": {
+      "title": "每五分钟一次的 Docker 持续备份 — Dockstash",
+      "description": "开启持续预设后，Dockstash 每五分钟为你的 Docker 项目创建一次快照——去重的 restic 存储、分层保留策略，并可恢复到任意时间点。"
+    },
+    "hero": {
+      "titleLead": "每五分钟",
+      "titleAccent": "一个快照",
+      "subtitle": "持续预设以 5 分钟节奏备份你的项目。restic 去重让每个快照都极小，分层保留把快照序列压缩为按小时和按天的存档，恢复时自动选取最接近任意时间戳的快照。",
+      "ctaPrimary": "查看价格",
+      "ctaSecondary": "了解监控如何工作"
+    },
+    "features": {
+      "heading": "为极小 RPO 而生",
+      "cadence": {
+        "title": "5 分钟节奏",
+        "body": "Pro 套餐的计划任务可低至每五分钟一次——无需流式代理即可获得近乎持续的保护。"
+      },
+      "dedup": {
+        "title": "去重存储",
+        "body": "restic 只上传变更的数据块，5 分钟节奏的成本只是重复完整快照的一小部分。"
+      },
+      "pitr": {
+        "title": "时间点恢复",
+        "body": "选择任意时间戳，Dockstash 解析该时刻或之前最近的快照，一键恢复。"
+      },
+      "retention": {
+        "title": "分层保留",
+        "body": "keep-last、小时、天、周、月保留自动压缩快照序列。"
+      }
+    },
+    "how": {
+      "heading": "工作原理",
+      "enable": {
+        "title": "启用预设",
+        "body": "一键为项目设置每五分钟的 cron 和调优的保留策略。"
+      },
+      "accumulate": {
+        "title": "快照持续累积",
+        "body": "每五分钟执行一次转储加快照流水线；任何失败都会立即向你告警。"
+      },
+      "restore": {
+        "title": "恢复到某一时刻",
+        "body": "在 PITR 标签页输入时间戳，确认解析出的快照后恢复。"
+      }
+    },
+    "faq": {
+      "heading": "常见问题",
+      "rpo": {
+        "question": "持续备份能提供怎样的 RPO？",
+        "answer": "使用 5 分钟预设时，最坏情况下的数据丢失窗口为五分钟加转储时长。Business 套餐可将计划低至一分钟。"
+      },
+      "cost": {
+        "question": "5 分钟节奏不会让存储成本爆炸吗？",
+        "answer": "不会。restic 在块级去重，未变更的数据永不重复上传，分层保留会把快照序列修剪为小时级和天级存档。"
+      },
+      "restore": {
+        "question": "如何恢复到特定时间？",
+        "answer": "打开项目的 PITR 标签页并选择时间戳。Dockstash 会解析该时刻或之前最新的快照，并在确认前显示精确的时间差。"
+      }
+    },
+    "cta": {
+      "heading": "把备份窗口缩小到分钟级",
+      "body": "持续备份包含在 Pro 中。一键在任意项目上启用预设。",
+      "button": "开始使用"
+    }
+  },
+  "monitoring": {
+    "breadcrumb": "备份监控",
+    "eyebrow": "备份健康",
+    "seo": {
+      "title": "Docker 项目的备份监控与告警 — Dockstash",
+      "description": "为每个备份提供健康仪表板：项目按健康/降级/危急评分，内置告警中心，并在备份、恢复或演练失败的瞬间发送邮件和 Webhook 告警。"
+    },
+    "hero": {
+      "titleLead": "确信你的备份",
+      "titleAccent": "真的在工作",
+      "subtitle": "备份总是悄无声息地失败。Dockstash 依据真实信号为每个项目评分——最近运行、恢复演练、仓库校验、计划任务与代理存活——任何偏差都会立即通知你。",
+      "ctaPrimary": "查看价格",
+      "ctaSecondary": "了解持续备份"
+    },
+    "features": {
+      "heading": "每一层都有看门狗",
+      "dashboard": {
+        "title": "健康仪表板",
+        "body": "每个项目依据真实信号评为健康、降级或危急：最近运行、演练、仓库校验、计划任务与代理状态。"
+      },
+      "alertCenter": {
+        "title": "告警中心",
+        "body": "每次失败和静默停摆都以已读/未读状态记录在应用内——没有告警会消失在邮箱里。"
+      },
+      "channels": {
+        "title": "邮件 + Webhook",
+        "body": "失败告警送达你的邮箱和每个项目的 Webhook——几分钟即可接入 Slack、Discord 或 PagerDuty。"
+      },
+      "heartbeat": {
+        "title": "死人开关",
+        "body": "项目超过心跳窗口无动静时，即使没有任何显式\"失败\"，Dockstash 也会告警。"
+      }
+    },
+    "states": {
+      "heading": "三种状态，零歧义",
+      "body": "舰队横幅始终显示最差的项目——一眼即可回答唯一重要的问题。",
+      "healthy": {
+        "title": "健康",
+        "body": "最近备份成功、演练通过、计划任务激活。"
+      },
+      "degraded": {
+        "title": "降级",
+        "body": "有事项需要关注：仓库校验失败、缺少计划任务，或项目从未运行。"
+      },
+      "critical": {
+        "title": "危急",
+        "body": "备份、演练或恢复失败，项目超出心跳窗口，或代理离线。"
+      }
+    },
+    "faq": {
+      "heading": "常见问题",
+      "signals": {
+        "question": "健康评分依据哪些信号？",
+        "answer": "最近备份的结果与时间、恢复演练与仓库校验的结果、计划任务是否存在、暂停状态，以及所分配代理的存活情况。"
+      },
+      "channels": {
+        "question": "支持哪些告警渠道？",
+        "answer": "所有套餐都有应用内告警；Pro 和 Business 增加邮件与项目级 Webhook。Webhook 以 JSON POST，Slack、Discord、PagerDuty 一个 URL 即可接入。"
+      },
+      "silent": {
+        "question": "如果什么都没运行的静默失败呢？",
+        "answer": "死人开关巡检会在项目于心跳窗口内没有任何成功备份时告警——这是大多数监控遗漏的故障模式。"
+      }
+    },
+    "cta": {
+      "heading": "别再指望，开始掌握。",
+      "body": "健康评分与告警中心内置提供；邮件与 Webhook 告警包含在 Pro 中。",
+      "button": "开始使用"
+    }
+  },
+  "mirror": {
+    "breadcrumb": "镜像模式",
+    "eyebrow": "单向同步",
+    "seo": {
+      "title": "通过加密备份的单向目录镜像 — Dockstash",
+      "description": "单向复制目录：源目录快照进入你的加密 restic 仓库，并在每次计划运行时恢复到目标目录——带版本、经验证、受路径白名单保护。"
+    },
+    "hero": {
+      "titleLead": "复制一个目录，",
+      "titleAccent": "保留每个版本",
+      "subtitle": "镜像模式通过加密仓库把源目录重放到目标路径。与 rsync 不同，每个周期都是完整的版本化快照——备份历史顺带免费获得。",
+      "ctaPrimary": "查看价格",
+      "ctaSecondary": "了解安全机制"
+    },
+    "features": {
+      "heading": "不会带来意外的同步",
+      "oneWay": {
+        "title": "严格单向",
+        "body": "经仓库从源到目标——无需考虑冲突解决，也不会意外反向同步。"
+      },
+      "pointInTime": {
+        "title": "时间点副本",
+        "body": "每个周期恢复一个完整快照：目标始终是一致的时刻，绝非复制到一半的目录树。"
+      },
+      "allowlist": {
+        "title": "白名单路径",
+        "body": "源和目标都必须位于项目根白名单内——保存时校验，每次运行再校验。"
+      },
+      "scheduled": {
+        "title": "按你的计划",
+        "body": "作为普通计划任务运行，拥有与备份相同的重试、实时日志和失败告警。"
+      }
+    },
+    "how": {
+      "heading": "工作原理",
+      "configure": {
+        "title": "指定两个路径",
+        "body": "在项目上设置源目录和目标目录——两者都会对照白名单验证。"
+      },
+      "schedule": {
+        "title": "添加计划",
+        "body": "镜像是可计划的任务类型：每小时、每天，或套餐允许的任意节奏。"
+      },
+      "replicate": {
+        "title": "Dockstash 执行复制",
+        "body": "每次运行以 mirror 标签快照源目录，并把最新快照恢复到目标。"
+      }
+    },
+    "faq": {
+      "heading": "常见问题",
+      "twoWay": {
+        "question": "Dockstash 支持双向同步吗？",
+        "answer": "不支持——这是刻意的设计。双向同步需要冲突解决，还会把错误向两个方向扩散。带完整版本历史的单向镜像更安全、更可预测。"
+      },
+      "deletes": {
+        "question": "删除如何传播？",
+        "answer": "每个镜像快照都是完整的：源端删除的文件不会出现在下一个快照中——但仍可从更早的快照恢复。"
+      },
+      "plan": {
+        "question": "哪个套餐包含镜像模式？",
+        "answer": "镜像模式是 Business 套餐功能，与多 VPS 舰队代理和任意节奏计划并列。"
+      }
+    },
+    "cta": {
+      "heading": "每个版本，只有一个方向",
+      "body": "镜像模式包含在 Business 中。配置源与目标并添加计划即可。",
+      "button": "开始使用"
     }
   }
 }

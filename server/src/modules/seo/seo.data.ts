@@ -18,7 +18,26 @@ export const DEFAULT_LOCALE: SeoLocale = 'en';
  * programmatic English served under locale prefixes and must not advertise
  * locale variants (they canonicalise onto the un-prefixed English URL).
  */
-export const TRANSLATED_PATHS = ['/', '/pricing', '/security', '/faq'] as const;
+export const TRANSLATED_PATHS = [
+  '/',
+  '/pricing',
+  '/security',
+  '/faq',
+  '/guides',
+] as const;
+
+/**
+ * Per-section translated flag. The guides surface (hub + every service and
+ * platform guide article) ships fully localized copy bundles in all locales,
+ * so every `/guides/...` path advertises hreflang alternates without listing
+ * dozens of paths in TRANSLATED_PATHS.
+ */
+export function isTranslatedPath(path: string): boolean {
+  return (
+    (TRANSLATED_PATHS as readonly string[]).includes(path) ||
+    path.startsWith('/guides/')
+  );
+}
 
 /** Core marketing/product pages. */
 export const CORE_PATHS: readonly string[] = [
@@ -27,6 +46,9 @@ export const CORE_PATHS: readonly string[] = [
   '/alternatives',
   '/guides',
   '/fleet-agents',
+  '/continuous-backup',
+  '/backup-monitoring',
+  '/mirror',
   '/security',
   '/faq',
   '/privacy',
@@ -67,6 +89,29 @@ export const GUIDE_SLUGS: readonly string[] = [
 
 export const GUIDE_PATHS: readonly string[] = GUIDE_SLUGS.map(
   (slug) => `/guides/backup-${slug}-docker`,
+);
+
+/**
+ * Platform guide slugs → `/guides/<slug>` (using Dockstash itself). Human
+ * titles for llms.txt live in PLATFORM_GUIDE_TITLES — slugs like
+ * "notifications-alerts" don't humanize well mechanically.
+ */
+export const PLATFORM_GUIDE_TITLES: Readonly<Record<string, string>> = {
+  'connect-fleet-agent': 'Connect a fleet agent',
+  'schedule-backups': 'Schedule automatic backups',
+  'restore-a-backup': 'Restore a backup',
+  'restore-drills': 'Run restore drills',
+  'notifications-alerts': 'Alerts and notifications',
+  'retention-policy': 'Retention policy and pruning',
+  'storage-destinations': 'Storage destinations',
+  'troubleshooting-backups': 'Troubleshoot failing backups',
+};
+
+export const PLATFORM_GUIDE_SLUGS: readonly string[] =
+  Object.keys(PLATFORM_GUIDE_TITLES);
+
+export const PLATFORM_GUIDE_PATHS: readonly string[] = PLATFORM_GUIDE_SLUGS.map(
+  (slug) => `/guides/${slug}`,
 );
 
 /** Self-hosted app use-case slugs → `/backup/<slug>-docker`. */
@@ -135,7 +180,7 @@ export const DISALLOWED_PATHS: readonly string[] = [
  * `client/src/shared/seo/schema.ts` whenever marketing content materially
  * changes — parity is enforced by `seo.parity.test.ts`.
  */
-export const SEO_LASTMOD = '2026-07-05';
+export const SEO_LASTMOD = '2026-07-06';
 
 /** Escape a string for safe inclusion in XML text / attribute values. */
 export function escapeXml(value: string): string {

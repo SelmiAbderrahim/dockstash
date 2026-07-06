@@ -28,7 +28,10 @@
         "backupPostgres": "Sauvegarder Postgres",
         "backupWordpress": "Sauvegarder WordPress",
         "privacy": "Politique de confidentialité",
-        "terms": "Conditions d’utilisation"
+        "terms": "Conditions d’utilisation",
+        "continuousBackup": "Sauvegarde continue",
+        "backupMonitoring": "Surveillance des sauvegardes",
+        "mirror": "Mode miroir"
       },
       "copyright": "© 2026 Dockstash"
     }
@@ -124,6 +127,14 @@
         "alerts": {
           "title": "Heartbeats et alertes",
           "body": "La mort silencieuse d’un cron est la panne de sauvegarde classique. Dockstash vous alerte quand une sauvegarde cesse de s’exécuter."
+        },
+        "continuous": {
+          "title": "Sauvegarde continue",
+          "body": "Un instantané toutes les cinq minutes avec le préréglage continu — puis restauration à n’importe quel instant."
+        },
+        "mirror": {
+          "title": "Mode miroir",
+          "body": "Réplication de répertoire à sens unique via le dépôt chiffré : versionnée, vérifiée, à votre rythme."
         }
       }
     },
@@ -255,7 +266,9 @@
           "hourly": "Sauvegardes horaires",
           "schedules": "Planifications personnalisées",
           "alerts": "Alertes e-mail + heartbeat de type dead-man’s-switch",
-          "drills": "Vérification automatisée par exercices de restauration"
+          "drills": "Vérification automatisée par exercices de restauration",
+          "continuous": "Sauvegarde continue (toutes les 5 minutes)",
+          "pitr": "Restauration à un instant donné"
         },
         "cta": "Choisir Pro"
       },
@@ -271,7 +284,8 @@
           "cron": "N’importe quelle planification cron",
           "priority": "Support prioritaire",
           "fleet": "Vue flotte multi-VPS",
-          "metering": "Comptage par projet"
+          "metering": "Comptage par projet",
+          "mirror": "Mode miroir à sens unique"
         },
         "cta": "Choisir Business"
       }
@@ -498,6 +512,332 @@
       "heading": "Run one dashboard for your whole fleet",
       "body": "Multi-VPS fleet view is on the Business plan.",
       "button": "See pricing"
+    }
+  },
+  "guides": {
+    "breadcrumb": "Guides",
+    "hub": {
+      "eyebrow": "Guides",
+      "title": "Guides de sauvegarde Docker",
+      "answer": "Ces guides montrent la bonne façon de sauvegarder chaque base de données et application sous Docker — dumper la base depuis son conteneur en marche (jamais une copie de fichiers à chaud), capturer les volumes de données et la config, et stocker des instantanés Restic chiffrés hors site — plus l'utilisation de chaque fonctionnalité Dockstash. Choisissez un guide plateforme, votre moteur de base de données ou votre application ci-dessous.",
+      "seoTitle": "Guides de sauvegarde Docker pour chaque base de données et application",
+      "seoDescription": "Guides pas à pas pour sauvegarder toute base de données ou application sous Docker — PostgreSQL, MySQL, MongoDB, Redis et des stacks comme WordPress et n8n — avec dumps cohérents, restaurations vérifiées et guides plateforme.",
+      "platformEyebrow": "Utiliser Dockstash",
+      "platformTitle": "Installer et piloter Dockstash",
+      "databaseEyebrow": "Par base de données",
+      "databaseTitle": "Sauvegarder une base de données sous Docker",
+      "appEyebrow": "Par stack applicative",
+      "appTitle": "Sauvegarder une stack applicative sous Docker",
+      "cardBackup": "Sauvegarder {{name}} sous Docker",
+      "faq": {
+        "volumeCopy": {
+          "question": "Pourquoi ne puis-je pas simplement copier le volume de la base ?",
+          "answer": "Une base en marche écrit constamment dans son répertoire de données. Le copier en pleine écriture capture un état déchiré et incohérent qui, le plus souvent, ne se restaurera pas. La bonne sauvegarde est un dump logique (pg_dumpall, mysqldump --single-transaction, mongodump --oplog) pris depuis le conteneur en marche."
+        },
+        "guideVsUseCase": {
+          "question": "Quelle différence entre un guide et une page cas d'usage ?",
+          "answer": "Un guide couvre un moteur de base de données (comment sauvegarder PostgreSQL, MySQL, Redis, etc.). Une page cas d'usage couvre une stack applicative entière (WordPress, n8n, Supabase) — ses bases, les volumes qui portent les fichiers et le plan de sauvegarde ordonné complet."
+        },
+        "automation": {
+          "question": "Dockstash automatise-t-il tout cela ?",
+          "answer": "Oui. Dockstash scanne votre projet Compose, détecte bases, volumes et config, exécute le bon dump par moteur et stocke des instantanés Restic chiffrés hors site — puis teste la restauration par un drill pour que vous sachiez qu'elle fonctionne."
+        }
+      }
+    },
+    "article": {
+      "seoTitle": "Sauvegarder un conteneur Docker {{name}} (2026)",
+      "seoDescription": "Comment sauvegarder {{name}} sous Docker : un dump cohérent depuis le conteneur en marche, des instantanés Restic chiffrés hors site et une restauration vérifiée.",
+      "headline": "Comment sauvegarder un conteneur Docker {{name}} (2026)",
+      "howToName": "Comment sauvegarder un conteneur Docker {{name}}",
+      "detectionEyebrow": "Détection",
+      "detectionTitle": "Ce que Dockstash détecte",
+      "envKeys": "Clés d'environnement détectées",
+      "defaultPort": "Port par défaut",
+      "livePaths": "Chemins de données vivants (jamais copiés à chaud)",
+      "images": "Exemples d'images",
+      "walkthroughEyebrow": "Pas à pas",
+      "walkthroughTitle": "Sauvegarder {{name}} avec Dockstash, étape par étape",
+      "commandsEyebrow": "Commandes",
+      "dumpTitle": "La commande de dump",
+      "restoreTitle": "La commande de restauration",
+      "restoreVerifyEyebrow": "Restaurer & vérifier",
+      "restoreVerifyTitle": "Restaurer une sauvegarde {{name}} et prouver qu'elle fonctionne",
+      "gotchasEyebrow": "Les pièges",
+      "gotchasTitle": "Pièges à éviter",
+      "troubleshootingEyebrow": "Dépannage",
+      "troubleshootingTitle": "Problèmes courants de sauvegarde {{name}}",
+      "symptom": "Symptôme",
+      "cause": "Cause",
+      "fix": "Correctif",
+      "ctaTitle": "Faites-le en un clic avec Dockstash",
+      "ctaBody": "Dockstash exécute exactement le dump ci-dessus, le confie à restic hors site et teste la restauration par un drill automatiquement — aucun script à maintenir.",
+      "startFree": "Commencer gratuitement",
+      "allGuides": "Tous les guides",
+      "relatedTitle": "À voir aussi",
+      "loading": "Chargement du guide…",
+      "notFound": {
+        "seoTitle": "Guide introuvable",
+        "seoDescription": "Ce guide de sauvegarde Docker est introuvable. Parcourez tous les guides de sauvegarde de bases et d'applications depuis le hub des guides.",
+        "title": "Guide introuvable",
+        "body": "Nous n'avons pas trouvé ce guide.",
+        "link": "Voir tous les guides de sauvegarde Docker"
+      }
+    },
+    "platformArticle": {
+      "eyebrow": "Guide plateforme",
+      "stepsEyebrow": "Pas à pas",
+      "stepsTitle": "Comment faire",
+      "relatedTitle": "Guides associés"
+    },
+    "platform": {
+      "connect-fleet-agent": {
+        "title": "Connecter un agent de flotte",
+        "seoTitle": "Connecter un agent de flotte pour sauvegarder un autre VPS",
+        "description": "Exécutez un petit agent sortant-uniquement sur n'importe quel VPS et sauvegardez ses conteneurs depuis un seul tableau de bord — enregistrement, installation, répertoires de projets et première assignation."
+      },
+      "schedule-backups": {
+        "title": "Planifier des sauvegardes automatiques",
+        "seoTitle": "Planifier des sauvegardes Docker automatiques",
+        "description": "Réglez une sauvegarde quotidienne, un prune hebdomadaire avec rétention, des contrôles d'intégrité et des exercices de restauration — cron validé, un job par dépôt, logs en direct."
+      },
+      "restore-a-backup": {
+        "title": "Restaurer une sauvegarde",
+        "seoTitle": "Restaurer une sauvegarde Docker en toute sécurité",
+        "description": "Choisissez un instantané, confirmez en tapant le nom du projet, restaurez par défaut vers un nouvel emplacement et validez avant d'écraser quoi que ce soit."
+      },
+      "restore-drills": {
+        "title": "Lancer des exercices de restauration",
+        "seoTitle": "Exercices de restauration — prouvez que vos sauvegardes se restaurent",
+        "description": "Restaurez automatiquement le dernier instantané dans un espace de travail isolé, comparez-le octet par octet et ligne à ligne à la source, et obtenez un badge réussite/échec."
+      },
+      "notifications-alerts": {
+        "title": "Configurer alertes & notifications",
+        "seoTitle": "Alertes de sauvegarde, heartbeats et webhooks",
+        "description": "E-mails d'échec, heartbeat façon dead-man's switch qui attrape les arrêts silencieux, diffusion webhook vers Slack ou PagerDuty, et piste d'audit immuable."
+      },
+      "retention-policy": {
+        "title": "Définir une politique de rétention",
+        "seoTitle": "Rétention des sauvegardes et pruning",
+        "description": "Conservez N instantanés quotidiens, hebdomadaires et mensuels et laissez le prune planifié mapper votre politique directement sur restic forget --prune."
+      },
+      "storage-destinations": {
+        "title": "Configurer les destinations de stockage",
+        "seoTitle": "Où Dockstash stocke vos sauvegardes",
+        "description": "Pointez Dockstash vers votre propre VPS de stockage en SSH, sauvegardez le mot de passe de chiffrement affiché une seule fois et préparez la récupération après perte totale."
+      },
+      "troubleshooting-backups": {
+        "title": "Dépanner des sauvegardes en échec",
+        "seoTitle": "Dépanner des sauvegardes Docker en échec",
+        "description": "Lisez les logs restic en direct, laissez les verrous périmés se corriger seuls, ranimez les agents hors ligne et comprenez les alertes heartbeat."
+      }
+    }
+  },
+  "continuousBackup": {
+    "breadcrumb": "Sauvegarde continue",
+    "eyebrow": "Sauvegarde quasi continue",
+    "seo": {
+      "title": "Sauvegardes Docker continues toutes les cinq minutes — Dockstash",
+      "description": "Activez le préréglage continu : Dockstash prend un instantané de votre projet Docker toutes les cinq minutes — stockage restic dédupliqué, rétention par paliers et restauration à n’importe quel instant."
+    },
+    "hero": {
+      "titleLead": "Un instantané toutes les",
+      "titleAccent": "cinq minutes",
+      "subtitle": "Le préréglage continu sauvegarde votre projet toutes les cinq minutes. La déduplication restic garde chaque instantané minuscule, la rétention par paliers compacte la série en conservations horaires et quotidiennes, et la restauration choisit l’instantané le plus proche de n’importe quel horodatage.",
+      "ctaPrimary": "Voir les tarifs",
+      "ctaSecondary": "Comment fonctionne la surveillance"
+    },
+    "features": {
+      "heading": "Conçu pour un RPO minimal",
+      "cadence": {
+        "title": "Cadence de 5 minutes",
+        "body": "Les planifications descendent à cinq minutes avec Pro — une protection quasi continue sans agent de streaming."
+      },
+      "dedup": {
+        "title": "Stockage dédupliqué",
+        "body": "Restic n’envoie que les blocs modifiés : une cadence de 5 minutes coûte une fraction d’instantanés complets répétés."
+      },
+      "pitr": {
+        "title": "Restauration à un instant donné",
+        "body": "Choisissez un horodatage ; Dockstash résout l’instantané le plus proche à cet instant ou avant et le restaure en un clic."
+      },
+      "retention": {
+        "title": "Rétention par paliers",
+        "body": "Les conservations keep-last, horaires, quotidiennes, hebdomadaires et mensuelles compactent la série automatiquement."
+      }
+    },
+    "how": {
+      "heading": "Comment ça marche",
+      "enable": {
+        "title": "Activez le préréglage",
+        "body": "Un clic pose le cron toutes-les-cinq-minutes et une politique de rétention adaptée sur votre projet."
+      },
+      "accumulate": {
+        "title": "Les instantanés s’accumulent",
+        "body": "Toutes les cinq minutes le pipeline dump-et-instantané s’exécute ; tout échec vous alerte immédiatement."
+      },
+      "restore": {
+        "title": "Restaurez à un instant",
+        "body": "Saisissez un horodatage dans l’onglet PITR, confirmez l’instantané résolu, puis restaurez."
+      }
+    },
+    "faq": {
+      "heading": "Questions",
+      "rpo": {
+        "question": "Quel RPO m’apporte la sauvegarde continue ?",
+        "answer": "Avec le préréglage 5 minutes, la fenêtre de perte maximale est de cinq minutes plus la durée du dump. Les offres Business descendent à une minute."
+      },
+      "cost": {
+        "question": "Une cadence de 5 minutes ne fait-elle pas exploser le stockage ?",
+        "answer": "Non. Restic déduplique au niveau des blocs : les données inchangées ne sont jamais renvoyées, et la rétention par paliers élague la série en conservations horaires et quotidiennes."
+      },
+      "restore": {
+        "question": "Comment restaurer à une heure précise ?",
+        "answer": "Ouvrez l’onglet PITR du projet et choisissez un horodatage. Dockstash résout l’instantané le plus récent à cet instant ou avant et affiche l’écart exact avant confirmation."
+      }
+    },
+    "cta": {
+      "heading": "Réduisez votre fenêtre de sauvegarde à quelques minutes",
+      "body": "La sauvegarde continue est incluse dans Pro. Activez le préréglage sur n’importe quel projet en un clic.",
+      "button": "Commencer"
+    }
+  },
+  "monitoring": {
+    "breadcrumb": "Surveillance des sauvegardes",
+    "eyebrow": "Santé des sauvegardes",
+    "seo": {
+      "title": "Surveillance et alertes de sauvegarde pour projets Docker — Dockstash",
+      "description": "Un tableau de bord de santé pour chaque sauvegarde : score sain/dégradé/critique par projet, centre d’alertes intégré, et alertes e-mail + webhook dès qu’une sauvegarde, une restauration ou un test échoue."
+    },
+    "hero": {
+      "titleLead": "Sachez que vos sauvegardes",
+      "titleAccent": "fonctionnent vraiment",
+      "subtitle": "Les sauvegardes échouent en silence. Dockstash note chaque projet à partir de signaux réels — dernière exécution, tests de restauration, vérifications du dépôt, planifications et vivacité des agents — et vous prévient dès la moindre dérive.",
+      "ctaPrimary": "Voir les tarifs",
+      "ctaSecondary": "À propos de la sauvegarde continue"
+    },
+    "features": {
+      "heading": "Des vigies à chaque niveau",
+      "dashboard": {
+        "title": "Tableau de bord de santé",
+        "body": "Chaque projet est noté sain, dégradé ou critique à partir de signaux réels : dernière exécution, tests, vérifications du dépôt, planifications et vivacité des agents."
+      },
+      "alertCenter": {
+        "title": "Centre d’alertes",
+        "body": "Chaque échec et chaque arrêt silencieux est consigné dans l’app avec un état lu/non lu — aucune alerte ne disparaît dans une boîte mail."
+      },
+      "channels": {
+        "title": "E-mail + webhooks",
+        "body": "Les alertes d’échec arrivent dans votre boîte et sur tout webhook par projet — branchez Slack, Discord ou PagerDuty en quelques minutes."
+      },
+      "heartbeat": {
+        "title": "Homme mort",
+        "body": "Si un projet reste muet au-delà de sa fenêtre de battement, Dockstash vous alerte même si rien n’a explicitement « échoué »."
+      }
+    },
+    "states": {
+      "heading": "Trois états, zéro ambiguïté",
+      "body": "La bannière de flotte affiche toujours le pire projet : un seul regard répond à la seule question qui compte.",
+      "healthy": {
+        "title": "Sain",
+        "body": "Sauvegarde récente réussie, tests au vert, planification active."
+      },
+      "degraded": {
+        "title": "Dégradé",
+        "body": "Quelque chose mérite attention : vérification du dépôt en échec, planification absente, ou projet jamais exécuté."
+      },
+      "critical": {
+        "title": "Critique",
+        "body": "Sauvegarde, test ou restauration en échec, projet au-delà de sa fenêtre de battement, ou agent hors ligne."
+      }
+    },
+    "faq": {
+      "heading": "Questions",
+      "signals": {
+        "question": "Quels signaux alimentent le score de santé ?",
+        "answer": "Résultat et ancienneté de la dernière sauvegarde, résultats des tests de restauration et des vérifications du dépôt, présence d’une planification, état de pause et vivacité de l’agent affecté."
+      },
+      "channels": {
+        "question": "Quels canaux d’alerte sont pris en charge ?",
+        "answer": "Alertes intégrées sur toutes les offres, plus e-mail et webhooks par projet avec Pro et Business. Les webhooks envoient du JSON : Slack, Discord et PagerDuty sont à une URL près."
+      },
+      "silent": {
+        "question": "Et les échecs silencieux où rien ne s’exécute ?",
+        "answer": "Un balayage « homme mort » vous alerte dès qu’un projet n’a eu aucune sauvegarde réussie dans sa fenêtre de battement — le mode d’échec que la plupart des supervisions ratent."
+      }
+    },
+    "cta": {
+      "heading": "Cessez d’espérer. Sachez.",
+      "body": "Le score de santé et le centre d’alertes sont intégrés ; les alertes e-mail et webhook sont incluses avec Pro.",
+      "button": "Commencer"
+    }
+  },
+  "mirror": {
+    "breadcrumb": "Mode miroir",
+    "eyebrow": "Synchronisation à sens unique",
+    "seo": {
+      "title": "Miroir de répertoire à sens unique via des sauvegardes chiffrées — Dockstash",
+      "description": "Répliquez un répertoire à sens unique : la source est capturée dans votre dépôt restic chiffré puis restaurée sur la cible à chaque exécution planifiée — versionnée, vérifiée, sur liste blanche."
+    },
+    "hero": {
+      "titleLead": "Répliquez un répertoire,",
+      "titleAccent": "gardez chaque version",
+      "subtitle": "Le mode miroir rejoue votre répertoire source sur un chemin cible via le dépôt chiffré. Contrairement à rsync, chaque cycle est un instantané complet et versionné — et l’historique de sauvegarde vient avec.",
+      "ctaPrimary": "Voir les tarifs",
+      "ctaSecondary": "Comment ça reste sûr"
+    },
+    "features": {
+      "heading": "Une synchro sans surprise",
+      "oneWay": {
+        "title": "Strictement à sens unique",
+        "body": "De la source vers la cible via le dépôt — aucune résolution de conflit à gérer, aucun retour accidentel."
+      },
+      "pointInTime": {
+        "title": "Copies à instant donné",
+        "body": "Chaque cycle restaure un instantané complet : la cible est un moment cohérent, jamais une arborescence à moitié copiée."
+      },
+      "allowlist": {
+        "title": "Chemins sur liste blanche",
+        "body": "Source et cible doivent vivre dans la liste blanche de racines projet — vérifiée à l’enregistrement et à chaque exécution."
+      },
+      "scheduled": {
+        "title": "À votre rythme",
+        "body": "S’exécute comme une tâche planifiée normale, avec les mêmes réessais, journaux en direct et alertes que les sauvegardes."
+      }
+    },
+    "how": {
+      "heading": "Comment ça marche",
+      "configure": {
+        "title": "Désignez deux chemins",
+        "body": "Définissez un répertoire source et un répertoire cible sur le projet — tous deux validés contre la liste blanche."
+      },
+      "schedule": {
+        "title": "Ajoutez une planification",
+        "body": "Le miroir est un type de tâche planifiable : horaire, quotidien, ou toute cadence permise par votre offre."
+      },
+      "replicate": {
+        "title": "Dockstash réplique",
+        "body": "Chaque exécution capture la source sous une étiquette miroir et restaure la plus récente sur la cible."
+      }
+    },
+    "faq": {
+      "heading": "Questions",
+      "twoWay": {
+        "question": "Dockstash gère-t-il la synchro bidirectionnelle ?",
+        "answer": "Non — volontairement. Le bidirectionnel exige une résolution de conflits et peut propager les erreurs dans les deux sens. Le miroir à sens unique avec historique complet est plus sûr et prévisible."
+      },
+      "deletes": {
+        "question": "Comment se propagent les suppressions ?",
+        "answer": "Chaque instantané miroir est complet : un fichier supprimé à la source est absent du prochain instantané — et reste récupérable depuis les précédents."
+      },
+      "plan": {
+        "question": "Quelle offre inclut le mode miroir ?",
+        "answer": "Le mode miroir est une fonctionnalité Business, aux côtés des agents multi-VPS et de la planification à toute cadence."
+      }
+    },
+    "cta": {
+      "heading": "Chaque version, une seule direction",
+      "body": "Le mode miroir est inclus dans Business. Configurez une source, une cible, et ajoutez une planification.",
+      "button": "Commencer"
     }
   }
 }

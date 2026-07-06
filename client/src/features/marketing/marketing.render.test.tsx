@@ -6,7 +6,14 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { marketingRoutes } from './routes';
 import { i18n, initI18n } from '@shared/i18n';
 import { ThemeProvider } from '@shared/theme/ThemeProvider';
-import { COMPETITORS, SERVICE_GUIDE_SLUGS, USE_CASE_SLUGS } from './content';
+import {
+  COMPETITORS,
+  PLATFORM_GUIDE_SLUGS,
+  SERVICE_GUIDE_SLUGS,
+  USE_CASE_SLUGS,
+  loadGuideCopy,
+  __resetGuideCopyForTests,
+} from './content';
 
 const renderPath = (path: string) => {
   const router = createMemoryRouter(marketingRoutes, { initialEntries: [path] });
@@ -21,9 +28,12 @@ const renderPath = (path: string) => {
   );
 };
 
-beforeEach(() => {
+beforeEach(async () => {
   initI18n({ initialLocale: 'en' });
   document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  // Guide pages read the locale copy bundle synchronously (the entries
+  // preload it in production); warm the cache so renders are synchronous.
+  await loadGuideCopy('en');
 });
 
 afterEach(() => {
@@ -38,6 +48,9 @@ describe('marketing static pages', () => {
     ['/pricing', 'Simple pricing'],
     ['/alternatives', 'Dockstash alternatives'],
     ['/fleet-agents', /one dashboard/i],
+    ['/continuous-backup', /five minutes/i],
+    ['/backup-monitoring', /actually working/i],
+    ['/mirror', /keep every version/i],
     ['/security', 'Security you can verify'],
     ['/faq', 'Frequently asked questions'],
     ['/privacy', 'Privacy Policy'],
@@ -71,11 +84,41 @@ describe('marketing guide + use-case pages', () => {
   it.each(SERVICE_GUIDE_SLUGS)('renders the guide page for %s', (slug) => {
     renderPath(`/guides/backup-${slug}-docker`);
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    // The expanded article sections render (walkthrough + troubleshooting).
+    expect(screen.getByText('What Dockstash detects')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/step by step/i).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it.each(PLATFORM_GUIDE_SLUGS)('renders the platform guide page for %s', (slug) => {
+    renderPath(`/guides/${slug}`);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('Platform guide')).toBeInTheDocument();
   });
 
   it.each(USE_CASE_SLUGS)('renders the use-case page for %s', (slug) => {
     renderPath(`/backup/${slug}-docker`);
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
+
+  it('renders the guides hub with all three sections', () => {
+    renderPath('/guides');
+    expect(screen.getByText('Set up and run Dockstash')).toBeInTheDocument();
+    expect(screen.getByText('Back up a database in Docker')).toBeInTheDocument();
+    expect(screen.getByText('Back up an app stack in Docker')).toBeInTheDocument();
+  });
+
+  it('shows the loading skeleton on a cold client entry, then the article', async () => {
+    __resetGuideCopyForTests();
+    renderPath('/guides/backup-postgres-docker');
+    expect(screen.getByText('Loading guide…')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: /How to back up a PostgreSQL Docker container/,
+      }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -84,6 +127,8 @@ describe('marketing not-found branches', () => {
     ['/alternatives/does-not-exist', 'Alternative not found'],
     ['/vs/does-not-exist', 'Comparison not found'],
     ['/guides/backup-does-not-exist-docker', 'Guide not found'],
+    // Empty derived slug: covers the falsy-slug arm of the dispatcher.
+    ['/guides/backup--docker', 'Guide not found'],
     ['/backup/does-not-exist-docker', 'Backup guide not found'],
   ])('%s renders the not-found state', (path, heading) => {
     renderPath(path as string);
@@ -137,14 +182,23 @@ describe('marketing i18n namespace under a locale prefix', () => {
     expect(screen.getByText(/بأكمله/)).toBeInTheDocument();
   });
 
-  it('keeps untranslated guide pages English on /fr/guides/backup-postgres-docker', () => {
+  it('renders the French guide article on /fr/guides/backup-postgres-docker', async () => {
+    await loadGuideCopy('fr');
     renderPath('/fr/guides/backup-postgres-docker');
-    expect(
-      screen.getByRole('heading', {
-        level: 1,
-        name: /How to back up a PostgreSQL Docker container/,
-      }),
-    ).toBeInTheDocument();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    // Localized headline: names the engine, but is not the English string.
+    expect(h1.textContent).toContain('PostgreSQL');
+    expect(h1.textContent).not.toMatch(
+      /How to back up a PostgreSQL Docker container/,
+    );
+  });
+
+  it('renders the Arabic platform guide on /ar/guides/connect-fleet-agent', async () => {
+    await loadGuideCopy('ar');
+    renderPath('/ar/guides/connect-fleet-agent');
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+    // The English platform-guide eyebrow must not leak through.
+    expect(screen.queryByText('Platform guide')).not.toBeInTheDocument();
   });
 });
 

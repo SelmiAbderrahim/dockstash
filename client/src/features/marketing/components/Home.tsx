@@ -4,7 +4,9 @@ import {
   BellRingIcon,
   CheckIcon,
   DatabaseIcon,
+  FolderSyncIcon,
   HardDriveIcon,
+  HistoryIcon,
   LockIcon,
   ScanSearchIcon,
   ShieldCheckIcon,
@@ -67,6 +69,8 @@ const FEATURE_DEFS = [
   { icon: <HardDriveIcon />, key: 'storage' },
   { icon: <LockIcon />, key: 'encryption' },
   { icon: <BellRingIcon />, key: 'alerts' },
+  { icon: <HistoryIcon />, key: 'continuous' },
+  { icon: <FolderSyncIcon />, key: 'mirror' },
 ] as const;
 
 // Honest product-shaped stats (no fabricated customer counts): supported

@@ -9,6 +9,9 @@ import { CompareCategoryPage } from './components/CompareCategoryPage';
 import { GuidesHub } from './components/GuidesHub';
 import { GuidePage } from './components/GuidePage';
 import { FleetAgentsPage } from './components/FleetAgentsPage';
+import { ContinuousBackupPage } from './components/ContinuousBackupPage';
+import { MonitoringPage } from './components/MonitoringPage';
+import { MirrorPage } from './components/MirrorPage';
 import { UseCasePage } from './components/UseCasePage';
 import { Security } from './components/Security';
 import { Faq } from './components/Faq';
@@ -37,6 +40,9 @@ const pages: RouteObject[] = [
   { path: 'guides/:entry', element: <GuidePage /> },
   { path: 'backup/:entry', element: <UseCasePage /> },
   { path: 'fleet-agents', element: <FleetAgentsPage /> },
+  { path: 'continuous-backup', element: <ContinuousBackupPage /> },
+  { path: 'backup-monitoring', element: <MonitoringPage /> },
+  { path: 'mirror', element: <MirrorPage /> },
   { path: 'security', element: <Security /> },
   { path: 'faq', element: <Faq /> },
   { path: 'privacy', element: <Privacy /> },

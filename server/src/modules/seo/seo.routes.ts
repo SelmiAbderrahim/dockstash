@@ -9,8 +9,11 @@ import {
   DISALLOWED_PATHS,
   GUIDE_PATHS,
   GUIDE_SLUGS,
+  isTranslatedPath,
+  PLATFORM_GUIDE_PATHS,
+  PLATFORM_GUIDE_SLUGS,
+  PLATFORM_GUIDE_TITLES,
   SEO_LASTMOD,
-  TRANSLATED_PATHS,
   USECASE_PATHS,
   USECASE_SLUGS,
 } from './seo.data.js';
@@ -67,15 +70,12 @@ function renderSitemapIndex(origin: string): string {
 
 function renderUrlset(origin: string, paths: readonly string[]): string {
   // hreflang alternates are only advertised for pages that are actually
-  // translated per locale; all programmatic pages (untranslated core paths,
-  // alternatives/vs, guides, use-cases) emit plain <loc> + <lastmod> entries.
+  // translated per locale: the translated core paths and the whole /guides
+  // surface (hub + service + platform articles ship localized copy bundles).
+  // Alternatives/vs and use-cases stay programmatic English and emit plain
+  // <loc> + <lastmod> entries.
   const entries = paths.map((path) =>
-    buildUrlEntry(
-      origin,
-      path,
-      SEO_LASTMOD,
-      (TRANSLATED_PATHS as readonly string[]).includes(path),
-    ),
+    buildUrlEntry(origin, path, SEO_LASTMOD, isTranslatedPath(path)),
   );
   return [
     XML_HEADER,
@@ -109,6 +109,9 @@ export function renderLlmsTxt(origin: string): string {
     `- [Home](${origin}/): What Dockstash does and how verified Docker backups work`,
     `- [Pricing](${origin}/pricing): Plans, including the free self-host tier`,
     `- [Fleet agents](${origin}/fleet-agents): Back up every VPS from one dashboard with lightweight outbound-only agents`,
+    `- [Continuous backup](${origin}/continuous-backup): Near-continuous snapshots every five minutes with point-in-time restore`,
+    `- [Backup monitoring](${origin}/backup-monitoring): Health dashboard, alert center, email and webhook alerts for every project`,
+    `- [Mirror mode](${origin}/mirror): Scheduled one-way directory replication through the encrypted restic repo`,
     `- [Security](${origin}/security): Security model, encryption, and restore verification`,
     `- [FAQ](${origin}/faq): Common questions about backing up Docker projects`,
     '',
@@ -118,6 +121,10 @@ export function renderLlmsTxt(origin: string): string {
     lines.push(
       `- [Back up ${humanizeSlug(slug)} in Docker](${origin}/guides/backup-${slug}-docker)`,
     );
+  }
+  lines.push('', '## Platform guides');
+  for (const [slug, title] of Object.entries(PLATFORM_GUIDE_TITLES)) {
+    lines.push(`- [${title}](${origin}/guides/${slug})`);
   }
   lines.push('', '## Backup targets');
   for (const slug of USECASE_SLUGS) {
@@ -178,5 +185,8 @@ seoRouter.get('/llms.txt', cacheable(llmsHandler));
 seoRouter.get('/sitemap.xml', cacheable(sitemapIndexHandler));
 seoRouter.get('/sitemap-core.xml', cacheable(urlsetHandler(CORE_PATHS)));
 seoRouter.get('/sitemap-alternatives.xml', cacheable(urlsetHandler(ALTERNATIVE_PATHS)));
-seoRouter.get('/sitemap-guides.xml', cacheable(urlsetHandler(GUIDE_PATHS)));
+seoRouter.get(
+  '/sitemap-guides.xml',
+  cacheable(urlsetHandler([...GUIDE_PATHS, ...PLATFORM_GUIDE_PATHS])),
+);
 seoRouter.get('/sitemap-usecases.xml', cacheable(urlsetHandler(USECASE_PATHS)));

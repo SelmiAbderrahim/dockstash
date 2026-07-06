@@ -28,7 +28,10 @@
         "backupPostgres": "Postgres sichern",
         "backupWordpress": "WordPress sichern",
         "privacy": "Datenschutzerklärung",
-        "terms": "Nutzungsbedingungen"
+        "terms": "Nutzungsbedingungen",
+        "continuousBackup": "Kontinuierliches Backup",
+        "backupMonitoring": "Backup-Überwachung",
+        "mirror": "Spiegelmodus"
       },
       "copyright": "© 2026 Dockstash"
     }
@@ -124,6 +127,14 @@
         "alerts": {
           "title": "Heartbeats & Alarme",
           "body": "Der stille Tod eines Cron-Jobs ist der klassische Backup-Fehler. Dockstash alarmiert Sie, wenn ein Backup ausbleibt."
+        },
+        "continuous": {
+          "title": "Kontinuierliches Backup",
+          "body": "Alle fünf Minuten ein Snapshot mit dem Kontinuierlich-Preset — dann Wiederherstellung zu jedem Zeitpunkt."
+        },
+        "mirror": {
+          "title": "Spiegelmodus",
+          "body": "Einweg-Verzeichnisreplikation über das verschlüsselte Repo: versioniert, verifiziert, nach Ihrem Zeitplan."
         }
       }
     },
@@ -255,7 +266,9 @@
           "hourly": "Stündliche Backups",
           "schedules": "Eigene Zeitpläne",
           "alerts": "E-Mail-Alarme + Dead-Man's-Switch-Heartbeat",
-          "drills": "Automatisierte Restore-Drill-Verifizierung"
+          "drills": "Automatisierte Restore-Drill-Verifizierung",
+          "continuous": "Kontinuierliches Backup (alle 5 Minuten)",
+          "pitr": "Point-in-Time-Wiederherstellung"
         },
         "cta": "Pro wählen"
       },
@@ -271,7 +284,8 @@
           "cron": "Beliebiger Cron-Zeitplan",
           "priority": "Priority-Support",
           "fleet": "Multi-VPS-Flottenansicht",
-          "metering": "Verbrauchsmessung pro Projekt"
+          "metering": "Verbrauchsmessung pro Projekt",
+          "mirror": "Einweg-Spiegelmodus"
         },
         "cta": "Business wählen"
       }
@@ -498,6 +512,214 @@
       "heading": "Run one dashboard for your whole fleet",
       "body": "Multi-VPS fleet view is on the Business plan.",
       "button": "See pricing"
+    }
+  },
+  "continuousBackup": {
+    "breadcrumb": "Kontinuierliches Backup",
+    "eyebrow": "Nahezu kontinuierliches Backup",
+    "seo": {
+      "title": "Kontinuierliche Docker-Backups alle fünf Minuten — Dockstash",
+      "description": "Aktivieren Sie das Kontinuierlich-Preset: Dockstash sichert Ihr Docker-Projekt alle fünf Minuten — deduplizierter Restic-Speicher, gestaffelte Aufbewahrung und Wiederherstellung zu jedem Zeitpunkt."
+    },
+    "hero": {
+      "titleLead": "Ein Snapshot alle",
+      "titleAccent": "fünf Minuten",
+      "subtitle": "Das Kontinuierlich-Preset sichert Ihr Projekt im 5-Minuten-Takt. Restic-Deduplizierung hält jeden Snapshot winzig, gestaffelte Aufbewahrung verdichtet die Serie zu stündlichen und täglichen Ständen, und die Wiederherstellung wählt den Snapshot am nächsten zu jedem Zeitstempel.",
+      "ctaPrimary": "Preise ansehen",
+      "ctaSecondary": "So funktioniert die Überwachung"
+    },
+    "features": {
+      "heading": "Gebaut für minimalen RPO",
+      "cadence": {
+        "title": "5-Minuten-Takt",
+        "body": "Zeitpläne laufen mit Pro bis hinunter zu fünf Minuten — nahezu kontinuierlicher Schutz ohne Streaming-Agent."
+      },
+      "dedup": {
+        "title": "Deduplizierter Speicher",
+        "body": "Restic überträgt nur geänderte Blöcke; ein 5-Minuten-Takt kostet einen Bruchteil wiederholter Voll-Snapshots."
+      },
+      "pitr": {
+        "title": "Point-in-Time-Wiederherstellung",
+        "body": "Wählen Sie einen Zeitstempel; Dockstash findet den nächstliegenden Snapshot davor und stellt ihn mit einem Klick wieder her."
+      },
+      "retention": {
+        "title": "Gestaffelte Aufbewahrung",
+        "body": "Keep-last-, Stunden-, Tages-, Wochen- und Monatsstände verdichten die Snapshot-Serie automatisch."
+      }
+    },
+    "how": {
+      "heading": "So funktioniert es",
+      "enable": {
+        "title": "Preset aktivieren",
+        "body": "Ein Klick setzt den Alle-fünf-Minuten-Cron und eine abgestimmte Aufbewahrungsrichtlinie auf Ihr Projekt."
+      },
+      "accumulate": {
+        "title": "Snapshots sammeln sich",
+        "body": "Alle fünf Minuten läuft die Dump-und-Snapshot-Pipeline; jeder Fehler alarmiert Sie sofort."
+      },
+      "restore": {
+        "title": "Zu einem Moment zurück",
+        "body": "Zeitstempel im PITR-Tab eingeben, aufgelösten Snapshot bestätigen, wiederherstellen."
+      }
+    },
+    "faq": {
+      "heading": "Fragen",
+      "rpo": {
+        "question": "Welchen RPO liefert kontinuierliches Backup?",
+        "answer": "Mit dem 5-Minuten-Preset beträgt das maximale Verlustfenster fünf Minuten plus Dump-Dauer. Business-Tarife planen bis hinunter zu einer Minute."
+      },
+      "cost": {
+        "question": "Sprengt ein 5-Minuten-Takt nicht die Speicherkosten?",
+        "answer": "Nein. Restic dedupliziert auf Blockebene — unveränderte Daten werden nie erneut hochgeladen, und die gestaffelte Aufbewahrung stutzt die Serie auf Stunden- und Tagesstände."
+      },
+      "restore": {
+        "question": "Wie stelle ich zu einer bestimmten Zeit wieder her?",
+        "answer": "Öffnen Sie den PITR-Tab des Projekts und wählen Sie einen Zeitstempel. Dockstash löst den neuesten Snapshot davor auf und zeigt die exakte Lücke vor der Bestätigung."
+      }
+    },
+    "cta": {
+      "heading": "Verkürzen Sie Ihr Backup-Fenster auf Minuten",
+      "body": "Kontinuierliches Backup ist in Pro enthalten. Aktivieren Sie das Preset mit einem Klick auf jedem Projekt.",
+      "button": "Loslegen"
+    }
+  },
+  "monitoring": {
+    "breadcrumb": "Backup-Überwachung",
+    "eyebrow": "Backup-Zustand",
+    "seo": {
+      "title": "Backup-Überwachung und Alarme für Docker-Projekte — Dockstash",
+      "description": "Ein Zustands-Dashboard für jedes Backup: healthy/degraded/critical-Bewertung pro Projekt, ein integriertes Alarmzentrum sowie E-Mail- und Webhook-Alarme, sobald ein Backup, eine Wiederherstellung oder ein Test fehlschlägt."
+    },
+    "hero": {
+      "titleLead": "Wissen, dass Ihre Backups",
+      "titleAccent": "wirklich funktionieren",
+      "subtitle": "Backups scheitern leise. Dockstash bewertet jedes Projekt anhand echter Signale — letzter Lauf, Wiederherstellungstests, Repository-Prüfungen, Zeitpläne und Agent-Erreichbarkeit — und meldet jede Abweichung sofort.",
+      "ctaPrimary": "Preise ansehen",
+      "ctaSecondary": "Über kontinuierliches Backup"
+    },
+    "features": {
+      "heading": "Wachhunde auf jeder Ebene",
+      "dashboard": {
+        "title": "Zustands-Dashboard",
+        "body": "Jedes Projekt wird aus echten Signalen als healthy, degraded oder critical bewertet: letzter Lauf, Tests, Repo-Prüfungen, Zeitpläne, Agent-Status."
+      },
+      "alertCenter": {
+        "title": "Alarmzentrum",
+        "body": "Jeder Fehler und jeder stille Stillstand wird in der App mit Gelesen/Ungelesen-Status festgehalten — kein Alarm verschwindet im Postfach."
+      },
+      "channels": {
+        "title": "E-Mail + Webhooks",
+        "body": "Fehleralarme erreichen Ihr Postfach und jeden Projekt-Webhook — Slack, Discord oder PagerDuty in Minuten angebunden."
+      },
+      "heartbeat": {
+        "title": "Totmannschalter",
+        "body": "Bleibt ein Projekt über sein Heartbeat-Fenster hinaus stumm, alarmiert Dockstash — auch wenn nichts explizit „fehlgeschlagen“ ist."
+      }
+    },
+    "states": {
+      "heading": "Drei Zustände, null Mehrdeutigkeit",
+      "body": "Das Flotten-Banner zeigt stets das schlechteste Projekt — ein Blick beantwortet die einzig wichtige Frage.",
+      "healthy": {
+        "title": "Healthy",
+        "body": "Aktuelles erfolgreiches Backup, Tests grün, Zeitplan aktiv."
+      },
+      "degraded": {
+        "title": "Degraded",
+        "body": "Etwas braucht Aufmerksamkeit: fehlgeschlagene Repo-Prüfung, fehlender Zeitplan oder ein nie gelaufenes Projekt."
+      },
+      "critical": {
+        "title": "Critical",
+        "body": "Fehlgeschlagenes Backup, Test oder Restore, ein Projekt jenseits seines Heartbeat-Fensters oder ein Offline-Agent."
+      }
+    },
+    "faq": {
+      "heading": "Fragen",
+      "signals": {
+        "question": "Welche Signale speisen die Zustandsbewertung?",
+        "answer": "Ergebnis und Alter des letzten Backups, Resultate von Wiederherstellungstests und Repo-Prüfungen, vorhandene Zeitpläne, Pausenstatus und die Erreichbarkeit des zugewiesenen Agents."
+      },
+      "channels": {
+        "question": "Welche Alarmkanäle werden unterstützt?",
+        "answer": "In-App-Alarme in jedem Tarif, dazu E-Mail und Projekt-Webhooks in Pro und Business. Webhooks senden JSON — Slack, Discord und PagerDuty sind eine URL entfernt."
+      },
+      "silent": {
+        "question": "Was ist mit stillen Ausfällen, bei denen gar nichts läuft?",
+        "answer": "Ein Totmannschalter-Durchlauf alarmiert, sobald ein Projekt innerhalb seines Heartbeat-Fensters kein erfolgreiches Backup hatte — der Fehlermodus, den die meisten Überwachungen übersehen."
+      }
+    },
+    "cta": {
+      "heading": "Hören Sie auf zu hoffen. Fangen Sie an zu wissen.",
+      "body": "Zustandsbewertung und Alarmzentrum sind eingebaut; E-Mail- und Webhook-Alarme sind in Pro enthalten.",
+      "button": "Loslegen"
+    }
+  },
+  "mirror": {
+    "breadcrumb": "Spiegelmodus",
+    "eyebrow": "Einweg-Synchronisation",
+    "seo": {
+      "title": "Einweg-Verzeichnisspiegel über verschlüsselte Backups — Dockstash",
+      "description": "Replizieren Sie ein Verzeichnis in eine Richtung: Die Quelle wird in Ihr verschlüsseltes Restic-Repo aufgenommen und bei jedem geplanten Lauf auf das Ziel wiederhergestellt — versioniert, verifiziert, allowlist-geschützt."
+    },
+    "hero": {
+      "titleLead": "Ein Verzeichnis replizieren,",
+      "titleAccent": "jede Version behalten",
+      "subtitle": "Der Spiegelmodus spielt Ihr Quellverzeichnis über das verschlüsselte Repo auf einen Zielpfad. Anders als rsync ist jeder Zyklus ein vollständiger, versionierter Snapshot — die Backup-Historie gibt es gratis dazu.",
+      "ctaPrimary": "Preise ansehen",
+      "ctaSecondary": "So bleibt es sicher"
+    },
+    "features": {
+      "heading": "Sync ohne Überraschungen",
+      "oneWay": {
+        "title": "Strikt eine Richtung",
+        "body": "Quelle zu Ziel über das Repo — keine Konfliktauflösung, kein versehentlicher Rückweg."
+      },
+      "pointInTime": {
+        "title": "Zeitpunktgenaue Kopien",
+        "body": "Jeder Zyklus stellt einen vollständigen Snapshot wieder her: Das Ziel ist ein konsistenter Moment, nie ein halb kopierter Baum."
+      },
+      "allowlist": {
+        "title": "Allowlist-Pfade",
+        "body": "Quelle und Ziel müssen in Ihrer Projektwurzel-Allowlist liegen — geprüft beim Speichern und bei jedem Lauf."
+      },
+      "scheduled": {
+        "title": "Nach Ihrem Zeitplan",
+        "body": "Läuft als normaler geplanter Job mit denselben Wiederholungen, Live-Logs und Fehleralarmen wie Backups."
+      }
+    },
+    "how": {
+      "heading": "So funktioniert es",
+      "configure": {
+        "title": "Zwei Pfade festlegen",
+        "body": "Quell- und Zielverzeichnis am Projekt setzen — beide gegen die Allowlist validiert."
+      },
+      "schedule": {
+        "title": "Zeitplan hinzufügen",
+        "body": "Spiegeln ist ein planbarer Job-Typ: stündlich, täglich oder jede Taktung, die Ihr Tarif erlaubt."
+      },
+      "replicate": {
+        "title": "Dockstash repliziert",
+        "body": "Jeder Lauf sichert die Quelle unter einem Spiegel-Tag und stellt den neuesten Stand auf das Ziel wieder her."
+      }
+    },
+    "faq": {
+      "heading": "Fragen",
+      "twoWay": {
+        "question": "Unterstützt Dockstash Zwei-Wege-Sync?",
+        "answer": "Nein — bewusst. Zwei-Wege-Sync braucht Konfliktauflösung und kann Fehler in beide Richtungen tragen. Einweg-Spiegelung mit voller Versionshistorie ist sicherer und vorhersehbar."
+      },
+      "deletes": {
+        "question": "Wie propagieren Löschungen?",
+        "answer": "Jeder Spiegel-Snapshot ist vollständig: Eine an der Quelle gelöschte Datei fehlt im nächsten Snapshot — bleibt aber aus früheren wiederherstellbar."
+      },
+      "plan": {
+        "question": "Welcher Tarif enthält den Spiegelmodus?",
+        "answer": "Der Spiegelmodus ist ein Business-Feature, neben Multi-VPS-Flottenagenten und Zeitplänen in jeder Taktung."
+      }
+    },
+    "cta": {
+      "heading": "Jede Version, eine Richtung",
+      "body": "Der Spiegelmodus ist in Business enthalten. Quelle und Ziel konfigurieren, Zeitplan hinzufügen.",
+      "button": "Loslegen"
     }
   }
 }

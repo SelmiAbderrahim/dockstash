@@ -81,6 +81,15 @@ export const MarketingLayout = () => {
             heading: t('layout.footer.product'),
             links: [
               { to: href('/pricing'), label: t('layout.footer.links.pricing') },
+              {
+                to: href('/continuous-backup'),
+                label: t('layout.footer.links.continuousBackup'),
+              },
+              {
+                to: href('/backup-monitoring'),
+                label: t('layout.footer.links.backupMonitoring'),
+              },
+              { to: href('/mirror'), label: t('layout.footer.links.mirror') },
               { to: href('/security'), label: t('layout.footer.links.security') },
               { to: href('/faq'), label: t('layout.footer.links.faq') },
             ],
