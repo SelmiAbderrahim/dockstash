@@ -120,7 +120,7 @@ describe('PATCH /api/backups/:projectId/alerts', () => {
     });
   });
 
-  it('404s unknown and 403s foreign projects', async () => {
+  it('404s unknown AND foreign projects (surface #2 existence-cloak)', async () => {
     const a = await seedUser('wh-owner@t.com');
     const b = await seedUser('wh-other@t.com');
     const project = await createProject(a.id, {
@@ -137,7 +137,9 @@ describe('PATCH /api/backups/:projectId/alerts', () => {
       .patch(`/api/backups/${project._id}/alerts`)
       .set('Authorization', `JWT ${b.token}`)
       .send({ webhookUrl: '' });
-    expect(foreign.status).toBe(403);
+    // Surface #2 / S2-01: foreign-owner returns 404 (not 403) — indistinguishable
+    // from the missing case so an attacker cannot enumerate project ids.
+    expect(foreign.status).toBe(404);
   });
 });
 

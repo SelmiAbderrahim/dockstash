@@ -147,8 +147,10 @@ Write `prompts/dockstash-security/FINAL-REPORT.md` with these sections (per
   any "deliberately did NOT touch and why" (e.g. a finding deferred to a
   future batch with a stated reason).
 - 3.7 **Sign-off** — a one-line statement: either "All eight surfaces
-  verified; suite green; zero high/critical advisories" OR "OPEN items
-  remain — see §3.6" with the count.
+  verified; suite green; 100% coverage on every touched package; zero
+  high/critical advisories" OR "OPEN items remain — see §3.6" with the count.
+  The first form is permitted ONLY when every Phase-1 coverage run reported
+  100/100/100/100 — otherwise the sign-off is the second form.
 
 ### Phase 4 — Branch / commit hygiene (only if asked)
 - 4.1 If the operator asks to commit/PR: branch off `master` first
@@ -159,6 +161,26 @@ Write `prompts/dockstash-security/FINAL-REPORT.md` with these sections (per
 - 4.2 Suggest the operator run `/code-review branch` on the resulting diff
   (complements the security pass) and `/security-review deps` once more on
   the merged branch.
+
+## Coverage & Success Gate — NON-NEGOTIABLE (blocks sign-off)
+
+The batch is signed off ONLY when, **inside Docker**, every touched package is
+**100% passing** with v8 coverage **100% on lines / branches / functions /
+statements**. This is a hard gate on §3.7 — a red suite or any package below
+100% forces the "OPEN items remain" sign-off, never "verified".
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npx vitest run --coverage
+docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npx vitest run --coverage
+docker run --rm -v "$PWD/agent":/app  -w /app node:20-bookworm npx vitest run --coverage   # if agent/src touched
+```
+
+- Capture the coverage summary table verbatim for each package — the report is the receipt.
+- If coverage is <100%, name the exact uncovered file:line in §3.6 and route it back to
+  the owning surface prompt. Do NOT reach for `/* c8 ignore */` or a lowered threshold to
+  paper over it — that is a weakened gate (Phase 2.1) and itself a finding.
+- A `npm audit` high/critical, a failing test, or a sub-100% package are ALL blockers:
+  surface them; never downgrade a gate to produce a clean report.
 
 ## Tests
 

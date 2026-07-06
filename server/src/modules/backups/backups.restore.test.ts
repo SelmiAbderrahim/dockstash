@@ -236,7 +236,7 @@ describe('runRestore', () => {
         { snapshotId: 'deadbeef', overwrite: true },
         { resticRunner: stubRunner() },
       ),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 
   it('stamps failure, alerts, and rethrows a translated 500 on restic errors', async () => {

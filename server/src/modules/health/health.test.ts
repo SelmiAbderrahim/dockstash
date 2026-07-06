@@ -193,8 +193,8 @@ describe('/api/health/projects', () => {
   });
 
   it('surfaces owner-scoped lastSuccessAt and lastDrillAt', async () => {
-    const alice = await User.create({ email: 'alice@x.co', password: 'p' });
-    const bob = await User.create({ email: 'bob@x.co', password: 'p' });
+    const alice = await User.create({ email: 'alice@x.co', password: 'p', emailVerified: true });
+    const bob = await User.create({ email: 'bob@x.co', password: 'p', emailVerified: true });
     const success = new Date('2027-01-01T00:00:00Z');
     await Project.create({
       owner: alice._id,
@@ -225,7 +225,7 @@ describe('/api/health/projects', () => {
   });
 
   it('serializes the complementary date fields (lastRunAt/lastCheckAt present, others null)', async () => {
-    const carol = await User.create({ email: 'carol@x.co', password: 'p' });
+    const carol = await User.create({ email: 'carol@x.co', password: 'p', emailVerified: true });
     const at = new Date('2027-02-02T00:00:00Z');
     await Project.create({
       owner: carol._id,

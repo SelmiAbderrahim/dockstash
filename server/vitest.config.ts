@@ -30,6 +30,11 @@ export default defineConfig({
         // Thin CLI seam over the tested seedPricingTiers() — like above.
         'src/seed-pricing-tiers.ts',
         'src/config/logger.ts',
+        // Thin ioredis + rate-limit-redis seam wired at boot from server.ts —
+        // real socket, mocked in unit tests via `setRedisStoreFactory` in
+        // `shared/middleware/coverage.test.ts`. Mirrors how server.ts is
+        // excluded above.
+        'src/shared/middleware/rate-limit-redis-store.ts',
         // NOTE: src/config/db.ts is intentionally NOT excluded — the v8
         // all-files scan in vitest 2.1.9 emits a 0% stub for excluded-but-
         // unimported files while filtering their runtime coverage, which

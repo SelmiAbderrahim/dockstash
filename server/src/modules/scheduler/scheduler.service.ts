@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
@@ -67,11 +68,14 @@ export async function loadOwnedSchedule(
   ctx: ServiceCtx = {},
 ): Promise<ScheduleHydrated> {
   const t = ctx.t ?? identityT;
-  const schedule = await Schedule.findById(scheduleId);
-  if (!schedule) throw HttpError.notFound(t('scheduler.error.scheduleNotFound'));
-  if (schedule.owner.toString() !== userId) {
-    throw HttpError.forbidden(t('scheduler.error.notOwner'));
+  // Owner scope AT QUERY TIME (surface #2 / S2-01): 404 for both non-existent
+  // and non-owned so an attacker cannot iterate ObjectIds and enumerate every
+  // tenant's schedules.
+  if (!isValidObjectId(scheduleId)) {
+    throw HttpError.notFound(t('scheduler.error.scheduleNotFound'));
   }
+  const schedule = await Schedule.findOne({ _id: scheduleId, owner: userId });
+  if (!schedule) throw HttpError.notFound(t('scheduler.error.scheduleNotFound'));
   return schedule;
 }
 

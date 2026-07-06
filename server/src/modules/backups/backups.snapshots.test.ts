@@ -73,7 +73,7 @@ describe('GET /api/backups/:projectId/snapshots', () => {
     expect(res.status).toBe(401);
   });
 
-  it('404s an unknown project and 403s a foreign one before touching storage', async () => {
+  it('404s both unknown AND foreign projects before touching storage (surface #2)', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const project = await seedProject(a.id);
@@ -88,7 +88,8 @@ describe('GET /api/backups/:projectId/snapshots', () => {
     const foreign = await request(app)
       .get(`/api/backups/${project._id}/snapshots`)
       .set('Authorization', `JWT ${b.token}`);
-    expect(foreign.status).toBe(403);
+    // Surface #2 / S2-01: foreign owner returns 404 (existence-cloak).
+    expect(foreign.status).toBe(404);
     expect(lister.listSnapshots).not.toHaveBeenCalled();
   });
 

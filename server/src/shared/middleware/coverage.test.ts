@@ -4,7 +4,17 @@ import passport from 'passport';
 import { requestId } from './request-id.js';
 import { language } from './language.js';
 import { requireCsrf } from './csrf.js';
-import { rateLimitHandler } from './rate-limit.js';
+import type { Store } from 'express-rate-limit';
+import {
+  createAgentRateLimiter,
+  createAuthRateLimiter,
+  createContactRateLimiter,
+  createExportRateLimiter,
+  createWebhookRateLimiter,
+  getRedisStoreFactory,
+  rateLimitHandler,
+  setRedisStoreFactory,
+} from './rate-limit.js';
 import { errorHandler } from './error-handler.js';
 import { requireAuth } from './require-auth.js';
 import { env } from '../../config/env.js';
@@ -234,6 +244,98 @@ describe('errorHandler i18n-key resolution branches', () => {
     expect(res.statusCode).toBe(404);
     expect(errorMessage(res)).toBe(translate('en', 'errors.projectNotFound'));
     expect(errorMessage(res)).not.toBe('errors.projectNotFound');
+  });
+});
+
+/**
+ * S1-02 — rate-limit store selection.
+ * `buildStore()` is a private helper; its behavior is verified through the
+ * public factory functions + the `setRedisStoreFactory` injector. The
+ * production ioredis + rate-limit-redis wiring is covered by the
+ * `c8 ignore`-wrapped `productionRedisStoreFactory` in
+ * `rate-limit-redis-store.ts` (real Redis socket) — see health.service.ts
+ * for the same pattern.
+ */
+describe('rate-limit Redis store selection (S1-02)', () => {
+  const prevFactory = getRedisStoreFactory();
+  const prevRedisUrl = env.REDIS_URL;
+  const prevNodeEnv = env.NODE_ENV;
+
+  afterEach(() => {
+    setRedisStoreFactory(prevFactory);
+    (env as { REDIS_URL?: string }).REDIS_URL = prevRedisUrl;
+    (env as { NODE_ENV: string }).NODE_ENV = prevNodeEnv;
+  });
+
+  it('setter / getter round-trip the factory reference', () => {
+    const stub: (url: string) => Store | null = () => null;
+    setRedisStoreFactory(stub);
+    expect(getRedisStoreFactory()).toBe(stub);
+    setRedisStoreFactory(null);
+    expect(getRedisStoreFactory()).toBeNull();
+  });
+
+  it('NODE_ENV === "test" short-circuits: the factory is never invoked', () => {
+    const factory = vi.fn(() => null);
+    setRedisStoreFactory(factory);
+    (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
+    (env as { NODE_ENV: string }).NODE_ENV = 'test';
+    // Each factory is constructed at call time — none should call the injected
+    // factory because the test-env guard fires first.
+    createAuthRateLimiter();
+    createWebhookRateLimiter();
+    createAgentRateLimiter();
+    createContactRateLimiter();
+    createExportRateLimiter();
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it('unset REDIS_URL short-circuits: no factory call, no Redis store', () => {
+    const factory = vi.fn(() => null);
+    setRedisStoreFactory(factory);
+    (env as { REDIS_URL?: string }).REDIS_URL = undefined;
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    createAuthRateLimiter();
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it('unset factory short-circuits: no crash when REDIS_URL is set in prod', () => {
+    setRedisStoreFactory(null);
+    (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    // Should return an in-memory limiter without throwing.
+    expect(() => createAuthRateLimiter()).not.toThrow();
+  });
+
+  it('factory returning null falls back to in-memory (undefined store)', () => {
+    const nullFactory: (url: string) => Store | null = vi.fn(() => null);
+    setRedisStoreFactory(nullFactory);
+    (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    createAuthRateLimiter();
+    expect(nullFactory).toHaveBeenCalledWith('redis://localhost:6379');
+  });
+
+  it('factory returning a live Store is used by every limiter kind', () => {
+    // express-rate-limit rejects reusing a single Store across limiters
+    // (`ERR_ERL_STORE_REUSE`), so hand out a fresh store per call.
+    const newStore = (): Store => ({
+      init: () => undefined,
+      increment: async () => ({ totalHits: 1, resetTime: new Date() }),
+      decrement: async () => undefined,
+      resetKey: async () => undefined,
+      resetAll: async () => undefined,
+    } as unknown as Store);
+    const factory: (url: string) => Store | null = vi.fn(() => newStore());
+    setRedisStoreFactory(factory);
+    (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    createAuthRateLimiter();
+    createWebhookRateLimiter();
+    createAgentRateLimiter();
+    createContactRateLimiter();
+    createExportRateLimiter();
+    expect(factory).toHaveBeenCalledTimes(5);
   });
 });
 

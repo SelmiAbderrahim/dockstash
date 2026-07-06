@@ -121,7 +121,10 @@ describe('agents: service', () => {
     expect(forA[0]?.port).toBe(2222);
   });
 
-  it('loadOwnedAgent enforces existence and ownership', async () => {
+  it('loadOwnedAgent enforces existence-cloak: 404 for both missing AND cross-owner', async () => {
+    // Surface #2 / S2-01 — the DB filters by owner at query time, so a
+    // foreign-owner id and a genuinely missing id both surface as 404 (no
+    // ObjectId-enumeration oracle).
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const { agent } = await registerAgent(a.id, { name: 'a1', host: 'h' });
@@ -130,7 +133,11 @@ describe('agents: service', () => {
     ).rejects.toMatchObject({ status: 404 });
     await expect(
       loadOwnedAgent(String(agent._id), b.id),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
+    // A non-ObjectId string is 404 too — never a Mongoose CastError 500.
+    await expect(
+      loadOwnedAgent('not-an-object-id', a.id),
+    ).rejects.toMatchObject({ status: 404 });
     const ok = await loadOwnedAgent(String(agent._id), a.id);
     expect(ok.name).toBe('a1');
   });
@@ -445,14 +452,14 @@ describe('agents: discovery endpoint', () => {
     expect(group.plan.databases[0]).toMatchObject({ type: 'postgres', container: 'app_db_1' });
   });
 
-  it("rejects reading another owner's agent discovery", async () => {
+  it("cloaks existence for another owner's agent discovery (404 not 403)", async () => {
     const a = await seedUser('own@t.com');
     const b = await seedUser('other@t.com');
     const { agent } = await registerAgent(a.id, { name: 'v', host: 'own.example' });
     const res = await request(app)
       .get(`/api/agents/${String(agent._id)}/discovery`)
       .set('Authorization', `JWT ${b.token}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it('machine heartbeat accepts and stores a discovery snapshot end-to-end', async () => {
@@ -605,14 +612,14 @@ describe('agents: discovery refresh', () => {
     ).toBe(401);
   });
 
-  it("rejects requesting a refresh for another owner's agent", async () => {
+  it("cloaks existence for another owner's agent refresh (404 not 403)", async () => {
     const a = await seedUser('rfa@t.com');
     const b = await seedUser('rfb@t.com');
     const { agent } = await registerAgent(a.id, { name: 'v', host: 'rf.example' });
     const res = await request(app)
       .post(`/api/agents/${String(agent._id)}/discovery/refresh`)
       .set('Authorization', `JWT ${b.token}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it('sets discoveryRequestedAt, and the next machine heartbeat signals refreshDiscovery once then clears it', async () => {
@@ -671,7 +678,7 @@ describe('backups: create with agent assignment', () => {
     expect(String(project.agent)).toBe(String(agent._id));
   });
 
-  it('rejects assigning to an agent the user does not own (service)', async () => {
+  it('rejects assigning to an agent the user does not own with 404 (existence-cloak)', async () => {
     const a = await seedUser('ca2@t.com');
     const b = await seedUser('cb2@t.com');
     const { agent } = await registerAgent(a.id, { name: 'v', host: 'ca2.example' });
@@ -682,7 +689,7 @@ describe('backups: create with agent assignment', () => {
         repoPassword: 'password1',
         agentId: String(agent._id),
       }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 
   it('POST /api/backups with agentId assigns at creation', async () => {
@@ -869,7 +876,7 @@ describe('agents: project job history endpoint', () => {
     expect(res.status).toBe(400);
   });
 
-  it('404s for a project that does not exist and 403s for a foreign project', async () => {
+  it('404s for both missing AND foreign projects (surface #2 existence-cloak)', async () => {
     const { token } = await seedUser('jobs-owner@t.com');
     const missing = await request(app)
       .get('/api/agents/jobs?projectId=507f1f77bcf86cd799439011')
@@ -881,7 +888,9 @@ describe('agents: project job history endpoint', () => {
     const foreign = await request(app)
       .get(`/api/agents/jobs?projectId=${project._id}`)
       .set('Authorization', `JWT ${token}`);
-    expect(foreign.status).toBe(403);
+    // Surface #2 / S2-01: foreign owner is 404 (same body as missing) so an
+    // attacker cannot enumerate a target tenant's project directory.
+    expect(foreign.status).toBe(404);
   });
 
   it('returns [] for an agent-less project (local jobs are not persisted)', async () => {

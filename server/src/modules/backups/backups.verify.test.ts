@@ -201,13 +201,13 @@ describe('backups: runResticCheck', () => {
     expect(persisted?.lastCheckStatus).not.toBe('pass');
   });
 
-  it('forbids cross-user check', async () => {
+  it('cloaks existence for cross-user check (404 not 403)', async () => {
     const owner = await seedUser('own@test.com');
     const stranger = await seedUser('str@test.com');
     const projectId = await seedProject(owner.id);
     await expect(
       runResticCheck(projectId, stranger.id, { resticRunner: makeResticSpy() }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 });
 
@@ -344,7 +344,7 @@ describe('backups: runRestoreDrill (round-trip)', () => {
     expect(persisted?.lastDrillStatus).toBe('fail');
   });
 
-  it('forbids cross-user drill', async () => {
+  it('cloaks existence for cross-user drill (404 not 403)', async () => {
     const owner = await seedUser('a@test.com');
     const stranger = await seedUser('b@test.com');
     const projectId = await seedProject(owner.id);
@@ -355,7 +355,7 @@ describe('backups: runRestoreDrill (round-trip)', () => {
         fileDiff: makeFileDiff({ mismatches: 0, details: [] }),
         dbDiff: makeDbDiff({ mismatches: 0, details: [] }),
       }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 });
 
@@ -482,7 +482,7 @@ describe('backups: HTTP /check and /drill', () => {
       .post(`/api/backups/${projectId}/drill`)
       .set('Authorization', `JWT ${stranger.token}`)
       .send({});
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it('POST /:id/check errors 500 when the controller was never configured', async () => {

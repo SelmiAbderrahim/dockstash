@@ -22,6 +22,36 @@ const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const SALT_ROUNDS = 10;
 
+/**
+ * Wall-clock floor applied to the non-enumerating auth surfaces
+ * (`resendVerification`, `generateResetToken`). Hit and miss branches both
+ * pad up to this floor, so the timing delta an attacker measures across
+ * repeated samples stays inside the padding jitter and can't cluster into
+ * "known" vs "unknown" populations. See S1-03 in
+ * `prompts/dockstash-security/findings.md`. Overridable in tests via
+ * `setAuthTimingPadMs` — the default is deliberately higher than P95 of the
+ * hit path (hashPassword + user.save + resend email) on a warm DB.
+ */
+const DEFAULT_AUTH_TIMING_PAD_MS = 400;
+let authTimingPadMs = DEFAULT_AUTH_TIMING_PAD_MS;
+
+export function setAuthTimingPadMs(ms: number): void {
+  authTimingPadMs = ms;
+}
+
+export function getAuthTimingPadMs(): number {
+  return authTimingPadMs;
+}
+
+async function padAuthTiming(startedAt: number): Promise<void> {
+  const remaining = authTimingPadMs - (Date.now() - startedAt);
+  if (remaining > 0) {
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, remaining);
+    });
+  }
+}
+
 function verifyUrlFor(token: string): string {
   return `${env.CLIENT_URL.replace(/\/$/, '')}/verify-email/${token}`;
 }
@@ -126,16 +156,26 @@ export async function verifyEmailWithToken(token: string): Promise<UserHydrated>
 /**
  * Resend a verification email. Idempotent and non-enumerating: an already
  * verified account short-circuits, an unknown email is reported the same way
- * to the caller (controller returns a generic message either way).
+ * to the caller (controller returns a generic message either way). Both hit
+ * and miss branches pad to `authTimingPadMs` so an attacker cannot distinguish
+ * populations by response latency (S1-03).
  */
 export async function resendVerification(
   email: string,
   locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<{ status: 'sent' | 'alreadyVerified' | 'unknown' }> {
+  const startedAt = Date.now();
   const user = await User.findOne({ email });
-  if (!user) return { status: 'unknown' };
-  if (user.emailVerified) return { status: 'alreadyVerified' };
+  if (!user) {
+    await padAuthTiming(startedAt);
+    return { status: 'unknown' };
+  }
+  if (user.emailVerified) {
+    await padAuthTiming(startedAt);
+    return { status: 'alreadyVerified' };
+  }
   await issueVerificationToken(user, locale);
+  await padAuthTiming(startedAt);
   return { status: 'sent' };
 }
 
@@ -158,9 +198,13 @@ export async function generateResetToken(
   // Non-enumerating: an unknown email returns null (the controller still
   // responds with the same generic 200) so an attacker cannot distinguish
   // registered from unregistered addresses by status code. Mirrors
-  // `resendVerification`.
+  // `resendVerification`. Both branches also pad to `authTimingPadMs` so an
+  // attacker cannot cluster response-latency samples into "known" vs
+  // "unknown" populations (S1-03).
+  const startedAt = Date.now();
   const user = await User.findOne({ email });
   if (!user) {
+    await padAuthTiming(startedAt);
     return null;
   }
   const token = randomBytes(48).toString('hex');
@@ -173,6 +217,7 @@ export async function generateResetToken(
   // `sendEmail` swallows transport errors internally, so this never rejects.
   await deliverPasswordResetEmail(user.email, resetUrl);
 
+  await padAuthTiming(startedAt);
   return { user, token };
 }
 

@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose';
 import { env } from '../../config/env.js';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
@@ -109,18 +110,18 @@ export async function getHealthOverview(
   };
 }
 
-/** Single-project health detail; 404/403 mirror loadOwnedProject semantics. */
+/** Single-project health detail; existence-cloaks like loadOwnedProject (surface #2). */
 export async function getProjectHealth(
   projectId: string,
   owner: string,
   ctx: ServiceCtx = {},
 ): Promise<ProjectHealthEntry> {
   const t = ctx.t ?? identityT;
-  const project = await Project.findById(projectId);
-  if (!project) throw HttpError.notFound(t('backups.error.projectNotFound'));
-  if (String(project.owner) !== owner) {
-    throw HttpError.forbidden(t('backups.error.notOwner'));
+  if (!isValidObjectId(projectId)) {
+    throw HttpError.notFound(t('backups.error.projectNotFound'));
   }
+  const project = await Project.findOne({ _id: projectId, owner });
+  if (!project) throw HttpError.notFound(t('backups.error.projectNotFound'));
   const now = ctx.now ?? new Date();
   const [schedules, agents] = await Promise.all([
     Schedule.find({ owner, project: projectId, enabled: true }),

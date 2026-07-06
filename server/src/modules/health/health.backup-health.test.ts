@@ -223,7 +223,7 @@ describe('backup-health service + endpoints', () => {
     expect(entry.status).toBe('critical'); // dangling agent counts as offline
   });
 
-  it('getProjectHealth 404s unknown and 403s foreign projects', async () => {
+  it('getProjectHealth 404s both unknown AND foreign projects (surface #2 existence-cloak)', async () => {
     const a = await seedUser('own@t.com');
     const b = await seedUser('other@t.com');
     const projectId = await seedProject(a.id);
@@ -231,7 +231,7 @@ describe('backup-health service + endpoints', () => {
       getProjectHealth('507f1f77bcf86cd799439011', a.id),
     ).rejects.toMatchObject({ status: 404 });
     await expect(getProjectHealth(projectId, b.id)).rejects.toMatchObject({
-      status: 403,
+      status: 404,
     });
     const entry = await getProjectHealth(projectId, a.id);
     expect(entry.projectId).toBe(projectId);
@@ -383,5 +383,76 @@ describe('backup-health service + endpoints', () => {
       .set('Authorization', `JWT ${b.token}`);
     expect(res.body.alerts).toHaveLength(0);
     expect(await Alert.countDocuments({})).toBe(1);
+  });
+
+  /**
+   * S1-01 — authenticated `/api/health/*` sub-routers must sit behind the
+   * `verified` chain, same as every other product surface. Pre-fix: an
+   * authenticated-but-unverified session got 200s from these endpoints and
+   * silently violated the "unverified users can't reach product data"
+   * invariant. Post-fix: 403 EMAIL_NOT_VERIFIED on every authenticated
+   * health surface (list + overview + detail + alerts + read).
+   */
+  describe('S1-01: unverified accounts are blocked from authenticated health surfaces', () => {
+    async function seedUnverifiedUser(email: string): Promise<{ id: string; token: string }> {
+      const u = await User.create({
+        email,
+        password: 'x'.repeat(60),
+        profile: { firstName: 'U', lastName: 'V' },
+        emailVerified: false,
+      });
+      return { id: u._id.toString(), token: signToken(u._id.toString()) };
+    }
+
+    it('GET /api/health/projects → 403 EMAIL_NOT_VERIFIED for unverified users', async () => {
+      const u = await seedUnverifiedUser('unv-proj@t.com');
+      const res = await request(app)
+        .get('/api/health/projects')
+        .set('Authorization', `JWT ${u.token}`);
+      expect(res.status).toBe(403);
+      expect(res.body.error.details.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('GET /api/health/overview → 403 EMAIL_NOT_VERIFIED for unverified users', async () => {
+      const u = await seedUnverifiedUser('unv-ov@t.com');
+      const res = await request(app)
+        .get('/api/health/overview')
+        .set('Authorization', `JWT ${u.token}`);
+      expect(res.status).toBe(403);
+      expect(res.body.error.details.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('GET /api/health/projects/:id → 403 EMAIL_NOT_VERIFIED for unverified users', async () => {
+      const u = await seedUnverifiedUser('unv-detail@t.com');
+      const res = await request(app)
+        .get('/api/health/projects/507f1f77bcf86cd799439011')
+        .set('Authorization', `JWT ${u.token}`);
+      expect(res.status).toBe(403);
+      expect(res.body.error.details.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('GET /api/health/alerts + POST /alerts/read → 403 EMAIL_NOT_VERIFIED for unverified users', async () => {
+      const u = await seedUnverifiedUser('unv-alerts@t.com');
+      const list = await request(app)
+        .get('/api/health/alerts')
+        .set('Authorization', `JWT ${u.token}`);
+      expect(list.status).toBe(403);
+      expect(list.body.error.details.code).toBe('EMAIL_NOT_VERIFIED');
+      const post = await request(app)
+        .post('/api/health/alerts/read')
+        .set('Authorization', `JWT ${u.token}`)
+        .send({});
+      expect(post.status).toBe(403);
+      expect(post.body.error.details.code).toBe('EMAIL_NOT_VERIFIED');
+    });
+
+    it('unauthenticated liveness stays public (`/api/health` + `/api/metrics` never gate)', async () => {
+      // Sanity check: verify the public liveness/metrics routes are NOT
+      // caught by the `verified` gate — 200 with no token.
+      const live = await request(app).get('/api/health');
+      expect(live.status).toBe(200);
+      const met = await request(app).get('/api/metrics');
+      expect(met.status).toBe(200);
+    });
   });
 });

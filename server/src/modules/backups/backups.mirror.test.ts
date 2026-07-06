@@ -145,7 +145,7 @@ describe('runMirror', () => {
     ).rejects.toMatchObject({ status: 404 });
     await expect(
       runMirror(String(project._id), b.id, { resticRunner: makeRunner() }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 });
 

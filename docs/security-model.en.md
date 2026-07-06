@@ -8,8 +8,13 @@ the blast radius of the Dockstash orchestrator.
 | Concern | Control | Where |
 |---------|---------|-------|
 | Common HTTP headers | `helmet()` (defaults, `crossOriginResourcePolicy: same-site`, `referrerPolicy: no-referrer`) | `shared/middleware/security-headers.ts` |
-| Credential-stuffing on `/api/auth/*` | `express-rate-limit`, default 10 req / 15 min per IP (`RATE_LIMIT_AUTH_*`) | `shared/middleware/rate-limit.ts` |
+| Credential-stuffing on `/api/auth/*` | `express-rate-limit`, default 10 req / 15 min per IP (`RATE_LIMIT_AUTH_*`); Redis-backed store when `REDIS_URL` set so multi-instance deployments share one bucket (S1-02) — falls back to in-memory otherwise | `shared/middleware/rate-limit.ts` + `shared/middleware/rate-limit-redis-store.ts` |
 | Webhook flood before signature check | `express-rate-limit`, default 120 req / min per IP; runs BEFORE `express.raw` — never consumes the body used for HMAC verify | `shared/middleware/rate-limit.ts` + `app.ts` |
+| Passport JWT algorithm | Strategy pins `algorithms: ['HS256']` — rejects `alg:none` and RS256-confusion. Only one verify path (passport-jwt); no hand-parsed tokens; enforced by the static meta-test at `shared/middleware/security-meta.test.ts` and the `passport-jwt-algorithms-pin` rule | `modules/auth/passport.strategies.ts` |
+| Verify-before-parse for Polar webhook | Raw-body route mounted BEFORE `express.json(...)` so HMAC verify sees the un-parsed buffer; static guard in `security-meta.test.ts` fails if mount order regresses | `app.ts` |
+| Superadmin OTP step-up | Untrusted-device login returns `otpRequired: true` and NO JWT until `POST /api/auth/otp/verify` succeeds | `modules/auth/auth.controller.ts` + `modules/auth/login-otp.service.ts` |
+| Non-enumerating auth surfaces | Same generic response for known / unknown email on `/api/auth/{forgot-password,resend-verification}`; both hit and miss branches pad to `authTimingPadMs` (default 400ms) so response-latency samples cannot cluster into "known" vs "unknown" populations (S1-03) | `modules/auth/auth.service.ts` (`padAuthTiming`) |
+| Unverified accounts blocked from product surfaces | Every authenticated router — including `/api/health/{projects,overview,alerts}` (S1-01) — mounted behind `[requireAuth, requireVerified]`; unauthenticated liveness `/api/health` + `/api/metrics` stay public | `app.ts` (the shared `verified` array) |
 | CORS | Locked to exactly `env.CLIENT_URL` with `credentials: true` — no wildcard, no reflected origin | `app.ts` |
 | CSRF (cookie-borne auth surfaces) | Double-submit cookie + header (`x-csrf-token`); safe methods pass; bearer-token requests exempt (documented below); mutating cookie surfaces reject on missing/mismatched token | `shared/middleware/csrf.ts` |
 | Body validation | Every mutating route parses its body via a per-module zod schema. New routes must add one under `<module>.schema.ts` before wiring |

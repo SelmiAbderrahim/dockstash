@@ -109,6 +109,45 @@ For each finding, write ≥5 probes:
   `localhost`/domain in source with `SERVER_URL`/`CLIENT_URL`/`site-config`
   helpers (outside test/seed/docs exceptions — `site-url-env-pattern.md`).
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// encryptSecret — a FRESH random 12-byte IV per call (GCM); returns an envelope
+export function encryptSecret(plain: string): SecretEnvelope {
+  const iv = crypto.randomBytes(12);                      // NEVER reuse / hardcode an IV
+  const cipher = crypto.createCipheriv('aes-256-gcm', currentKey(), iv);
+  const ct = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  return {
+    ciphertext: ct.toString('base64'),
+    iv: iv.toString('base64'),
+    tag: cipher.getAuthTag().toString('base64'),
+    keyVersion: currentKeyVersion(),                      // enables idempotent rotation
+  };
+}
+
+// model — strip the envelope from EVERY response (toJSON transform)
+schema.set('toJSON', { transform: (_doc, ret) => { delete ret.repoPasswordEnc; return ret; } });
+
+// logger.ts — pino redaction covers every secret key
+export const logger = pino({
+  redact: {
+    paths: [
+      'req.headers.authorization', 'req.headers.cookie', '*.password', '*.token',
+      'MASTER_ENCRYPTION_KEY', 'SUPERADMIN_PASSWORD', '*.apiKeyHash', '*.repoPassword',
+    ],
+    censor: '[REDACTED]',
+  },
+});
+
+// superadmin.seed.ts — idempotent; never overwrite an existing account; never log the password
+await SuperAdmin.updateOne(
+  { email: env.SUPERADMIN_EMAIL },
+  { $setOnInsert: { email: env.SUPERADMIN_EMAIL, passwordHash: await bcrypt.hash(env.SUPERADMIN_PASSWORD, 12) } },
+  { upsert: true },                                       // re-seed is a no-op, hash never rewritten
+);
+logger.info({ email: env.SUPERADMIN_EMAIL }, 'superadmin ensured');  // email only — no password
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server;
 capture pino via a destination stream):
@@ -159,6 +198,28 @@ capture pino via a destination stream):
   entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5. Cross-reference
   `docs/security-model.en.md`.
 
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- Rotation coverage must hit the happy path, the idempotent re-run (`keyVersion == target`),
+  AND the mid-rotation failure → rollback branch. IV-uniqueness, no-secret-in-response, and
+  no-secret-in-logs each get an explicit assertion. The key-missing-at-boot throw is covered.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
+
 ## i18n
 
 Any admin-facing rotation/seeder error (rotation-failed, key-missing-at-boot)
@@ -179,6 +240,9 @@ Parity test green. RTL for `ar`.
 
 - **Agents:** `security-review-specialist` (primary); `typescript-pro` (crypto
   typing); `backend-dev` (rotation + seeder plumbing).
+- **MCP:** `code-review-graph` `get_impact_radius_tool` on `shared/crypto`
+  (`encryptSecret`/`decryptSecret`/`rotateStore`) before editing — every
+  at-rest secret path flows through it, so a change there fans out widely.
 - **Skills:** `/security-review` `secrets` mode (deep semantic pass —
   **required** before merge); `code-review` (final diff pass — assert no
   plaintext secret field without annotation, no `console.log` of a secret, no

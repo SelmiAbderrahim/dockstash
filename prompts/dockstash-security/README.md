@@ -60,7 +60,7 @@ hold the crown-jewel surfaces.
 |--------|---------------|-------------------|--------|
 | 00 Recon findings | `security-auditor` | — | `security-review` (`full` mode, read-only) |
 | 01 Auth & session | `security-auditor` | `typescript-pro` | `security-review` (`auth` mode), `backend-i18n` |
-| 02 IDOR isolation | `security-auditor` | `backend-dev` | `security-review` (`api` mode), `vitest-unit-testing` |
+| 02 IDOR isolation | `security-auditor` | `backend-dev`, `unit-test-specialist` | `security-review` (`api` mode) |
 | 03 Plan caps / entitlements | `security-auditor` | `backend-dev` | `security-review` (`api` mode), `spec-driven-development` |
 | 04 Webhook / payment integrity | `security-auditor` | `backend-dev` | `security-review` (`api` mode), `payment-orchestrator` |
 | 05 Fleet-agent surface | `security-auditor` | `backend-dev` | `security-review` (`auth` + `api` mode) |
@@ -90,7 +90,16 @@ hold the crown-jewel surfaces.
 - **i18n:** **7 locales — `en, ar, fr, de, es, ru, zh`** — server dictionaries
   under `shared/i18n/`, client under its locale files. Every new/changed
   user-facing error message is an i18n key present in ALL 7 dictionaries; key
-  parity tests stay green. RTL for `ar` (`rtl-support-arabic.md`).
+  parity tests stay green. RTL for `ar` (logical utilities per
+  `.claude/rules/dockstash-design-system.md` §7).
+- **Coverage & success gate (every prompt):** each surface prompt (`01`–`08`)
+  ends with a **Coverage & Success Gate — NON-NEGOTIABLE** section, and `09`
+  gates sign-off on it. The bar is **100% passing tests AND 100% v8 coverage**
+  (lines/branches/functions/statements) on the code the prompt touched. No
+  `.skip`/`.only`, no lowered `vitest.config.ts` threshold, no `/* c8 ignore */`,
+  no `eslint-disable`/`@ts-ignore` to reach green. Every added branch (guard,
+  `catch`, ternary) is tested on both sides; a genuinely-unreachable line is
+  refactored away, not ignored.
 - **Tests:** vitest both sides. Server: node, `fileParallelism:false`, v8
   coverage, supertest against `createApp()`, `mongodb-memory-server`.
   Router-level integration tests are mandatory — the guarantee must hold

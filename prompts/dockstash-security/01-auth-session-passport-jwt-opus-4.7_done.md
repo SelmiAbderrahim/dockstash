@@ -114,6 +114,42 @@ fixtures. Examples (adapt to actual findings):
   any surface-#1 secret the audit found un-redacted (`SUPERADMIN_PASSWORD`,
   CSRF secrets, OTP codes, password-reset tokens).
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+Read the cited source file BEFORE adapting these; they show the pattern, not the
+current bytes.
+
+```ts
+// app.ts — raw-body webhook MUST be mounted BEFORE express.json()
+app.post(
+  '/api/billing/webhook',
+  createWebhookRateLimiter(),                 // limiter first, must not consume the body
+  express.raw({ type: 'application/json' }),  // hands the handler the un-parsed Buffer
+  webhookHandler,
+);
+app.use(express.json({ limit: '1mb' }));      // AFTER the raw route — order is load-bearing
+
+// passport.strategies.ts — pin the algorithm, re-hydrate the user every request
+new JwtStrategy(
+  {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme('JWT'),
+    secretOrKey: env.JWT_SECRET,
+    algorithms: ['HS256'],                    // rejects alg=none and RS256-confusion
+  },
+  async (payload, done) => {
+    const user = await User.findById(payload.sub).lean();  // fresh read → deletions/role changes apply now
+    if (!user) return done(null, false);                   // 401 immediately after account removal
+    return done(null, user);
+  },
+);
+
+// csrf.ts — secure cookie in prod; exemption is bearer-only (never extend to cookie-only)
+res.cookie('csrfToken', token, {
+  sameSite: 'lax',
+  secure: env.NODE_ENV === 'production',
+});
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (`server/`, vitest node, `fileParallelism:false`, v8 coverage; supertest
 against `createApp()`; `startMemoryMongo`/`stopMemoryMongo`/`clearCollections`):
@@ -156,13 +192,35 @@ Preferred: an **executable** guard over prose.
   add a one-line entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5 if
   load-bearing.
 
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- Every branch you add (guard, early-return, `catch`, ternary) is exercised on BOTH
+  sides. A green suite at 99% with one untested error branch is a FAIL.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
+
 ## i18n
 
 Every new/changed user-facing error (CSRF-missing, rate-limited,
 challenge-required, alg-rejected generic 401, non-enumerating forgot-password
 response) is a key present in ALL 7 server dictionaries under `shared/i18n/`
 (`en, ar, fr, de, es, ru, zh`) and surfaced in the client locale files where
-the client renders them. RTL for `ar` (`rtl-support-arabic.md`). Key-parity
+the client renders them. RTL for `ar` (logical utilities per
+`.claude/rules/dockstash-design-system.md` §7). Key-parity
 test stays green. No hardcoded user-facing strings.
 
 ## Documentation

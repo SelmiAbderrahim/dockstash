@@ -264,11 +264,15 @@ export interface AgentJobResultInput {
 
 async function stampProject(
   projectId: string,
+  owner: string,
   kind: AgentJobKind,
   result: AgentJobResultInput,
   now: Date,
 ): Promise<void> {
-  const project = await Project.findById(projectId);
+  // Owner scope AT QUERY TIME (surface #2 / S2-02). A malicious daemon cannot
+  // pin telemetry on another owner's project even if a stray join reaches this
+  // path — the DB never returns an unowned row.
+  const project = await Project.findOne({ _id: projectId, owner });
   if (!project) return; // deleted mid-run — nothing left to stamp
   const detail = result.ok ? '' : (result.error ?? 'agent job failed');
   switch (kind) {
@@ -345,7 +349,7 @@ export async function completeJob(
   );
   if (!job) throw HttpError.notFound(t('agents.error.jobNotFound'));
 
-  await stampProject(String(job.project), job.kind, result, now);
+  await stampProject(String(job.project), principal.owner, job.kind, result, now);
   await persistScheduleStatus(job.scheduleId, result.ok ? 'success' : 'failed');
   events.logs?.done(jobId, result.ok, result.ok ? undefined : job.error);
   if (!result.ok) {

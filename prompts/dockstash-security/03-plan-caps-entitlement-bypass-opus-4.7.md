@@ -97,6 +97,36 @@ For each finding, write ≥5 inputs:
   create/update path that sets retention (so a Free-tier user cannot set a
   365-day retention by raw API).
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// controller — order: parse → own → assert → reserve → enqueue
+const body = createProjectSchema.parse(req.body);            // 1 parse (strict zod)
+const entitlements = await resolveEntitlements(req.user.id); // tier resolved from plans.ts
+
+// 2+3 atomic cap guard closes the TOCTOU window — no count-then-insert race.
+// The conditional { $lt: cap } + $inc is a single atomic op; the 2nd concurrent
+// request at remaining==1 matches zero docs and fails the guard.
+const counter = await UsageCounter.findOneAndUpdate(
+  { owner: req.user.id, projects: { $lt: entitlements.projectCap } },
+  { $inc: { projects: 1 } },
+  { new: true },
+);
+if (!counter) throw HttpError.paymentRequired('errors.tier.projectCapReached');
+
+try {
+  const project = await Project.create({ owner: req.user.id, ...body });  // 4 reserve
+  await enqueueDiscovery(project._id);                                    // 5 enqueue (AFTER assert)
+  return res.status(201).json(project);
+} catch (err) {
+  await UsageCounter.updateOne({ owner: req.user.id }, { $inc: { projects: -1 } }); // roll back the reservation
+  throw err;
+}
+
+// retention clamp — a Free-tier raw-API attempt to set 365 days is clamped server-side
+const retentionDays = clampRetentionDays(body.retentionDays, entitlements);
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - **Cap math**: set a cap to N, create N successfully, assert the N+1th is
@@ -132,6 +162,28 @@ Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - d) If warranted, add `.claude/rules/entitlement-cap-ordering.md` and a
   one-line entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5 if
   load-bearing. Cross-reference `docs/plans-and-limits.en.md`.
+
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- The concurrency/TOCTOU test (N+1 parallel requests at remaining==1) must assert BOTH
+  the single-201 winner and the 402/409 losers, AND the rollback branch on the `catch`.
+  The atomic-guard's fail path (`!counter`) must be covered.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
 
 ## i18n
 

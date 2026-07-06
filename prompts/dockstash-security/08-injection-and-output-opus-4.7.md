@@ -116,6 +116,31 @@ For each finding, write ≥5 inputs:
   when an error occurs (overlaps surface #7's pino redaction — confirm
   jointly).
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// strict zod rejects operator-injection keys ($gt, $where, $regex) at the boundary
+const listSchema = z.object({
+  status: z.enum(['active', 'archived']).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+}).strict();                                             // unknown / `$`-prefixed keys → 400
+
+const q = listSchema.parse(req.query);                  // typed values — NEVER spread req.query
+if (req.params.id && !isValidObjectId(req.params.id)) throw HttpError.badRequest('errors.invalidId');
+const rows = await Project.find({
+  owner: req.user.id,                                    // always owner-scoped
+  ...(q.status ? { status: q.status } : {}),            // explicit typed fields only
+});
+
+// error-handler.ts — i18n key + correlation id ONLY; never err.stack / err.message raw
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  const status = err instanceof HttpError ? err.status : 500;
+  const key = err instanceof HttpError ? err.i18nKey : 'errors.internal';
+  logger.error({ err, correlationId: req.id }, 'request failed');   // full detail to logs (redacted), not the client
+  res.status(status).json({ error: { code: key, message: req.t(key), correlationId: req.id } });
+}
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - **Operator injection**: a `GET` with `?role[$gt]=` / `?email[$regex]=…`
@@ -159,6 +184,28 @@ Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
   REQUIREMENT header, Correct/Forbidden examples, Validation Checklist) and
   a one-line entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5.
   Cross-reference `docs/data-rights.en.md` + `docs/security-model.en.md`.
+
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- Cover both error-handler branches (`HttpError` → mapped status/key; unknown → 500/internal),
+  the strict-zod reject (`$`-key → 400), the invalid-ObjectId reject (→ 400, never 500), and
+  the superadmin gate on every sub-route. Assert the 500 body carries NO stack / path / secret.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
 
 ## i18n
 

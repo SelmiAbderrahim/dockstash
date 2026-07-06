@@ -312,6 +312,12 @@ STEP 6 — VERIFY & REPORT. Run (Docker-only, per .claude/rules/docker-only-comm
 
 ### Ground rules
   - Every build/test/runtime command runs in Docker — never bare npm/node/npx on the host.
+  - Exit bar for every surface: 100% passing tests AND 100% v8 coverage
+    (lines/branches/functions/statements) on the code you touched. Every fix ships a test
+    that FAILS before and PASSES after; every added branch (guard/catch/ternary) is tested
+    on both sides. Never lower a coverage threshold, add `/* c8 ignore */`, `.skip`/`.only`,
+    `eslint-disable`, or `@ts-ignore` to reach green — a genuinely-unreachable line is
+    refactored away, not ignored.
   - Report outcomes faithfully. If a test fails, show the output. If a fix is partial, say so.
   - Never disable a security control, coverage gate, or lint rule to pass CI.
   - Never bind-mount /var/run/docker.sock or spawn a subprocess through a shell.

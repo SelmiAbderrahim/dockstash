@@ -22,8 +22,15 @@ import {
 } from './modules/backups/index.js';
 import { configureSettingsController, makeProductionSshProbe } from './modules/settings/index.js';
 import { wireRecoveryController } from './boot/recovery.js';
+import { setRedisStoreFactory } from './shared/middleware/rate-limit.js';
+import { productionRedisStoreFactory } from './shared/middleware/rate-limit-redis-store.js';
 
 function main(): void {
+  // Redis-backed rate-limit store (S1-02). Wired BEFORE `createApp()` so every
+  // limiter constructed at mount time picks up the shared bucket. No-op when
+  // REDIS_URL is unset or NODE_ENV === 'test' (the factory itself is only ever
+  // invoked from `buildStore()` inside rate-limit.ts and short-circuits there).
+  setRedisStoreFactory(productionRedisStoreFactory);
   const app = createApp();
 
   const server = app.listen(env.PORT, () => {

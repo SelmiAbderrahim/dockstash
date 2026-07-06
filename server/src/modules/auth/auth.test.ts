@@ -10,7 +10,13 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import type { NextFunction, Request, Response } from 'express';
 import { User } from '../users/index.js';
-import { authenticate } from './auth.service.js';
+import {
+  authenticate,
+  generateResetToken,
+  getAuthTimingPadMs,
+  resendVerification,
+  setAuthTimingPadMs,
+} from './auth.service.js';
 import { requireVerified } from './auth.controller.js';
 import { registerStrategies } from './passport.strategies.js';
 import { env } from '../../config/env.js';
@@ -58,6 +64,7 @@ const validUser = {
 describe('auth module', () => {
   const prevResendKey = env.RESEND_API_KEY;
   const prevResendFrom = env.RESEND_FROM;
+  const prevPadMs = getAuthTimingPadMs();
 
   beforeAll(async () => {
     await startMemoryMongo();
@@ -69,6 +76,9 @@ describe('auth module', () => {
       sentEmails.push({ to: msg.to, subject: msg.subject, text: msg.text });
       return { delivered: true };
     });
+    // Keep the anti-enumeration pad small in tests so the suite stays fast;
+    // dedicated cases restore a real pad to prove the floor. See S1-03.
+    setAuthTimingPadMs(5);
   });
 
   afterAll(async () => {
@@ -76,6 +86,7 @@ describe('auth module', () => {
     setResendTransport(null);
     (env as { RESEND_API_KEY?: string }).RESEND_API_KEY = prevResendKey;
     (env as { RESEND_FROM?: string }).RESEND_FROM = prevResendFrom;
+    setAuthTimingPadMs(prevPadMs);
   });
 
   beforeEach(async () => {
@@ -381,6 +392,95 @@ describe('auth module', () => {
       const missingId = new mongoose.Types.ObjectId().toString();
       const err = await invokeHandler(requireVerified, { user: { id: missingId } as Express.User });
       expect(err).toMatchObject({ status: 401 });
+    });
+  });
+
+  /**
+   * S1-03 — Timing enumeration on forgot-password / resend-verification.
+   * Both hit and miss branches must pad up to `authTimingPadMs` so an attacker
+   * cannot cluster response-latency samples into "known" vs "unknown" pools.
+   * Pre-fix: the miss branch short-circuited synchronously and always returned
+   * well under the pad; these expectations would fail.
+   */
+  describe('non-enumerating timing pad (S1-03)', () => {
+    beforeEach(async () => {
+      await request(app).post('/api/auth/signup').send(validUser).expect(201);
+    });
+
+    it('padAuthTiming: raising the pad above elapsed schedules a setTimeout', async () => {
+      setAuthTimingPadMs(60);
+      try {
+        const start = Date.now();
+        const miss = await generateResetToken('nobody-pad@example.com');
+        const elapsed = Date.now() - start;
+        expect(miss).toBeNull();
+        expect(elapsed).toBeGreaterThanOrEqual(50);
+      } finally {
+        setAuthTimingPadMs(5);
+      }
+    });
+
+    it('padAuthTiming: setting the pad to 0 skips the setTimeout branch', async () => {
+      setAuthTimingPadMs(0);
+      try {
+        // Elapsed will always exceed 0 by the time padAuthTiming runs, so the
+        // `remaining > 0` guard is false — this exercises the fast-path branch.
+        const res = await resendVerification('another-pad@example.com');
+        expect(res).toEqual({ status: 'unknown' });
+      } finally {
+        setAuthTimingPadMs(5);
+      }
+    });
+
+    it('service: generateResetToken miss and hit both return with pad floor', async () => {
+      setAuthTimingPadMs(40);
+      try {
+        const start1 = Date.now();
+        const miss = await generateResetToken('unknown@example.com');
+        const missDur = Date.now() - start1;
+        expect(miss).toBeNull();
+        expect(missDur).toBeGreaterThanOrEqual(30);
+
+        const start2 = Date.now();
+        const hit = await generateResetToken(validUser.email);
+        const hitDur = Date.now() - start2;
+        expect(hit).not.toBeNull();
+        expect(hitDur).toBeGreaterThanOrEqual(30);
+      } finally {
+        setAuthTimingPadMs(5);
+      }
+    });
+
+    it('service: resendVerification miss / already-verified / sent all hit the pad floor', async () => {
+      setAuthTimingPadMs(40);
+      try {
+        const missStart = Date.now();
+        const miss = await resendVerification('ghost@example.com');
+        expect(miss.status).toBe('unknown');
+        expect(Date.now() - missStart).toBeGreaterThanOrEqual(30);
+
+        const sentStart = Date.now();
+        const sent = await resendVerification(validUser.email);
+        expect(sent.status).toBe('sent');
+        expect(Date.now() - sentStart).toBeGreaterThanOrEqual(30);
+
+        // Flip the account to verified and check the alreadyVerified branch too.
+        await User.updateOne({ email: validUser.email }, { $set: { emailVerified: true } });
+        const verifStart = Date.now();
+        const alreadyVerified = await resendVerification(validUser.email);
+        expect(alreadyVerified.status).toBe('alreadyVerified');
+        expect(Date.now() - verifStart).toBeGreaterThanOrEqual(30);
+      } finally {
+        setAuthTimingPadMs(5);
+      }
+    });
+
+    it('setter/getter round-trip the pad value', () => {
+      const prev = getAuthTimingPadMs();
+      setAuthTimingPadMs(123);
+      expect(getAuthTimingPadMs()).toBe(123);
+      setAuthTimingPadMs(prev);
+      expect(getAuthTimingPadMs()).toBe(prev);
     });
   });
 });

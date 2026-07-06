@@ -169,6 +169,9 @@ These are the load-bearing rules. Each links to the full rule file in `.claude/r
 - **Typed Mongoose schemas.** Every schema uses `InferSchemaType` (TypeScript) and exports the type alongside the model. No bare `mongoose.model()` calls without a type annotation.
   → `.claude/rules/mern-mongoose-typed-schemas.md`
 
+- **Owner-scoped queries at query time.** Every owner-scoped resource load MUST filter by `owner` in the query itself (`Model.findOne({ _id, owner })`), NOT with a subsequent `if (row.owner !== userId)`. Foreign-owner requests return **404** (existence-cloak); every product router carries a cross-account test. Enforced by `server/src/shared/middleware/idor-meta.test.ts` and an ESLint `no-restricted-syntax` ban on `findById(req.params.*)` in controllers.
+  → `.claude/rules/owner-scoped-queries.md`
+
 - **Environment variables from root `.env` only.** Never create `.env` files in subdirectories. Server config flows through `src/config/env.ts` (zod-validated). Client config uses `import.meta.env.VITE_*`.
   → `.claude/rules/environment-variables.md`
 

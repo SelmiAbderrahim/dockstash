@@ -92,10 +92,16 @@ export function createApp(): Express {
   app.use('/', seoRouter);
 
   app.use('/api', healthRouter);
-  app.use('/api/health/projects', projectHealthRouter);
+  // Product surfaces are hard-gated behind [requireAuth, requireVerified] —
+  // defined below and reused here so an authenticated-but-unverified session
+  // cannot silently reach /api/health/{projects,overview,alerts}. Only the
+  // public liveness/metrics under `healthRouter` above stay unauthenticated.
+  // See S1-01 in prompts/dockstash-security/findings.md.
+  const verified = [requireAuth, requireVerified];
+  app.use('/api/health/projects', verified, projectHealthRouter);
   // Backup-health dashboard + alert center (mounted after the legacy projects
   // list so `GET /api/health/projects` keeps its handler; see health.routes).
-  app.use('/api/health', backupHealthRouter);
+  app.use('/api/health', verified, backupHealthRouter);
   // OAuth capability probe mounted BEFORE the rate limiter: the client asks
   // it on every login/register render, and inside the 10-req/15-min auth
   // budget it would starve real login attempts. Read-only, leaks nothing.
@@ -117,8 +123,8 @@ export function createApp(): Express {
 
   // Product surfaces are hard-gated: an authenticated but unverified user is
   // blocked (403 EMAIL_NOT_VERIFIED) until they confirm their email. `requireAuth`
-  // populates req.user so `requireVerified` can do its DB check.
-  const verified = [requireAuth, requireVerified];
+  // populates req.user so `requireVerified` can do its DB check. The `verified`
+  // array is declared above the health mount so the same gate applies uniformly.
   app.use('/api/audit', verified, auditRouter);
   app.use('/api/users', verified, usersRouter);
   // Public pricing catalog is mounted BEFORE the `verified` gate; Express matches

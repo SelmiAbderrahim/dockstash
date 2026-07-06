@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { isValidObjectId } from 'mongoose';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { hashApiSecret } from '../../shared/crypto/index.js';
 import { translate, DEFAULT_LOCALE } from '../../shared/i18n/index.js';
@@ -90,11 +91,14 @@ export async function loadOwnedAgent(
   deps: { t?: Translator } = {},
 ): Promise<AgentHydrated> {
   const t = deps.t ?? identityT;
-  const agent = await Agent.findById(agentId);
-  if (!agent) throw HttpError.notFound(t('agents.error.notFound'));
-  if (agent.owner.toString() !== userId) {
-    throw HttpError.forbidden(t('agents.error.notOwner'));
+  // Owner scope AT QUERY TIME (surface #2 / S2-01): 404 for both non-existent
+  // and non-owned so an attacker cannot iterate ObjectIds and enumerate every
+  // tenant's agents.
+  if (!isValidObjectId(agentId)) {
+    throw HttpError.notFound(t('agents.error.notFound'));
   }
+  const agent = await Agent.findOne({ _id: agentId, owner: userId });
+  if (!agent) throw HttpError.notFound(t('agents.error.notFound'));
   return agent;
 }
 

@@ -49,8 +49,10 @@ export async function resolveProjectRunner(
   owner: string,
   build: RunnerBuilder = defaultBuilder,
 ): Promise<ResticRunnerExt> {
-  const project = await Project.findById(projectId);
-  if (!project || project.owner.toString() !== owner) {
+  // Owner scope AT QUERY TIME (surface #2): the DB never returns an unowned
+  // row, so a bug in a caller cannot leak repo material across tenants.
+  const project = await Project.findOne({ _id: projectId, owner });
+  if (!project) {
     throw new Error(`resolveProjectRunner: project ${projectId} not found for owner`);
   }
   const { transport, settings } = await loadTransportForUser(owner);

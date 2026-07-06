@@ -742,13 +742,13 @@ describe('/api/agent machine surface + assignment E2E', () => {
     expect(assign.status).toBe(200);
     expect(assign.body.project.agentId).toBe(agentId);
 
-    // Foreign owner cannot assign
+    // Foreign owner: existence-cloak returns 404 (surface #2 / S2-01)
     const b = await seedUser('b@t.com');
     const foreign = await request(app)
       .patch(`/api/backups/${project._id}/agent`)
       .set('Authorization', `JWT ${b.token}`)
       .send({ agentId: null });
-    expect(foreign.status).toBe(403);
+    expect(foreign.status).toBe(404);
 
     // Job enqueued through the decorated queue shape (created directly here).
     await createAgentJob(

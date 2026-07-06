@@ -108,6 +108,33 @@ For each finding, write ≥5 inputs:
   `docker-client` spawn that concatenates server-supplied params into a shell
   string; the fix belongs to prompt `06`. Note the handoff in `findings.md`.
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// agent-api.controller.ts — scope EVERY handler to the calling agent
+const job = await AgentJob.findOne({ _id: req.params.jobId, agentId: req.agent.id });
+if (!job) return res.status(404).end();      // another agent's job → 404, never 200
+
+// require-agent-auth.ts — timing-flat verify: unknown id STILL pays the HMAC cost, ONE 401
+const [, agentId, secret] = /^dsa_([0-9a-f]{24})\.([0-9a-f]{48})$/.exec(token) ?? [];
+const agent = agentId ? await Agent.findById(agentId).lean() : null;
+const storedHash = agent?.apiKeyHash ?? DUMMY_HASH;          // dummy → timing doesn't leak existence
+const providedHash = hashApiSecret(secret ?? '');           // HMAC-SHA256, master-keyed
+const match = timingSafeEqualHex(providedHash, storedHash);
+if (!agent || !match) return res.status(401).json({ error: 'unauthorized' });  // ONE generic 401
+req.agent = { id: agent._id.toString(), owner: agent.owner.toString() };
+
+// agents.model.ts — rotation atomically swaps the hash; the old token dies on the next request
+export async function rotateAgentKey(agentId: string) {
+  const secret = crypto.randomBytes(24).toString('hex');    // 48 hex chars
+  await Agent.updateOne(
+    { _id: agentId },
+    { $set: { apiKeyHash: hashApiSecret(secret), rotatedAt: new Date() } },  // atomic swap
+  );
+  return `dsa_${agentId}.${secret}`;         // returned ONCE; never persisted, never logged, never echoed
+}
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - **Per-agent scope**: seed owner A → agent A → job A; owner B → agent B →
@@ -147,6 +174,28 @@ Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
   entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5. Cross-reference
   `docs/fleet-agents.en.md`.
 
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched (server AND, if `agent/src` changed, the agent package):
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npx vitest run --coverage
+docker run --rm -v "$PWD/agent":/app  -w /app node:20-bookworm npx vitest run --coverage  # if agent/src touched
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- Cover the full verify matrix on EVERY `/api/agent` handler: own-job (200), other-agent's
+  job (404), valid token (200), tampered secret (401), unknown agentId (401), rotated-old
+  token (401). The dummy-record timing-flatten branch and the regex-no-match branch must be hit.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
+
 ## i18n
 
 The `/api/agent` surface returns ONE generic 401 (no body) — no key needed.
@@ -168,6 +217,10 @@ green. RTL for `ar`.
 
 - **Agents:** `security-review-specialist` (primary); `backend-dev` (agent-api
   handlers + daemon rewrites).
+- **MCP:** `code-review-graph` `get_impact_radius_tool` on any spawn/adapter
+  helper before editing it — the `restic-runner`/`docker-client` copies are
+  vendored into both `server/src/modules/backups/` and `agent/src/`, so know
+  the blast radius before touching one side.
 - **Skills:** `/security-review` `auth` + `api` mode (deep semantic pass —
   **required** before merge); `code-review` (final diff pass — assert no
   `AgentJob.findById(req.params.jobId)` without an agent-id join, no echo of

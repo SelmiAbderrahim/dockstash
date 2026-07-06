@@ -123,6 +123,53 @@ For each finding, write ≥5 inputs:
   them. No `as any`, no spreading `req.body`/`req.query` into a Mongoose
   filter (overlaps surface #8) or a spawn arg.
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// restic-runner.ts — argv-only, secret via env, NEVER a shell string
+import { spawn } from 'node:child_process';
+const child = spawn('restic', ['-r', repoUrl, 'backup', srcPath], {
+  shell: false,                                     // no shell → metacharacters are inert data
+  env: { ...process.env, RESTIC_PASSWORD: password }, // secret in env, NOT in argv
+});
+// FORBIDDEN: exec(`restic -r ${repoUrl} backup ${srcPath}`)  // command injection via repoUrl/srcPath
+
+// ssh-transport.ts — pin the host key; fail closed if unset; never auto-accept
+const pinned = env.STORAGE_SSH_HOST_KEY_FINGERPRINT;
+if (!pinned) throw HttpError.failedDependency('errors.ssh.fingerprintMissing');  // fail closed
+conn.connect({
+  host, port, username,
+  hostVerifier: (key: Buffer) => sshFingerprint(key) === pinned,  // reject on mismatch — no StrictHostKeyChecking=no
+});
+
+// shared/net/safe-fetch.ts — SSRF guard: scheme allowlist + IP blocklist + redirect re-validation
+import ipaddr from 'ipaddr.js';
+import { lookup } from 'node:dns/promises';
+const BLOCKED = ['127.0.0.0/8','10.0.0.0/8','172.16.0.0/12','192.168.0.0/16',
+                 '169.254.0.0/16','::1/128','fc00::/7'];
+
+async function assertPublicUrl(raw: string): Promise<URL> {
+  const url = new URL(raw);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:')
+    throw HttpError.badRequest('errors.ssrf.scheme');          // rejects gopher://, file://, …
+  const { address } = await lookup(url.hostname);              // resolve, then judge the IP
+  const ip = ipaddr.parse(address);
+  if (BLOCKED.some((cidr) => ip.match(ipaddr.parseCIDR(cidr))))
+    throw HttpError.badRequest('errors.ssrf.private');         // metadata/loopback/private → reject
+  return url;
+}
+
+export async function safeFetch(raw: string, init?: RequestInit): Promise<Response> {
+  let url = await assertPublicUrl(raw);
+  for (let hop = 0; hop < 5; hop++) {
+    const res = await fetch(url, { ...init, redirect: 'manual' });  // follow redirects manually
+    if (res.status < 300 || res.status >= 400) return res;
+    url = await assertPublicUrl(new URL(res.headers.get('location')!, url).toString());  // re-validate EACH hop
+  }
+  throw HttpError.badRequest('errors.ssrf.tooManyRedirects');
+}
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server;
 external systems INJECTED so restic/ssh/dockerode are mocked):
@@ -178,6 +225,29 @@ external systems INJECTED so restic/ssh/dockerode are mocked):
   entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5. Cross-reference
   `docs/security-model.en.md`.
 
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched (server AND, since the spawn helpers are vendored, the agent package):
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npx vitest run --coverage
+docker run --rm -v "$PWD/agent":/app  -w /app node:20-bookworm npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- `safe-fetch.ts` must hit EVERY branch: valid public URL, bad scheme, each blocked CIDR
+  (loopback/private/link-local/metadata/IPv6), the redirect re-validation loop, and the
+  too-many-redirects exit. Each blocked case asserts the underlying `fetch` was NEVER called.
+- The host-key path covers match (proceed), mismatch (abort), and unset-fingerprint (fail-closed).
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
+
 ## i18n
 
 Host-key-mismatch, SSRF-rejected, invalid-scheme, invalid-container, missing-
@@ -201,6 +271,10 @@ rendered. Parity test green. RTL for `ar`.
 
 - **Agents:** `security-review-specialist` (primary); `backend-dev` (spawn
   rewrites + SSRF helper); `build-engineer` (socket-proxy + `cap_drop`).
+- **MCP:** `code-review-graph` `get_impact_radius_tool` / `get_review_context_tool`
+  before rewriting a spawn helper — restic-runner/docker-client are vendored
+  into both `server/src/modules/backups/` and `agent/src/`; the parity check
+  (STEP 5d) fails if a fix lands on only one copy.
 - **Skills:** `/security-review` `docker` mode (deep semantic pass —
   **required** before merge); `docker-workflow-automation` (socket-proxy,
   capability drop); `code-review` (final diff pass — assert no `shell:true`,

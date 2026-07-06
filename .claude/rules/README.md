@@ -2,11 +2,13 @@
 
 Governance rules for the MERN starter project. Each rule is a focused `.md` file in this directory.
 
-## Kept Rules (13)
+## Kept Rules (15)
 
 | Rule | Source | Summary |
 |------|--------|---------|
 | `git-destructive-commands.md` | ported as-is | Never run destructive git commands without explicit per-turn user confirmation |
+| `passport-jwt-algorithms-pin.md` | authored (surface #1 STEP 5) | Passport `'jwt'` strategy MUST pin `algorithms: ['HS256']`; no second `jwt.verify` path |
+| `owner-scoped-queries.md` | authored (surface #2 STEP 5) | Load owner-scoped resources with `findOne({_id, owner})` at query time; foreign owner → 404 existence-cloak; every product router has a cross-account test |
 | `docker-only-commands.md` | authored | Every build/test/runtime command runs inside Docker (`node:20-bookworm` dev tooling, `docker compose` stack ops); bare host `npm`/`node` forbidden |
 | `dockstash-design-system.md` | authored | Visual source of truth: monochrome shadcn tokens, serif-accent headlines, flat cards, inverted CTA bands (packaged as the `dockstash-design` skill) |
 | `environment-variables.md` | ported + adapted | Root `.env` only; MERN-typical vars (`MONGODB_URI`, `JWT_SECRET`, `PORT`, etc.) |

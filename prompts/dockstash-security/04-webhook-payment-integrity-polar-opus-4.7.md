@@ -113,6 +113,38 @@ For each finding, write ≥5 inputs:
   record (e.g. a `refund` row referencing the original order); they NEVER
   hard-delete the order/subscription history.
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// verify.ts — verify RAW bytes BEFORE JSON.parse; fail closed on missing secret
+export function verifyWebhook(rawBody: Buffer, headers: Record<string, string>): PolarEvent {
+  const secret = env.POLAR_WEBHOOK_SECRET;
+  if (!secret) throw HttpError.unauthorized();            // FAIL CLOSED — never skip verification
+
+  const expected = standardWebhookSign(
+    secret, headers['webhook-id'], headers['webhook-timestamp'], rawBody,
+  );
+  const a = Buffer.from(expected);
+  const b = Buffer.from(headers['webhook-signature'] ?? '');
+  // length guard first, THEN constant-time compare (never ===)
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) throw HttpError.unauthorized();
+
+  const skew = Math.abs(Date.now() / 1000 - Number(headers['webhook-timestamp']));
+  if (skew > env.WEBHOOK_TOLERANCE_SECONDS) throw HttpError.unauthorized();  // narrow replay window
+
+  return JSON.parse(rawBody.toString('utf8'));            // parse ONLY after verify succeeds
+}
+
+// ingest.ts — idempotency via a unique index on eventId: insert-or-ack
+try {
+  await WebhookEvent.create({ eventId: event.id });       // unique index rejects a replay
+} catch (err) {
+  if (isDuplicateKeyError(err)) return res.status(200).end();  // already processed → ack, NO re-grant
+  throw err;
+}
+await applyLifecycleTransition(event);                    // runs exactly once per event id
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - **Tampered signature**: a request with a signature that does not match the
@@ -152,6 +184,28 @@ Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
   header, Correct/Forbidden examples, Validation Checklist) and a one-line
   entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5. Cross-reference
   `docs/polar-billing-and-webhooks.en.md`.
+
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- Cover EVERY verify branch: valid sig (200), tampered sig (401), unset secret (401,
+  fail-closed), replay outside window (401), duplicate eventId (200 ack, no re-grant).
+  The `isDuplicateKeyError` catch and the length-mismatch branch must both be hit.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
 
 ## i18n
 

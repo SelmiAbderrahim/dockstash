@@ -162,7 +162,7 @@ describe('scheduler: model + zod schemas', () => {
     expect(res.status).toBe(400);
   });
 
-  it('rejects non-owner project on create', async () => {
+  it('rejects non-owner project on create with 404 (existence-cloak, surface #2)', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const projectId = await seedProject(a.id);
@@ -170,7 +170,10 @@ describe('scheduler: model + zod schemas', () => {
       .post('/api/scheduler/schedules')
       .set('Authorization', `JWT ${b.token}`)
       .send({ projectId, kind: 'backup', cron: '0 3 * * *' });
-    expect(res.status).toBe(403);
+    // Non-owner projectId is treated as if the project does not exist, so an
+    // attacker cannot enumerate a target tenant's project directory by trying
+    // to attach schedules to it.
+    expect(res.status).toBe(404);
   });
 
   it('creates + lists + updates + deletes a schedule', async () => {
@@ -215,7 +218,7 @@ describe('scheduler: model + zod schemas', () => {
     expect(pub.lastEnqueuedAt).toBeNull();
   });
 
-  it('403s cross-user loadOwnedSchedule / update / delete', async () => {
+  it('404s cross-user loadOwnedSchedule / update / delete (surface #2 existence-cloak)', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const projectId = await seedProject(a.id);
@@ -225,13 +228,13 @@ describe('scheduler: model + zod schemas', () => {
       cron: '0 3 * * *',
     });
     await expect(loadOwnedSchedule(s._id.toString(), b.id)).rejects.toMatchObject({
-      status: 403,
+      status: 404,
     });
     await expect(
       updateSchedule(s._id.toString(), b.id, { cron: '0 5 * * *' }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
     await expect(deleteSchedule(s._id.toString(), b.id)).rejects.toMatchObject({
-      status: 403,
+      status: 404,
     });
   });
 
@@ -915,7 +918,7 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
     expect(del.status).toBe(204);
   });
 
-  it('rejects cross-user schedule access', async () => {
+  it('cloaks existence for cross-user schedule access (404 not 403)', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const projectId = await seedProject(a.id);
@@ -927,7 +930,7 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
     const res = await request(app)
       .get(`/api/scheduler/schedules/${created._id.toString()}`)
       .set('Authorization', `JWT ${b.token}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it('POST /enqueue consults the entitlement hook; denial → 403', async () => {
@@ -970,7 +973,7 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
     expect(res.status).toBe(404);
   });
 
-  it('POST /enqueue for a stranger’s schedule → 403', async () => {
+  it('POST /enqueue for a stranger’s schedule → 404 (existence-cloak)', async () => {
     const a = await seedUser('a@t.com');
     const b = await seedUser('b@t.com');
     const projectId = await seedProject(a.id);
@@ -983,7 +986,7 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
       .post('/api/scheduler/enqueue')
       .set('Authorization', `JWT ${b.token}`)
       .send({ scheduleId: s._id.toString() });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 });
 

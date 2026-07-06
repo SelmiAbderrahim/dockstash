@@ -23,6 +23,7 @@ import { matchAdapter, type ComposeService, type FileAdapter } from './backups.a
 import { dbSnapshotTag } from './backups.restore-plan.js';
 import type { CreateProjectInput } from './backups.schema.js';
 import path from 'node:path';
+import { isValidObjectId } from 'mongoose';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
 
@@ -99,11 +100,16 @@ export async function loadOwnedProject(
   deps: LoadOwnedProjectDeps = {},
 ): Promise<ProjectHydrated> {
   const t = deps.t ?? identityT;
-  const project = await Project.findById(projectId);
-  if (!project) throw HttpError.notFound(t('backups.error.projectNotFound'));
-  if (project.owner.toString() !== userId) {
-    throw HttpError.forbidden(t('backups.error.notOwner'));
+  // Owner scope is applied AT QUERY TIME — a foreign-owner id and a genuinely
+  // missing id are indistinguishable to the caller (both 404). This cloaks
+  // resource existence: an attacker iterating ObjectIds cannot enumerate the
+  // directory of every tenant's projects. See prompts/dockstash-security/
+  // 02-cross-account-idor-isolation-opus-4.7.md (surface #2, S2-01).
+  if (!isValidObjectId(projectId)) {
+    throw HttpError.notFound(t('backups.error.projectNotFound'));
   }
+  const project = await Project.findOne({ _id: projectId, owner: userId });
+  if (!project) throw HttpError.notFound(t('backups.error.projectNotFound'));
   return project;
 }
 

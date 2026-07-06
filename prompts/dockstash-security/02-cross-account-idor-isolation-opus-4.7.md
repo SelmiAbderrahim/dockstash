@@ -93,6 +93,27 @@ For every unscoped load:
   ids return 400, never a Mongoose 500 (overlaps surface #8; fix here if the
   unscoped handler is the one throwing).
 
+### Phase 2 — Reference fix shapes (illustrative — match the repo's real types)
+
+```ts
+// BEFORE — IDOR: any authenticated user reads any project by guessing an id
+const project = await Project.findById(req.params.id);
+if (project.owner.toString() !== req.user.id) throw HttpError.forbidden();
+
+// AFTER — owner-scoped AT QUERY TIME; the DB never returns the unowned row
+const project = await Project.findOne({ _id: req.params.id, owner: req.user.id });
+if (!project) throw HttpError.notFound('errors.project.notFound');  // 404 cloaks existence
+
+// Nested child — re-derive the owner THROUGH the parent; never trust a URL parentId
+const parent = await Project.findOne({ _id: req.params.projectId, owner: req.user.id });
+if (!parent) throw HttpError.notFound('errors.project.notFound');
+const snapshot = await Snapshot.findOne({ _id: req.params.snapshotId, project: parent._id });
+if (!snapshot) throw HttpError.notFound('errors.snapshot.notFound');
+
+// Invalid id → 400 (never a Mongoose 500) — cast before the query
+if (!isValidObjectId(req.params.id)) throw HttpError.badRequest('errors.invalidId');
+```
+
 ### Phase 3 — Tests (STEP 4)
 Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
 - **Cross-account matrix**: for EVERY touched resource, seed two users + two
@@ -128,6 +149,28 @@ Server (vitest node, supertest against `createApp()`, mongodb-memory-server):
   one-line entry in `.claude/rules/README.md`. Update `CLAUDE.md` §5 if
   load-bearing.
 
+## Coverage & Success Gate — NON-NEGOTIABLE
+
+This surface is DONE only when, **inside Docker**, the suite is 100% passing and
+v8 coverage is **100% on lines / branches / functions / statements** for the code
+this prompt touched:
+
+```
+docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+  npx vitest run --coverage
+```
+
+Hard requirements:
+- Every fix ships a test that FAILS before the change and PASSES after — stated per test.
+- The cross-account matrix must cover EVERY touched route: seed two owners, assert the
+  second gets a non-200 on each resource. A route without both the 200 (owner) and the
+  404/403 (non-owner) branch tested is a coverage FAIL.
+- No `.skip`/`.only`, no lowered `vitest.config.ts` thresholds, no `/* c8 ignore */`,
+  no `eslint-disable`, no `@ts-ignore` to reach green (`docs/ci-gates.en.md`).
+- If a line is genuinely unreachable, delete/refactor it — never ignore it.
+- The 7-locale i18n parity test stays green (every new key in en/ar/fr/de/es/ru/zh).
+- Re-run until green AND 100%. A red or sub-100% run is not "almost done" — it is not done.
+
 ## i18n
 
 Any re-cast error ("not found" vs "forbidden" to match the module convention)
@@ -144,10 +187,10 @@ dictionaries. No user-facing string change is made without locale parity.
 ## Agents & Skills
 
 - **Agents:** `security-review-specialist` (primary); `backend-dev` (per-
-  module query rewrites).
+  module query rewrites); `unit-test-specialist` (the cross-account matrix is
+  heavy — Vitest + supertest fixtures, mocking strategy).
 - **Skills:** `/security-review` `api` mode (deep semantic pass —
-  **required** before merge); `vitest-unit-testing` (the cross-account matrix
-  is heavy); `code-review` (final diff pass — assert no `findById(req.params`
+  **required** before merge); `code-review` (final diff pass — assert no `findById(req.params`
   remains in a controller, no nested-child load trusts `parentId` from the URL
   alone).
 

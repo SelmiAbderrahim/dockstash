@@ -393,3 +393,44 @@ describe('settings: serializers', () => {
     });
   });
 });
+
+// Surface #2 / S2-01: settings are keyed by JWT subject id — a second user's
+// token MUST NOT read/mutate the first user's storage settings. All settings
+// service functions filter by `{ owner: userId }` from `requireUserId(req.user)`,
+// so an attacker cannot forge cross-tenant access by passing another user's id.
+describe('settings: cross-account isolation', () => {
+  it("another user's token cannot see or mutate the owner's storage settings", async () => {
+    const owner = await seedUser('own-set@t.com');
+    const stranger = await seedUser('other-set@t.com');
+    await upsertStorage(owner.id, { ...STORAGE_INPUT });
+
+    // Stranger reads /api/settings/storage → they see THEIR OWN empty defaults,
+    // not the owner's row. `configured: false` is the smoking gun that the row
+    // never leaked across tenants.
+    const strangerRead = await request(app)
+      .get('/api/settings/storage')
+      .set('Authorization', `JWT ${stranger.token}`);
+    expect(strangerRead.status).toBe(200);
+    expect(strangerRead.body.storage.configured).toBe(false);
+
+    // Owner still sees their configured storage.
+    const ownerRead = await request(app)
+      .get('/api/settings/storage')
+      .set('Authorization', `JWT ${owner.token}`);
+    expect(ownerRead.body.storage.host).toBe(STORAGE_INPUT.host);
+    expect(ownerRead.body.storage.configured).toBe(true);
+
+    // Stranger PUT creates their own row, does NOT modify the owner's.
+    const strangerWrite = await request(app)
+      .put('/api/settings/storage')
+      .set('Authorization', `JWT ${stranger.token}`)
+      .send({ ...STORAGE_INPUT, host: 'stranger.example.com' });
+    expect(strangerWrite.status).toBe(200);
+    const ownerReloaded = await StorageSettings.findOne({ owner: owner.id });
+    expect(ownerReloaded?.host).toBe(STORAGE_INPUT.host);
+    const strangerRow = await StorageSettings.findOne({ owner: stranger.id });
+    expect(strangerRow?.host).toBe('stranger.example.com');
+    // Two distinct rows — no cross-tenant collision.
+    expect(String(ownerReloaded?._id)).not.toBe(String(strangerRow?._id));
+  });
+});

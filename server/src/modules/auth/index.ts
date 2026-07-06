@@ -70,5 +70,7 @@ export {
   issueLoginResponse,
   verifyEmailWithToken,
   resendVerification as resendVerificationService,
+  setAuthTimingPadMs,
+  getAuthTimingPadMs,
   type IssuedToken,
 } from './auth.service.js';

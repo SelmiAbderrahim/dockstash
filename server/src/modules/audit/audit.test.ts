@@ -192,4 +192,28 @@ describe('audit routes', () => {
     const entries = await listAuditForUser(alice.id);
     expect(entries).toHaveLength(1);
   });
+
+  // Surface #2 / S2-01: cross-account isolation for audit trails.
+  it('cross-account: another user cannot read the first user’s audit trail', async () => {
+    const alice = await seedUser('alice-x@x.co');
+    const bob = await seedUser('bob-x@x.co');
+    await recordAudit({
+      actorUserId: alice.id,
+      action: 'backup.run',
+      targetType: 'project',
+      targetId: 'alice-only',
+    });
+    // Bob's JWT sees ONLY bob's rows (zero here) — never alice's.
+    const res = await request(app)
+      .get('/api/audit')
+      .set('Authorization', bob.token);
+    expect(res.status).toBe(200);
+    expect(res.body.entries).toHaveLength(0);
+    // Sanity: alice still sees her own row.
+    const aliceRes = await request(app)
+      .get('/api/audit')
+      .set('Authorization', alice.token);
+    expect(aliceRes.body.entries).toHaveLength(1);
+    expect(aliceRes.body.entries[0].targetId).toBe('alice-only');
+  });
 });

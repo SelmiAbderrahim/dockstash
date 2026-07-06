@@ -643,7 +643,10 @@ describe('backups: service + persistence', () => {
     expect(JSON.stringify(serialized)).not.toContain('sup3r-s3cret');
   });
 
-  it('loadOwnedProject forbids cross-user access', async () => {
+  it('loadOwnedProject cloaks existence for cross-user access (404, not 403)', async () => {
+    // Surface #2 / S2-01: owner-scoped resources return 404 both for missing
+    // rows AND for foreign-owner rows, so an attacker iterating ObjectIds
+    // cannot enumerate every tenant's projects by status-code oracle.
     const a = await seedUser('a@test.com');
     const b = await seedUser('b@test.com');
     const p = await createProject(a.id, {
@@ -652,8 +655,15 @@ describe('backups: service + persistence', () => {
       repoPassword: 'password1',
     });
     await expect(loadOwnedProject(p._id.toString(), b.id)).rejects.toMatchObject({
-      status: 403,
+      status: 404,
     });
+  });
+
+  it('loadOwnedProject 404s for a non-ObjectId (never a CastError 500)', async () => {
+    const a = await seedUser('a@test.com');
+    await expect(
+      loadOwnedProject('not-an-object-id', a.id),
+    ).rejects.toMatchObject({ status: 404 });
   });
 
   it('loadOwnedProject 404s when not found', async () => {
@@ -1025,7 +1035,7 @@ describe('backups: runBackup orchestration', () => {
     expect(result.status).toBe('success');
   });
 
-  it('refuses to run when the caller does not own the project', async () => {
+  it('refuses to run when the caller does not own the project (404 cloaks existence)', async () => {
     const { projectId } = await seedProject();
     const stranger = await seedUser('c@test.com');
     const { restic, docker } = makeMocks();
@@ -1035,7 +1045,7 @@ describe('backups: runBackup orchestration', () => {
         dockerClient: docker,
         composeServices: { pg: { image: 'postgres:16' } },
       }),
-    ).rejects.toMatchObject({ status: 403 });
+    ).rejects.toMatchObject({ status: 404 });
   });
 
   it('emits argv (never a shell string) even when compose env carries metacharacters', async () => {
@@ -1121,7 +1131,8 @@ describe('backups: HTTP routes (ownership + auth)', () => {
     expect(res.status).toBe(400);
   });
 
-  it('GET /:id forbids access to another user’s project', async () => {
+  it('GET /:id cloaks existence for another user (404 not 403)', async () => {
+    // Surface #2 / S2-01 — non-owned and non-existent must be indistinguishable.
     const a = await seedUser('a@test.com');
     const b = await seedUser('b@test.com');
     const created = await createProject(a.id, {
@@ -1132,7 +1143,13 @@ describe('backups: HTTP routes (ownership + auth)', () => {
     const res = await request(app)
       .get(`/api/backups/${created._id.toString()}`)
       .set('Authorization', `JWT ${b.token}`);
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
+
+    // And a genuinely missing id returns the SAME 404 — no oracle.
+    const missing = await request(app)
+      .get(`/api/backups/507f1f77bcf86cd799439011`)
+      .set('Authorization', `JWT ${b.token}`);
+    expect(missing.status).toBe(404);
   });
 
   it('GET /:id returns the project to its owner', async () => {

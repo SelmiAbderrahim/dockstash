@@ -134,7 +134,10 @@ export const listProjectJobsHandler: RequestHandler = asyncHandler(async (req, r
   const userId = requireUserId(req.user);
   const { projectId } = listJobsQuerySchema.parse(req.query);
   await loadOwnedProject(projectId, userId, { t: req.t });
-  const jobs = await AgentJob.find({ project: projectId })
+  // Defense in depth: even though loadOwnedProject already proved ownership,
+  // scope the child query by owner too (surface #2 / S2-03) — a stale AgentJob
+  // that survives an ownership transfer or a projectId collision cannot leak.
+  const jobs = await AgentJob.find({ project: projectId, owner: userId })
     .sort({ createdAt: -1 })
     .limit(JOB_HISTORY_LIMIT);
   res.status(200).json({ jobs: jobs.map(serializeAgentJob) });
