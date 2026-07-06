@@ -196,6 +196,23 @@ describe('SnapshotsScreen', () => {
     expect(screen.getByText('1.4 MB')).toBeInTheDocument();
   });
 
+  it('shows the backup nature in the Type column', () => {
+    renderScreen({
+      projects: [makeProject()],
+      status: 'succeeded',
+      byProject: {
+        p1: [
+          { id: 'db', projectId: 'p1', time: '', sizeBytes: 1, tags: ['db:cache:redis'] },
+          { id: 'mir', projectId: 'p1', time: '', sizeBytes: 1, tags: ['mirror'] },
+          { id: 'file', projectId: 'p1', time: '', sizeBytes: 1 },
+        ],
+      },
+    });
+    expect(screen.getByText('Redis')).toBeInTheDocument();
+    expect(screen.getByText('Mirror')).toBeInTheDocument();
+    expect(screen.getByText('Files')).toBeInTheDocument();
+  });
+
   it('opens the restore dialog when Restore is clicked', () => {
     renderScreen({
       projects: [makeProject()],

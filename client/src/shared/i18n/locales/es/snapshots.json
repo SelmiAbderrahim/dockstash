@@ -6,8 +6,13 @@
   "tableLabel": "Instantáneas",
   "columns": {
     "date": "Fecha",
+    "type": "Tipo",
     "size": "Tamaño",
     "actions": "Acciones"
+  },
+  "types": {
+    "files": "Archivos",
+    "mirror": "Espejo"
   },
   "actions": {
     "restore": "Restaurar"

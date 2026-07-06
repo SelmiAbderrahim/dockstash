@@ -6,8 +6,13 @@
   "tableLabel": "Snapshots",
   "columns": {
     "date": "Date",
+    "type": "Type",
     "size": "Size",
     "actions": "Actions"
+  },
+  "types": {
+    "files": "Files",
+    "mirror": "Mirror"
   },
   "actions": {
     "restore": "Restore"

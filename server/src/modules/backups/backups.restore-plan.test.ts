@@ -109,8 +109,56 @@ describe('classifySnapshot', () => {
   });
 });
 
+/** The full clean-then-replay-then-verify sequence postgres restores emit. */
+function expectedPostgresSteps(user: string) {
+  const psqlStrict = ['psql', '-U', user, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'];
+  return [
+    {
+      kind: 'exec',
+      argv: [
+        ...psqlStrict,
+        '-c',
+        'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname IS NOT NULL',
+      ],
+    },
+    {
+      kind: 'exec-stdin-text',
+      argv: psqlStrict,
+      text:
+        "SELECT format('DROP DATABASE %I WITH (FORCE)', datname) FROM pg_database" +
+        " WHERE NOT datistemplate AND datname <> 'postgres' \\gexec\n",
+    },
+    {
+      kind: 'exec-stdin-text',
+      argv: psqlStrict,
+      text:
+        "SELECT format('DROP SCHEMA %I CASCADE', nspname) FROM pg_namespace" +
+        " WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' \\gexec\n" +
+        'CREATE SCHEMA public;\n' +
+        'GRANT ALL ON SCHEMA public TO PUBLIC;\n',
+    },
+    { kind: 'exec-stdin', argv: ['psql', '-U', user, '-d', 'postgres'] },
+    {
+      kind: 'exec-guard',
+      argv: [
+        'psql',
+        '-U',
+        user,
+        '-d',
+        'postgres',
+        '-tA',
+        '-c',
+        "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r'",
+      ],
+      failIfStdoutMatches: '^0\\s*$',
+      error:
+        'replay finished but no tables landed in schema public — the dump did not apply',
+    },
+  ];
+}
+
 describe('buildDbRestorePlan', () => {
-  it('postgres: psql against the maintenance DB with the configured user', () => {
+  it('postgres: clean-then-replay-then-verify with the configured user', () => {
     const plan = buildDbRestorePlan(db('db', 'postgres'), {
       image: 'postgres:16',
       environment: ['POSTGRES_USER=app'],
@@ -119,15 +167,24 @@ describe('buildDbRestorePlan', () => {
       service: 'db',
       type: 'postgres',
       container: 'c-db',
-      steps: [{ kind: 'exec-stdin', argv: ['psql', '-U', 'app', '-d', 'postgres'] }],
+      steps: expectedPostgresSteps('app'),
     });
   });
 
   it('postgres: defaults the user to postgres', () => {
     const plan = buildDbRestorePlan(db('db', 'postgres'), { image: 'postgres:16' });
-    expect(plan.steps).toEqual([
-      { kind: 'exec-stdin', argv: ['psql', '-U', 'postgres', '-d', 'postgres'] },
-    ]);
+    expect(plan.steps).toEqual(expectedPostgresSteps('postgres'));
+  });
+
+  it('postgres: the replay step itself stays tolerant (no ON_ERROR_STOP) and the verify guard trips on a zero table count', () => {
+    const steps = buildDbRestorePlan(db('db', 'postgres'), { image: 'postgres:16' }).steps;
+    const replay = steps.find((s) => s.kind === 'exec-stdin');
+    expect(replay).toEqual({ kind: 'exec-stdin', argv: ['psql', '-U', 'postgres', '-d', 'postgres'] });
+    const guard = steps.at(-1);
+    if (guard?.kind !== 'exec-guard') throw new Error('last step must be the verify guard');
+    const re = new RegExp(guard.failIfStdoutMatches);
+    expect(re.test('0\n')).toBe(true);
+    expect(re.test('84\n')).toBe(false);
   });
 
   it('mysql: root password from env, empty fallback', () => {

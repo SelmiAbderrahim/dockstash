@@ -95,8 +95,10 @@ export const postgresAdapter: StdinAdapter = {
   match: (image) => /postgres/i.test(image),
   dumpCmd: (svc) => {
     const user = readServiceEnv(svc, 'POSTGRES_USER') ?? 'postgres';
-    // --clean --if-exists so a restore replay drops-and-recreates instead of
-    // append-conflicting into a non-empty cluster (see restore-plan module).
+    // --clean --if-exists helps, but is NOT sufficient: pg_dumpall emits no
+    // cleanup for the built-in `postgres` database, and DROP DATABASE fails
+    // under live app connections — the restore plan resets the cluster itself
+    // before replaying (see postgresRestoreSteps in restore-plan).
     return ['pg_dumpall', '--clean', '--if-exists', '-U', user];
   },
 };

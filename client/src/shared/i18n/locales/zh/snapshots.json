@@ -6,8 +6,13 @@
   "tableLabel": "快照",
   "columns": {
     "date": "日期",
+    "type": "类型",
     "size": "大小",
     "actions": "操作"
+  },
+  "types": {
+    "files": "文件",
+    "mirror": "镜像"
   },
   "actions": {
     "restore": "恢复"

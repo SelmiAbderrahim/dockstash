@@ -6,8 +6,13 @@
   "tableLabel": "Snapshots",
   "columns": {
     "date": "Datum",
+    "type": "Typ",
     "size": "Größe",
     "actions": "Aktionen"
+  },
+  "types": {
+    "files": "Dateien",
+    "mirror": "Spiegel"
   },
   "actions": {
     "restore": "Wiederherstellen"

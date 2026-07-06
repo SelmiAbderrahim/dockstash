@@ -12,7 +12,7 @@ import { startHealthServer } from './health.js';
 import type { ClaimedJob, JobResult } from './types.js';
 
 // Mirrored by the server's EXPECTED_AGENT_VERSION (agents.service.ts) — bump both.
-export const AGENT_VERSION = '0.3.0';
+export const AGENT_VERSION = '0.4.0';
 
 export interface RunAgentDeps {
   env?: NodeJS.ProcessEnv;

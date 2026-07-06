@@ -34,6 +34,7 @@ import {
 } from '../store/selectors';
 import { setActiveRestoreJob } from '../store/slice';
 import { RestoreDialog } from './RestoreDialog';
+import { engineLabel, snapshotKind } from '../snapshotKind';
 import type { Snapshot } from '../types';
 
 function formatBytes(n: number): string {
@@ -47,6 +48,19 @@ function formatBytes(n: number): string {
   }
   return `${v.toFixed(1)} ${units[i]}`;
 }
+
+// SPEC-A2/A3 tint recipe: token at /10 for the fill, full-strength for the text.
+const TypeChip = ({ tone, label }: { tone: 'primary' | 'muted'; label: string }) => (
+  <span
+    data-tone={tone}
+    className={cn(
+      'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+      tone === 'primary' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+    )}
+  >
+    {label}
+  </span>
+);
 
 export const SnapshotsScreen = () => {
   const { t, i18n } = useTranslation('snapshots');
@@ -150,6 +164,7 @@ export const SnapshotsScreen = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-start">{t('columns.date')}</TableHead>
+                <TableHead className="text-start">{t('columns.type')}</TableHead>
                 <TableHead className="text-start">{t('columns.size')}</TableHead>
                 <TableHead className="text-end">
                   <span className="sr-only">{t('columns.actions')}</span>
@@ -157,9 +172,18 @@ export const SnapshotsScreen = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {snapshots.map((s) => (
+              {snapshots.map((s) => {
+                const kind = snapshotKind(s);
+                return (
                 <TableRow key={s.id}>
                   <TableCell>{new Date(s.time).toLocaleString(i18n.language)}</TableCell>
+                  <TableCell>
+                    {kind.kind === 'database' ? (
+                      <TypeChip tone="primary" label={engineLabel(kind.engine)} />
+                    ) : (
+                      <TypeChip tone="muted" label={t(`types.${kind.kind}`)} />
+                    )}
+                  </TableCell>
                   <TableCell>{formatBytes(s.sizeBytes)}</TableCell>
                   <TableCell className="text-end">
                     <Button
@@ -172,7 +196,8 @@ export const SnapshotsScreen = () => {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>

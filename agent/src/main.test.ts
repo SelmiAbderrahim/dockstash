@@ -207,6 +207,6 @@ describe('productionExecute', () => {
 
 describe('AGENT_VERSION', () => {
   it('is a stable semantic version string', () => {
-    expect(AGENT_VERSION).toBe('0.3.0');
+    expect(AGENT_VERSION).toBe('0.4.0');
   });
 });

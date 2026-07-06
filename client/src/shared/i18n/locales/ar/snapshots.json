@@ -6,8 +6,13 @@
   "tableLabel": "اللقطات",
   "columns": {
     "date": "التاريخ",
+    "type": "النوع",
     "size": "الحجم",
     "actions": "الإجراءات"
+  },
+  "types": {
+    "files": "ملفات",
+    "mirror": "مرآة"
   },
   "actions": {
     "restore": "استرجاع"

@@ -280,7 +280,17 @@ describe('runRestoreJob', () => {
       ]),
       f.deps,
     );
-    expect(f.stdinCalls[0]?.argv).toEqual(['psql', '-U', 'app', '-d', 'postgres']);
+    // Cleanup scripts run first (strict psql), the dump replay is the last stdin step.
+    expect(f.stdinCalls[0]?.argv).toEqual([
+      'psql',
+      '-U',
+      'app',
+      '-d',
+      'postgres',
+      '-v',
+      'ON_ERROR_STOP=1',
+    ]);
+    expect(f.stdinCalls.at(-1)?.argv).toEqual(['psql', '-U', 'app', '-d', 'postgres']);
   });
 
   it('overwrite db snapshot: falls back to the plan type when inspect reports no image', async () => {

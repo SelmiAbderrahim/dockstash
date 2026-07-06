@@ -146,9 +146,7 @@ function restoreSteps(type: string, svc: ComposeService): RestoreStep[] | null {
   switch (type) {
     case 'postgres': {
       const user = readServiceEnv(svc, 'POSTGRES_USER') ?? 'postgres';
-      // pg_dumpall output is plain SQL replayed through psql against the
-      // maintenance DB; dumps taken with --clean --if-exists drop-and-recreate.
-      return [{ kind: 'exec-stdin', argv: ['psql', '-U', user, '-d', 'postgres'] }];
+      return postgresRestoreSteps(user);
     }
     case 'mysql': {
       const pw = readServiceEnv(svc, 'MYSQL_ROOT_PASSWORD') ?? '';
@@ -183,6 +181,74 @@ function restoreSteps(type: string, svc: ComposeService): RestoreStep[] | null {
     default:
       return null;
   }
+}
+
+/**
+ * Postgres restore is clean-then-replay-then-verify. `pg_dumpall --clean`
+ * emits NO cleanup statements for the built-in `postgres` database (an app
+ * whose DATABASE_NAME is literally `postgres` gets a dump with zero DROPs),
+ * and its `DROP DATABASE` for named databases fails while the app holds
+ * connections — either way a replay into a non-empty cluster used to no-op
+ * with every error swallowed (psql exits 0 without ON_ERROR_STOP). So the
+ * plan resets the cluster itself before the replay:
+ *   1. terminate every other backend (frees DROP locks; apps reconnect after)
+ *   2. drop all non-template databases except `postgres` — `WITH (FORCE)`
+ *      needs postgres 13+; on an older server the step fails loudly instead
+ *      of the restore silently no-opping
+ *   3. drop all user schemas in `postgres` and recreate `public` (pg 14 dumps
+ *      do not re-create it; a pg 15+ dump's own `CREATE SCHEMA public` then
+ *      becomes a benign already-exists error in the tolerant replay)
+ *   4. replay the pg_dumpall stream — deliberately WITHOUT ON_ERROR_STOP: the
+ *      cleanup above guarantees a fresh target, so the only errors left are
+ *      benign (e.g. `role "postgres" already exists`)
+ *   5. guard: fail the job when zero tables landed in schema public, so a
+ *      broken replay can never report success again
+ */
+function postgresRestoreSteps(user: string): RestoreStep[] {
+  const psqlStrict = ['psql', '-U', user, '-d', 'postgres', '-v', 'ON_ERROR_STOP=1'];
+  return [
+    {
+      kind: 'exec',
+      argv: [
+        ...psqlStrict,
+        '-c',
+        'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE pid <> pg_backend_pid() AND datname IS NOT NULL',
+      ],
+    },
+    {
+      kind: 'exec-stdin-text',
+      argv: [...psqlStrict],
+      text:
+        "SELECT format('DROP DATABASE %I WITH (FORCE)', datname) FROM pg_database" +
+        " WHERE NOT datistemplate AND datname <> 'postgres' \\gexec\n",
+    },
+    {
+      kind: 'exec-stdin-text',
+      argv: [...psqlStrict],
+      text:
+        "SELECT format('DROP SCHEMA %I CASCADE', nspname) FROM pg_namespace" +
+        " WHERE nspname !~ '^pg_' AND nspname <> 'information_schema' \\gexec\n" +
+        'CREATE SCHEMA public;\n' +
+        'GRANT ALL ON SCHEMA public TO PUBLIC;\n',
+    },
+    { kind: 'exec-stdin', argv: ['psql', '-U', user, '-d', 'postgres'] },
+    {
+      kind: 'exec-guard',
+      argv: [
+        'psql',
+        '-U',
+        user,
+        '-d',
+        'postgres',
+        '-tA',
+        '-c',
+        "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relkind = 'r'",
+      ],
+      failIfStdoutMatches: '^0\\s*$',
+      error:
+        'replay finished but no tables landed in schema public — the dump did not apply',
+    },
+  ];
 }
 
 function rdbRestoreSteps(cli: 'redis-cli' | 'valkey-cli'): RestoreStep[] {
