@@ -204,6 +204,25 @@ describe('backup-health service + endpoints', () => {
     expect(entry?.status).toBe('critical');
   });
 
+  it('covers never-backed-up, dangling-agent, and check/drill status branches', async () => {
+    const a = await seedUser('edge@t.com');
+    // Agent id that exists in no Agent row → status map miss → 'offline'.
+    const danglingAgent = new (await import('mongoose')).default.Types.ObjectId();
+    const projectId = await seedProject(a.id, {
+      name: 'edge',
+      lastSuccessAt: null,
+      lastCheckStatus: 'fail',
+      lastDrillStatus: 'pass',
+      agent: danglingAgent,
+    });
+    const entry = await getProjectHealth(projectId, a.id);
+    expect(entry.agentStatus).toBe('offline');
+    expect(entry.lastSuccessAt).toBeNull();
+    expect(entry.lastCheckStatus).toBe('fail');
+    expect(entry.lastDrillStatus).toBe('pass');
+    expect(entry.status).toBe('critical'); // dangling agent counts as offline
+  });
+
   it('getProjectHealth 404s unknown and 403s foreign projects', async () => {
     const a = await seedUser('own@t.com');
     const b = await seedUser('other@t.com');

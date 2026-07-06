@@ -199,6 +199,22 @@ describe('runMirror on agent-assigned projects (agent-root allowlist)', () => {
     expect(bad.status).toBe(400);
   });
 
+  it('updateProjectMirror + assertMirrorAllowed work without an injected translator', async () => {
+    const { updateProjectMirror } = await import('./backups.service.js');
+    const { assertMirrorAllowed } = await import('../billing/entitlements.service.js');
+    const a = await seedUser('m-not@t.com');
+    const project = await seedProject(a.id);
+    const updated = await updateProjectMirror(String(project._id), a.id, {
+      enabled: false,
+      sourcePath: '',
+      targetPath: '',
+    });
+    expect(updated.mirror?.enabled).toBe(false);
+    await expect(assertMirrorAllowed(a.id)).resolves.toMatchObject({
+      slug: 'business',
+    });
+  });
+
   it('stringifies non-Error restic failures', async () => {
     const a = await seedUser('m-str@t.com');
     const project = await seedProject(a.id);

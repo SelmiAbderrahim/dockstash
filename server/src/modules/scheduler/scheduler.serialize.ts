@@ -31,9 +31,10 @@ export function serializeSchedule(schedule: ScheduleHydrated): PublicSchedule {
       keepDaily: schedule.retention.keepDaily,
       keepWeekly: schedule.retention.keepWeekly,
       keepMonthly: schedule.retention.keepMonthly,
-      // Legacy rows predate these fields — surface the schema default (0).
-      keepHourly: schedule.retention.keepHourly ?? 0,
-      keepLast: schedule.retention.keepLast ?? 0,
+      // Legacy rows predate these fields, but Mongoose hydrates missing
+      // subdoc paths with their schema defaults (0), so plain access is safe.
+      keepHourly: schedule.retention.keepHourly,
+      keepLast: schedule.retention.keepLast,
     },
     lastRunStatus: schedule.lastRunStatus,
     lastEnqueuedAt: schedule.lastEnqueuedAt
