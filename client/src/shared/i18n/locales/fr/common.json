@@ -16,6 +16,14 @@
     "login": "Connexion",
     "register": "Inscription"
   },
+  "dashboard": {
+    "projects": "Gérez vos projets et déploiements.",
+    "snapshots": "Parcourez et restaurez les instantanés de projet.",
+    "settings": "Configurez votre espace de travail et vos intégrations.",
+    "billing": "Consultez l'utilisation, les forfaits et les factures.",
+    "profile": "Consultez et mettez à jour les informations de votre compte.",
+    "admin": "Accédez aux contrôles d'administration."
+  },
   "sidebar": {
     "brandLink": "Accueil Dockstash",
     "toggle": "Basculer la barre latérale",

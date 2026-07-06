@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { loadCookie } from '@shared/utils/cookies';
 import {
   Card,
@@ -15,8 +16,8 @@ interface CookieUser {
 
 interface Destination {
   to: string;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
 }
 
 const useUserRole = (): string | undefined => {
@@ -25,37 +26,17 @@ const useUserRole = (): string | undefined => {
 };
 
 const BASE_DESTINATIONS: Destination[] = [
-  {
-    to: '/projects',
-    label: 'Projects',
-    description: 'Manage your projects and deployments.',
-  },
-  {
-    to: '/snapshots',
-    label: 'Snapshots',
-    description: 'Browse and restore project snapshots.',
-  },
-  {
-    to: '/settings',
-    label: 'Settings',
-    description: 'Configure your workspace and integrations.',
-  },
-  {
-    to: '/billing',
-    label: 'Billing',
-    description: 'Review usage, plans, and invoices.',
-  },
-  {
-    to: '/profile',
-    label: 'Profile',
-    description: 'View and update your account details.',
-  },
+  { to: '/projects', labelKey: 'nav.projects', descriptionKey: 'dashboard.projects' },
+  { to: '/snapshots', labelKey: 'nav.snapshots', descriptionKey: 'dashboard.snapshots' },
+  { to: '/settings', labelKey: 'nav.settings', descriptionKey: 'dashboard.settings' },
+  { to: '/billing', labelKey: 'nav.billing', descriptionKey: 'dashboard.billing' },
+  { to: '/profile', labelKey: 'nav.profile', descriptionKey: 'dashboard.profile' },
 ];
 
 const ADMIN_DESTINATION: Destination = {
   to: '/admin',
-  label: 'Admin',
-  description: 'Access administrative controls.',
+  labelKey: 'nav.admin',
+  descriptionKey: 'dashboard.admin',
 };
 
 /**
@@ -65,22 +46,23 @@ const ADMIN_DESTINATION: Destination = {
  */
 export const Dashboard = () => {
   const role = useUserRole();
+  const { t } = useTranslation('common');
   const destinations =
     role === 'Admin' ? [...BASE_DESTINATIONS, ADMIN_DESTINATION] : BASE_DESTINATIONS;
 
   return (
     <div className="dashboard px-4 py-8">
-      <h1 className="text-foreground mb-6 text-2xl font-semibold">Dashboard</h1>
+      <h1 className="text-foreground mb-6 text-2xl font-semibold">{t('nav.dashboard')}</h1>
       <nav className="dashboard-nav grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {destinations.map((destination) => (
           <Card key={destination.to} className="flex flex-col">
             <CardHeader>
-              <CardTitle>{destination.label}</CardTitle>
-              <CardDescription>{destination.description}</CardDescription>
+              <CardTitle>{t(destination.labelKey)}</CardTitle>
+              <CardDescription>{t(destination.descriptionKey)}</CardDescription>
             </CardHeader>
             <CardContent className="mt-auto">
               <Button asChild className="w-full">
-                <Link to={destination.to}>{destination.label}</Link>
+                <Link to={destination.to}>{t(destination.labelKey)}</Link>
               </Button>
             </CardContent>
           </Card>

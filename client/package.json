@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
+    "@fontsource-variable/noto-sans-arabic": "^5.2.10",
     "@fontsource/instrument-serif": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
+    "@fontsource/noto-naskh-arabic": "^5.2.11",
     "@hookform/resolvers": "^3.9.1",
     "@reduxjs/toolkit": "^2.5.0",
     "class-variance-authority": "^0.7.1",

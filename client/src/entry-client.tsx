@@ -17,6 +17,12 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
 // Instrument Serif italic — display accent word inside marketing headlines only.
 import '@fontsource/instrument-serif/400-italic.css';
+// Arabic script coverage (Inter/Instrument Serif have none): variable-weight
+// Noto Sans Arabic for UI text, Noto Naskh Arabic for the serif display accent.
+// Both are unicode-range-subset — browsers fetch them only when Arabic glyphs
+// actually appear on the page.
+import '@fontsource-variable/noto-sans-arabic/wght.css';
+import '@fontsource/noto-naskh-arabic/400.css';
 import './styles/tailwind.css';
 
 declare global {

@@ -84,7 +84,7 @@ export const MonitoringPage = () => {
               <Button asChild>
                 <Link to={href('/pricing')}>
                   {t('monitoring.hero.ctaPrimary')}
-                  <ArrowRightIcon className="size-4" aria-hidden="true" />
+                  <ArrowRightIcon className="size-4 rtl:-scale-x-100" aria-hidden="true" />
                 </Link>
               </Button>
               <Button asChild variant="outline">
@@ -156,7 +156,7 @@ export const MonitoringPage = () => {
             <Button asChild>
               <Link to={href('/pricing')}>
                 {t('monitoring.cta.button')}
-                <ArrowRightIcon className="size-4" aria-hidden="true" />
+                <ArrowRightIcon className="size-4 rtl:-scale-x-100" aria-hidden="true" />
               </Link>
             </Button>
           </div>

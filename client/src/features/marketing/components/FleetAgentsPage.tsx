@@ -77,7 +77,7 @@ export const FleetAgentsPage = () => {
               <Button asChild>
                 <Link to={href('/pricing')}>
                   {t('fleetAgents.hero.ctaPrimary')}
-                  <ArrowRightIcon className="size-4" aria-hidden="true" />
+                  <ArrowRightIcon className="size-4 rtl:-scale-x-100" aria-hidden="true" />
                 </Link>
               </Button>
               <Button asChild variant="outline">
@@ -133,7 +133,7 @@ export const FleetAgentsPage = () => {
             <Button asChild>
               <Link to={href('/pricing')}>
                 {t('fleetAgents.cta.button')}
-                <ArrowRightIcon className="size-4" aria-hidden="true" />
+                <ArrowRightIcon className="size-4 rtl:-scale-x-100" aria-hidden="true" />
               </Link>
             </Button>
           </div>

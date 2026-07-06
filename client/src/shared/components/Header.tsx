@@ -14,6 +14,7 @@ import {
   SheetTrigger,
 } from '@shared/ui/sheet';
 import { LanguageSwitcher } from '@shared/i18n/LanguageSwitcher';
+import { isRtl } from '@shared/i18n';
 import { ThemeToggle } from './ThemeToggle';
 
 interface NavLink {
@@ -41,7 +42,7 @@ const ANON_LINKS: NavLink[] = [
 export const Header = () => {
   const authenticated = useAppSelector(selectAuthenticated);
   const role = useAppSelector(selectUserRole);
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const authedLinks =
     role === 'Superadmin' ? [SUPERADMIN_LINK, ...AUTHED_LINKS] : AUTHED_LINKS;
@@ -77,7 +78,7 @@ export const Header = () => {
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-64">
+            <SheetContent side={isRtl(i18n.language) ? 'left' : 'right'} className="w-64">
               <SheetHeader>
                 <SheetTitle>
                   <BrandLogo />

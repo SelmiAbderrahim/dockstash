@@ -33,6 +33,6 @@ export function isSupportedLocale(value: unknown): value is SupportedLocale {
   return typeof value === 'string' && (SUPPORTED_LOCALES as readonly string[]).includes(value);
 }
 
-export function isRtl(locale: SupportedLocale): boolean {
+export function isRtl(locale: string): boolean {
   return (RTL_LOCALES as readonly string[]).includes(locale);
 }

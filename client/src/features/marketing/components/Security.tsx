@@ -141,7 +141,7 @@ export const Security = () => {
             <Button asChild size="lg">
               <Link to="/register">
                 {t('shared.startFree')}
-                <ArrowRightIcon aria-hidden="true" />
+                <ArrowRightIcon aria-hidden="true" className="rtl:-scale-x-100" />
               </Link>
             </Button>
           </div>

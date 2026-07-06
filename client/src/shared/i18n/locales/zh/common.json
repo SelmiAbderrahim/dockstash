@@ -16,6 +16,14 @@
     "login": "登录",
     "register": "注册"
   },
+  "dashboard": {
+    "projects": "管理你的项目和部署。",
+    "snapshots": "浏览并恢复项目快照。",
+    "settings": "配置工作区和集成。",
+    "billing": "查看用量、套餐和账单。",
+    "profile": "查看并更新账户信息。",
+    "admin": "访问管理控制台。"
+  },
   "sidebar": {
     "brandLink": "Dockstash 首页",
     "toggle": "切换侧边栏",

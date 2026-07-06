@@ -16,6 +16,14 @@
     "login": "Anmelden",
     "register": "Registrieren"
   },
+  "dashboard": {
+    "projects": "Projekte und Deployments verwalten.",
+    "snapshots": "Projekt-Snapshots durchsuchen und wiederherstellen.",
+    "settings": "Arbeitsbereich und Integrationen konfigurieren.",
+    "billing": "Nutzung, Tarife und Rechnungen einsehen.",
+    "profile": "Kontodaten ansehen und aktualisieren.",
+    "admin": "Zugriff auf Verwaltungsfunktionen."
+  },
   "sidebar": {
     "brandLink": "Dockstash Startseite",
     "toggle": "Seitenleiste umschalten",

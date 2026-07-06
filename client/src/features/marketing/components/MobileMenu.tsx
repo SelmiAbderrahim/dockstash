@@ -12,6 +12,7 @@ import {
 } from '@shared/ui/sheet';
 import { ThemeToggle } from '@shared/components/ThemeToggle';
 import { cn } from '@shared/lib/utils';
+import { isRtl } from '@shared/i18n';
 import { MarketingLocaleSwitcher } from './MarketingLocaleSwitcher';
 import { useMarketingT } from './shared';
 
@@ -28,7 +29,7 @@ export interface MobileMenuLink {
  * `Sheet` focus trap / escape-to-close a11y checks.
  */
 export const MobileMenu = ({ links }: { links: MobileMenuLink[] }) => {
-  const { t } = useMarketingT();
+  const { t, locale } = useMarketingT();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
 
@@ -49,7 +50,7 @@ export const MobileMenu = ({ links }: { links: MobileMenuLink[] }) => {
           <MenuIcon aria-hidden="true" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-72">
+      <SheetContent side={isRtl(locale) ? 'left' : 'right'} className="w-72">
         <SheetHeader>
           <SheetTitle>{t('layout.navMobileLabel')}</SheetTitle>
         </SheetHeader>

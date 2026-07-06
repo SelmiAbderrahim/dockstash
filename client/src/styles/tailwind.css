@@ -183,11 +183,15 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
+  /* Noto Sans Arabic sits after Inter: Latin glyphs resolve from Inter,
+     Arabic script falls through to Noto (Inter has no Arabic coverage). */
   --font-sans:
-    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
-  /* Display serif — used ONLY for the italic accent word inside headlines. */
-  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+    'Inter Variable', 'Noto Sans Arabic Variable', system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Display serif — used ONLY for the italic accent word inside headlines.
+     Noto Naskh Arabic supplies the accent glyphs for the Arabic locale. */
+  --font-serif:
+    'Instrument Serif', 'Noto Naskh Arabic', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
@@ -200,6 +204,11 @@
   }
   #root {
     min-height: 100dvh;
+  }
+  /* Arabic script is never italicized — block synthetic oblique so the serif
+     display accent renders as upright Naskh instead of skewed glyphs. */
+  :lang(ar) {
+    font-synthesis-style: none;
   }
 }
 

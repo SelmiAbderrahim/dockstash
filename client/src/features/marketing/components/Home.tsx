@@ -167,7 +167,7 @@ export const Home = () => {
               <Button asChild size="lg">
                 <Link to="/register">
                   {t('shared.startFree')}
-                  <ArrowRightIcon aria-hidden="true" />
+                  <ArrowRightIcon aria-hidden="true" className="rtl:-scale-x-100" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
@@ -302,7 +302,7 @@ export const Home = () => {
                   className="inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline"
                 >
                   {t('home.showcase.compareLink')}
-                  <ArrowRightIcon aria-hidden="true" className="size-4" />
+                  <ArrowRightIcon aria-hidden="true" className="size-4 rtl:-scale-x-100" />
                 </Link>
               </p>
             </div>
@@ -378,7 +378,7 @@ export const Home = () => {
             <Button asChild variant="outline">
               <Link to={href('/alternatives')}>
                 {t('home.compare.cta')}
-                <ArrowRightIcon aria-hidden="true" />
+                <ArrowRightIcon aria-hidden="true" className="rtl:-scale-x-100" />
               </Link>
             </Button>
           </div>
@@ -400,7 +400,7 @@ export const Home = () => {
             <Button asChild size="lg">
               <Link to="/register">
                 {t('shared.startFree')}
-                <ArrowRightIcon aria-hidden="true" />
+                <ArrowRightIcon aria-hidden="true" className="rtl:-scale-x-100" />
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">

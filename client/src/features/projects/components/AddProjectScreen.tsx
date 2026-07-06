@@ -473,7 +473,7 @@ export const AddProjectScreen = () => {
 
       <Button asChild variant="link" size="sm" className="h-auto self-start p-0">
         <Link to="/projects">
-          <ArrowLeftIcon className="size-4" aria-hidden="true" /> {t('add.cancel')}
+          <ArrowLeftIcon className="size-4 rtl:-scale-x-100" aria-hidden="true" /> {t('add.cancel')}
         </Link>
       </Button>
     </section>

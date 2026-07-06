@@ -43,7 +43,7 @@ export const NotFoundPage = () => {
             <Button asChild>
               <Link to={href('/')}>
                 Back to home
-                <ArrowRightIcon className="size-4" />
+                <ArrowRightIcon className="size-4 rtl:-scale-x-100" />
               </Link>
             </Button>
             <Button asChild variant="outline">

@@ -14,6 +14,7 @@ import {
   UserIcon,
 } from 'lucide-react';
 import { useAppSelector } from '@shared/hooks/redux';
+import { isRtl } from '@shared/i18n';
 import { selectAuthenticated, selectUserRole } from '@features/auth';
 import { BrandLogo } from '@shared/brand';
 import {
@@ -89,7 +90,7 @@ const isRouteActive = (pathname: string, target: string): boolean =>
 export const AppSidebar = () => {
   const authenticated = useAppSelector(selectAuthenticated);
   const role = useAppSelector(selectUserRole);
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const { pathname } = useLocation();
 
   if (!authenticated) return null;
@@ -101,7 +102,7 @@ export const AppSidebar = () => {
   });
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" side={isRtl(i18n.language) ? 'right' : 'left'}>
       <SidebarHeader>
         <Link
           to="/dashboard"

@@ -16,6 +16,14 @@
     "login": "Login",
     "register": "Register"
   },
+  "dashboard": {
+    "projects": "Manage your projects and deployments.",
+    "snapshots": "Browse and restore project snapshots.",
+    "settings": "Configure your workspace and integrations.",
+    "billing": "Review usage, plans, and invoices.",
+    "profile": "View and update your account details.",
+    "admin": "Access administrative controls."
+  },
   "sidebar": {
     "brandLink": "Dockstash home",
     "toggle": "Toggle sidebar",
