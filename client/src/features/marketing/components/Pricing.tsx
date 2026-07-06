@@ -253,18 +253,10 @@ export const Pricing = () => {
                   className="mt-auto w-full"
                   variant={tier.popular ? 'default' : 'outline'}
                 >
-                  <Link
-                    to={
-                      // App-shell destinations (/register, /billing…) are never
-                      // locale-prefixed — /ar/billing would 404 into the SSR
-                      // splat. Only marketing paths go through href().
-                      tier.cta.to === '/register' || tier.cta.to.startsWith('/billing')
-                        ? tier.cta.to
-                        : href(tier.cta.to)
-                    }
-                  >
-                    {tier.cta.label}
-                  </Link>
+                  {/* Every tier CTA targets the app shell (/register, /billing…),
+                      which is never locale-prefixed — href('/billing') would
+                      produce /ar/billing and 404 into the SSR splat. */}
+                  <Link to={tier.cta.to}>{tier.cta.label}</Link>
                 </Button>
               </Reveal>
             ))}
