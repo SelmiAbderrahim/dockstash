@@ -19,13 +19,31 @@ import { APP_PREFIXES } from './app-paths.mjs';
 const CSP_INLINE_THEME_HASH = 'sha256-Ai8enj3xMBb6rfnOEbqcZWXXLQ+hKVptkKTEKAJ0z/o=';
 const CSP_INLINE_SSR_MARKER_HASH =
   'sha256-H4IPIqVUyi3ISZIAtVbaGRIonXX8D9ffDFVol7IUAGo=';
+// Hash of the inline gtag() bootstrap in index.html (~lines 36–41). The body
+// includes the baked-in VITE_GA_ID, so recompute if the GA id or script body
+// changes:  curl -s https://<host> | extract the 2nd inline <script> | sha256.
+// ponytail: static hash over build-baked bytes — swap for a per-request nonce
+// only if GA config needs to vary at runtime.
+const CSP_INLINE_GTAG_HASH = 'sha256-YMG/8r1CLEykQ829h0XgGcR3FMo9AExqFYUITiwbpAA=';
 const CSP_DIRECTIVES = {
   defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", `'${CSP_INLINE_THEME_HASH}'`, `'${CSP_INLINE_SSR_MARKER_HASH}'`],
+  scriptSrc: [
+    "'self'",
+    `'${CSP_INLINE_THEME_HASH}'`,
+    `'${CSP_INLINE_SSR_MARKER_HASH}'`,
+    `'${CSP_INLINE_GTAG_HASH}'`,
+    'https://www.googletagmanager.com',
+  ],
   styleSrc: ["'self'", "'unsafe-inline'"],
-  imgSrc: ["'self'", 'data:'],
+  imgSrc: ["'self'", 'data:', 'https://www.google-analytics.com', 'https://*.google-analytics.com'],
   fontSrc: ["'self'", 'data:'],
-  connectSrc: ["'self'"],
+  connectSrc: [
+    "'self'",
+    'https://www.google-analytics.com',
+    'https://*.google-analytics.com',
+    'https://*.analytics.google.com',
+    'https://www.googletagmanager.com',
+  ],
   objectSrc: ["'none'"],
   frameAncestors: ["'none'"],
   baseUri: ["'self'"],
