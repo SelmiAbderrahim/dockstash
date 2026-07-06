@@ -29,6 +29,13 @@ export function makeAgentAwareQueue(inner: SchedulerQueue): SchedulerQueue {
           translate(DEFAULT_LOCALE, 'agents.error.drillNotSupported'),
         );
       }
+      // Mirror is server-local v1 — the agent daemon has no mirror executor,
+      // so reject at enqueue instead of shipping a job that can only fail.
+      if (data.kind === 'mirror') {
+        throw HttpError.badRequest(
+          translate(DEFAULT_LOCALE, 'agents.error.mirrorNotSupported'),
+        );
+      }
       if (data.kind === 'prune' && project.legalHold) {
         // Parity with runPrune: legal hold beats retention — record a
         // successful skip instead of shipping a destructive job to the agent.

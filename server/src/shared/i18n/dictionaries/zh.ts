@@ -153,6 +153,14 @@ export const zh: DictionaryShape = {
         '最近一次成功备份：{{lastGoodAt}}\n\n' +
         '打开仪表板：{{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: '镜像失败 — 项目 {{project}}',
+      body:
+        '项目「{{project}}」的一次镜像运行于 {{failedAt}} 失败。\n\n' +
+        '错误：{{error}}\n' +
+        '最近一次成功备份：{{lastGoodAt}}\n\n' +
+        '打开仪表板：{{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: '静默停滞 — {{project}} 已 {{hours}} 小时无备份',
       body:
@@ -194,6 +202,8 @@ export const zh: DictionaryShape = {
       snapshotsFailed: '无法列出快照：{{message}}',
       noSnapshotBeforeTs: '在 {{ts}} 或之前不存在快照。',
       restoreFailed: '恢复失败：{{message}}',
+      mirrorNotConfigured: '该项目未配置或未启用镜像。',
+      mirrorFailed: '镜像运行失败：{{message}}',
       restoreSnapshotNotFound: '在此项目的仓库中未找到快照 {{snapshotId}}。',
       restoreUnsupportedEngine: '{{type}} 暂不支持原地恢复。请恢复到新位置并手动加载制品。',
       restoreNeedsDocker: '数据库恢复需要 Docker 运行时；本服务器未配置。',
@@ -202,6 +212,7 @@ export const zh: DictionaryShape = {
     },
     success: {
       backupComplete: '备份已成功完成。',
+      mirrorComplete: '镜像已成功完成。',
     },
     check: {
       pass: '仓库检查通过。',
@@ -264,6 +275,7 @@ export const zh: DictionaryShape = {
       unauthorized: '代理认证失败。',
       jobNotFound: '未找到代理任务。',
       drillNotSupported: '远程代理暂不支持恢复演练。',
+      mirrorNotSupported: '远程代理暂不支持镜像任务。',
       duplicateHost: '该主机的代理已存在。',
     },
   },

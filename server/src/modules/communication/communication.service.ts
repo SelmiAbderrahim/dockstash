@@ -145,7 +145,7 @@ export async function deliverDunningEmail(input: DunningInput): Promise<void> {
   });
 }
 
-export type AlertKind = 'backup' | 'restore' | 'drill' | 'heartbeat';
+export type AlertKind = 'backup' | 'restore' | 'drill' | 'mirror' | 'heartbeat';
 
 export interface AlertEmailInput {
   email: string;
@@ -176,6 +176,8 @@ function subjectKeyFor(kind: AlertKind): string {
       return 'email.restoreFailure.subject';
     case 'drill':
       return 'email.drillFailure.subject';
+    case 'mirror':
+      return 'email.mirrorFailure.subject';
     case 'heartbeat':
       return 'email.heartbeatMiss.subject';
   }
@@ -189,6 +191,8 @@ function bodyKeyFor(kind: AlertKind): string {
       return 'email.restoreFailure.body';
     case 'drill':
       return 'email.drillFailure.body';
+    case 'mirror':
+      return 'email.mirrorFailure.body';
     case 'heartbeat':
       return 'email.heartbeatMiss.body';
   }

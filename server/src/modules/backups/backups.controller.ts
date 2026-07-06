@@ -5,6 +5,7 @@ import {
   alertsConfigSchema,
   assignAgentSchema,
   createProjectSchema,
+  mirrorConfigSchema,
   projectIdParamsSchema,
   scanProjectSchema,
   updatePlanSchema,
@@ -16,6 +17,7 @@ import {
   scanProjectPath,
   updateProjectAgent,
   updateProjectAlerts,
+  updateProjectMirror,
   updateProjectPlan,
 } from './backups.service.js';
 import {
@@ -26,6 +28,7 @@ import {
 import { serializeProject } from './backups.serialize.js';
 import {
   assertAlertsAllowed,
+  assertMirrorAllowed,
   assertMultiVpsAllowed,
 } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
@@ -90,6 +93,16 @@ export const patchAlerts: RequestHandler = asyncHandler(async (req, res) => {
   const project = await updateProjectAlerts(projectId, userId, webhookUrl, {
     t: req.t,
   });
+  res.status(200).json({ project: serializeProject(project) });
+});
+
+/** One-way mirror config (Business tier). */
+export const patchMirror: RequestHandler = asyncHandler(async (req, res) => {
+  const { projectId } = projectIdParamsSchema.parse(req.params);
+  const input = mirrorConfigSchema.parse(req.body);
+  const userId = requireUserId(req.user);
+  await assertMirrorAllowed(userId, { t: req.t });
+  const project = await updateProjectMirror(projectId, userId, input, { t: req.t });
   res.status(200).json({ project: serializeProject(project) });
 });
 

@@ -30,6 +30,8 @@ export interface PublicProject {
   lastRestoreDetail: string;
   /** Per-project outbound alert webhook (Pro+); '' = unset. */
   alertWebhookUrl: string;
+  /** One-way mirror config (Business). */
+  mirror: { enabled: boolean; sourcePath: string; targetPath: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +68,12 @@ export function serializeProject(project: ProjectHydrated): PublicProject {
     lastRestoreStatus: (project.lastRestoreStatus ?? null) as 'pass' | 'fail' | null,
     lastRestoreDetail: project.lastRestoreDetail ?? '',
     alertWebhookUrl: project.alertWebhookUrl ?? '',
+    mirror: {
+      // Legacy rows predate the subdoc — surface the schema defaults.
+      enabled: project.mirror?.enabled ?? false,
+      sourcePath: project.mirror?.sourcePath ?? '',
+      targetPath: project.mirror?.targetPath ?? '',
+    },
     createdAt: new Date((project as unknown as { createdAt: Date }).createdAt).toISOString(),
     updatedAt: new Date((project as unknown as { updatedAt: Date }).updatedAt).toISOString(),
   };

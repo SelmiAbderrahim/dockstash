@@ -14,6 +14,7 @@ import type {
 } from '../backups/backups.boundaries.js';
 import type { ComposeService } from '../backups/backups.adapters.js';
 import { runRestore } from '../backups/backups.restore.service.js';
+import { runMirror } from '../backups/backups.mirror.service.js';
 import { runPrune } from './scheduler.prune.service.js';
 import type {
   AlertHook,
@@ -93,6 +94,13 @@ export async function dispatchJob(job: Job, deps: DispatchDeps): Promise<void> {
         throw new Error('dispatchJob: restore requires a restore payload');
       }
       await runRestore(projectId, owner, payload, {
+        t,
+        resticRunner: deps.resticRunner,
+      });
+      return;
+    }
+    case 'mirror': {
+      await runMirror(projectId, owner, {
         t,
         resticRunner: deps.resticRunner,
       });

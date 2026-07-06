@@ -17,8 +17,12 @@ export const allowAllEntitlements: EntitlementChecker = {
  * baseline capability on every tier — manual runs must always work so a free
  * user can still back up and get their data back.
  */
-function isKindAllowed(kind: JobKind, flags: { restoreDrills: boolean }): boolean {
+function isKindAllowed(
+  kind: JobKind,
+  flags: { restoreDrills: boolean; mirror: boolean },
+): boolean {
   if (kind === 'drill') return flags.restoreDrills;
+  if (kind === 'mirror') return flags.mirror;
   return true;
 }
 
@@ -34,6 +38,7 @@ export const billingEntitlements: EntitlementChecker = {
     const resolved = await resolveEntitlements(owner);
     return isKindAllowed(kind, {
       restoreDrills: resolved.entitlements.restoreDrills,
+      mirror: resolved.entitlements.mirror,
     });
   },
 };

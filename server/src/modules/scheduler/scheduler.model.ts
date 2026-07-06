@@ -1,13 +1,21 @@
 import mongoose, { type InferSchemaType, type HydratedDocument } from 'mongoose';
 
-export const JOB_KINDS = ['backup', 'prune', 'check', 'drill', 'restore'] as const;
+export const JOB_KINDS = [
+  'backup',
+  'prune',
+  'check',
+  'drill',
+  'restore',
+  'mirror',
+] as const;
 export type JobKind = (typeof JOB_KINDS)[number];
 
 /**
  * Kinds a cron `Schedule` may carry. `restore` is deliberately excluded —
  * restores are always explicit one-shot user actions, never recurring jobs.
+ * `mirror` (Business) IS schedulable: one-way source→repo→target replication.
  */
-export const SCHEDULABLE_JOB_KINDS = ['backup', 'prune', 'check', 'drill'] as const;
+export const SCHEDULABLE_JOB_KINDS = ['backup', 'prune', 'check', 'drill', 'mirror'] as const;
 export type SchedulableJobKind = (typeof SCHEDULABLE_JOB_KINDS)[number];
 
 export const SCHEDULE_STATUSES = [

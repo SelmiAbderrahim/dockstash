@@ -109,6 +109,19 @@ const projectSchema = new mongoose.Schema(
     // Per-project outbound alert webhook (Pro+). '' = unset → alerts fall back
     // to the operator-level ALERT_WEBHOOK_URL env target only.
     alertWebhookUrl: { type: String, default: '', trim: true },
+    // One-way mirror (Business): source dir → restic (tag `mirror`) → target
+    // dir. Server-local only in v1 (agent enqueue rejects the kind).
+    mirror: {
+      type: new mongoose.Schema(
+        {
+          enabled: { type: Boolean, default: false },
+          sourcePath: { type: String, default: '', trim: true },
+          targetPath: { type: String, default: '', trim: true },
+        },
+        { _id: false },
+      ),
+      default: () => ({}),
+    },
     // Lifecycle (prompt 07). A `paused` project is read-only: no new backups
     // run, but existing snapshots are retained. Set on downgrade-over-cap and
     // during lapse; cleared when the user reactivates or picks the project as

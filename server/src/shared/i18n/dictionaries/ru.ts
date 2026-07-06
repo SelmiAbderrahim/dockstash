@@ -153,6 +153,14 @@ export const ru: DictionaryShape = {
         'Последняя успешная резервная копия: {{lastGoodAt}}\n\n' +
         'Откройте панель: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'ПРОВАЛ зеркалирования — проект {{project}}',
+      body:
+        'Зеркалирование для проекта «{{project}}» не удалось {{failedAt}}.\n\n' +
+        'Ошибка: {{error}}\n' +
+        'Последняя успешная резервная копия: {{lastGoodAt}}\n\n' +
+        'Откройте панель: {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'Тихий сбой — нет резервной копии {{hours}}ч у {{project}}',
       body:
@@ -194,6 +202,8 @@ export const ru: DictionaryShape = {
       snapshotsFailed: 'Не удалось получить список снимков: {{message}}',
       noSnapshotBeforeTs: 'Нет снимка на {{ts}} или ранее.',
       restoreFailed: 'Восстановление не удалось: {{message}}',
+      mirrorNotConfigured: 'Зеркалирование не настроено или не включено для этого проекта.',
+      mirrorFailed: 'Зеркалирование завершилось с ошибкой: {{message}}',
       restoreSnapshotNotFound: 'Снимок {{snapshotId}} не найден в репозитории этого проекта.',
       restoreUnsupportedEngine: 'Восстановление на месте пока не поддерживается для {{type}}. Восстановите в новое расположение и загрузите артефакт вручную.',
       restoreNeedsDocker: 'Для восстановления базы данных требуется среда Docker; она не настроена на этом сервере.',
@@ -202,6 +212,7 @@ export const ru: DictionaryShape = {
     },
     success: {
       backupComplete: 'Резервное копирование успешно завершено.',
+      mirrorComplete: 'Зеркалирование успешно завершено.',
     },
     check: {
       pass: 'Проверка репозитория пройдена.',
@@ -264,6 +275,7 @@ export const ru: DictionaryShape = {
       unauthorized: 'Ошибка аутентификации агента.',
       jobNotFound: 'Задание агента не найдено.',
       drillNotSupported: 'Тренировочные восстановления пока не поддерживаются на удалённых агентах.',
+      mirrorNotSupported: 'Задачи зеркалирования пока не поддерживаются на удалённых агентах.',
       duplicateHost: 'Агент для этого хоста уже существует.',
     },
   },

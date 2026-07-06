@@ -151,6 +151,14 @@ export const en = {
         'Last successful backup: {{lastGoodAt}}\n\n' +
         'Open the dashboard: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'Mirror FAILED — project {{project}}',
+      body:
+        'A mirror run for project "{{project}}" failed at {{failedAt}}.\n\n' +
+        'Error: {{error}}\n' +
+        'Last successful backup: {{lastGoodAt}}\n\n' +
+        'Open the dashboard: {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'Silent stall — no backup in {{hours}}h for {{project}}',
       body:
@@ -192,6 +200,8 @@ export const en = {
       snapshotsFailed: 'Could not list snapshots: {{message}}',
       noSnapshotBeforeTs: 'No snapshot exists at or before {{ts}}.',
       restoreFailed: 'Restore failed: {{message}}',
+      mirrorNotConfigured: 'Mirror is not configured or not enabled for this project.',
+      mirrorFailed: 'Mirror run failed: {{message}}',
       restoreSnapshotNotFound: 'Snapshot {{snapshotId}} was not found in this project’s repository.',
       restoreUnsupportedEngine: 'In-place restore is not supported for {{type}} yet. Restore to a new location and load the artifact manually.',
       restoreNeedsDocker: 'Database restore requires the Docker runtime; it is not configured on this server.',
@@ -200,6 +210,7 @@ export const en = {
     },
     success: {
       backupComplete: 'Backup completed successfully.',
+      mirrorComplete: 'Mirror completed successfully.',
     },
     check: {
       pass: 'Repository check passed.',
@@ -264,6 +275,7 @@ export const en = {
       unauthorized: 'Agent authentication failed.',
       jobNotFound: 'Agent job not found.',
       drillNotSupported: 'Restore drills are not supported on remote agents yet.',
+      mirrorNotSupported: 'Mirror jobs are not supported on remote agents yet.',
       duplicateHost: 'An agent for this host already exists.',
     },
   },

@@ -93,6 +93,53 @@ export const alertsConfigSchema = z.object({
 });
 export type AlertsConfigInput = z.infer<typeof alertsConfigSchema>;
 
+/**
+ * `PATCH /:projectId/mirror` — one-way mirror config (Business). Structural
+ * path validation only; the allowlist check lives in the service layer (same
+ * contract as `projectPath` above).
+ */
+export const mirrorConfigSchema = z
+  .object({
+    enabled: z.boolean(),
+    sourcePath: z
+      .string()
+      .refine((v) => v === '' || isSafeAbsolutePath(v), {
+        message: 'Invalid source path',
+      })
+      .default(''),
+    targetPath: z
+      .string()
+      .refine((v) => v === '' || isSafeAbsolutePath(v), {
+        message: 'Invalid target path',
+      })
+      .default(''),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.enabled) return;
+    if (!v.sourcePath) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sourcePath'],
+        message: 'sourcePath is required when mirror is enabled',
+      });
+    }
+    if (!v.targetPath) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['targetPath'],
+        message: 'targetPath is required when mirror is enabled',
+      });
+    }
+    if (v.sourcePath && v.sourcePath === v.targetPath) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['targetPath'],
+        message: 'targetPath must differ from sourcePath',
+      });
+    }
+  });
+export type MirrorConfigInput = z.infer<typeof mirrorConfigSchema>;
+
 /** Assign the project to a fleet agent; null = run on the local server. */
 export const assignAgentSchema = z.object({
   agentId: z

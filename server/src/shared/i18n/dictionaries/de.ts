@@ -153,6 +153,14 @@ export const de: DictionaryShape = {
         'Letztes erfolgreiches Backup: {{lastGoodAt}}\n\n' +
         'Dashboard öffnen: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'Spiegelung FEHLGESCHLAGEN — Projekt {{project}}',
+      body:
+        'Ein Spiegel-Lauf für Projekt „{{project}}“ ist am {{failedAt}} fehlgeschlagen.\n\n' +
+        'Fehler: {{error}}\n' +
+        'Letztes erfolgreiches Backup: {{lastGoodAt}}\n\n' +
+        'Dashboard öffnen: {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'Stiller Stillstand — kein Backup seit {{hours}}h für {{project}}',
       body:
@@ -194,6 +202,8 @@ export const de: DictionaryShape = {
       snapshotsFailed: 'Snapshots konnten nicht aufgelistet werden: {{message}}',
       noSnapshotBeforeTs: 'Kein Snapshot bei oder vor {{ts}} vorhanden.',
       restoreFailed: 'Wiederherstellung fehlgeschlagen: {{message}}',
+      mirrorNotConfigured: 'Der Spiegel ist für dieses Projekt nicht konfiguriert oder nicht aktiviert.',
+      mirrorFailed: 'Spiegel-Lauf fehlgeschlagen: {{message}}',
       restoreSnapshotNotFound: 'Snapshot {{snapshotId}} wurde im Repository dieses Projekts nicht gefunden.',
       restoreUnsupportedEngine: 'Die In-Place-Wiederherstellung wird für {{type}} noch nicht unterstützt. Stellen Sie an einem neuen Ort wieder her und laden Sie das Artefakt manuell.',
       restoreNeedsDocker: 'Die Datenbank-Wiederherstellung benötigt die Docker-Laufzeit; sie ist auf diesem Server nicht konfiguriert.',
@@ -202,6 +212,7 @@ export const de: DictionaryShape = {
     },
     success: {
       backupComplete: 'Backup erfolgreich abgeschlossen.',
+      mirrorComplete: 'Spiegelung erfolgreich abgeschlossen.',
     },
     check: {
       pass: 'Repository-Prüfung bestanden.',
@@ -264,6 +275,7 @@ export const de: DictionaryShape = {
       unauthorized: 'Agent-Authentifizierung fehlgeschlagen.',
       jobNotFound: 'Agent-Auftrag nicht gefunden.',
       drillNotSupported: 'Wiederherstellungsübungen werden auf Remote-Agents noch nicht unterstützt.',
+      mirrorNotSupported: 'Spiegel-Jobs werden auf Remote-Agents noch nicht unterstützt.',
       duplicateHost: 'Für diesen Host existiert bereits ein Agent.',
     },
   },

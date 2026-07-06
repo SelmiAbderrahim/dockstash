@@ -128,3 +128,11 @@ export {
   type RunRestoreDeps,
   type RunRestoreResult,
 } from './backups.restore.service.js';
+export {
+  runMirror,
+  MIRROR_TAG,
+  type MirrorRunner,
+  type RunMirrorDeps,
+  type RunMirrorResult,
+} from './backups.mirror.service.js';
+export { pickNearestSnapshot, type PitrResolution } from './backups.pitr.js';

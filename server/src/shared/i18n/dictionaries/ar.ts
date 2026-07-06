@@ -153,6 +153,14 @@ export const ar: DictionaryShape = {
         'آخر نسخة احتياطية ناجحة: {{lastGoodAt}}\n\n' +
         'افتح لوحة التحكم: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'فشل النسخ المتطابق — المشروع {{project}}',
+      body:
+        'فشل تشغيل نسخ متطابق للمشروع "{{project}}" في {{failedAt}}.\n\n' +
+        'الخطأ: {{error}}\n' +
+        'آخر نسخة احتياطية ناجحة: {{lastGoodAt}}\n\n' +
+        'افتح لوحة التحكم: {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'توقف صامت — لا توجد نسخة احتياطية منذ {{hours}} ساعة للمشروع {{project}}',
       body:
@@ -194,6 +202,8 @@ export const ar: DictionaryShape = {
       snapshotsFailed: 'تعذّر سرد اللقطات: {{message}}',
       noSnapshotBeforeTs: 'لا توجد لقطة عند {{ts}} أو قبلها.',
       restoreFailed: 'فشلت الاستعادة: {{message}}',
+      mirrorNotConfigured: 'النسخ المتطابق غير مُهيأ أو غير مفعّل لهذا المشروع.',
+      mirrorFailed: 'فشل تشغيل النسخ المتطابق: {{message}}',
       restoreSnapshotNotFound: 'لم يتم العثور على اللقطة {{snapshotId}} في مستودع هذا المشروع.',
       restoreUnsupportedEngine: 'الاستعادة في المكان غير مدعومة بعد لـ {{type}}. استعد إلى موقع جديد وحمّل الملف يدوياً.',
       restoreNeedsDocker: 'تتطلب استعادة قاعدة البيانات بيئة Docker؛ وهي غير مهيأة على هذا الخادم.',
@@ -202,6 +212,7 @@ export const ar: DictionaryShape = {
     },
     success: {
       backupComplete: 'اكتمل النسخ الاحتياطي بنجاح.',
+      mirrorComplete: 'اكتمل النسخ المتطابق بنجاح.',
     },
     check: {
       pass: 'نجح فحص المستودع.',
@@ -264,6 +275,7 @@ export const ar: DictionaryShape = {
       unauthorized: 'فشلت مصادقة الوكيل.',
       jobNotFound: 'لم يتم العثور على مهمة الوكيل.',
       drillNotSupported: 'تمارين الاستعادة غير مدعومة بعد على الوكلاء البعيدين.',
+      mirrorNotSupported: 'مهام النسخ المتطابق غير مدعومة بعد على الوكلاء البعيدين.',
       duplicateHost: 'يوجد وكيل لهذا المضيف بالفعل.',
     },
   },

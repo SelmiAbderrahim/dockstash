@@ -275,6 +275,24 @@ export async function clampRetentionPolicy(
 }
 
 /**
+ * Enforce the one-way mirror flag (Business). Throws 403
+ * `billing.entitlements.mirrorLocked` for tiers without it.
+ */
+export async function assertMirrorAllowed(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<ResolvedEntitlements> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  if (!resolved.entitlements.mirror) {
+    throw HttpError.forbidden(t('billing.entitlements.mirrorLocked'), {
+      reason: 'mirrorLocked',
+    });
+  }
+  return resolved;
+}
+
+/**
  * Enforce the point-in-time-restore resolver flag (Pro+). Throws 403
  * `billing.entitlements.pitrLocked` on the free tier so the client can render
  * an upgrade prompt.

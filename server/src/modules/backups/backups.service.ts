@@ -172,6 +172,33 @@ export async function updateProjectAlerts(
   return project;
 }
 
+/**
+ * Update the one-way mirror config (Business). When enabling, both paths must
+ * live inside the project-root allowlist — the same guard the mirror runner
+ * re-checks at execution time (belt and braces, like restore).
+ */
+export async function updateProjectMirror(
+  projectId: string,
+  userId: string,
+  input: { enabled: boolean; sourcePath: string; targetPath: string },
+  deps: UpdatePlanDeps = {},
+): Promise<ProjectHydrated> {
+  const t = deps.t ?? identityT;
+  const project = await loadOwnedProject(projectId, userId, deps);
+  if (input.enabled) {
+    const roots = await allowedRootsForProject(project, userId, deps);
+    for (const p of [input.sourcePath, input.targetPath]) {
+      const allowed = roots ? isPathUnderRoots(p, roots) : isAllowedProjectPath(p);
+      if (!allowed) {
+        throw HttpError.badRequest(t('backups.error.pathNotAllowed', { path: p }));
+      }
+    }
+  }
+  project.mirror = input as ProjectHydrated['mirror'];
+  await project.save();
+  return project;
+}
+
 export interface ScanServiceDeps {
   t?: Translator;
   scanner?: typeof scanProject;

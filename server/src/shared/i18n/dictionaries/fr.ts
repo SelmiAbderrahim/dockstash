@@ -153,6 +153,14 @@ export const fr: DictionaryShape = {
         'Dernière sauvegarde réussie : {{lastGoodAt}}\n\n' +
         'Ouvrez le tableau de bord : {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'ÉCHEC du miroir — projet {{project}}',
+      body:
+        'Une exécution miroir pour le projet « {{project}} » a échoué le {{failedAt}}.\n\n' +
+        'Erreur : {{error}}\n' +
+        'Dernière sauvegarde réussie : {{lastGoodAt}}\n\n' +
+        'Ouvrez le tableau de bord : {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'Arrêt silencieux — aucune sauvegarde depuis {{hours}}h pour {{project}}',
       body:
@@ -194,6 +202,8 @@ export const fr: DictionaryShape = {
       snapshotsFailed: 'Impossible de lister les instantanés : {{message}}',
       noSnapshotBeforeTs: 'Aucun instantané n\'existe à {{ts}} ou avant.',
       restoreFailed: 'Échec de la restauration : {{message}}',
+      mirrorNotConfigured: 'Le miroir n\'est pas configuré ou pas activé pour ce projet.',
+      mirrorFailed: 'Échec de l\'exécution du miroir : {{message}}',
       restoreSnapshotNotFound: 'Le snapshot {{snapshotId}} est introuvable dans le dépôt de ce projet.',
       restoreUnsupportedEngine: 'La restauration en place n’est pas encore prise en charge pour {{type}}. Restaurez vers un nouvel emplacement et chargez l’artefact manuellement.',
       restoreNeedsDocker: 'La restauration de base de données nécessite l’environnement Docker ; il n’est pas configuré sur ce serveur.',
@@ -202,6 +212,7 @@ export const fr: DictionaryShape = {
     },
     success: {
       backupComplete: 'Sauvegarde terminée avec succès.',
+      mirrorComplete: 'Miroir terminé avec succès.',
     },
     check: {
       pass: 'Vérification du dépôt réussie.',
@@ -264,6 +275,7 @@ export const fr: DictionaryShape = {
       unauthorized: "Échec de l'authentification de l'agent.",
       jobNotFound: "Tâche d'agent introuvable.",
       drillNotSupported: "Les exercices de restauration ne sont pas encore pris en charge sur les agents distants.",
+      mirrorNotSupported: "Les tâches miroir ne sont pas encore prises en charge sur les agents distants.",
       duplicateHost: "Un agent pour cet hôte existe déjà.",
     },
   },

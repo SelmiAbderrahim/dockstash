@@ -153,6 +153,14 @@ export const es: DictionaryShape = {
         'Última copia de seguridad correcta: {{lastGoodAt}}\n\n' +
         'Abre el panel: {{clientUrl}}/projects/{{projectId}}\n',
     },
+    mirrorFailure: {
+      subject: 'Espejo FALLIDO — proyecto {{project}}',
+      body:
+        'Una ejecución de espejo para el proyecto «{{project}}» falló el {{failedAt}}.\n\n' +
+        'Error: {{error}}\n' +
+        'Última copia de seguridad correcta: {{lastGoodAt}}\n\n' +
+        'Abre el panel: {{clientUrl}}/projects/{{projectId}}\n',
+    },
     heartbeatMiss: {
       subject: 'Interrupción silenciosa — sin copia de seguridad desde hace {{hours}}h en {{project}}',
       body:
@@ -194,6 +202,8 @@ export const es: DictionaryShape = {
       snapshotsFailed: 'No se pudieron listar las instantáneas: {{message}}',
       noSnapshotBeforeTs: 'No existe ninguna instantánea en {{ts}} o antes.',
       restoreFailed: 'La restauración falló: {{message}}',
+      mirrorNotConfigured: 'El espejo no está configurado o no está habilitado para este proyecto.',
+      mirrorFailed: 'La ejecución del espejo falló: {{message}}',
       restoreSnapshotNotFound: 'La instantánea {{snapshotId}} no se encontró en el repositorio de este proyecto.',
       restoreUnsupportedEngine: 'La restauración en el lugar aún no es compatible con {{type}}. Restaure en una nueva ubicación y cargue el artefacto manualmente.',
       restoreNeedsDocker: 'La restauración de base de datos requiere el entorno Docker; no está configurado en este servidor.',
@@ -202,6 +212,7 @@ export const es: DictionaryShape = {
     },
     success: {
       backupComplete: 'Copia de seguridad completada con éxito.',
+      mirrorComplete: 'Espejo completado con éxito.',
     },
     check: {
       pass: 'Verificación del repositorio superada.',
@@ -264,6 +275,7 @@ export const es: DictionaryShape = {
       unauthorized: 'Error de autenticación del agente.',
       jobNotFound: 'Tarea del agente no encontrada.',
       drillNotSupported: 'Los simulacros de restauración aún no son compatibles con agentes remotos.',
+      mirrorNotSupported: 'Los trabajos de espejo aún no son compatibles con agentes remotos.',
       duplicateHost: 'Ya existe un agente para este host.',
     },
   },
