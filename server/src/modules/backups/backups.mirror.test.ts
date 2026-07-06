@@ -149,6 +149,74 @@ describe('runMirror', () => {
   });
 });
 
+describe('runMirror on agent-assigned projects (agent-root allowlist)', () => {
+  async function seedAgentProject(ownerId: string, roots: string[]) {
+    const agent = await Agent.create({
+      owner: ownerId,
+      name: 'vps-roots',
+      host: '10.0.0.7',
+      port: 22,
+      apiKeyHash: { hash: 'x'.repeat(64), keyVersion: 1 },
+      status: 'online',
+      discovery: { folders: [], containers: [], dockerAvailable: true, roots },
+    });
+    const project = await seedProject(ownerId);
+    await Project.findByIdAndUpdate(project._id, { agent: agent._id });
+    return project;
+  }
+
+  it('allows paths under the agent-reported roots', async () => {
+    const a = await seedUser('m-agent@t.com');
+    const project = await seedAgentProject(a.id, ['/srv/apps']);
+    await enableMirror(String(project._id), '/srv/apps/site', '/srv/apps/mirror');
+    const runner = makeRunner();
+    const res = await runMirror(String(project._id), a.id, { resticRunner: runner });
+    expect(res.ok).toBe(true);
+    expect(runner.calls).toHaveLength(2);
+  });
+
+  it('rejects a target outside the agent roots (second loop iteration)', async () => {
+    const a = await seedUser('m-agent2@t.com');
+    const project = await seedAgentProject(a.id, ['/srv/apps']);
+    await enableMirror(String(project._id), '/srv/apps/site', '/var/www/other');
+    await expect(
+      runMirror(String(project._id), a.id, { resticRunner: makeRunner() }),
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('PATCH mirror validates against agent roots too', async () => {
+    const a = await seedUser('m-agent3@t.com');
+    const project = await seedAgentProject(a.id, ['/srv/apps']);
+    const ok = await request(app)
+      .patch(`/api/backups/${project._id}/mirror`)
+      .set('Authorization', `JWT ${a.token}`)
+      .send({ enabled: true, sourcePath: '/srv/apps/site', targetPath: '/srv/apps/copy' });
+    expect(ok.status).toBe(200);
+    const bad = await request(app)
+      .patch(`/api/backups/${project._id}/mirror`)
+      .set('Authorization', `JWT ${a.token}`)
+      .send({ enabled: true, sourcePath: '/srv/apps/site', targetPath: '/var/www/out' });
+    expect(bad.status).toBe(400);
+  });
+
+  it('stringifies non-Error restic failures', async () => {
+    const a = await seedUser('m-str@t.com');
+    const project = await seedProject(a.id);
+    await enableMirror(String(project._id));
+    const runner = makeRunner({
+      async backup() {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
+        throw 'raw-string-failure';
+      },
+    });
+    await expect(
+      runMirror(String(project._id), a.id, { resticRunner: runner }),
+    ).rejects.toMatchObject({ status: 500 });
+    const rows = await Alert.find({ owner: a.id });
+    expect(rows[0]?.error).toBe('raw-string-failure');
+  });
+});
+
 describe('dispatchJob mirror case', () => {
   it('routes kind=mirror to runMirror through the restic runner', async () => {
     const a = await seedUser('md@t.com');

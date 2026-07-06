@@ -326,4 +326,20 @@ describe('GET /api/backups/:projectId/pitr', () => {
       .set('Authorization', `JWT ${a.token}`);
     expect(http.status).toBe(400);
   });
+
+  it('502s with the stringified value on non-Error lister failures', async () => {
+    const a = await seedUser('pitr-str@t.com');
+    const project = await seedProject(a.id);
+    configureSnapshotsController({
+      listSnapshots: async () => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
+        throw 'pitr-string-boom';
+      },
+    });
+    const res = await request(app)
+      .get(`/api/backups/${project._id}/pitr?ts=2026-07-01T00:00:00Z`)
+      .set('Authorization', `JWT ${a.token}`);
+    expect(res.status).toBe(502);
+    expect(res.body.error.message).toContain('pitr-string-boom');
+  });
 });
