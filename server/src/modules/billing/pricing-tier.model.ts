@@ -25,6 +25,8 @@ const pricingTierSchema = new mongoose.Schema(
     },
     caps: {
       projects: { type: Number, required: true },
+      /** Max registered fleet agents; Infinity stored as MAX_SAFE_INTEGER. */
+      agents: { type: Number, required: true },
       retentionDays: { type: Number, required: true },
       frequency: {
         type: String,
@@ -35,7 +37,6 @@ const pricingTierSchema = new mongoose.Schema(
     flags: {
       schedules: { type: Boolean, required: true, default: false },
       emailAlerts: { type: Boolean, required: true, default: false },
-      multiVps: { type: Boolean, required: true, default: false },
     },
     active: { type: Boolean, required: true, default: true },
   },

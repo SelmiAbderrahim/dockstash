@@ -380,9 +380,9 @@ Files under `server/src/modules/billing/`:
   `POST /select-projects` (all authenticated except `/pricing-tiers`). Webhook is
   registered outside this router (raw body).
 - `plans.ts` — the entitlements matrix (`ENTITLEMENTS` keyed by
-  `free`/`pro`/`business`: `projects`, `retentionDays`, `frequency`, +
-  `schedules`/`emailAlerts`/`multiVps` flags). `PRICE_MONTHLY_CENTS` and
-  `PRICE_YEARLY_CENTS` (yearly = monthly × 10).
+  `free`/`pro`/`business`: `projects`, `agents` (connected-server cap: 1 / 5 /
+  ∞), `retentionDays`, `frequency`, + `schedules`/`emailAlerts` flags).
+  `PRICE_MONTHLY_CENTS` and `PRICE_YEARLY_CENTS` (yearly = monthly × 10).
 - `pricing-tier.model.ts` + `pricing-tier.seed.ts` — data-backed `PricingTier`
   rows; seed is idempotent and preserves operator edits to price + `active`.
 - `entitlements.service.ts` — `resolveEntitlements(userId)` (subscription state

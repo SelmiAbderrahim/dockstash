@@ -131,6 +131,37 @@ For every gated create/enable/cadence-change controller:
 - `clampRetentionPolicy` runs on EVERY schedule create/update path (see
   `scheduler.service.ts::createSchedule` / `updateSchedule`). Prune-time
   clamp stays as belt-and-braces.
+- Retention narrowing on a downgrade is **grandfathered**, not applied
+  retroactively: a downgrade that shrinks the retention ceiling stamps
+  `Subscription.retentionGraceUntil = now + GRACE_WINDOW_MS`, and for that
+  window `runPrune` applies the pre-downgrade (wider) policy **unclamped** so
+  snapshots predating the downgrade are not deleted. A `paused` project's
+  prune job short-circuits to a successful skip BEFORE `resticRunner.forget`
+  — backups are never deleted by a billing lapse (prompt 13 / F1).
+
+## Free-Landing Consistency (prompt 13)
+
+Every transition that lands a subscriber on Free MUST funnel through
+`applyProjectCap(userId, 'free', { priorSlug })` — grace expiry
+(`expireGraceIfNeeded`), refund/chargeback (`handleRefund`), plan downgrade
+(`handleDowngrade`), the reconcile terminal-heal (`reconcile.ts`), AND a direct
+`subscription.canceled` / `.revoked` webhook (`webhook/registry.ts`). A
+free-landing branch that sets a terminal status WITHOUT the paired
+`applyProjectCap` call is a durable regression — over-cap projects stay
+"active" and every subsequent run 403s with no project flagged. `applyProjectCap`
+is the single funnel that: pauses (never deletes) over-cap projects, disables
+their still-enabled schedules (`pausedByBilling`), re-asserts the fleet-agent
+cap (`blockedByBilling`, never deletes an agent), and stamps the retention
+grandfather window.
+
+Each entitlement-visible transition (dunning-start, grace-expiry downgrade,
+reactivation) additionally fires `notifyLifecycleEvent(...)`, which is ALWAYS
+non-fatal — a rejected notifier is logged and swallowed so the state transition
+is never rolled back by a bounced email.
+
+The meta-test at `shared/middleware/entitlement-meta.test.ts` statically
+asserts each free-landing branch is paired with `applyProjectCap`, the prune
+path guards on `paused`, and each transition has a notifier call.
 
 ## Validation
 

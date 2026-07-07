@@ -203,24 +203,6 @@ export async function assertAlertsAllowed(
 }
 
 /**
- * Enforce the multi-VPS fleet feature (Business). Throws 403
- * `billing.entitlements.multiVpsLocked` for tiers without it.
- */
-export async function assertMultiVpsAllowed(
-  userId: string,
-  deps: { t?: Translator } = {},
-): Promise<ResolvedEntitlements> {
-  const t = deps.t ?? identityT;
-  const resolved = await resolveEntitlements(userId);
-  if (!resolved.entitlements.multiVps) {
-    throw HttpError.forbidden(t('billing.entitlements.multiVpsLocked'), {
-      reason: 'multiVpsLocked',
-    });
-  }
-  return resolved;
-}
-
-/**
  * Clamp a retention window (in days) to the tier ceiling. Never widens; only
  * narrows. Callers pass the requested `keep --days` and receive the effective
  * value to hand to `restic forget`.
@@ -273,6 +255,23 @@ export async function clampRetentionPolicy(
     clamped.keepLast = Math.min(policy.keepLast, KEEP_LAST_MAX);
   }
   return clamped;
+}
+
+/**
+ * F1 grandfather guard: true while the user's effective subscription is inside
+ * the retention grace window stamped at downgrade time. During the window the
+ * prune job SKIPS the tier clamp so snapshots that predate a downgrade are not
+ * retroactively deleted by the narrower ceiling (see `applyProjectCap` +
+ * `runPrune`). Steady state (no downgrade, or window elapsed) → false.
+ */
+export async function isRetentionGraceActive(
+  userId: string,
+  now: Date = new Date(),
+): Promise<boolean> {
+  if (env.PAYMENT_PROVIDER === 'none') return false;
+  const sub = await findEffectiveSubscription(userId, getPaymentProvider().name);
+  const until = sub?.retentionGraceUntil ?? null;
+  return until !== null && until.getTime() > now.getTime();
 }
 
 /**
@@ -450,6 +449,82 @@ export async function reconcileProjectCounter(
   await UsageCounter.updateOne(
     { owner: userId },
     { $set: { projects: clamped } },
+    { upsert: true },
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Reservation ledger — atomic agent-cap enforcement. Idiom-identical to the
+// project trio above: `agents` on the per-owner UsageCounter is the sole
+// concurrency authority for "how many fleet agents does this user have".
+// Free = 1, Pro = 5, Business = ∞ (no counter row on the infinite tier).
+// See `.claude/rules/entitlement-cap-ordering.md`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Atomically reserve a fleet-agent slot by incrementing the per-owner counter
+ * BEFORE the Agent record is created. On the infinite (business) tier no
+ * counter row is ever written. At cap, throws 403 `agentLimitReached`.
+ */
+export async function reserveAgentSlot(
+  userId: string,
+  deps: { t?: Translator } = {},
+): Promise<void> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  const cap = resolved.entitlements.agents;
+  // Infinite tier (business / OSS self-host): no counter row is ever written.
+  if (!Number.isFinite(cap)) return;
+
+  const filter = { owner: userId, agents: { $lt: cap } };
+  const update = { $inc: { agents: 1 } };
+  // At the cap-miss branch the filter `agents < cap` failed, so `agents == cap`.
+  const atCap = () =>
+    HttpError.forbidden(t('billing.entitlements.agentLimitReached'), {
+      reason: 'agentLimitReached',
+      cap: capForClient(cap),
+      used: cap,
+    });
+
+  try {
+    const result = await UsageCounter.updateOne(filter, update, { upsert: true });
+    if (result.matchedCount > 0 || result.upsertedCount > 0) return;
+    throw atCap();
+  } catch (err) {
+    // E11000 (dup key on upsert) means a concurrent bootstrap insert won the
+    // race — the row now exists. Retry the atomic reservation WITHOUT upsert.
+    if ((err as { code?: number }).code === 11000) {
+      const retry = await UsageCounter.updateOne(filter, update);
+      if (retry.matchedCount > 0) return;
+      throw atCap();
+    }
+    throw err;
+  }
+}
+
+/**
+ * Release a previously reserved agent slot (decrement, clamped at zero).
+ * Called on `registerAgent` failure rollback and on agent deletion.
+ */
+export async function releaseAgentSlot(userId: string): Promise<void> {
+  await UsageCounter.updateOne(
+    { owner: userId, agents: { $gt: 0 } },
+    { $inc: { agents: -1 } },
+  );
+}
+
+/**
+ * Reconcile the agent counter to an absolute value (clamped ≥ 0). Used by the
+ * downgrade lifecycle path to correct drift; upserts the row if absent.
+ */
+export async function reconcileAgentCounter(
+  userId: string,
+  count: number,
+): Promise<void> {
+  const clamped = Math.max(0, count);
+  await UsageCounter.updateOne(
+    { owner: userId },
+    { $set: { agents: clamped } },
     { upsert: true },
   );
 }

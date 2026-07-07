@@ -55,4 +55,10 @@ export class StripeProvider implements IPaymentProvider {
   async listActiveSubscriptions(): Promise<NormalizedSubscription[]> {
     return [];
   }
+
+  async getSubscription(
+    _providerSubscriptionId: string,
+  ): Promise<NormalizedSubscription | null> {
+    inactive('getSubscription');
+  }
 }

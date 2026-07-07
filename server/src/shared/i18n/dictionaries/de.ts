@@ -89,7 +89,7 @@ export const de: DictionaryShape = {
       pitrLocked: 'Point-in-Time-Wiederherstellung ist in den Tarifen Pro und Business verfügbar.',
       mirrorLocked: 'Der Spiegelmodus ist im Business-Tarif verfügbar.',
       alertsLocked: 'Alarmkanäle (E-Mail und Webhooks) sind in den Tarifen Pro und Business verfügbar.',
-      multiVpsLocked: 'Die Multi-VPS-Flottenansicht ist im Business-Tarif verfügbar.',
+      agentLimitReached: 'Agenten-Limit für Ihren Tarif erreicht. Führen Sie ein Upgrade durch, um weitere Server zu verbinden.',
       projectPaused: 'Dieses Projekt ist pausiert. Reaktivieren Sie es oder upgraden Sie, um Backups auszuführen.',
       selectionInvalid: 'Wählen Sie zwischen einem und {{cap}} Projekten aus, die aktiv bleiben sollen.',
       notOwner: 'Sie sind nicht der Eigentümer eines oder mehrerer dieser Projekte.',
@@ -136,6 +136,20 @@ export const de: DictionaryShape = {
       body:
         'Wir konnten Ihre Zahlungsmethode für den {{plan}}-Tarif nicht belasten.\n\n' +
         'Aktualisieren Sie sie vor dem {{graceEndsAt}}, um den Tarif zu behalten: {{clientUrl}}/billing.\n',
+    },
+    downgradeNotice: {
+      subject: 'Ihr Dockstash-Tarif wurde auf Free geändert',
+      body:
+        'Ihr {{plan}}-Tarif ist abgelaufen und Ihr Konto ist jetzt im Free-Tarif.\n\n' +
+        'Ihre vorhandenen Backups sind sicher — es wurde nichts gelöscht. Projekte über dem ' +
+        'Free-Limit sind pausiert (schreibgeschützt), bis Sie erneut abonnieren: {{clientUrl}}/billing.\n',
+    },
+    reactivation: {
+      subject: 'Ihr Dockstash-Abo ist wieder aktiv',
+      body:
+        'Gute Nachrichten — Ihr {{plan}}-Abo ist wieder aktiv und alle pausierten ' +
+        'Projekte sind wieder online.\n\n' +
+        'Verwalten Sie Ihr Konto auf {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'Wiederherstellungstest FEHLGESCHLAGEN — Projekt {{project}}',
@@ -246,6 +260,7 @@ export const de: DictionaryShape = {
       scheduled: 'Zeitplan gespeichert.',
       enqueued: 'Job in die Warteschlange gestellt.',
       prunePassed: 'Prune erfolgreich abgeschlossen.',
+      pruneSkippedPaused: 'Aufbewahrungslöschung übersprungen: Projekt ist pausiert; gespeicherte Snapshots bleiben erhalten.',
     },
     job: {
       failedRetriesExhausted: 'Job nach {{attempts}} Versuchen fehlgeschlagen: {{message}}',

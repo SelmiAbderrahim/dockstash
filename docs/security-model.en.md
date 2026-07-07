@@ -235,7 +235,18 @@ static guard at
   — never a body `userId`. Deletion enqueues a purge
   `ACCOUNT_DELETION_GRACE_HOURS` in the future via `PurgeQueue`; no
   synchronous hard delete. `purgeAccount` refuses on `user.legalHold`
-  and skips `project.legalHold`. See `docs/data-rights.en.md`.
+  and skips `project.legalHold` — and, when it skips ANY project for a
+  hold, it now leaves the `User` row intact rather than orphaning that
+  project (prompt 13 / F8). See `docs/data-rights.en.md`.
+- **Every free-landing transition pauses + notifies consistently.** Grace
+  expiry, refund/chargeback, downgrade, and a direct `subscription.canceled`
+  / `.revoked` webhook all funnel through `applyProjectCap(userId, 'free', …)`
+  — pause (never delete) over-cap projects, disable their schedules, re-assert
+  the fleet-agent cap, grandfather retention. The three entitlement-visible
+  transitions (dunning-start, grace-expiry downgrade, reactivation) also fire a
+  non-fatal user notification via the lifecycle notifier; a bounced email never
+  rolls back the state change. A durable meta-test asserts no free-landing
+  branch skips the pause. (prompt 13 / F2–F6)
 - **Error output = i18n keys only.** `shared/middleware/error-handler.ts`
   returns `{ error: { message, details? } }` where `message` is an
   `Accept-Language`-resolved i18n key. `HttpError` messages that look

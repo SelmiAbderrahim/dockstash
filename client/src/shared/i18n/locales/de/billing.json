@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} Projekte",
       "unlimited": "Unbegrenzt",
-      "retention": "Aufbewahrung {{days}} Tage"
+      "retention": "Aufbewahrung {{days}} Tage",
+      "agents": "Verbundene Server: {{value}}"
     },
     "frequency": {
       "daily": "Tägliche Backups",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "Geplante Backups",
-      "emailAlerts": "E-Mail-Benachrichtigungen",
-      "multiVps": "Multi-VPS"
+      "emailAlerts": "E-Mail-Benachrichtigungen"
     },
     "cta": {
       "select": "Loslegen",
@@ -83,7 +83,8 @@
       "projects": "Projekte",
       "retention": "Aufbewahrung",
       "retentionValue": "{{days}} Tage",
-      "frequency": "Backup-Häufigkeit"
+      "frequency": "Backup-Häufigkeit",
+      "agents": "Server"
     },
     "features": {
       "title": "Enthaltene Funktionen"
@@ -105,7 +106,8 @@
       "running": "Läuft",
       "idle": "Inaktiv"
     },
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "agentsQuotaLabel": "Verwendete verbundene Server"
   },
   "selection": {
     "title": "Wählen Sie die aktiv bleibenden Projekte",

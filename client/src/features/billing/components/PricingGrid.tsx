@@ -192,11 +192,18 @@ export const PricingGrid = () => {
                           : tier.caps.projects,
                     })}
                   </li>
+                  <li>
+                    {t('grid.caps.agents', {
+                      value:
+                        tier.caps.agents === null
+                          ? t('grid.caps.unlimited')
+                          : tier.caps.agents,
+                    })}
+                  </li>
                   <li>{t('grid.caps.retention', { days: tier.caps.retentionDays })}</li>
                   <li>{t(`grid.frequency.${tier.caps.frequency}`)}</li>
                   {tier.flags.schedules ? <li>{t('grid.flag.schedules')}</li> : null}
                   {tier.flags.emailAlerts ? <li>{t('grid.flag.emailAlerts')}</li> : null}
-                  {tier.flags.multiVps ? <li>{t('grid.flag.multiVps')}</li> : null}
                 </ul>
               </CardContent>
               <CardFooter>

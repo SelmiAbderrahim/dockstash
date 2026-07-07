@@ -64,8 +64,8 @@
     "loading": "Loading fleet…",
     "register": "Register agent",
     "locked": {
-      "title": "Multi-VPS fleet is a Business feature",
-      "body": "Upgrade to the Business plan to register agents on additional servers and see your whole fleet in one place.",
+      "title": "You've reached your server limit",
+      "body": "Using {{used}} of {{cap}} servers on your plan. Upgrade to connect more.",
       "cta": "View plans"
     },
     "empty": {

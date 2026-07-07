@@ -64,8 +64,8 @@
     "loading": "Flotte wird geladen…",
     "register": "Agent registrieren",
     "locked": {
-      "title": "Die Multi-VPS-Flotte ist eine Business-Funktion",
-      "body": "Wechseln Sie zum Business-Tarif, um Agenten auf weiteren Servern zu registrieren und Ihre gesamte Flotte an einem Ort zu sehen.",
+      "title": "Sie haben Ihr Server-Limit erreicht",
+      "body": "Sie nutzen {{used}} von {{cap}} Servern in Ihrem Tarif. Führen Sie ein Upgrade durch, um weitere zu verbinden.",
       "cta": "Tarife ansehen"
     },
     "empty": {

@@ -13,7 +13,7 @@ sind an ein aktives Abo gebunden.
 | Planungsfrequenz     | Nur täglich| Max stündlich | Beliebiger cron |
 | Geplante Backups     | —          | ✔           | ✔              |
 | E-Mail-Alarme        | —          | ✔           | ✔              |
-| Multi-VPS            | —          | —           | ✔              |
+| Verbundene Server    | 1          | 5           | Unbegrenzt     |
 
 Jährliche Abrechnung = **10× monatlich** (zwei Monate gratis). Preise leben in
 `PricingTier`-Zeilen und sind ohne Redeploy editierbar.

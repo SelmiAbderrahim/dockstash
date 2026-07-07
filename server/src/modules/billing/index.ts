@@ -101,6 +101,7 @@ export {
   assertScheduleAllowed,
   clampRetentionDays,
   clampRetentionPolicy,
+  isRetentionGraceActive,
   classifyCron,
   type ResolvedEntitlements,
   type RetentionPolicyShape,
@@ -115,7 +116,13 @@ export {
   comparePlans,
   handleRefund,
   selectProjectsToKeep,
+  notifyLifecycleEvent,
+  setLifecycleNotifier,
+  resetLifecycleNotifier,
   GRACE_WINDOW_MS,
+  type LifecycleEvent,
+  type LifecycleNotifier,
+  type LifecycleNotifyContext,
 } from './lifecycle.service.js';
 export {
   getBillingOverviewForUser,

@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} proyectos",
       "unlimited": "Ilimitados",
-      "retention": "Retención {{days}} días"
+      "retention": "Retención {{days}} días",
+      "agents": "Servidores conectados: {{value}}"
     },
     "frequency": {
       "daily": "Copias diarias",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "Copias programadas",
-      "emailAlerts": "Alertas por correo",
-      "multiVps": "Multi-VPS"
+      "emailAlerts": "Alertas por correo"
     },
     "cta": {
       "select": "Empezar",
@@ -83,7 +83,8 @@
       "projects": "Proyectos",
       "retention": "Retención",
       "retentionValue": "{{days}} días",
-      "frequency": "Frecuencia de copias"
+      "frequency": "Frecuencia de copias",
+      "agents": "Servidores"
     },
     "features": {
       "title": "Funciones incluidas"
@@ -105,7 +106,8 @@
       "running": "En curso",
       "idle": "Inactivo"
     },
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "agentsQuotaLabel": "Servidores conectados usados"
   },
   "selection": {
     "title": "Elige qué proyectos quedan activos",

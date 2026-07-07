@@ -145,6 +145,49 @@ export async function deliverDunningEmail(input: DunningInput): Promise<void> {
   });
 }
 
+export interface PlanChangeEmailInput {
+  email: string;
+  plan: string;
+  locale?: SupportedLocale;
+}
+
+/**
+ * Grace-window expiry notice: the paid plan lapsed and the account dropped to
+ * Free. Backups are retained (read-only) — the body reassures + points to
+ * billing to re-upgrade. (prompt 13 / F3)
+ */
+export async function deliverDowngradeNoticeEmail(
+  input: PlanChangeEmailInput,
+): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, 'email.downgradeNotice.subject'),
+    text: translate(locale, 'email.downgradeNotice.body', {
+      plan: input.plan,
+      clientUrl: normalizedClientUrl(),
+    }),
+  });
+}
+
+/**
+ * Reactivation notice: a lapsed/past-due subscription recovered to active —
+ * paused projects are back online. (prompt 13 / F3)
+ */
+export async function deliverReactivationEmail(
+  input: PlanChangeEmailInput,
+): Promise<void> {
+  const locale = input.locale ?? DEFAULT_LOCALE;
+  await sendEmail({
+    to: input.email,
+    subject: translate(locale, 'email.reactivation.subject'),
+    text: translate(locale, 'email.reactivation.body', {
+      plan: input.plan,
+      clientUrl: normalizedClientUrl(),
+    }),
+  });
+}
+
 export type AlertKind = 'backup' | 'restore' | 'drill' | 'mirror' | 'heartbeat';
 
 export interface AlertEmailInput {

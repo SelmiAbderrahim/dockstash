@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} 个项目",
       "unlimited": "无限",
-      "retention": "保留 {{days}} 天"
+      "retention": "保留 {{days}} 天",
+      "agents": "已连接服务器：{{value}}"
     },
     "frequency": {
       "daily": "每日备份",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "定时备份",
-      "emailAlerts": "邮件提醒",
-      "multiVps": "多 VPS"
+      "emailAlerts": "邮件提醒"
     },
     "cta": {
       "select": "开始使用",
@@ -83,7 +83,8 @@
       "projects": "项目",
       "retention": "保留",
       "retentionValue": "{{days}} 天",
-      "frequency": "备份频率"
+      "frequency": "备份频率",
+      "agents": "服务器"
     },
     "features": {
       "title": "包含的功能"
@@ -105,7 +106,8 @@
       "running": "运行中",
       "idle": "空闲"
     },
-    "retry": "重试"
+    "retry": "重试",
+    "agentsQuotaLabel": "已使用的已连接服务器"
   },
   "selection": {
     "title": "选择保留的项目",

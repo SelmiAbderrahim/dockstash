@@ -26,8 +26,8 @@ const TIERS: PricingTier[] = [
     priceYearly: 0,
     productIdMonthly: null,
     productIdYearly: null,
-    caps: { projects: 1, retentionDays: 7, frequency: 'daily' },
-    flags: { schedules: false, emailAlerts: false, multiVps: false },
+    caps: { projects: 1, agents: 1, retentionDays: 7, frequency: 'daily' },
+    flags: { schedules: false, emailAlerts: false },
   },
   {
     slug: 'pro',
@@ -36,8 +36,8 @@ const TIERS: PricingTier[] = [
     priceYearly: 10000,
     productIdMonthly: 'pm',
     productIdYearly: 'py',
-    caps: { projects: 10, retentionDays: 30, frequency: 'hourly' },
-    flags: { schedules: true, emailAlerts: true, multiVps: false },
+    caps: { projects: 10, agents: 5, retentionDays: 30, frequency: 'hourly' },
+    flags: { schedules: true, emailAlerts: true },
   },
   {
     slug: 'business',
@@ -46,8 +46,8 @@ const TIERS: PricingTier[] = [
     priceYearly: 30000,
     productIdMonthly: 'bm',
     productIdYearly: 'by',
-    caps: { projects: null, retentionDays: 90, frequency: 'any-cron' },
-    flags: { schedules: true, emailAlerts: true, multiVps: true },
+    caps: { projects: null, agents: null, retentionDays: 90, frequency: 'any-cron' },
+    flags: { schedules: true, emailAlerts: true },
   },
 ];
 
@@ -112,10 +112,13 @@ describe('PricingGrid', () => {
     // Free tier price label + unlimited on business.
     expect(screen.getAllByText(/^Free$/).length).toBeGreaterThan(0);
     expect(screen.getByText(/\$10/)).toBeInTheDocument(); // pro monthly $10
-    expect(screen.getByText(/unlimited/i)).toBeInTheDocument();
+    expect(screen.getByText(/unlimited projects/i)).toBeInTheDocument();
     expect(screen.getByText(/hourly backups/i)).toBeInTheDocument();
     expect(screen.getByText(/any cron/i)).toBeInTheDocument();
-    expect(screen.getByText(/multi-vps/i)).toBeInTheDocument();
+    // Connected-server cap row per tier (Free 1, Pro 5, Business Unlimited).
+    expect(screen.getByText('Connected servers: 1')).toBeInTheDocument();
+    expect(screen.getByText('Connected servers: 5')).toBeInTheDocument();
+    expect(screen.getByText('Connected servers: Unlimited')).toBeInTheDocument();
     // Free is the current plan.
     expect(screen.getByRole('button', { name: /current plan/i })).toBeInTheDocument();
     // Paid non-current tiers use "Get started".

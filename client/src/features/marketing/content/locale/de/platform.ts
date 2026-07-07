@@ -7,7 +7,7 @@ import type { PlatformGuideCopy } from '../types';
 export const PLATFORM: Record<string, PlatformGuideCopy> = {
   'connect-fleet-agent': {
     intro:
-      'Ein Fleet-Agent ist ein kleiner Daemon auf einem anderen VPS, damit Dockstash auch die Container dieser Maschine sichert. Der Agent meldet sich per HTTPS nach Hause — bei Ihnen wird kein eingehender Port geöffnet — und fährt dieselbe Dump-dann-restic-Pipeline wie der Primärserver. Multi-VPS-Fleet ist ein Feature des Business-Tarifs.',
+      'Ein Fleet-Agent ist ein kleiner Daemon auf einem anderen VPS, damit Dockstash auch die Container dieser Maschine sichert. Der Agent meldet sich per HTTPS nach Hause — bei Ihnen wird kein eingehender Port geöffnet — und fährt dieselbe Dump-dann-restic-Pipeline wie der Primärserver. Flotten sind in jedem Tarif verfügbar — Free verbindet 1 Server, Pro 5 und Business unbegrenzt viele.',
     steps: {
       'open-fleet': {
         title: 'Den Fleet-Bildschirm öffnen',

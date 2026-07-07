@@ -20,6 +20,8 @@ import {
   handleDowngrade,
   handleUpgrade,
   handleRefund,
+  applyProjectCap,
+  notifyLifecycleEvent,
   GRACE_WINDOW_MS,
 } from '../lifecycle.service.js';
 
@@ -122,7 +124,7 @@ async function upsertSubscription(
       // Plan changed: smaller tier pauses over-cap projects (never deletes);
       // bigger tier reactivates what fits.
       if (comparePlans(planSlug, priorSub.planSlug) < 0) {
-        await handleDowngrade(userId, norm.productId);
+        await handleDowngrade(userId, norm.productId, priorSub.planSlug);
       } else {
         await handleUpgrade(userId, norm.productId);
       }
@@ -130,11 +132,28 @@ async function upsertSubscription(
       // Same plan recovering (e.g. past_due → active after payment fix):
       // idempotently reactivate anything paused by dunning/grace expiry.
       await handleUpgrade(userId, norm.productId);
+      // F3: notify once per recovery — the prior-status guard makes a repeat
+      // `active` delivery a no-op.
+      await notifyLifecycleEvent('reactivated', { userId, planSlug });
     }
+  } else if (status === 'canceled' || status === 'revoked') {
+    // F2: a direct cancel/revoke (no prior past_due) lands the user on Free.
+    // Pause over-cap projects exactly like every other free-landing path —
+    // otherwise EVERY project's next run 403s with no project flagged.
+    await applyProjectCap(userId, 'free', { priorSlug: priorSub?.planSlug });
   }
   if (status === 'past_due' && !priorSub?.graceEndsAt) {
     await beginDunning(norm.providerSubscriptionId).catch(() => {
       /* already recorded by the upsert above */
+    });
+    // F3: dunning-started email on the transition INTO past_due. beginDunning
+    // returns false here (the upsert already wrote graceEndsAt), so this
+    // call-site guard is the honest one-shot trigger; a repeat delivery has
+    // priorSub.graceEndsAt set and skips.
+    await notifyLifecycleEvent('dunning_started', {
+      userId,
+      planSlug,
+      graceEndsAt: updated.graceEndsAt,
     });
   }
 }

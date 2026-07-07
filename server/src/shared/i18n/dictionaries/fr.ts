@@ -89,7 +89,7 @@ export const fr: DictionaryShape = {
       pitrLocked: 'La restauration à un instant donné est disponible avec les offres Pro et Business.',
       mirrorLocked: 'Le mode miroir est disponible avec l\'offre Business.',
       alertsLocked: 'Les canaux d\'alerte (e-mail et webhooks) sont disponibles avec les offres Pro et Business.',
-      multiVpsLocked: 'La vue de flotte multi-VPS est disponible avec l\'offre Business.',
+      agentLimitReached: 'Limite d\'agents atteinte pour votre offre. Passez à une offre supérieure pour connecter plus de serveurs.',
       projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
       selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
       notOwner: 'Vous n’êtes pas propriétaire d’un ou plusieurs de ces projets.',
@@ -136,6 +136,20 @@ export const fr: DictionaryShape = {
       body:
         'Nous n’avons pas pu débiter votre moyen de paiement pour l’offre {{plan}}.\n\n' +
         'Mettez-le à jour avant le {{graceEndsAt}} pour conserver l’offre : {{clientUrl}}/billing.\n',
+    },
+    downgradeNotice: {
+      subject: 'Votre offre Dockstash est passée à Free',
+      body:
+        'Votre offre {{plan}} a expiré et votre compte est désormais sur l’offre Free.\n\n' +
+        'Vos sauvegardes existantes sont en sécurité — rien n’a été supprimé. Les projets ' +
+        'au-delà de la limite Free sont en pause (lecture seule) jusqu’à votre réabonnement : {{clientUrl}}/billing.\n',
+    },
+    reactivation: {
+      subject: 'Votre abonnement Dockstash est de nouveau actif',
+      body:
+        'Bonne nouvelle — votre abonnement {{plan}} est de nouveau actif et les projets ' +
+        'en pause sont de nouveau en ligne.\n\n' +
+        'Gérez votre compte sur {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'ÉCHEC du test de restauration — projet {{project}}',
@@ -246,6 +260,7 @@ export const fr: DictionaryShape = {
       scheduled: 'Planification enregistrée.',
       enqueued: 'Tâche mise en file d’attente.',
       prunePassed: 'Nettoyage terminé avec succès.',
+      pruneSkippedPaused: 'Purge de rétention ignorée : le projet est en pause ; les instantanés stockés sont conservés.',
     },
     job: {
       failedRetriesExhausted: 'Échec de la tâche après {{attempts}} tentatives : {{message}}',

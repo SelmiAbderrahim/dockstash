@@ -2,7 +2,7 @@ import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { loadOwnedProject } from '../backups/backups.service.js';
-import { clampRetentionPolicy } from '../billing/index.js';
+import { clampRetentionPolicy, isRetentionGraceActive } from '../billing/index.js';
 import type { RetentionPolicyShape } from '../billing/index.js';
 import type { ResticRunnerExt, RetentionPolicy } from './scheduler.boundaries.js';
 
@@ -59,6 +59,12 @@ export async function runPrune(
 ): Promise<RunPruneResult> {
   const t = deps.t ?? identityT;
   const project = await loadOwnedProject(projectId, userId, { t });
+  // Backups are never deleted on a billing lapse (prompt 13 / F1): a project
+  // paused by a downgrade must not have its stored snapshots pruned. Same shape
+  // as the legalHold skip — ok=true records a successful skip, not a failure.
+  if (project.paused) {
+    return { ok: true, detail: t('scheduler.success.pruneSkippedPaused') };
+  }
   // Legal hold beats retention. IDEA.md §8 / prompt 11: auto-prune MUST NOT
   // delete snapshots on a held project. The job returns ok=true so the
   // scheduler records it as a successful skip, not a failure.
@@ -66,9 +72,14 @@ export async function runPrune(
     return { ok: true, detail: t('security.legalHold.pruneSkipped') };
   }
   // Tier ceiling beats the stored schedule policy: a downgraded user must not
-  // keep retaining on their old, wider policy.
+  // keep retaining on their old, wider policy. EXCEPT during the retention
+  // grace window (prompt 13 / F1): for GRACE_WINDOW_MS after a downgrade the
+  // pre-downgrade (wider) policy is applied unclamped so history that predates
+  // the downgrade survives; after the window the tier ceiling takes over.
   const clamp = deps.clampPolicy ?? clampRetentionPolicy;
-  const effective = await clamp(userId, retention);
+  const effective = (await isRetentionGraceActive(userId))
+    ? retention
+    : await clamp(userId, retention);
   try {
     await deps.resticRunner.forget(pruneArgs(effective));
     return { ok: true, detail: t('scheduler.success.prunePassed') };

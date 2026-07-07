@@ -68,7 +68,8 @@ const usageOverCap: UsageResponse = {
   ],
   retentionDays: 30,
   frequency: 'hourly',
-  flags: { schedules: true, emailAlerts: true, multiVps: false },
+  agents: { used: 1, cap: null },
+  flags: { schedules: true, emailAlerts: true },
   selectionRequired: true,
 };
 
@@ -82,7 +83,8 @@ const usageSelectionNoCap: UsageResponse = {
   metering: [],
   retentionDays: 30,
   frequency: 'daily',
-  flags: { schedules: true, emailAlerts: false, multiVps: false },
+  agents: { used: 1, cap: null },
+  flags: { schedules: true, emailAlerts: false },
   selectionRequired: true,
 };
 
@@ -91,7 +93,8 @@ const usageEmpty: UsageResponse = {
   metering: [],
   retentionDays: 7,
   frequency: 'daily',
-  flags: { schedules: false, emailAlerts: false, multiVps: false },
+  agents: { used: 0, cap: null },
+  flags: { schedules: false, emailAlerts: false },
   selectionRequired: false,
 };
 
@@ -197,21 +200,11 @@ describe('BillingPage — usage tab', () => {
     const bar = screen.getByRole('progressbar');
     expect(bar).toHaveAttribute('aria-valuenow', '3');
     expect(bar).toHaveAttribute('aria-valuemax', '1');
-    // Entitlement flags surface as badges (schedules + emailAlerts on, multiVps off).
+    // Entitlement flags surface as badges (schedules + emailAlerts on).
     expect(screen.getByText(/scheduled backups/i)).toBeInTheDocument();
     expect(screen.getByText(/email alerts/i)).toBeInTheDocument();
-    expect(screen.queryByText(/multi-vps/i)).not.toBeInTheDocument();
-  });
-
-  it('renders only the multi-VPS badge when it is the sole entitlement', async () => {
-    mockedApi.fetchUsage.mockResolvedValue({
-      ...usageEmpty,
-      flags: { schedules: false, emailAlerts: false, multiVps: true },
-    });
-    renderPage('/billing?tab=usage');
-    expect(await screen.findByText(/multi-vps/i)).toBeInTheDocument();
-    expect(screen.queryByText(/scheduled backups/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/email alerts/i)).not.toBeInTheDocument();
+    // The connected-servers stat card is always present.
+    expect(screen.getByText('Servers')).toBeInTheDocument();
   });
 
   it('renders the selection UI with an unlimited (null) cap', async () => {

@@ -232,7 +232,7 @@
     "breadcrumb": "定价",
     "eyebrow": "定价",
     "title": "为经验证的 Docker 备份提供简单定价",
-    "answer": "Dockstash 提供三种方案。Free（{{freePrice}}）自托管一个项目，保留 {{freeRetentionDays}} 天，每日备份。Pro（{{proMonthly}}/月）增加至 {{proProjects}} 个项目、保留 {{proRetentionDays}} 天、每小时计划和邮件告警。Business（{{bizMonthly}}/月）提供无限项目、保留 {{bizRetentionDays}} 天、任意 cron、优先支持和多 VPS。年付立省两个月——Pro 为 {{proYearly}}/年，Business 为 {{bizYearly}}/年。",
+    "answer": "Dockstash 提供三种方案。Free（{{freePrice}}）自托管一个项目，保留 {{freeRetentionDays}} 天，每日备份。Pro（{{proMonthly}}/月）增加至 {{proProjects}} 个项目、保留 {{proRetentionDays}} 天、每小时计划和邮件告警。Business（{{bizMonthly}}/月）提供无限项目、保留 {{bizRetentionDays}} 天、任意 cron、优先支持和无限已连接服务器。年付立省两个月——Pro 为 {{proYearly}}/年，Business 为 {{bizYearly}}/年。",
     "billing": {
       "label": "计费周期",
       "monthly": "月付",
@@ -251,7 +251,8 @@
           "daily": "每日备份",
           "community": "社区支持",
           "selfHost": "默认自托管——无付费服务商",
-          "restic": "标准 Restic 仓库，存于您的存储 VPS"
+          "restic": "标准 Restic 仓库，存于您的存储 VPS",
+          "servers": "1 台已连接服务器"
         }
       },
       "pro": {
@@ -268,7 +269,8 @@
           "alerts": "邮件告警 + 失联开关心跳",
           "drills": "自动化恢复演练验证",
           "continuous": "持续备份（每 5 分钟）",
-          "pitr": "时间点恢复"
+          "pitr": "时间点恢复",
+          "servers": "5 台已连接服务器"
         },
         "cta": "选择 Pro"
       },
@@ -283,7 +285,7 @@
           "retention": "保留 {{bizRetentionDays}} 天",
           "cron": "任意 cron 计划",
           "priority": "优先支持",
-          "fleet": "多 VPS 舰队视图",
+          "fleet": "无限已连接服务器",
           "metering": "按项目计量",
           "mirror": "单向镜像模式"
         },
@@ -435,7 +437,7 @@
       },
       "cost": {
         "question": "Dockstash 多少钱？",
-        "answer": "Free 版为 {{freePrice}}，可自托管一个项目。Pro 增加至 {{proProjects}} 个项目、每小时备份和邮件告警；Business 提供无限项目、优先支持和多 VPS。年付立省两个月。"
+        "answer": "Free 版为 {{freePrice}}，可自托管一个项目。Pro 增加至 {{proProjects}} 个项目、每小时备份和邮件告警；Business 提供无限项目、优先支持和无限已连接服务器。年付立省两个月。"
       }
     },
     "keepReading": "继续阅读",
@@ -495,9 +497,9 @@
     },
     "faq": {
       "heading": "Questions",
-      "multiVps": {
-        "question": "How do I back up multiple VPS servers with one dashboard?",
-        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      "plans": {
+        "question": "每个套餐可以连接多少台服务器？",
+        "answer": "每个套餐都包含集群代理 — Free 连接 1 台服务器，Pro 5 台，Business 不限。在每台服务器上安装代理，并将该服务器的项目分配给它的代理；每次备份、快照和警报都会显示在同一个集群视图中。"
       },
       "rootPorts": {
         "question": "Does the agent need root or inbound ports?",
@@ -510,7 +512,7 @@
     },
     "cta": {
       "heading": "Run one dashboard for your whole fleet",
-      "body": "Multi-VPS fleet view is on the Business plan.",
+      "body": "在任意套餐中连接您的服务器 — Free 1 台，Pro 5 台，Business 不限。",
       "button": "See pricing"
     }
   },
@@ -713,7 +715,7 @@
       },
       "plan": {
         "question": "哪个套餐包含镜像模式？",
-        "answer": "镜像模式是 Business 套餐功能，与多 VPS 舰队代理和任意节奏计划并列。"
+        "answer": "镜像模式是 Business 套餐功能，与任意节奏计划并列。"
       }
     },
     "cta": {

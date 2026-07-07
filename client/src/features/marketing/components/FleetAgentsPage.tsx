@@ -21,7 +21,7 @@ import { Reveal } from '../useReveal';
 import type { FaqItem } from '../types';
 
 const STEP_KEYS = ['register', 'install', 'assign'] as const;
-const FAQ_KEYS = ['multiVps', 'rootPorts', 'auth'] as const;
+const FAQ_KEYS = ['plans', 'rootPorts', 'auth'] as const;
 
 const INSTALL_SNIPPET = `docker compose -f docker-compose.agent.yml up -d
 # DOCKSTASH_URL=https://dockstash.com

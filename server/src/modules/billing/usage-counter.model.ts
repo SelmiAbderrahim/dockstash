@@ -25,6 +25,7 @@ const usageCounterSchema = new mongoose.Schema(
       unique: true,
     },
     projects: { type: Number, required: true, default: 0, min: 0 },
+    agents: { type: Number, required: true, default: 0, min: 0 },
   },
   { timestamps: true },
 );

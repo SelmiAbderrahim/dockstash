@@ -27,6 +27,9 @@ export async function seedPricingTiers(): Promise<void> {
     const capsProjects = Number.isFinite(ent.projects)
       ? ent.projects
       : Number.MAX_SAFE_INTEGER;
+    const capsAgents = Number.isFinite(ent.agents)
+      ? ent.agents
+      : Number.MAX_SAFE_INTEGER;
     await PricingTier.findOneAndUpdate(
       { slug },
       {
@@ -37,13 +40,13 @@ export async function seedPricingTiers(): Promise<void> {
           productIdYearly: getProductIdForPlan(slug, 'year'),
           caps: {
             projects: capsProjects,
+            agents: capsAgents,
             retentionDays: ent.retentionDays,
             frequency: ent.frequency,
           },
           flags: {
             schedules: ent.schedules,
             emailAlerts: ent.emailAlerts,
-            multiVps: ent.multiVps,
           },
         },
         $setOnInsert: {

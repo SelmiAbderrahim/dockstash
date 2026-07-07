@@ -64,8 +64,8 @@
     "loading": "正在加载集群…",
     "register": "注册代理",
     "locked": {
-      "title": "多 VPS 集群是 Business 套餐功能",
-      "body": "升级到 Business 套餐即可在更多服务器上注册代理，并在一个页面查看整个集群。",
+      "title": "您已达到服务器上限",
+      "body": "您的套餐已使用 {{cap}} 台服务器中的 {{used}} 台。升级以连接更多。",
       "cta": "查看套餐"
     },
     "empty": {

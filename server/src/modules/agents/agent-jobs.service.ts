@@ -5,6 +5,7 @@ import { logger } from '../../config/logger.js';
 import { translate, DEFAULT_LOCALE } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { Project } from '../backups/backups.model.js';
+import { Agent } from './agents.model.js';
 import { loadTransportForUser } from '../settings/settings.service.js';
 import { assertProjectCap } from '../billing/entitlements.service.js';
 import { sendFailureAlert } from '../alerting/index.js';
@@ -133,6 +134,13 @@ export async function claimNextJob(
 ): Promise<ClaimedJobPayload | null> {
   const t = deps.t ?? identityT;
   const now = deps.now ?? new Date();
+  // F6: a downgrade below the fleet cap blocks the newest-over-cap agents from
+  // leasing NEW jobs (the agent record is never deleted; already-leased jobs
+  // finish). A blocked agent claims nothing until a re-upgrade clears the flag.
+  const principalAgent = await Agent.findById(principal.id)
+    .select('blockedByBilling')
+    .lean();
+  if (principalAgent?.blockedByBilling) return null;
   // Bounded loop: each iteration either returns, or terminally fails one
   // pending job — it cannot spin.
   for (;;) {

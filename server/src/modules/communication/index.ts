@@ -8,10 +8,13 @@ export {
   deliverWelcomeEmail,
   deliverPaymentReceiptEmail,
   deliverDunningEmail,
+  deliverDowngradeNoticeEmail,
+  deliverReactivationEmail,
   deliverAlertEmail,
   type WelcomeEmailInput,
   type PaymentReceiptInput,
   type DunningInput,
+  type PlanChangeEmailInput,
   type AlertEmailInput,
   type AlertKind,
 } from './communication.service.js';

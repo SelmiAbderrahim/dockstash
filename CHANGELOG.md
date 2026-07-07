@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Fleet agents on every plan (metered) (prompt 12)
+
+The fleet stops being a Business-only boolean and becomes a per-plan metered
+resource — **Free = 1, Pro = 5, Business = unlimited** connected servers. A
+paying Pro customer can now register agents and back up their servers.
+
+- **Entitlement change** — `Entitlements.multiVps: boolean` → `agents: number`
+  (1 / 5 / ∞). Prices, projects, retention, frequency, and every other flag are
+  unchanged.
+- **Atomic cap enforcement** — agent registration reserves a slot via the
+  existing `UsageCounter` atomic `$lt`-cap `$inc` idiom (`reserveAgentSlot` /
+  `releaseAgentSlot` / `reconcileAgentCounter`); deletion releases it. Read and
+  maintenance agent routes lose the plan gate — owner-scoping is the only guard.
+- **Reason-code migration** — `multiVpsLocked` → `agentLimitReached` (carries
+  `{ used, cap }`) across server dictionaries, client fleet typing, and the UI.
+- **UI** — the `/fleet` tier-lock card is replaced by an at-cap upgrade upsell;
+  the billing grid shows a "Connected servers" row (1 / 5 / Unlimited) and the
+  usage tab a servers used/cap stat. Marketing pricing/fleet/FAQ pages, all 7
+  locales, and the plans/fleet docs reflect the per-plan counts.
+
 ### Observability — Resend, alerts, audit & health (prompt 08)
 
 Makes failure loud and every action traceable.
@@ -33,8 +53,8 @@ Makes failure loud and every action traceable.
 Turns subscriptions into enforced product limits.
 
 - **Entitlements matrix** — `server/src/modules/billing/plans.ts` — typed
-  `ENTITLEMENTS` keyed by `free`/`pro`/`business` (projects, retentionDays,
-  frequency, schedules/emailAlerts/multiVps flags). Monthly + yearly pricing
+  `ENTITLEMENTS` keyed by `free`/`pro`/`business` (projects, agents, retentionDays,
+  frequency, schedules/emailAlerts flags). Monthly + yearly pricing
   (yearly = monthly × 10, "2 months free").
 - **`PricingTier` model** — data-backed pricing editable without a redeploy;
   `pricing-tier.seed.ts` upserts idempotently from the matrix and preserves

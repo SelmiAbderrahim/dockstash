@@ -13,13 +13,16 @@ import { Project } from '../backups/backups.model.js';
 import { UsageCounter } from './usage-counter.model.js';
 import {
   adjustProjectCounter,
+  reconcileAgentCounter,
   reconcileProjectCounter,
+  releaseAgentSlot,
   releaseProjectSlot,
+  reserveAgentSlot,
   reserveProjectSlot,
 } from './entitlements.service.js';
 import { applyProjectCap, handleUpgrade, selectProjectsToKeep } from './lifecycle.service.js';
 import { Subscription } from './subscription.model.js';
-import { getPaymentProvider } from './active-provider.js';
+import { getPaymentProvider, __setPaymentProviderForTests } from './active-provider.js';
 import { Customer } from './customer.model.js';
 import { createSchedule, updateSchedule } from '../scheduler/scheduler.service.js';
 import { Schedule } from '../scheduler/scheduler.model.js';
@@ -40,6 +43,21 @@ import { Schedule } from '../scheduler/scheduler.model.js';
  */
 
 const app = createApp();
+
+// Worker-sharing guard (mirrors agents-cap.test.ts:84): the OSS agents suite
+// (agents.test.ts) mutates env.PAYMENT_PROVIDER='none' and can share this
+// vitest worker. Re-pin a paid provider before every test so a no-subscription
+// user resolves to `free` (finite caps) rather than the OSS business (infinite)
+// ceiling, which would make the cap-enforcement assertions vacuously pass/fail.
+beforeEach(async () => {
+  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
+  __setPaymentProviderForTests(null); // rebuild the cached provider from env
+  // The per-file mongo restart leaves the fresh DB without indexes until
+  // autoIndex completes async. The reservation ledger's atomic guard relies on
+  // the unique `owner` index (its concurrency authority) to E11000 at cap —
+  // build it up front so cap enforcement is deterministic across suite ordering.
+  await UsageCounter.createIndexes();
+});
 
 function signToken(userId: string): string {
   return jwt.sign({ _id: userId, id: userId }, env.JWT_SECRET, { expiresIn: '1h' });
@@ -128,21 +146,21 @@ describe('surface #3: S3-01 project-cap enforcement at POST /api/backups (create
     expect(counter?.projects).toBe(1);
   });
 
-  it('rollback on validation failure inside createProject releases the reservation', async () => {
-    // A bad path fails inside createProject AFTER the reservation is taken.
-    // The controller catches, releases, and rethrows. Subsequent legit create
-    // must still succeed (reservation not stuck at cap).
+  it('rollback on a foreign agentId inside createProject releases the reservation', async () => {
+    // A foreign/unknown agentId 404s inside createProject → loadOwnedAgent AFTER
+    // the project slot is reserved. The controller catches, releases, and
+    // rethrows. A subsequent legit create must still succeed (ledger not stuck
+    // at cap). Agent assignment is owner-scoped only now — no plan gate.
     const { token, id } = await seedUser('cap-rollback@t.com');
     const bad = await request(app)
       .post('/api/backups')
       .set('Authorization', `JWT ${token}`)
       .send({ name: 'x', path: '/var/www/x', repoPassword: 'password1', agentId: '507f1f77bcf86cd799439011' });
-    // Free tier cannot assign an agent — 403 multiVpsLocked before reserve.
-    expect(bad.status).toBe(403);
-    expect(bad.body?.error?.details?.reason).toBe('multiVpsLocked');
-    // No reservation was taken (assert fires first).
+    // Unowned agent → 404 (existence-cloak), AFTER reserve, then rolled back.
+    expect(bad.status).toBe(404);
+    // Reservation was rolled back to zero (row may exist at 0 or be absent).
     const counter0 = await UsageCounter.findOne({ owner: id });
-    expect(counter0).toBeNull();
+    expect(counter0?.projects ?? 0).toBe(0);
 
     // Next legit create should still succeed under free cap=1.
     const ok = await request(app)
@@ -507,5 +525,115 @@ describe('surface #3: reservation ledger unit cover', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe('agent reservation ledger — atomic per-plan agent-cap enforcement', () => {
+  beforeAll(() => startMemoryMongo());
+  afterAll(() => stopMemoryMongo());
+  beforeEach(() => clearCollections());
+
+  async function seedUserRow(email: string): Promise<string> {
+    const u = await User.create({
+      email,
+      password: 'x',
+      profile: { firstName: 'A', lastName: 'G' },
+      emailVerified: true,
+    });
+    return String(u._id);
+  }
+
+  it('reserveAgentSlot upserts the counter to 1 on the first reservation (free cap=1)', async () => {
+    const id = await seedUserRow('agent-first@t.com');
+    await reserveAgentSlot(id);
+    const counter = await UsageCounter.findOne({ owner: id });
+    expect(counter?.agents).toBe(1);
+  });
+
+  it('reserveAgentSlot is a no-op on the infinite tier (Business ceiling)', async () => {
+    const prev = env.PAYMENT_PROVIDER;
+    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
+    try {
+      const id = await seedUserRow('agent-inf@t.com');
+      await reserveAgentSlot(id);
+      const counter = await UsageCounter.findOne({ owner: id });
+      expect(counter).toBeNull();
+    } finally {
+      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prev;
+    }
+  });
+
+  it('reserveAgentSlot at cap throws agentLimitReached with {used, cap}', async () => {
+    const id = await seedUserRow('agent-atcap@t.com');
+    // Free cap = 1; seed the counter at 1 so the next reservation rejects.
+    await UsageCounter.create({ owner: id, agents: 1 });
+    await expect(reserveAgentSlot(id)).rejects.toMatchObject({
+      status: 403,
+      details: { reason: 'agentLimitReached', used: 1, cap: 1 },
+    });
+  });
+
+  it('reserveAgentSlot bootstrap E11000 is caught and retried (concurrent-insert race)', async () => {
+    const id = await seedUserRow('agent-boot-race@t.com');
+    await UsageCounter.create({ owner: id, agents: 0 });
+    const spy = vi.spyOn(UsageCounter, 'updateOne').mockImplementationOnce(() => {
+      const err = new Error('E11000 duplicate key');
+      (err as { code?: number }).code = 11000;
+      throw err;
+    });
+    try {
+      await reserveAgentSlot(id);
+    } finally {
+      spy.mockRestore();
+    }
+    const counter = await UsageCounter.findOne({ owner: id });
+    expect(counter?.agents).toBe(1);
+  });
+
+  it('reserveAgentSlot E11000 retry that still misses the cap rejects', async () => {
+    const id = await seedUserRow('agent-boot-full@t.com');
+    // Row already at cap; the E11000 retry finds no room and rejects.
+    await UsageCounter.create({ owner: id, agents: 1 });
+    const spy = vi.spyOn(UsageCounter, 'updateOne').mockImplementationOnce(() => {
+      const err = new Error('E11000 duplicate key');
+      (err as { code?: number }).code = 11000;
+      throw err;
+    });
+    try {
+      await expect(reserveAgentSlot(id)).rejects.toMatchObject({
+        status: 403,
+        details: { reason: 'agentLimitReached', cap: 1 },
+      });
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('reserveAgentSlot re-throws a non-dup bootstrap error', async () => {
+    const id = await seedUserRow('agent-boot-other@t.com');
+    const spy = vi.spyOn(UsageCounter, 'updateOne').mockImplementationOnce(() => {
+      throw new Error('mongo unavailable');
+    });
+    try {
+      await expect(reserveAgentSlot(id)).rejects.toThrow('mongo unavailable');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('releaseAgentSlot clamps at zero (never goes negative)', async () => {
+    const id = await seedUserRow('agent-clamp@t.com');
+    await UsageCounter.create({ owner: id, agents: 0 });
+    await releaseAgentSlot(id);
+    const counter = await UsageCounter.findOne({ owner: id });
+    expect(counter?.agents).toBe(0);
+  });
+
+  it('reconcileAgentCounter clamps negative inputs to 0 and upserts an absolute value', async () => {
+    const id = await seedUserRow('agent-rec@t.com');
+    await reconcileAgentCounter(id, -3);
+    expect((await UsageCounter.findOne({ owner: id }))?.agents).toBe(0);
+    await reconcileAgentCounter(id, 4);
+    expect((await UsageCounter.findOne({ owner: id }))?.agents).toBe(4);
   });
 });

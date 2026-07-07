@@ -5,8 +5,9 @@ import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
 
 // Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
-// entitlements (multi-VPS fleet, schedules, email alerts, restore drills) are
-// unrestricted here — billing tiering itself is covered by the billing suites.
+// entitlements (fleet agent caps, schedules, email alerts, restore drills) are
+// unrestricted here — billing tiering itself is covered by the billing suites
+// (agent-cap enforcement lives in agents-cap.test.ts).
 const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(() => {
   (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';

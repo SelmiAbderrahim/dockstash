@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Lock, MoreHorizontal, Plus } from 'lucide-react';
+import { Loader2, MoreHorizontal, Plus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
-import { Alert, AlertDescription } from '@shared/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
 import {
   Table,
@@ -39,6 +38,7 @@ import {
   selectDeleteError,
   selectDeleteStatus,
   selectFleet,
+  selectFleetCapInfo,
   selectFleetError,
   selectFleetLockedReason,
   selectFleetStatus,
@@ -97,6 +97,7 @@ export const FleetScreen = () => {
   const status = useAppSelector(selectFleetStatus);
   const error = useAppSelector(selectFleetError);
   const lockedReason = useAppSelector(selectFleetLockedReason);
+  const capInfo = useAppSelector(selectFleetCapInfo);
   const deleting = useAppSelector(selectDeleteStatus) === 'loading';
   const deleteError = useAppSelector(selectDeleteError);
 
@@ -139,7 +140,9 @@ export const FleetScreen = () => {
     }
   }, [activeStepTarget]);
 
-  const locked = lockedReason === 'multiVpsLocked';
+  // At-cap: a register attempt was rejected with `agentLimitReached`. The fleet
+  // is metered per plan now (never a tier lock) — surface an upgrade upsell.
+  const atCap = lockedReason === 'agentLimitReached';
 
   return (
     <section
@@ -157,12 +160,10 @@ export const FleetScreen = () => {
           </h1>
           <p className="text-sm text-muted-foreground">{t('fleet.lede')}</p>
         </div>
-        {!locked && (
-          <Button type="button" data-tour="fleet-register-button" onClick={() => setRegisterOpen(true)}>
-            <Plus className="size-4" aria-hidden="true" />
-            {t('fleet.register')}
-          </Button>
-        )}
+        <Button type="button" data-tour="fleet-register-button" onClick={() => setRegisterOpen(true)}>
+          <Plus className="size-4" aria-hidden="true" />
+          {t('fleet.register')}
+        </Button>
       </header>
 
       {status === 'loading' && (
@@ -177,24 +178,24 @@ export const FleetScreen = () => {
         </div>
       )}
 
-      {locked && (
-        <Card data-testid="fleet-locked">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="size-4 text-muted-foreground" aria-hidden="true" />
-              {t('fleet.locked.title')}
-            </CardTitle>
-            <CardDescription>{t('fleet.locked.body')}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
+      {atCap && (
+        <Alert data-testid="fleet-at-cap">
+          <AlertTitle>{t('fleet.locked.title')}</AlertTitle>
+          <AlertDescription className="flex flex-col items-start gap-3">
+            <span>
+              {t('fleet.locked.body', {
+                used: capInfo?.used ?? 0,
+                cap: capInfo?.cap ?? 0,
+              })}
+            </span>
+            <Button asChild size="sm">
               <Link to="/billing">{t('fleet.locked.cta')}</Link>
             </Button>
-          </CardContent>
-        </Card>
+          </AlertDescription>
+        </Alert>
       )}
 
-      {status === 'failed' && !locked && (
+      {status === 'failed' && (
         <Alert variant="destructive">
           <AlertDescription>{error ?? t('fleet.errors.load')}</AlertDescription>
         </Alert>

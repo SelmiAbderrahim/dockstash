@@ -64,8 +64,8 @@
     "loading": "Chargement de la flotte…",
     "register": "Enregistrer un agent",
     "locked": {
-      "title": "La flotte multi-VPS est une fonctionnalité Business",
-      "body": "Passez à l'offre Business pour enregistrer des agents sur d'autres serveurs et voir toute votre flotte au même endroit.",
+      "title": "Vous avez atteint votre limite de serveurs",
+      "body": "Vous utilisez {{used}} serveur(s) sur {{cap}} de votre offre. Passez à une offre supérieure pour en connecter plus.",
       "cta": "Voir les offres"
     },
     "empty": {

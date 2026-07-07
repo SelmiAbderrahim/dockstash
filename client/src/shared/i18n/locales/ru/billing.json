@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} проектов",
       "unlimited": "Безлимит",
-      "retention": "Хранение {{days}} дней"
+      "retention": "Хранение {{days}} дней",
+      "agents": "Подключённые серверы: {{value}}"
     },
     "frequency": {
       "daily": "Ежедневное копирование",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "Плановые резервные копии",
-      "emailAlerts": "Email-оповещения",
-      "multiVps": "Мульти-VPS"
+      "emailAlerts": "Email-оповещения"
     },
     "cta": {
       "select": "Начать",
@@ -83,7 +83,8 @@
       "projects": "Проекты",
       "retention": "Хранение",
       "retentionValue": "{{days}} дней",
-      "frequency": "Частота копирования"
+      "frequency": "Частота копирования",
+      "agents": "Серверы"
     },
     "features": {
       "title": "Включённые возможности"
@@ -105,7 +106,8 @@
       "running": "Выполняется",
       "idle": "Простой"
     },
-    "retry": "Повторить"
+    "retry": "Повторить",
+    "agentsQuotaLabel": "Использовано подключённых серверов"
   },
   "selection": {
     "title": "Выберите активные проекты",

@@ -7,7 +7,7 @@ import type { PlatformGuideCopy } from '../types';
 export const PLATFORM: Record<string, PlatformGuideCopy> = {
   'connect-fleet-agent': {
     intro:
-      "Un agent de flotte est un petit démon que vous exécutez sur un autre VPS pour que Dockstash sauvegarde aussi les conteneurs de cette machine. L'agent appelle la maison en HTTPS — aucun port entrant n'est ouvert chez vous — et exécute le même pipeline dump-puis-restic que le serveur principal. La flotte multi-VPS est une fonctionnalité de l'offre Business.",
+      "Un agent de flotte est un petit démon que vous exécutez sur un autre VPS pour que Dockstash sauvegarde aussi les conteneurs de cette machine. L'agent appelle la maison en HTTPS — aucun port entrant n'est ouvert chez vous — et exécute le même pipeline dump-puis-restic que le serveur principal. Les flottes sont disponibles sur toutes les offres — Free connecte 1 serveur, Pro 5, et Business un nombre illimité.",
     steps: {
       'open-fleet': {
         title: "Ouvrez l'écran Fleet",

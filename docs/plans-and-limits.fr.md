@@ -13,7 +13,7 @@ auto-hébergement et fonctionne sans fournisseur de paiement ; **Pro** et
 | Fréquence planning   | Quotidien  | Horaire max | Toute cron     |
 | Sauvegardes planifiées | —        | ✔           | ✔              |
 | Alertes e-mail       | —          | ✔           | ✔              |
-| Multi-VPS            | —          | —           | ✔              |
+| Serveurs connectés   | 1          | 5           | Illimité       |
 
 L’annuel = **10× le mensuel** (deux mois offerts). Les prix vivent dans les lignes
 `PricingTier` et peuvent être modifiés sans redéploiement.

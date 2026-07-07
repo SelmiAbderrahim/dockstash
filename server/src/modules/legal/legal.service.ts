@@ -196,8 +196,12 @@ export async function purgeAccount(
   }
   const projects = await Project.find({ owner: userId });
   let purged = 0;
+  let skippedForLegalHold = false;
   for (const p of projects) {
-    if (p.legalHold) continue;
+    if (p.legalHold) {
+      skippedForLegalHold = true;
+      continue;
+    }
     if (deps.resticRepoPurger) {
       try {
         await deps.resticRepoPurger.purgeRepo({
@@ -215,6 +219,13 @@ export async function purgeAccount(
     }
     await Project.deleteOne({ _id: p._id });
     purged += 1;
+  }
+  // F8: a project under legal hold survives the loop above. Deleting the User
+  // row anyway would orphan it (no owner, yet not user-level held). Defer the
+  // account purge — the deletion schedule stays intact so a later sweep retries
+  // once the hold lifts. Never deletes more than the non-held projects.
+  if (skippedForLegalHold) {
+    return { ok: false, reason: 'legalHold', projectsPurged: purged };
   }
   await User.deleteOne({ _id: user._id });
   return { ok: true, projectsPurged: purged };

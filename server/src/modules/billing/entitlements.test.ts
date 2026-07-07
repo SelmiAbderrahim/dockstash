@@ -12,7 +12,6 @@ import {
   assertProjectCap,
   assertScheduleAllowed,
   assertRestoreDrillAllowed,
-  assertMultiVpsAllowed,
   assertPitrAllowed,
   isEmailAlertsAllowed,
   classifyCron,
@@ -147,7 +146,7 @@ describe('entitlements resolution', () => {
       const resolved = await resolveEntitlements(String(user._id));
       expect(resolved.slug).toBe('free');
       expect(resolved.entitlements.projects).toBe(1);
-      expect(resolved.entitlements.multiVps).toBe(false);
+      expect(resolved.entitlements.agents).toBe(1);
       expect(resolved.status).toBe('none');
     } finally {
       (env as { POLAR_ACCESS_TOKEN?: string }).POLAR_ACCESS_TOKEN = prevToken;
@@ -267,21 +266,17 @@ describe('enforcement guards', () => {
     ).resolves.toMatchObject({ slug: 'pro' });
   });
 
-  it('assertMultiVpsAllowed blocks free/pro, allows business', async () => {
+  it('agent cap resolves per tier: free→1, pro→5, business→∞', async () => {
     const free = await createOwner('free-vps@example.com');
-    await expect(
-      assertMultiVpsAllowed(String(free._id)),
-    ).rejects.toMatchObject({ status: 403, details: { reason: 'multiVpsLocked' } });
+    expect((await resolveEntitlements(String(free._id))).entitlements.agents).toBe(1);
     const pro = await createOwner('pro-vps@example.com');
     await seedActiveSub(String(pro._id), 'pro');
-    await expect(
-      assertMultiVpsAllowed(String(pro._id)),
-    ).rejects.toMatchObject({ status: 403, details: { reason: 'multiVpsLocked' } });
+    expect((await resolveEntitlements(String(pro._id))).entitlements.agents).toBe(5);
     const biz = await createOwner('biz-vps@example.com');
     await seedActiveSub(String(biz._id), 'business');
-    await expect(
-      assertMultiVpsAllowed(String(biz._id)),
-    ).resolves.toMatchObject({ slug: 'business' });
+    expect((await resolveEntitlements(String(biz._id))).entitlements.agents).toBe(
+      Number.POSITIVE_INFINITY,
+    );
   });
 
   it('isEmailAlertsAllowed is false for free, true for pro', async () => {
@@ -327,6 +322,8 @@ describe('enforcement guards', () => {
     const fresh = usage.metering.find((m) => m.name === 'never-run');
     expect(fresh).toMatchObject({ snapshotCount: 0, sizeBytes: 0 });
     expect(fresh?.lastRunAt).toBeNull();
+    // Free tier: 0 agents registered, cap 1.
+    expect(usage.agents).toEqual({ used: 0, cap: 1 });
   });
 
   it('clampRetentionDays never widens', async () => {

@@ -23,6 +23,7 @@ const mockedApi = vi.mocked(api);
 
 const usageAllStatuses: UsageResponse = {
   projects: { used: 1, cap: 5, active: [{ id: 'a', name: 'Alpha' }], paused: [] },
+  agents: { used: 2, cap: 5 },
   metering: [
     { id: 's', name: 'Ok', sizeBytes: 1024, snapshotCount: 2, lastRunAt: '2026-06-01T00:00:00.000Z', lastStatus: 'success' },
     { id: 'f', name: 'Broke', sizeBytes: 0, snapshotCount: 0, lastRunAt: null, lastStatus: 'failed' },
@@ -32,7 +33,7 @@ const usageAllStatuses: UsageResponse = {
   ],
   retentionDays: 30,
   frequency: 'daily',
-  flags: { schedules: false, emailAlerts: false, multiVps: false },
+  flags: { schedules: false, emailAlerts: false },
   selectionRequired: false,
 };
 
@@ -63,5 +64,37 @@ describe('UsageTab — per-project status column', () => {
     expect(screen.getByText('Idle')).toBeInTheDocument();
     // Unknown status falls back to the raw value (and the idle style).
     expect(screen.getByText('weird')).toBeInTheDocument();
+  });
+});
+
+describe('UsageTab — connected-servers (agents) stat', () => {
+  it('renders the agents used/cap card with a quota bar under a finite cap', async () => {
+    mockedApi.fetchUsage.mockResolvedValue(usageAllStatuses);
+    renderTab();
+    expect(await screen.findByText('Servers')).toBeInTheDocument();
+    // used=2, cap=5 → a labelled quota bar reflecting the used count.
+    const bar = screen.getByLabelText('Connected servers used');
+    expect(bar).toHaveAttribute('aria-valuenow', '2');
+    expect(bar).toHaveAttribute('aria-valuemax', '5');
+  });
+
+  it('shows Unlimited and no quota bar when the agent cap is null (Business)', async () => {
+    mockedApi.fetchUsage.mockResolvedValue({
+      ...usageAllStatuses,
+      agents: { used: 9, cap: null },
+    });
+    renderTab();
+    await screen.findByText('Servers');
+    expect(screen.queryByLabelText('Connected servers used')).not.toBeInTheDocument();
+  });
+
+  it('marks the agent count destructive when over the cap', async () => {
+    mockedApi.fetchUsage.mockResolvedValue({
+      ...usageAllStatuses,
+      agents: { used: 7, cap: 5 },
+    });
+    renderTab();
+    const over = await screen.findByText('7');
+    expect(over).toHaveClass('text-destructive');
   });
 });

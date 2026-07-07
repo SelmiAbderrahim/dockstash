@@ -19,6 +19,7 @@ import { WebhookVerifyError } from '../payment-provider.js';
 import {
   getPolarRestClient,
   listAllPolarPages,
+  PolarApiError,
   type PolarPaginatedResponse,
   type PolarRestClient,
 } from './polar-rest.js';
@@ -342,6 +343,22 @@ export class PolarProvider implements IPaymentProvider {
       ),
     );
     return items.map(toNormalizedSubscription);
+  }
+
+  async getSubscription(
+    providerSubscriptionId: string,
+  ): Promise<NormalizedSubscription | null> {
+    try {
+      const raw = await this.client().request<RawPolarSubscription>(
+        `/subscriptions/${providerSubscriptionId}`,
+      );
+      return toNormalizedSubscription(raw);
+    } catch (err) {
+      // A 404 means Polar no longer knows this subscription (fully ended) →
+      // the reconcile healer treats it as canceled. Any other error propagates.
+      if (err instanceof PolarApiError && err.status === 404) return null;
+      throw err;
+    }
   }
 }
 

@@ -87,7 +87,7 @@ export const ar: DictionaryShape = {
       pitrLocked: 'الاستعادة إلى نقطة زمنية متاحة في خطط Pro وBusiness.',
       mirrorLocked: 'وضع النسخ المتطابق متاح في خطة Business.',
       alertsLocked: 'قنوات التنبيه (البريد الإلكتروني وWebhooks) متاحة في خطط Pro وBusiness.',
-      multiVpsLocked: 'عرض أسطول متعدد الخوادم متاح في خطة Business.',
+      agentLimitReached: 'وصلت إلى حد الوكلاء في خطتك. قم بالترقية لربط المزيد من الخوادم.',
       projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
       selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
       notOwner: 'أنت لا تملك واحداً أو أكثر من تلك المشاريع.',
@@ -134,6 +134,20 @@ export const ar: DictionaryShape = {
       body:
         'تعذر علينا خصم قيمة خطة {{plan}} من وسيلة الدفع.\n\n' +
         'يرجى التحديث قبل {{graceEndsAt}} للحفاظ على الخطة نشطة: {{clientUrl}}/billing.\n',
+    },
+    downgradeNotice: {
+      subject: 'تم تغيير خطتك في Dockstash إلى Free',
+      body:
+        'انتهت صلاحية خطة {{plan}} وحسابك الآن على خطة Free.\n\n' +
+        'نسخك الاحتياطية الحالية آمنة — لم يُحذف أي شيء. المشاريع التي تتجاوز ' +
+        'حد Free متوقفة (للقراءة فقط) حتى تُعيد الاشتراك: {{clientUrl}}/billing.\n',
+    },
+    reactivation: {
+      subject: 'اشتراكك في Dockstash نشط مرة أخرى',
+      body:
+        'خبر سار — اشتراك {{plan}} نشط مرة أخرى وعادت المشاريع ' +
+        'المتوقفة إلى العمل.\n\n' +
+        'أدر حسابك على {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'فشل اختبار الاستعادة — المشروع {{project}}',
@@ -244,6 +258,7 @@ export const ar: DictionaryShape = {
       scheduled: 'تم حفظ الجدول.',
       enqueued: 'تم إضافة المهمة إلى قائمة الانتظار.',
       prunePassed: 'اكتمل التقليم بنجاح.',
+      pruneSkippedPaused: 'تم تخطي حذف الاحتفاظ: المشروع متوقف؛ يتم الاحتفاظ باللقطات المخزَّنة.',
     },
     job: {
       failedRetriesExhausted: 'فشلت المهمة بعد {{attempts}} محاولات: {{message}}',

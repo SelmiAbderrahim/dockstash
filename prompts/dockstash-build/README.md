@@ -26,10 +26,12 @@ the vitest + supertest + `mongodb-memory-server` harness — and **reuse** all o
 | 09 | Disaster recovery — self-backup + export/import | Tool can't recover itself | `09-disaster-recovery-selfbackup-and-export-opus-4.7.md` |
 | 10 | Shadcn 4-screen dashboard + setup wizard | No product UI | `10-shadcn-four-screen-dashboard-and-wizard-opus-4.7.md` |
 | 11 | Security + legal + CI in Docker | No rate-limit/helmet/CSRF, no CI, no GDPR flows | `11-security-legal-and-ci-in-docker-opus-4.7.md` |
+| 13 | Billing-lapse data integrity + dunning notifications | Downgrade destructively prunes snapshots below the new tier's retention ceiling (contradicts "never deleted"); cancel/revoke webhook skips pausing; dunning/downgrade emails never wired; reconcile can't heal a fully-canceled subscription; paused projects' schedules keep firing; fleet-agent cap not re-asserted on downgrade; GDPR purge can orphan a legal-hold project | `13-billing-lapse-data-integrity-and-notifications-opus-4.7.md` |
 
 **Dependency order:** 00 (containers) → 01 + 02 (cross-cutting foundations: i18n + crypto) →
 03 + 04 (backup engine + proof) → 05 (orchestration) → 06 + 07 (billing plumbing → model/UI) →
-08 (alerting) → 09 (DR) → 10 (full UI, surfaces every feature) → 11 (hardening + CI gates, last).
+08 (alerting) → 09 (DR) → 10 (full UI, surfaces every feature) → 11 (hardening + CI gates, last) →
+13 (closes lifecycle-wiring gaps left by 07 + 08, run any time after both).
 Each prompt names the prior prompts it assumes.
 
 ## Agents & skills matrix

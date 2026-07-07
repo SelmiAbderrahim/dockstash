@@ -8,7 +8,7 @@ A **fleet agent** is a small daemon you run on another VPS so Dockstash can
 back up the containers on *that* host, not just the primary. The control plane
 (the Dockstash server) never connects out to your VPS — the agent **phones
 home** over HTTPS, so no inbound ports are opened on the machine you're adding.
-Multi-VPS fleet is a **Business**-tier feature.
+Fleets are on **every plan** — **Free** connects 1 server, **Pro** 5, and **Business** unlimited.
 
 ```
 Your VPS                                   Dockstash server

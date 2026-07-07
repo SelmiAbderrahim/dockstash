@@ -3,6 +3,7 @@ import {
   selectDeleteError,
   selectDeleteStatus,
   selectFleet,
+  selectFleetCapInfo,
   selectFleetError,
   selectFleetLockedReason,
   selectFleetStatus,
@@ -21,7 +22,8 @@ const fleet: FleetState = {
   items: [entry],
   status: 'succeeded',
   error: 'oops',
-  lockedReason: 'multiVpsLocked',
+  lockedReason: 'agentLimitReached',
+  capInfo: { used: 1, cap: 1 },
   registerStatus: 'failed',
   registerError: 'taken',
   rotateStatus: 'loading',
@@ -37,7 +39,8 @@ describe('fleet selectors', () => {
     expect(selectFleet(state)).toEqual([entry]);
     expect(selectFleetStatus(state)).toBe('succeeded');
     expect(selectFleetError(state)).toBe('oops');
-    expect(selectFleetLockedReason(state)).toBe('multiVpsLocked');
+    expect(selectFleetLockedReason(state)).toBe('agentLimitReached');
+    expect(selectFleetCapInfo(state)).toEqual({ used: 1, cap: 1 });
     expect(selectRegisterStatus(state)).toBe('failed');
     expect(selectRegisterError(state)).toBe('taken');
     expect(selectRotateStatus(state)).toBe('loading');

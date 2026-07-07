@@ -88,6 +88,15 @@ const subscriptionSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    // Retention grandfather window (prompt 13 / F1). Stamped on any downgrade
+    // to a narrower retention tier: until this instant the prune job keeps
+    // applying the pre-downgrade (wider) retention so history predating the
+    // downgrade is not retroactively deleted. Null = clamp to the tier ceiling
+    // immediately (the normal steady state).
+    retentionGraceUntil: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );

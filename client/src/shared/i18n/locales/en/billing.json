@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} projects",
       "unlimited": "Unlimited",
-      "retention": "{{days}} days retention"
+      "retention": "{{days}} days retention",
+      "agents": "Connected servers: {{value}}"
     },
     "frequency": {
       "daily": "Daily backups",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "Scheduled backups",
-      "emailAlerts": "Email alerts",
-      "multiVps": "Multi-VPS"
+      "emailAlerts": "Email alerts"
     },
     "cta": {
       "select": "Get started",
@@ -83,7 +83,8 @@
       "projects": "Projects",
       "retention": "Retention",
       "retentionValue": "{{days}} days",
-      "frequency": "Backup frequency"
+      "frequency": "Backup frequency",
+      "agents": "Servers"
     },
     "features": {
       "title": "Included features"
@@ -105,7 +106,8 @@
       "running": "Running",
       "idle": "Idle"
     },
-    "retry": "Retry"
+    "retry": "Retry",
+    "agentsQuotaLabel": "Connected servers used"
   },
   "selection": {
     "title": "Pick which projects stay active",

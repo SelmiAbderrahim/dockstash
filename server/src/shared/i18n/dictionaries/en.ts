@@ -86,7 +86,7 @@ export const en = {
       pitrLocked: 'Point-in-time restore is available on Pro and Business plans.',
       mirrorLocked: 'Mirror mode is available on the Business plan.',
       alertsLocked: 'Alert channels (email and webhooks) are available on Pro and Business plans.',
-      multiVpsLocked: 'Multi-VPS fleet view is available on the Business plan.',
+      agentLimitReached: 'Agent limit reached for your plan. Upgrade to connect more servers.',
       projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
       selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
       notOwner: 'You do not own one or more of those projects.',
@@ -133,6 +133,20 @@ export const en = {
       body:
         'We could not charge your payment method for the {{plan}} plan.\n\n' +
         'Update it before {{graceEndsAt}} to keep the plan active: {{clientUrl}}/billing.\n',
+    },
+    downgradeNotice: {
+      subject: 'Your Dockstash plan has changed to Free',
+      body:
+        'Your {{plan}} plan has lapsed and your account is now on the Free plan.\n\n' +
+        'Your existing backups are safe — nothing has been deleted. Projects over the ' +
+        'Free limit are paused (read-only) until you re-subscribe: {{clientUrl}}/billing.\n',
+    },
+    reactivation: {
+      subject: 'Your Dockstash subscription is active again',
+      body:
+        'Good news — your {{plan}} subscription is active again and any paused ' +
+        'projects are back online.\n\n' +
+        'Manage your account at {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'Restore drill FAILED — project {{project}}',
@@ -243,6 +257,7 @@ export const en = {
       scheduled: 'Schedule saved.',
       enqueued: 'Job enqueued.',
       prunePassed: 'Prune completed successfully.',
+      pruneSkippedPaused: 'Retention prune skipped: project is paused; stored snapshots are retained.',
     },
     job: {
       failedRetriesExhausted: 'Job failed after {{attempts}} attempts: {{message}}',

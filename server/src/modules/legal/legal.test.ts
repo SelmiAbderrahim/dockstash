@@ -242,16 +242,46 @@ describe('legal / GDPR', () => {
       expect(res.reason).toBe('legalHold');
     });
 
-    it('respects legal hold on a project (keeps it, purges the rest)', async () => {
+    it('defers the account purge when a project is held — keeps BOTH rows (F8 no orphan)', async () => {
       const { userId, projectId } = await seedUserAndProjects();
       await User.updateOne({ _id: userId }, { deletionScheduledAt: new Date(Date.now() - 1000) });
       await Project.updateOne({ _id: projectId }, { legalHold: true });
       const purger = { purgeRepo: vi.fn(async () => undefined) };
       const res = await purgeAccount(userId, { resticRepoPurger: purger });
-      expect(res.ok).toBe(true);
-      // Held project skipped — purger never called.
+      // A held project blocks the account purge — deleting the User anyway would
+      // orphan that project. The purge is deferred, not partially applied.
+      expect(res.ok).toBe(false);
+      expect(res.reason).toBe('legalHold');
+      expect(res.projectsPurged).toBe(0);
       expect(purger.purgeRepo).not.toHaveBeenCalled();
+      // Held project AND user survive; the deletion schedule stays so a later
+      // sweep retries once the hold lifts.
       expect(await Project.findById(projectId)).not.toBeNull();
+      const user = await User.findById(userId);
+      expect(user).not.toBeNull();
+      expect(user?.deletionScheduledAt).toBeInstanceOf(Date);
+    });
+
+    it('purges non-held projects but still defers when one is held (F8)', async () => {
+      const { userId, projectId } = await seedUserAndProjects();
+      await User.updateOne({ _id: userId }, { deletionScheduledAt: new Date(Date.now() - 1000) });
+      await Project.updateOne({ _id: projectId }, { legalHold: true });
+      const free = await Project.create({
+        owner: userId,
+        name: 'free',
+        path: '/var/www/free',
+        plan: { paths: [], databases: [], configs: [] },
+        repoPasswordEnc: encryptSecret('pw2'),
+      });
+      const purger = { purgeRepo: vi.fn(async () => undefined) };
+      const res = await purgeAccount(userId, { resticRepoPurger: purger });
+      expect(res.ok).toBe(false);
+      expect(res.reason).toBe('legalHold');
+      expect(res.projectsPurged).toBe(1);
+      // Non-held project purged; held project + user kept.
+      expect(await Project.findById(free._id)).toBeNull();
+      expect(await Project.findById(projectId)).not.toBeNull();
+      expect(await User.findById(userId)).not.toBeNull();
     });
 
     it('returns notDue when the grace window has not elapsed', async () => {

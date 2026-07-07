@@ -232,7 +232,7 @@
     "breadcrumb": "Pricing",
     "eyebrow": "Pricing",
     "title": "Simple pricing for verified Docker backups",
-    "answer": "Dockstash has three plans. Free ({{freePrice}}) self-hosts one project with {{freeRetentionDays}}-day retention and daily backups. Pro ({{proMonthly}}/mo) adds {{proProjects}} projects, {{proRetentionDays}}-day retention, hourly schedules, and email alerts. Business ({{bizMonthly}}/mo) is unlimited projects, {{bizRetentionDays}}-day retention, any cron, priority support, and multi-VPS. Yearly billing gives you two months free — {{proYearly}}/yr for Pro and {{bizYearly}}/yr for Business.",
+    "answer": "Dockstash has three plans. Free ({{freePrice}}) self-hosts one project with {{freeRetentionDays}}-day retention and daily backups. Pro ({{proMonthly}}/mo) adds {{proProjects}} projects, {{proRetentionDays}}-day retention, hourly schedules, and email alerts. Business ({{bizMonthly}}/mo) is unlimited projects, {{bizRetentionDays}}-day retention, any cron, priority support, and unlimited connected servers. Yearly billing gives you two months free — {{proYearly}}/yr for Pro and {{bizYearly}}/yr for Business.",
     "billing": {
       "label": "Billing period",
       "monthly": "Monthly",
@@ -251,7 +251,8 @@
           "daily": "Daily backups",
           "community": "Community support",
           "selfHost": "Self-host default — no paid provider",
-          "restic": "Standard Restic repos on your storage VPS"
+          "restic": "Standard Restic repos on your storage VPS",
+          "servers": "1 connected server"
         }
       },
       "pro": {
@@ -268,7 +269,8 @@
           "alerts": "Email alerts + dead-man’s-switch heartbeat",
           "drills": "Automated restore-drill verification",
           "continuous": "Continuous backup (every 5 minutes)",
-          "pitr": "Point-in-time restore"
+          "pitr": "Point-in-time restore",
+          "servers": "5 connected servers"
         },
         "cta": "Choose Pro"
       },
@@ -283,7 +285,7 @@
           "retention": "{{bizRetentionDays}}-day retention",
           "cron": "Any cron schedule",
           "priority": "Priority support",
-          "fleet": "Multi-VPS fleet view",
+          "fleet": "Unlimited connected servers",
           "metering": "Per-project metering",
           "mirror": "One-way mirror mode"
         },
@@ -435,7 +437,7 @@
       },
       "cost": {
         "question": "How much does Dockstash cost?",
-        "answer": "The Free tier is {{freePrice}} for one self-hosted project. Pro adds {{proProjects}} projects, hourly backups, and email alerts; Business is unlimited projects with priority support and multi-VPS. Yearly billing gives you two months free."
+        "answer": "The Free tier is {{freePrice}} for one self-hosted project. Pro adds {{proProjects}} projects, hourly backups, and email alerts; Business is unlimited projects with priority support and unlimited connected servers. Yearly billing gives you two months free."
       }
     },
     "keepReading": "Keep reading",
@@ -495,9 +497,9 @@
     },
     "faq": {
       "heading": "Questions",
-      "multiVps": {
-        "question": "How do I back up multiple VPS servers with one dashboard?",
-        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      "plans": {
+        "question": "How many servers can I connect on each plan?",
+        "answer": "Every plan includes fleet agents — Free connects 1 server, Pro 5, and Business unlimited. Install the agent on each server and assign that server's projects to its agent; every backup, snapshot, and alert shows up in one fleet view."
       },
       "rootPorts": {
         "question": "Does the agent need root or inbound ports?",
@@ -510,7 +512,7 @@
     },
     "cta": {
       "heading": "Run one dashboard for your whole fleet",
-      "body": "Multi-VPS fleet view is on the Business plan.",
+      "body": "Connect your servers on any plan — 1 on Free, 5 on Pro, unlimited on Business.",
       "button": "See pricing"
     }
   },
@@ -831,7 +833,7 @@
       },
       "plan": {
         "question": "Which plan includes mirror mode?",
-        "answer": "Mirror mode is a Business-plan feature, alongside multi-VPS fleet agents and any-cadence scheduling."
+        "answer": "Mirror mode is a Business-plan feature, alongside any-cadence scheduling."
       }
     },
     "cta": {

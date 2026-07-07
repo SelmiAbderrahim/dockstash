@@ -1,6 +1,7 @@
 import { HttpError } from '../../shared/utils/http-error.js';
 import { findUserById } from '../users/index.js';
 import { Project } from '../backups/backups.model.js';
+import { Agent } from '../agents/agents.model.js';
 import { Customer } from './customer.model.js';
 import {
   findEffectiveSubscription,
@@ -9,7 +10,7 @@ import {
 import { getPaymentProvider } from './active-provider.js';
 import { PricingTier } from './pricing-tier.model.js';
 import { seedPricingTiers } from './pricing-tier.seed.js';
-import { resolveEntitlements } from './entitlements.service.js';
+import { capForClient, resolveEntitlements } from './entitlements.service.js';
 import { selectProjectsToKeep } from './lifecycle.service.js';
 import type { SelectProjectsInput } from './billing.schema.js';
 
@@ -96,13 +97,14 @@ export interface PricingTierClient {
   productIdYearly: string | null;
   caps: {
     projects: number | null;
+    /** Max fleet agents; null = unlimited (Business). */
+    agents: number | null;
     retentionDays: number;
     frequency: string;
   };
   flags: {
     schedules: boolean;
     emailAlerts: boolean;
-    multiVps: boolean;
   };
 }
 
@@ -123,8 +125,8 @@ export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
   // instead of rendering an enabled button that fails on submit.
   const configured = getPaymentProvider().isConfigured();
   return tiers.map((t) => {
-    const caps = t.caps ?? { projects: 0, retentionDays: 0, frequency: 'daily' };
-    const flags = t.flags ?? { schedules: false, emailAlerts: false, multiVps: false };
+    const caps = t.caps ?? { projects: 0, agents: 0, retentionDays: 0, frequency: 'daily' };
+    const flags = t.flags ?? { schedules: false, emailAlerts: false };
     return {
       slug: t.slug,
       name: t.name,
@@ -135,13 +137,13 @@ export async function getPricingTiersForClient(): Promise<PricingTierClient[]> {
       caps: {
         projects:
           caps.projects >= Number.MAX_SAFE_INTEGER ? null : caps.projects,
+        agents: caps.agents >= Number.MAX_SAFE_INTEGER ? null : caps.agents,
         retentionDays: caps.retentionDays,
         frequency: caps.frequency,
       },
       flags: {
         schedules: flags.schedules,
         emailAlerts: flags.emailAlerts,
-        multiVps: flags.multiVps,
       },
     };
   });
@@ -195,11 +197,13 @@ export interface UsageResponse {
     paused: Array<{ id: string; name: string }>;
     active: Array<{ id: string; name: string }>;
   };
+  /** Registered fleet agents against the plan cap. */
+  agents: { used: number; cap: number | null };
   /** Per-project metrics for active projects (metering surface). */
   metering: ProjectMetrics[];
   retentionDays: number;
   frequency: string;
-  flags: { schedules: boolean; emailAlerts: boolean; multiVps: boolean };
+  flags: { schedules: boolean; emailAlerts: boolean };
   selectionRequired: boolean;
 }
 
@@ -228,15 +232,16 @@ export async function getUsageForUser(userId: string): Promise<UsageResponse> {
   const cap = Number.isFinite(resolved.entitlements.projects)
     ? resolved.entitlements.projects
     : null;
+  const agentsUsed = await Agent.countDocuments({ owner: userId });
   return {
     projects: { used: active.length, cap, paused, active },
+    agents: { used: agentsUsed, cap: capForClient(resolved.entitlements.agents) },
     metering,
     retentionDays: resolved.entitlements.retentionDays,
     frequency: resolved.entitlements.frequency,
     flags: {
       schedules: resolved.entitlements.schedules,
       emailAlerts: resolved.entitlements.emailAlerts,
-      multiVps: resolved.entitlements.multiVps,
     },
     selectionRequired: resolved.selectionRequired,
   };

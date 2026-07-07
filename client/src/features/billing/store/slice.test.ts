@@ -41,8 +41,8 @@ describe('billing slice — transitions', () => {
         priceYearly: 0,
         productIdMonthly: null,
         productIdYearly: null,
-        caps: { projects: 1, retentionDays: 7, frequency: 'daily' },
-        flags: { schedules: false, emailAlerts: false, multiVps: false },
+        caps: { projects: 1, agents: 1, retentionDays: 7, frequency: 'daily' },
+        flags: { schedules: false, emailAlerts: false },
       },
     ];
     const s = billingReducer(initial(), {
@@ -81,6 +81,7 @@ describe('billing slice — transitions', () => {
     expect(pending.usageError).toBe('');
     const usage: UsageResponse = {
       projects: { used: 2, cap: 10, active: [], paused: [] },
+      agents: { used: 1, cap: 5 },
       metering: [
         {
           id: 'p1',
@@ -93,7 +94,7 @@ describe('billing slice — transitions', () => {
       ],
       retentionDays: 30,
       frequency: 'hourly',
-      flags: { schedules: true, emailAlerts: true, multiVps: false },
+      flags: { schedules: true, emailAlerts: true },
       selectionRequired: false,
     };
     const s = billingReducer(pending, {

@@ -64,8 +64,8 @@
     "loading": "Cargando la flota…",
     "register": "Registrar agente",
     "locked": {
-      "title": "La flota multi-VPS es una función del plan Business",
-      "body": "Actualiza al plan Business para registrar agentes en más servidores y ver toda tu flota en un solo lugar.",
+      "title": "Has alcanzado el límite de servidores",
+      "body": "Usando {{used}} de {{cap}} servidores de tu plan. Mejora tu plan para conectar más.",
       "cta": "Ver planes"
     },
     "empty": {

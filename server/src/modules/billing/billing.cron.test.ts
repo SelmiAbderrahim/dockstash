@@ -45,6 +45,7 @@ function providerConfigured(configured: boolean): IPaymentProvider {
       payload: { kind: 'unknown', rawType: '' },
     }),
     listActiveSubscriptions: async () => [],
+    getSubscription: async () => null,
   };
 }
 

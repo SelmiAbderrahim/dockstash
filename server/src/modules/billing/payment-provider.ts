@@ -102,4 +102,13 @@ export interface IPaymentProvider {
   verifyWebhook(rawBody: Buffer, headers: WebhookHeaders): void;
   parseEvent(rawBody: Buffer, headers: WebhookHeaders): ParsedEvent;
   listActiveSubscriptions(): Promise<NormalizedSubscription[]>;
+  /**
+   * Fetch a single subscription by its provider id, regardless of status.
+   * Resolves `null` when the provider no longer knows the id (404) — used by
+   * the reconcile drift-healer to revisit local rows that dropped out of the
+   * `?active=true` listing (prompt 13 / F4).
+   */
+  getSubscription(
+    providerSubscriptionId: string,
+  ): Promise<NormalizedSubscription | null>;
 }

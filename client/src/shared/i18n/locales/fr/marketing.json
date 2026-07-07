@@ -232,7 +232,7 @@
     "breadcrumb": "Tarifs",
     "eyebrow": "Tarifs",
     "title": "Une tarification simple pour des sauvegardes Docker vérifiées",
-    "answer": "Dockstash propose trois offres. Free ({{freePrice}}) auto-héberge un projet avec {{freeRetentionDays}} jours de rétention et des sauvegardes quotidiennes. Pro ({{proMonthly}}/mois) ajoute {{proProjects}} projets, {{proRetentionDays}} jours de rétention, des planifications horaires et des alertes e-mail. Business ({{bizMonthly}}/mois) offre projets illimités, {{bizRetentionDays}} jours de rétention, n’importe quel cron, un support prioritaire et le multi-VPS. La facturation annuelle offre deux mois — {{proYearly}}/an pour Pro et {{bizYearly}}/an pour Business.",
+    "answer": "Dockstash propose trois offres. Free ({{freePrice}}) auto-héberge un projet avec {{freeRetentionDays}} jours de rétention et des sauvegardes quotidiennes. Pro ({{proMonthly}}/mois) ajoute {{proProjects}} projets, {{proRetentionDays}} jours de rétention, des planifications horaires et des alertes e-mail. Business ({{bizMonthly}}/mois) offre projets illimités, {{bizRetentionDays}} jours de rétention, n’importe quel cron, un support prioritaire et des serveurs connectés illimités. La facturation annuelle offre deux mois — {{proYearly}}/an pour Pro et {{bizYearly}}/an pour Business.",
     "billing": {
       "label": "Période de facturation",
       "monthly": "Mensuel",
@@ -251,7 +251,8 @@
           "daily": "Sauvegardes quotidiennes",
           "community": "Support communautaire",
           "selfHost": "Auto-hébergé par défaut — aucun prestataire payant",
-          "restic": "Dépôts Restic standard sur votre VPS de stockage"
+          "restic": "Dépôts Restic standard sur votre VPS de stockage",
+          "servers": "1 serveur connecté"
         }
       },
       "pro": {
@@ -268,7 +269,8 @@
           "alerts": "Alertes e-mail + heartbeat de type dead-man’s-switch",
           "drills": "Vérification automatisée par exercices de restauration",
           "continuous": "Sauvegarde continue (toutes les 5 minutes)",
-          "pitr": "Restauration à un instant donné"
+          "pitr": "Restauration à un instant donné",
+          "servers": "5 serveurs connectés"
         },
         "cta": "Choisir Pro"
       },
@@ -283,7 +285,7 @@
           "retention": "{{bizRetentionDays}} jours de rétention",
           "cron": "N’importe quelle planification cron",
           "priority": "Support prioritaire",
-          "fleet": "Vue flotte multi-VPS",
+          "fleet": "Serveurs connectés illimités",
           "metering": "Comptage par projet",
           "mirror": "Mode miroir à sens unique"
         },
@@ -435,7 +437,7 @@
       },
       "cost": {
         "question": "Combien coûte Dockstash ?",
-        "answer": "L’offre Free est à {{freePrice}} pour un projet auto-hébergé. Pro ajoute {{proProjects}} projets, des sauvegardes horaires et des alertes e-mail ; Business offre projets illimités, support prioritaire et multi-VPS. La facturation annuelle offre deux mois."
+        "answer": "L’offre Free est à {{freePrice}} pour un projet auto-hébergé. Pro ajoute {{proProjects}} projets, des sauvegardes horaires et des alertes e-mail ; Business offre projets illimités, support prioritaire et des serveurs connectés illimités. La facturation annuelle offre deux mois."
       }
     },
     "keepReading": "Poursuivre la lecture",
@@ -495,9 +497,9 @@
     },
     "faq": {
       "heading": "Questions",
-      "multiVps": {
-        "question": "How do I back up multiple VPS servers with one dashboard?",
-        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      "plans": {
+        "question": "Combien de serveurs puis-je connecter selon l'offre ?",
+        "answer": "Chaque offre inclut des agents de flotte — Free connecte 1 serveur, Pro 5, et Business un nombre illimité. Installez l'agent sur chaque serveur et affectez les projets de ce serveur à son agent ; chaque sauvegarde, instantané et alerte apparaît dans une seule vue de flotte."
       },
       "rootPorts": {
         "question": "Does the agent need root or inbound ports?",
@@ -510,7 +512,7 @@
     },
     "cta": {
       "heading": "Run one dashboard for your whole fleet",
-      "body": "Multi-VPS fleet view is on the Business plan.",
+      "body": "Connectez vos serveurs sur n'importe quelle offre — 1 sur Free, 5 sur Pro, illimité sur Business.",
       "button": "See pricing"
     }
   },
@@ -831,7 +833,7 @@
       },
       "plan": {
         "question": "Quelle offre inclut le mode miroir ?",
-        "answer": "Le mode miroir est une fonctionnalité Business, aux côtés des agents multi-VPS et de la planification à toute cadence."
+        "answer": "Le mode miroir est une fonctionnalité Business, aux côtés de la planification à toute cadence."
       }
     },
     "cta": {

@@ -32,7 +32,8 @@ export interface Entitlements {
   emailAlerts: boolean;
   /** Automated restore-drill verification (Pro+). */
   restoreDrills: boolean;
-  multiVps: boolean;
+  /** Max registered fleet agents (connected servers). Free 1 / Pro 5 / Business ∞. */
+  agents: number;
   /** Point-in-time restore resolver (nearest snapshot <= timestamp, Pro+). */
   pitrRestore: boolean;
   /** One-way directory mirror jobs (Business). */
@@ -53,7 +54,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     schedules: false,
     emailAlerts: false,
     restoreDrills: false,
-    multiVps: false,
+    agents: 1,
     pitrRestore: false,
     mirror: false,
   },
@@ -65,7 +66,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     schedules: true,
     emailAlerts: true,
     restoreDrills: true,
-    multiVps: false,
+    agents: 5,
     pitrRestore: true,
     mirror: false,
   },
@@ -77,7 +78,7 @@ export const ENTITLEMENTS: Record<PlanSlug, Entitlements> = {
     schedules: true,
     emailAlerts: true,
     restoreDrills: true,
-    multiVps: true,
+    agents: Number.POSITIVE_INFINITY,
     pitrRestore: true,
     mirror: true,
   },

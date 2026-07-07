@@ -13,7 +13,7 @@ auto-hospedaje y funciona sin proveedor de pagos configurado; **Pro** y
 | Frecuencia horario   | Solo diaria| Máx. horaria| Cualquier cron |
 | Copias programadas   | —          | ✔           | ✔              |
 | Alertas por correo   | —          | ✔           | ✔              |
-| Multi-VPS            | —          | —           | ✔              |
+| Servidores conectados| 1          | 5           | Ilimitado      |
 
 Facturación anual = **10× mensual** (dos meses gratis). Los precios viven en
 `PricingTier` y se editan sin redesplegar.

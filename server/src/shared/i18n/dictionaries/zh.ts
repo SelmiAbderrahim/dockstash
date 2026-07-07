@@ -87,7 +87,7 @@ export const zh: DictionaryShape = {
       pitrLocked: '时间点恢复在 Pro 和 Business 套餐中可用。',
       mirrorLocked: '镜像模式在 Business 套餐中可用。',
       alertsLocked: '警报通道（邮件和 Webhook）在 Pro 和 Business 套餐中可用。',
-      multiVpsLocked: '多 VPS 集群视图在 Business 套餐中可用。',
+      agentLimitReached: '已达到当前套餐的代理数量上限。升级以连接更多服务器。',
       projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
       selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
       notOwner: '您不是其中一个或多个项目的所有者。',
@@ -134,6 +134,20 @@ export const zh: DictionaryShape = {
       body:
         '我们无法为 {{plan}} 计划扣款。\n\n' +
         '请在 {{graceEndsAt}} 之前更新支付方式以保留此计划：{{clientUrl}}/billing。\n',
+    },
+    downgradeNotice: {
+      subject: '您的 Dockstash 计划已变更为 Free',
+      body:
+        '您的 {{plan}} 计划已到期，您的账户现已转为 Free 计划。\n\n' +
+        '您现有的备份是安全的 — 没有任何内容被删除。超出 Free ' +
+        '限额的项目将被暂停（只读），直到您重新订阅：{{clientUrl}}/billing。\n',
+    },
+    reactivation: {
+      subject: '您的 Dockstash 订阅已重新激活',
+      body:
+        '好消息 — 您的 {{plan}} 订阅已重新激活，所有已暂停的 ' +
+        '项目已恢复在线。\n\n' +
+        '在 {{clientUrl}}/billing 管理您的账户。\n',
     },
     drillFailure: {
       subject: '恢复演练失败 — 项目 {{project}}',
@@ -244,6 +258,7 @@ export const zh: DictionaryShape = {
       scheduled: '计划已保存。',
       enqueued: '任务已加入队列。',
       prunePassed: 'Prune 成功完成。',
+      pruneSkippedPaused: '保留策略清理已跳过：项目已暂停；已存储的快照将保留。',
     },
     job: {
       failedRetriesExhausted: '任务在 {{attempts}} 次尝试后失败：{{message}}',

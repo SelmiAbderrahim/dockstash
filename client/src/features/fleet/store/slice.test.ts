@@ -19,15 +19,14 @@ const entry: FleetEntry = {
 };
 
 describe('fleet slice', () => {
-  it('fetchFleet.pending clears the error and lock while loading', () => {
+  it('fetchFleet.pending clears the error while loading', () => {
     let s = fleetReducer(initial(), {
       type: fetchFleet.rejected.type,
-      payload: { message: 'x', lockedReason: 'multiVpsLocked' },
+      payload: { message: 'x', lockedReason: null, capInfo: null },
     });
     s = fleetReducer(s, { type: fetchFleet.pending.type });
     expect(s.status).toBe('loading');
     expect(s.error).toBeNull();
-    expect(s.lockedReason).toBeNull();
   });
 
   it('fetchFleet.fulfilled stores the entries', () => {
@@ -39,20 +38,41 @@ describe('fleet slice', () => {
     expect(s.items).toEqual([entry]);
   });
 
-  it('fetchFleet.rejected records the message and locked reason', () => {
+  it('fetchFleet.rejected records the message (list route no longer locks)', () => {
     const s = fleetReducer(initial(), {
       type: fetchFleet.rejected.type,
-      payload: { message: 'nope', lockedReason: 'multiVpsLocked' },
+      payload: { message: 'nope', lockedReason: null, capInfo: null },
     });
     expect(s.status).toBe('failed');
     expect(s.error).toBe('nope');
-    expect(s.lockedReason).toBe('multiVpsLocked');
   });
 
   it('fetchFleet.rejected falls back when the payload is missing', () => {
     const s = fleetReducer(initial(), { type: fetchFleet.rejected.type, payload: undefined });
     expect(s.error).toBe('Could not load the fleet.');
+  });
+
+  it('registerAgent.rejected with agentLimitReached surfaces the at-cap lock + capInfo', () => {
+    let s = fleetReducer(initial(), {
+      type: registerAgent.rejected.type,
+      payload: { message: 'at cap', lockedReason: 'agentLimitReached', capInfo: { used: 1, cap: 1 } },
+    });
+    expect(s.lockedReason).toBe('agentLimitReached');
+    expect(s.capInfo).toEqual({ used: 1, cap: 1 });
+    // A retry (pending) clears the prior lock so a freed slot re-registers clean.
+    s = fleetReducer(s, { type: registerAgent.pending.type });
     expect(s.lockedReason).toBeNull();
+    expect(s.capInfo).toBeNull();
+  });
+
+  it('registerAgent.fulfilled clears a prior at-cap lock', () => {
+    let s = fleetReducer(initial(), {
+      type: registerAgent.rejected.type,
+      payload: { message: 'at cap', lockedReason: 'agentLimitReached', capInfo: { used: 1, cap: 1 } },
+    });
+    s = fleetReducer(s, { type: registerAgent.fulfilled.type });
+    expect(s.lockedReason).toBeNull();
+    expect(s.capInfo).toBeNull();
   });
 
   it('registerAgent lifecycle updates registerStatus', () => {

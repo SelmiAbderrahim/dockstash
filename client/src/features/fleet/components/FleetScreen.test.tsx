@@ -49,6 +49,7 @@ const baseState = (over: Partial<FleetState> = {}): FleetState => ({
   status: 'succeeded',
   error: null,
   lockedReason: null,
+  capInfo: null,
   registerStatus: 'idle',
   registerError: null,
   rotateStatus: 'idle',
@@ -150,17 +151,27 @@ describe('FleetScreen', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Loading fleet…');
   });
 
-  it('shows the upgrade prompt when multi-VPS is locked and hides the register action', () => {
-    renderScreen({ status: 'failed', error: 'locked', lockedReason: 'multiVpsLocked' });
-    expect(screen.getByTestId('fleet-locked')).toBeInTheDocument();
-    expect(screen.getByText('Multi-VPS fleet is a Business feature')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'View plans' })).toHaveAttribute(
+  it('shows the at-cap upsell (with used/cap) when a register hit the plan limit, keeping register available', () => {
+    renderScreen({
+      status: 'succeeded',
+      items: entries,
+      lockedReason: 'agentLimitReached',
+      capInfo: { used: 1, cap: 1 },
+    });
+    const banner = screen.getByTestId('fleet-at-cap');
+    expect(within(banner).getByText("You've reached your server limit")).toBeInTheDocument();
+    expect(within(banner).getByText(/Using 1 of 1 servers/)).toBeInTheDocument();
+    expect(within(banner).getByRole('link', { name: 'View plans' })).toHaveAttribute(
       'href',
       '/billing',
     );
-    expect(screen.queryByRole('button', { name: 'Register agent' })).not.toBeInTheDocument();
-    // The generic load-error alert must not double up with the locked card.
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // The fleet is metered per plan now, never tier-locked — register stays available.
+    expect(screen.getByRole('button', { name: 'Register agent' })).toBeInTheDocument();
+  });
+
+  it('renders the at-cap banner with a 0/0 fallback when cap details are absent', () => {
+    renderScreen({ status: 'succeeded', lockedReason: 'agentLimitReached', capInfo: null });
+    expect(screen.getByTestId('fleet-at-cap')).toHaveTextContent('Using 0 of 0 servers');
   });
 
   it('shows the load error when fetching fails for other reasons', () => {

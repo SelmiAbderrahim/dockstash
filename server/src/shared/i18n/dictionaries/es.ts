@@ -89,7 +89,7 @@ export const es: DictionaryShape = {
       pitrLocked: 'La restauración a un punto en el tiempo está disponible en los planes Pro y Business.',
       mirrorLocked: 'El modo espejo está disponible en el plan Business.',
       alertsLocked: 'Los canales de alerta (correo y webhooks) están disponibles en los planes Pro y Business.',
-      multiVpsLocked: 'La vista de flota multi-VPS está disponible en el plan Business.',
+      agentLimitReached: 'Has alcanzado el límite de agentes de tu plan. Mejora tu plan para conectar más servidores.',
       projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
       selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
       notOwner: 'No eres propietario de uno o más de esos proyectos.',
@@ -136,6 +136,20 @@ export const es: DictionaryShape = {
       body:
         'No pudimos cobrar tu método de pago para el plan {{plan}}.\n\n' +
         'Actualízalo antes del {{graceEndsAt}} para mantener el plan: {{clientUrl}}/billing.\n',
+    },
+    downgradeNotice: {
+      subject: 'Tu plan de Dockstash ha cambiado a Free',
+      body:
+        'Tu plan {{plan}} ha caducado y tu cuenta ahora está en el plan Free.\n\n' +
+        'Tus copias de seguridad existentes están a salvo — no se ha eliminado nada. Los proyectos ' +
+        'que superan el límite Free están en pausa (solo lectura) hasta que vuelvas a suscribirte: {{clientUrl}}/billing.\n',
+    },
+    reactivation: {
+      subject: 'Tu suscripción de Dockstash vuelve a estar activa',
+      body:
+        'Buenas noticias: tu suscripción {{plan}} vuelve a estar activa y los proyectos ' +
+        'en pausa están de nuevo en línea.\n\n' +
+        'Gestiona tu cuenta en {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'Ensayo de restauración FALLIDO — proyecto {{project}}',
@@ -246,6 +260,7 @@ export const es: DictionaryShape = {
       scheduled: 'Programación guardada.',
       enqueued: 'Trabajo puesto en cola.',
       prunePassed: 'Prune completado con éxito.',
+      pruneSkippedPaused: 'Purga de retención omitida: el proyecto está en pausa; las instantáneas almacenadas se conservan.',
     },
     job: {
       failedRetriesExhausted: 'Trabajo fallido tras {{attempts}} intentos: {{message}}',

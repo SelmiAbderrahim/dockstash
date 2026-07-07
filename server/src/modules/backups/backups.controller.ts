@@ -29,7 +29,6 @@ import { serializeProject } from './backups.serialize.js';
 import {
   assertAlertsAllowed,
   assertMirrorAllowed,
-  assertMultiVpsAllowed,
   reserveProjectSlot,
   releaseProjectSlot,
 } from '../billing/entitlements.service.js';
@@ -57,8 +56,9 @@ export const listContainers: RequestHandler = asyncHandler(async (req, res) => {
 export const create: RequestHandler = asyncHandler(async (req, res) => {
   const input = createProjectSchema.parse(req.body);
   const userId = requireUserId(req.user);
-  // Assigning to a fleet agent at creation is a Business-tier operation.
-  if (input.agentId) await assertMultiVpsAllowed(userId, { t: req.t });
+  // Pointing a project at a fleet agent is owner-scoped only — createProject →
+  // loadOwnedAgent 404s a foreign/unknown agentId. The agent cap was paid at
+  // registration time, so no per-project plan gate here.
   // Reserve a slot BEFORE creating the record — the atomic counter closes the
   // TOCTOU window between countDocuments and Project.create (S3-01/S3-03).
   await reserveProjectSlot(userId, { t: req.t });
@@ -121,8 +121,8 @@ export const patchAgent: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
   const { agentId } = assignAgentSchema.parse(req.body);
   const userId = requireUserId(req.user);
-  // Assignment (and unassignment) is a Business-tier fleet operation.
-  await assertMultiVpsAllowed(userId, { t: req.t });
+  // Assignment is owner-scoped only: updateProjectAgent → loadOwnedAgent 404s a
+  // foreign agentId. The cap was already paid when the agent was registered.
   const project = await updateProjectAgent(projectId, userId, agentId, { t: req.t });
   await recordAudit({
     actorUserId: userId,

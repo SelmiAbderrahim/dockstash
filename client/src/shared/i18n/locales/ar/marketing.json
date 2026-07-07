@@ -232,7 +232,7 @@
     "breadcrumb": "الأسعار",
     "eyebrow": "الأسعار",
     "title": "أسعار بسيطة لنسخ Docker احتياطية موثَّقة",
-    "answer": "لدى Dockstash ثلاث خطط. Free ({{freePrice}}) تستضيف ذاتيًا مشروعًا واحدًا مع احتفاظ {{freeRetentionDays}} يومًا ونسخ يومي. Pro ({{proMonthly}}/شهر) تضيف {{proProjects}} مشاريع واحتفاظ {{proRetentionDays}} يومًا وجداول كل ساعة وتنبيهات بريدية. Business ({{bizMonthly}}/شهر) تقدّم مشاريع غير محدودة واحتفاظ {{bizRetentionDays}} يومًا وأي جدول cron ودعمًا ذا أولوية وتعدد خوادم VPS. الدفع السنوي يمنحك شهرين مجانًا — {{proYearly}}/سنة لـ Pro و{{bizYearly}}/سنة لـ Business.",
+    "answer": "لدى Dockstash ثلاث خطط. Free ({{freePrice}}) تستضيف ذاتيًا مشروعًا واحدًا مع احتفاظ {{freeRetentionDays}} يومًا ونسخ يومي. Pro ({{proMonthly}}/شهر) تضيف {{proProjects}} مشاريع واحتفاظ {{proRetentionDays}} يومًا وجداول كل ساعة وتنبيهات بريدية. Business ({{bizMonthly}}/شهر) تقدّم مشاريع غير محدودة واحتفاظ {{bizRetentionDays}} يومًا وأي جدول cron ودعمًا ذا أولوية وخوادم متصلة غير محدودة. الدفع السنوي يمنحك شهرين مجانًا — {{proYearly}}/سنة لـ Pro و{{bizYearly}}/سنة لـ Business.",
     "billing": {
       "label": "فترة الفوترة",
       "monthly": "شهري",
@@ -251,7 +251,8 @@
           "daily": "نسخ يومي",
           "community": "دعم المجتمع",
           "selfHost": "استضافة ذاتية افتراضيًا — دون مزوّد مدفوع",
-          "restic": "مستودعات Restic قياسية على خادم التخزين لديك"
+          "restic": "مستودعات Restic قياسية على خادم التخزين لديك",
+          "servers": "خادم واحد متصل"
         }
       },
       "pro": {
@@ -268,7 +269,8 @@
           "alerts": "تنبيهات بريدية + نبض مفتاح الرجل الميت",
           "drills": "تحقّق آلي بتدريبات الاستعادة",
           "continuous": "نسخ احتياطي مستمر (كل 5 دقائق)",
-          "pitr": "استعادة إلى نقطة زمنية"
+          "pitr": "استعادة إلى نقطة زمنية",
+          "servers": "5 خوادم متصلة"
         },
         "cta": "اختر Pro"
       },
@@ -283,7 +285,7 @@
           "retention": "احتفاظ {{bizRetentionDays}} يومًا",
           "cron": "أي جدول cron",
           "priority": "دعم ذو أولوية",
-          "fleet": "عرض أسطول متعدد الخوادم",
+          "fleet": "خوادم متصلة غير محدودة",
           "metering": "قياس لكل مشروع",
           "mirror": "وضع نسخ متطابق أحادي الاتجاه"
         },
@@ -435,7 +437,7 @@
       },
       "cost": {
         "question": "كم يكلّف Dockstash؟",
-        "answer": "خطة Free بـ {{freePrice}} لمشروع واحد مستضاف ذاتيًا. تضيف Pro عددًا يبلغ {{proProjects}} مشاريع ونسخًا كل ساعة وتنبيهات بريدية؛ وBusiness مشاريع غير محدودة مع دعم ذي أولوية وتعدد خوادم. الدفع السنوي يمنحك شهرين مجانًا."
+        "answer": "خطة Free بـ {{freePrice}} لمشروع واحد مستضاف ذاتيًا. تضيف Pro عددًا يبلغ {{proProjects}} مشاريع ونسخًا كل ساعة وتنبيهات بريدية؛ وBusiness مشاريع غير محدودة مع دعم ذي أولوية وخوادم متصلة غير محدودة. الدفع السنوي يمنحك شهرين مجانًا."
       }
     },
     "keepReading": "تابع القراءة",
@@ -495,9 +497,9 @@
     },
     "faq": {
       "heading": "Questions",
-      "multiVps": {
-        "question": "How do I back up multiple VPS servers with one dashboard?",
-        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      "plans": {
+        "question": "كم عدد الخوادم التي يمكنني ربطها في كل خطة؟",
+        "answer": "كل خطة تتضمن وكلاء الأسطول — Free تربط خادمًا واحدًا، وPro خمسة، وBusiness عددًا غير محدود. ثبّت الوكيل على كل خادم وعيّن مشاريع ذلك الخادم لوكيله؛ يظهر كل نسخ احتياطي ولقطة وتنبيه في عرض أسطول واحد."
       },
       "rootPorts": {
         "question": "Does the agent need root or inbound ports?",
@@ -510,7 +512,7 @@
     },
     "cta": {
       "heading": "Run one dashboard for your whole fleet",
-      "body": "Multi-VPS fleet view is on the Business plan.",
+      "body": "اربط خوادمك في أي خطة — خادم واحد في Free، وخمسة في Pro، وغير محدود في Business.",
       "button": "See pricing"
     }
   },
@@ -713,7 +715,7 @@
       },
       "plan": {
         "question": "أي خطة تشمل وضع النسخ المتطابق؟",
-        "answer": "وضع النسخ المتطابق ميزة في خطة Business، إلى جانب وكلاء الأسطول متعدد الخوادم والجدولة بأي إيقاع."
+        "answer": "وضع النسخ المتطابق ميزة في خطة Business، إلى جانب الجدولة بأي إيقاع."
       }
     },
     "cta": {

@@ -232,7 +232,7 @@
     "breadcrumb": "Тарифы",
     "eyebrow": "Тарифы",
     "title": "Простые тарифы за проверенные Docker-бэкапы",
-    "answer": "У Dockstash три тарифа. Free ({{freePrice}}) — self-hosted для одного проекта с хранением {{freeRetentionDays}} дней и ежедневными копиями. Pro ({{proMonthly}}/мес) добавляет {{proProjects}} проектов, хранение {{proRetentionDays}} дней, почасовые расписания и оповещения по почте. Business ({{bizMonthly}}/мес) — безлимитные проекты, хранение {{bizRetentionDays}} дней, любой cron, приоритетная поддержка и мульти-VPS. Годовая оплата дарит два месяца — {{proYearly}}/год за Pro и {{bizYearly}}/год за Business.",
+    "answer": "У Dockstash три тарифа. Free ({{freePrice}}) — self-hosted для одного проекта с хранением {{freeRetentionDays}} дней и ежедневными копиями. Pro ({{proMonthly}}/мес) добавляет {{proProjects}} проектов, хранение {{proRetentionDays}} дней, почасовые расписания и оповещения по почте. Business ({{bizMonthly}}/мес) — безлимитные проекты, хранение {{bizRetentionDays}} дней, любой cron, приоритетная поддержка и неограниченное число подключённых серверов. Годовая оплата дарит два месяца — {{proYearly}}/год за Pro и {{bizYearly}}/год за Business.",
     "billing": {
       "label": "Период оплаты",
       "monthly": "Ежемесячно",
@@ -251,7 +251,8 @@
           "daily": "Ежедневные копии",
           "community": "Поддержка сообщества",
           "selfHost": "Self-hosted по умолчанию — без платного провайдера",
-          "restic": "Стандартные репозитории Restic на вашем VPS-хранилище"
+          "restic": "Стандартные репозитории Restic на вашем VPS-хранилище",
+          "servers": "1 подключённый сервер"
         }
       },
       "pro": {
@@ -268,7 +269,8 @@
           "alerts": "Почтовые оповещения + heartbeat типа «сторож»",
           "drills": "Автоматическая проверка учебными восстановлениями",
           "continuous": "Непрерывное резервирование (каждые 5 минут)",
-          "pitr": "Восстановление на момент времени"
+          "pitr": "Восстановление на момент времени",
+          "servers": "5 подключённых серверов"
         },
         "cta": "Выбрать Pro"
       },
@@ -283,7 +285,7 @@
           "retention": "Хранение {{bizRetentionDays}} дней",
           "cron": "Любое cron-расписание",
           "priority": "Приоритетная поддержка",
-          "fleet": "Обзор парка мульти-VPS",
+          "fleet": "Неограниченное число подключённых серверов",
           "metering": "Учёт по каждому проекту",
           "mirror": "Односторонний режим зеркалирования"
         },
@@ -435,7 +437,7 @@
       },
       "cost": {
         "question": "Сколько стоит Dockstash?",
-        "answer": "Тариф Free — {{freePrice}} за один self-hosted проект. Pro добавляет {{proProjects}} проектов, почасовые копии и почтовые оповещения; Business — безлимитные проекты с приоритетной поддержкой и мульти-VPS. Годовая оплата дарит два месяца."
+        "answer": "Тариф Free — {{freePrice}} за один self-hosted проект. Pro добавляет {{proProjects}} проектов, почасовые копии и почтовые оповещения; Business — безлимитные проекты с приоритетной поддержкой и неограниченным числом подключённых серверов. Годовая оплата дарит два месяца."
       }
     },
     "keepReading": "Продолжить чтение",
@@ -495,9 +497,9 @@
     },
     "faq": {
       "heading": "Questions",
-      "multiVps": {
-        "question": "How do I back up multiple VPS servers with one dashboard?",
-        "answer": "Install the Dockstash agent on each server and assign that server’s projects to its agent. Every backup, snapshot, and alert shows up in one fleet view."
+      "plans": {
+        "question": "Сколько серверов можно подключить на каждом тарифе?",
+        "answer": "Каждый тариф включает агентов парка — Free подключает 1 сервер, Pro — 5, Business — без ограничений. Установите агент на каждый сервер и назначьте проекты этого сервера его агенту; каждое резервное копирование, снимок и оповещение отображаются в едином представлении парка."
       },
       "rootPorts": {
         "question": "Does the agent need root or inbound ports?",
@@ -510,7 +512,7 @@
     },
     "cta": {
       "heading": "Run one dashboard for your whole fleet",
-      "body": "Multi-VPS fleet view is on the Business plan.",
+      "body": "Подключайте серверы на любом тарифе — 1 на Free, 5 на Pro, без ограничений на Business.",
       "button": "See pricing"
     }
   },
@@ -713,7 +715,7 @@
       },
       "plan": {
         "question": "В какой тариф входит режим зеркалирования?",
-        "answer": "Режим зеркалирования — функция тарифа Business, вместе с мульти-VPS агентами и расписаниями с любым интервалом."
+        "answer": "Режим зеркалирования — функция тарифа Business, вместе с расписаниями с любым интервалом."
       }
     },
     "cta": {

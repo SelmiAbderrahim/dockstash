@@ -32,7 +32,7 @@ const entry: FleetEntry = {
 
 const lockedError = () =>
   new ApiError('Request failed with status 403', 403, {
-    error: { message: 'Locked', details: { reason: 'multiVpsLocked' } },
+    error: { message: 'Locked', details: { reason: 'agentLimitReached', used: 1, cap: 1 } },
   });
 
 beforeEach(() => {
@@ -40,8 +40,18 @@ beforeEach(() => {
 });
 
 describe('lockedReasonFromError', () => {
-  it('returns the reason for a 403 ApiError carrying multiVpsLocked details', () => {
-    expect(lockedReasonFromError(lockedError())).toBe('multiVpsLocked');
+  it('returns the reason + cap details for a 403 carrying agentLimitReached', () => {
+    expect(lockedReasonFromError(lockedError())).toEqual({
+      reason: 'agentLimitReached',
+      capInfo: { used: 1, cap: 1 },
+    });
+  });
+
+  it('returns null capInfo when used/cap are absent', () => {
+    const err = new ApiError('x', 403, {
+      error: { details: { reason: 'agentLimitReached' } },
+    });
+    expect(lockedReasonFromError(err)).toEqual({ reason: 'agentLimitReached', capInfo: null });
   });
 
   it('returns null for non-ApiError values', () => {
@@ -50,7 +60,7 @@ describe('lockedReasonFromError', () => {
 
   it('returns null for ApiErrors with a non-403 status', () => {
     const err = new ApiError('x', 500, {
-      error: { details: { reason: 'multiVpsLocked' } },
+      error: { details: { reason: 'agentLimitReached' } },
     });
     expect(lockedReasonFromError(err)).toBeNull();
   });
@@ -72,7 +82,7 @@ describe('lockedReasonFromError', () => {
     ).toBeNull();
   });
 
-  it('returns null when the reason is absent or not multiVpsLocked', () => {
+  it('returns null when the reason is absent or not agentLimitReached', () => {
     expect(lockedReasonFromError(new ApiError('x', 403, { error: { details: {} } }))).toBeNull();
     expect(
       lockedReasonFromError(new ApiError('x', 403, { error: { details: { reason: 'other' } } })),
@@ -96,7 +106,8 @@ describe('fetchFleet', () => {
     expect(fetchFleet.rejected.match(result)).toBe(true);
     expect(result.payload).toEqual({
       message: 'Locked',
-      lockedReason: 'multiVpsLocked',
+      lockedReason: 'agentLimitReached',
+      capInfo: { used: 1, cap: 1 },
       conflict: false,
     });
   });
@@ -106,7 +117,7 @@ describe('fetchFleet', () => {
     const store = makeStore();
     const result = await store.dispatch(fetchFleet());
     expect(fetchFleet.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'boom', lockedReason: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'boom', lockedReason: null, capInfo: null, conflict: false });
   });
 
   it('passes the silent flag through to the pending/fulfilled meta', async () => {
@@ -154,7 +165,7 @@ describe('registerAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(registerAgent({ name: 'w', host: 'h' }));
     expect(registerAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'nope', lockedReason: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'nope', lockedReason: null, capInfo: null, conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 
@@ -170,6 +181,7 @@ describe('registerAgent', () => {
     expect(result.payload).toEqual({
       message: 'An agent for this host already exists.',
       lockedReason: null,
+      capInfo: null,
       conflict: true,
     });
   });
@@ -195,7 +207,7 @@ describe('rotateAgentKey', () => {
     const store = makeStore();
     const result = await store.dispatch(rotateAgentKey('a1'));
     expect(rotateAgentKey.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null, capInfo: null, conflict: false });
   });
 });
 
@@ -216,7 +228,7 @@ describe('deleteAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(deleteAgent('a1'));
     expect(deleteAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null, capInfo: null, conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 });

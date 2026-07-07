@@ -41,6 +41,26 @@ subscriptions and heals drift on local `Subscription` rows (status,
 `currentPeriodEnd`, `cancelAtPeriodEnd`). It never creates rows Polar does not
 report, and one failing record does not abort the loop.
 
+A subscription that has fully ended drops out of Polar's `?active=true`
+listing, so the poll above would never revisit it — a dropped terminal webhook
+(`subscription.canceled` / `.revoked`) could otherwise leave paid entitlements
+live indefinitely. A second pass therefore re-fetches every local `active` /
+`past_due` row that the active listing did not report, via
+`provider.getSubscription(id)`. A `404` (Polar no longer knows the id) heals the
+row to `canceled` + Free; any other terminal status heals through the same
+path. (prompt 13 / F4)
+
+## Free-landing transitions
+
+Every path that lands a subscriber on Free — grace expiry, refund/chargeback,
+a plan downgrade, AND a **direct** `subscription.canceled` / `.revoked` webhook
+— funnels through `applyProjectCap(userId, 'free', { priorSlug })`. That pauses
+(never deletes) over-cap projects, disables their schedules, re-asserts the
+fleet-agent cap, and — when the prior tier retained for longer — stamps a
+retention grandfather window so a downgrade does not retroactively prune
+pre-downgrade snapshots. Earlier, a direct cancel/revoke skipped this entirely
+and every subsequent backup 403'd with no project flagged. (prompt 13 / F2)
+
 ## Environment
 
 | Variable | Purpose |

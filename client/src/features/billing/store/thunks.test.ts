@@ -56,10 +56,11 @@ describe('billing thunks — fulfilled paths', () => {
   it('loadUsage returns usage', async () => {
     const usage = {
       projects: { used: 0, cap: null, active: [], paused: [] },
+      agents: { used: 0, cap: 1 },
       metering: [],
       retentionDays: 7,
       frequency: 'daily' as const,
-      flags: { schedules: false, emailAlerts: false, multiVps: false },
+      flags: { schedules: false, emailAlerts: false },
       selectionRequired: false,
     };
     mocked.fetchUsage.mockResolvedValue(usage);

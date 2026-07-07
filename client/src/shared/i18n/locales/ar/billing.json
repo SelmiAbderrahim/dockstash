@@ -36,7 +36,8 @@
     "caps": {
       "projects": "{{value}} مشاريع",
       "unlimited": "غير محدود",
-      "retention": "الاحتفاظ {{days}} أيام"
+      "retention": "الاحتفاظ {{days}} أيام",
+      "agents": "الخوادم المتصلة: {{value}}"
     },
     "frequency": {
       "daily": "نسخ احتياطي يومي",
@@ -45,8 +46,7 @@
     },
     "flag": {
       "schedules": "نسخ احتياطية مجدولة",
-      "emailAlerts": "تنبيهات البريد الإلكتروني",
-      "multiVps": "خوادم VPS متعددة"
+      "emailAlerts": "تنبيهات البريد الإلكتروني"
     },
     "cta": {
       "select": "ابدأ الآن",
@@ -83,7 +83,8 @@
       "projects": "المشاريع",
       "retention": "الاحتفاظ",
       "retentionValue": "{{days}} أيام",
-      "frequency": "تكرار النسخ الاحتياطي"
+      "frequency": "تكرار النسخ الاحتياطي",
+      "agents": "الخوادم"
     },
     "features": {
       "title": "الميزات المضمنة"
@@ -105,7 +106,8 @@
       "running": "قيد التشغيل",
       "idle": "خامل"
     },
-    "retry": "إعادة المحاولة"
+    "retry": "إعادة المحاولة",
+    "agentsQuotaLabel": "الخوادم المتصلة المستخدمة"
   },
   "selection": {
     "title": "اختر المشاريع التي تبقى نشطة",

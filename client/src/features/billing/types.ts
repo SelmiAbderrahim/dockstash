@@ -18,10 +18,12 @@ export interface PricingTier {
   productIdYearly: string | null;
   caps: {
     projects: number | null;
+    /** Max connected servers (fleet agents); null = unlimited. */
+    agents: number | null;
     retentionDays: number;
     frequency: ScheduleFrequency;
   };
-  flags: { schedules: boolean; emailAlerts: boolean; multiVps: boolean };
+  flags: { schedules: boolean; emailAlerts: boolean };
 }
 
 export interface BillingOverview {
@@ -54,10 +56,12 @@ export interface UsageResponse {
     active: ProjectRef[];
     paused: ProjectRef[];
   };
+  /** Registered fleet agents against the plan cap. */
+  agents: { used: number; cap: number | null };
   metering: ProjectMetrics[];
   retentionDays: number;
   frequency: ScheduleFrequency;
-  flags: { schedules: boolean; emailAlerts: boolean; multiVps: boolean };
+  flags: { schedules: boolean; emailAlerts: boolean };
   selectionRequired: boolean;
 }
 

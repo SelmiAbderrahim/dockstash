@@ -46,6 +46,7 @@ function provider(overrides: Partial<IPaymentProvider> = {}): IPaymentProvider {
     verifyWebhook: () => undefined,
     parseEvent: () => ({ eventId: 'e', type: 't', timestamp: '0', payload: { kind: 'unknown', rawType: 't' } }),
     listActiveSubscriptions: async () => [],
+    getSubscription: async () => null,
     ...overrides,
   };
 }

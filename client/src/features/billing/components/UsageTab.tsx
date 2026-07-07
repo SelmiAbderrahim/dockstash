@@ -153,6 +153,9 @@ export const UsageTab = () => {
 
   const { cap, used } = usage.projects;
   const overCap = cap !== null && used > cap;
+  const agentsUsed = usage.agents.used;
+  const agentsCap = usage.agents.cap;
+  const agentsOverCap = agentsCap !== null && agentsUsed > agentsCap;
 
   return (
     <div className="flex flex-col gap-8">
@@ -161,7 +164,7 @@ export const UsageTab = () => {
         <p className="text-sm text-muted-foreground">{t('usage.lede')}</p>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="gap-0">
           <CardHeader className="gap-1">
             <CardDescription className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide">
@@ -179,6 +182,27 @@ export const UsageTab = () => {
           {cap !== null ? (
             <CardContent className="mt-3">
               <Progress value={used} max={cap} aria-label={t('usage.quotaLabel')} />
+            </CardContent>
+          ) : null}
+        </Card>
+
+        <Card className="gap-0">
+          <CardHeader className="gap-1">
+            <CardDescription className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide">
+              <Server className="size-3.5" />
+              {t('usage.stat.agents')}
+            </CardDescription>
+            <CardTitle className="text-2xl tabular-nums">
+              <span className={cn(agentsOverCap && 'text-destructive')}>{agentsUsed}</span>
+              <span className="text-base font-normal text-muted-foreground">
+                {' / '}
+                {agentsCap ?? t('grid.caps.unlimited')}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          {agentsCap !== null ? (
+            <CardContent className="mt-3">
+              <Progress value={agentsUsed} max={agentsCap} aria-label={t('usage.agentsQuotaLabel')} />
             </CardContent>
           ) : null}
         </Card>
@@ -208,7 +232,7 @@ export const UsageTab = () => {
         </Card>
       </div>
 
-      {usage.flags.schedules || usage.flags.emailAlerts || usage.flags.multiVps ? (
+      {usage.flags.schedules || usage.flags.emailAlerts ? (
         <div className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">{t('usage.features.title')}</h3>
           <div className="flex flex-wrap gap-2">
@@ -222,12 +246,6 @@ export const UsageTab = () => {
               <Badge variant="outline" className="gap-1.5">
                 <Mail className="size-3.5" />
                 {t('grid.flag.emailAlerts')}
-              </Badge>
-            ) : null}
-            {usage.flags.multiVps ? (
-              <Badge variant="outline" className="gap-1.5">
-                <Server className="size-3.5" />
-                {t('grid.flag.multiVps')}
               </Badge>
             ) : null}
           </div>

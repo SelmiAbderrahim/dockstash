@@ -58,6 +58,11 @@ const scheduleSchema = new mongoose.Schema(
     cron: { type: String, required: true, trim: true },
     retention: { type: retentionSchema, default: () => ({}) },
     enabled: { type: Boolean, default: true },
+    // Set when a billing pause disabled this schedule (prompt 13 / F5). Only a
+    // schedule paused BY billing is re-enabled on re-upgrade — a schedule the
+    // user disabled independently stays disabled. `enabled:false` alone is
+    // ambiguous, so this flag disambiguates the two.
+    pausedByBilling: { type: Boolean, required: true, default: false },
     lastEnqueuedAt: { type: Date, default: null },
     lastRunStatus: { type: String, enum: SCHEDULE_STATUSES, default: 'idle' },
   },

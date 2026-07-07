@@ -7,7 +7,7 @@ import type { PlatformGuideCopy } from '../types';
 export const PLATFORM: Record<string, PlatformGuideCopy> = {
   'connect-fleet-agent': {
     intro:
-      'Un agente de flota es un pequeño demonio que ejecutas en otro VPS para que Dockstash respalde también los contenedores de esa máquina. El agente llama a casa por HTTPS — no se abre ningún puerto entrante en tu servidor — y ejecuta la misma tubería volcado-luego-restic que el servidor principal. La flota multi-VPS es una función del plan Business.',
+      'Un agente de flota es un pequeño demonio que ejecutas en otro VPS para que Dockstash respalde también los contenedores de esa máquina. El agente llama a casa por HTTPS — no se abre ningún puerto entrante en tu servidor — y ejecuta la misma tubería volcado-luego-restic que el servidor principal. Las flotas están disponibles en todos los planes — Free conecta 1 servidor, Pro 5 y Business ilimitados.',
     steps: {
       'open-fleet': {
         title: 'Abre la pantalla Fleet',

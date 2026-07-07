@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
-import { assertMultiVpsAllowed } from '../billing/entitlements.service.js';
+import { releaseAgentSlot, reserveAgentSlot } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
 import {
   registerAgentSchema,
@@ -24,7 +24,7 @@ import {
 import type { AgentHydrated } from './agents.model.js';
 import { buildAgentDiscoveryView, type StoredSnapshot } from './agents.discovery.js';
 
-/** Multi-VPS fleet is a Business feature — gate every agent operation. */
+/** Public shape of a fleet agent — never the API-key hash. */
 function serializeAgent(agent: AgentHydrated) {
   return {
     id: String(agent._id),
@@ -40,9 +40,19 @@ function serializeAgent(agent: AgentHydrated) {
 
 export const registerAgentHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const input = registerAgentSchema.parse(req.body);
-  const { agent, token } = await registerAgent(userId, input, { t: req.t });
+  // Reserve a slot BEFORE creating the record — the atomic counter closes the
+  // TOCTOU window at the per-plan agent cap (parse → assert/reserve → create).
+  await reserveAgentSlot(userId, { t: req.t });
+  let result;
+  try {
+    result = await registerAgent(userId, input, { t: req.t });
+  } catch (err) {
+    // Rollback the reservation if registration failed (e.g. duplicate host).
+    await releaseAgentSlot(userId);
+    throw err;
+  }
+  const { agent, token } = result;
   await recordAudit({
     actorUserId: userId,
     action: 'agent.register',
@@ -57,14 +67,12 @@ export const registerAgentHandler: RequestHandler = asyncHandler(async (req, res
 
 export const listAgentsHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const agents = await listAgentsForUser(userId);
   res.status(200).json({ agents: agents.map(serializeAgent) });
 });
 
 export const rotateAgentKeyHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const { agentId } = agentIdParamsSchema.parse(req.params);
   const { agent, token } = await rotateAgentKey(agentId, userId, { t: req.t });
   await recordAudit({
@@ -80,9 +88,10 @@ export const rotateAgentKeyHandler: RequestHandler = asyncHandler(async (req, re
 
 export const deleteAgentHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const { agentId } = agentIdParamsSchema.parse(req.params);
   await deleteAgent(agentId, userId, { t: req.t });
+  // Free the reserved slot AFTER the owner-scoped delete commits.
+  await releaseAgentSlot(userId);
   await recordAudit({
     actorUserId: userId,
     action: 'agent.delete',
@@ -96,7 +105,6 @@ export const deleteAgentHandler: RequestHandler = asyncHandler(async (req, res) 
 
 export const fleetHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const fleet = await computeFleet(userId);
   res.status(200).json({ fleet });
 });
@@ -145,7 +153,6 @@ export const listProjectJobsHandler: RequestHandler = asyncHandler(async (req, r
 
 export const agentDiscoveryHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
-  await assertMultiVpsAllowed(userId, { t: req.t });
   const { agentId } = agentIdParamsSchema.parse(req.params);
   const agent = await loadOwnedAgent(agentId, userId, { t: req.t });
   const view = buildAgentDiscoveryView(
@@ -157,7 +164,6 @@ export const agentDiscoveryHandler: RequestHandler = asyncHandler(async (req, re
 export const requestAgentDiscoveryRefreshHandler: RequestHandler = asyncHandler(
   async (req, res) => {
     const userId = requireUserId(req.user);
-    await assertMultiVpsAllowed(userId, { t: req.t });
     const { agentId } = agentIdParamsSchema.parse(req.params);
     await requestDiscoveryRefresh(agentId, userId, { t: req.t });
     res.status(204).end();

@@ -660,6 +660,7 @@ describe('billing / raw-body route mount order', () => {
         payload: { kind: 'unknown', rawType: 't' },
       }),
       listActiveSubscriptions: async () => [],
+      getSubscription: async () => null,
     };
     __setPaymentProviderForTests(mock);
     const res = await request(app)
@@ -693,6 +694,7 @@ describe('billing / raw-body route mount order', () => {
         payload: { kind: 'unknown', rawType: 't' },
       }),
       listActiveSubscriptions: async () => [],
+      getSubscription: async () => null,
     };
     __setPaymentProviderForTests(mock);
     const res = await request(app)
@@ -763,6 +765,7 @@ describe('billing / reconciliation', () => {
           currentPeriodEnd: new Date('2030-01-01T00:00:00Z'),
         },
       ],
+      getSubscription: async () => null,
     };
     const summary = await reconcileSubscriptions(mockProvider);
     expect(summary.polled).toBe(1);
@@ -796,6 +799,7 @@ describe('billing / reconciliation', () => {
           currentPeriodEnd: null,
         },
       ],
+      getSubscription: async () => null,
     };
     const summary = await reconcileSubscriptions(mockProvider);
     expect(summary.polled).toBe(1);
@@ -862,6 +866,7 @@ describe('billing / reconciliation', () => {
           currentPeriodEnd: null,
         },
       ],
+      getSubscription: async () => null,
     };
     const summary = await reconcileSubscriptions(mockProvider);
     expect(summary.errors).toBe(1);
@@ -887,6 +892,7 @@ describe('billing / reconciliation', () => {
       listActiveSubscriptions: async () => {
         throw new Error('should not call');
       },
+      getSubscription: async () => null,
     };
     const summary = await reconcileSubscriptions(mockProvider);
     expect(summary).toEqual({ polled: 0, healed: 0, errors: 0 });
@@ -914,6 +920,7 @@ describe('billing / reconciliation', () => {
           message: 'boom',
         });
       },
+      getSubscription: async () => null,
     };
     const summary = await reconcileSubscriptions(mockProvider);
     expect(summary.errors).toBe(1);

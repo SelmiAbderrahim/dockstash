@@ -312,6 +312,7 @@ function reconcileProvider(remotes: NormalizedSubscription[]): IPaymentProvider 
     verifyWebhook: () => undefined,
     parseEvent: () => ({ eventId: '', type: '', timestamp: '0', payload: { kind: 'unknown', rawType: '' } }),
     listActiveSubscriptions: async () => remotes,
+    getSubscription: async () => null,
   };
 }
 

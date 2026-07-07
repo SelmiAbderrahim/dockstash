@@ -37,6 +37,7 @@ function mockProvider(overrides: Partial<IPaymentProvider> = {}): IPaymentProvid
     verifyWebhook: () => undefined,
     parseEvent: () => ({ eventId: 'e', type: 't', timestamp: '0', payload: { kind: 'unknown', rawType: 't' } }),
     listActiveSubscriptions: async () => [],
+    getSubscription: async () => null,
     ...overrides,
   };
 }
@@ -83,8 +84,8 @@ describe('billing / controller + service surface', () => {
       productIdMonthly: 'prod_pro',
       productIdYearly: 'prod_pro_year',
       interval: 'month',
-      caps: { projects: 10, retentionDays: 30, frequency: 'daily' },
-      flags: { schedules: true, emailAlerts: true, multiVps: false },
+      caps: { projects: 10, agents: 5, retentionDays: 30, frequency: 'daily' },
+      flags: { schedules: true, emailAlerts: true },
       active: true,
     });
   }
@@ -243,8 +244,8 @@ describe('billing / controller + service surface', () => {
     const tiers = await getPricingTiersForClient();
     const legacy = tiers.find((t) => t.slug === 'legacy');
     expect(legacy?.productIdMonthly).toBe('pm_1');
-    expect(legacy?.caps).toEqual({ projects: 0, retentionDays: 0, frequency: 'daily' });
-    expect(legacy?.flags).toEqual({ schedules: false, emailAlerts: false, multiVps: false });
+    expect(legacy?.caps).toEqual({ projects: 0, agents: 0, retentionDays: 0, frequency: 'daily' });
+    expect(legacy?.flags).toEqual({ schedules: false, emailAlerts: false });
   });
 
   it('seedPricingTiers reconciles product ids from env into stale (pre-seeded null) rows', async () => {
@@ -262,8 +263,8 @@ describe('billing / controller + service surface', () => {
         productIdYearly: null,
         interval: 'month',
         active: true,
-        caps: { projects: 5, retentionDays: 30, frequency: 'daily' },
-        flags: { schedules: true, emailAlerts: true, multiVps: false },
+        caps: { projects: 5, agents: 5, retentionDays: 30, frequency: 'daily' },
+        flags: { schedules: true, emailAlerts: true },
       });
       await seedPricingTiers();
       const pro = await PricingTier.findOne({ slug: 'pro' }).lean();
@@ -284,6 +285,10 @@ describe('billing / controller + service surface', () => {
         expect(t.productIdMonthly).toBeNull();
         expect(t.productIdYearly).toBeNull();
       }
+      // Connected-server caps: finite per tier, unlimited (null) for Business.
+      expect(tiers.find((t) => t.slug === 'free')?.caps.agents).toBe(1);
+      expect(tiers.find((t) => t.slug === 'pro')?.caps.agents).toBe(5);
+      expect(tiers.find((t) => t.slug === 'business')?.caps.agents).toBeNull();
     } finally {
       (env as { POLAR_PRO_PRODUCT_ID?: string }).POLAR_PRO_PRODUCT_ID = prev;
     }

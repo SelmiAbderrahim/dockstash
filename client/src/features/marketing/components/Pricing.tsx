@@ -70,6 +70,7 @@ export const Pricing = () => {
       tagline: t('pricing.tiers.free.tagline'),
       features: [
         t('pricing.tiers.free.features.projects', PLAN_FACTS),
+        t('pricing.tiers.free.features.servers'),
         t('pricing.tiers.free.features.retention', PLAN_FACTS),
         t('pricing.tiers.free.features.daily'),
         t('pricing.tiers.free.features.community'),
@@ -90,6 +91,7 @@ export const Pricing = () => {
       tagline: t('pricing.tiers.pro.tagline'),
       features: [
         t('pricing.tiers.pro.features.projects', PLAN_FACTS),
+        t('pricing.tiers.pro.features.servers'),
         t('pricing.tiers.pro.features.retention', PLAN_FACTS),
         t('pricing.tiers.pro.features.continuous'),
         t('pricing.tiers.pro.features.pitr'),
