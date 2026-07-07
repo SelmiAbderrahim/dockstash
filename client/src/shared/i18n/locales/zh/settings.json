@@ -32,8 +32,11 @@
   },
   "retention": {
     "daily": "保留每日份数",
+    "dailyHint": "每天保留一份备份，共保留 N 天。",
     "weekly": "保留每周份数",
+    "weeklyHint": "每周保留一份备份，在每日范围之后生效。",
     "monthly": "保留每月份数",
+    "monthlyHint": "每月保留一份备份，在每周范围之后生效。",
     "saved": "保留策略已保存。"
   },
   "password": {

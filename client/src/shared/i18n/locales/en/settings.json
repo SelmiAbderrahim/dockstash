@@ -32,8 +32,11 @@
   },
   "retention": {
     "daily": "Keep last N daily",
+    "dailyHint": "One backup kept per day, for the last N days.",
     "weekly": "Keep last N weekly",
+    "weeklyHint": "One backup kept per week, after the daily range.",
     "monthly": "Keep last N monthly",
+    "monthlyHint": "One backup kept per month, after the weekly range.",
     "saved": "Retention saved."
   },
   "password": {

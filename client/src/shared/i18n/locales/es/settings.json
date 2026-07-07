@@ -32,8 +32,11 @@
   },
   "retention": {
     "daily": "Diarias a mantener",
+    "dailyHint": "Se conserva una copia por día, durante los últimos N días.",
     "weekly": "Semanales a mantener",
+    "weeklyHint": "Se conserva una copia por semana, tras el período diario.",
     "monthly": "Mensuales a mantener",
+    "monthlyHint": "Se conserva una copia por mes, tras el período semanal.",
     "saved": "Retención guardada."
   },
   "password": {

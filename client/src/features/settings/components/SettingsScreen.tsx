@@ -236,6 +236,7 @@ const RetentionTab = () => {
                 value={keepDaily}
                 onChange={(e) => setKeepDaily(Number(e.target.value))}
               />
+              <small className="text-sm text-muted-foreground">{t('retention.dailyHint')}</small>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="retention-weekly">{t('retention.weekly')}</Label>
@@ -246,6 +247,7 @@ const RetentionTab = () => {
                 value={keepWeekly}
                 onChange={(e) => setKeepWeekly(Number(e.target.value))}
               />
+              <small className="text-sm text-muted-foreground">{t('retention.weeklyHint')}</small>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="retention-monthly">{t('retention.monthly')}</Label>
@@ -256,6 +258,7 @@ const RetentionTab = () => {
                 value={keepMonthly}
                 onChange={(e) => setKeepMonthly(Number(e.target.value))}
               />
+              <small className="text-sm text-muted-foreground">{t('retention.monthlyHint')}</small>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">

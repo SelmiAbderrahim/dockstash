@@ -32,8 +32,11 @@
   },
   "retention": {
     "daily": "Conserver N quotidiennes",
+    "dailyHint": "Une sauvegarde conservée par jour, pendant N jours.",
     "weekly": "Conserver N hebdomadaires",
+    "weeklyHint": "Une sauvegarde conservée par semaine, après la période quotidienne.",
     "monthly": "Conserver N mensuelles",
+    "monthlyHint": "Une sauvegarde conservée par mois, après la période hebdomadaire.",
     "saved": "Rétention enregistrée."
   },
   "password": {

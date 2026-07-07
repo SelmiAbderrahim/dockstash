@@ -32,8 +32,11 @@
   },
   "retention": {
     "daily": "Tägliche behalten",
+    "dailyHint": "Ein Backup pro Tag wird für die letzten N Tage aufbewahrt.",
     "weekly": "Wöchentliche behalten",
+    "weeklyHint": "Ein Backup pro Woche wird nach dem täglichen Zeitraum aufbewahrt.",
     "monthly": "Monatliche behalten",
+    "monthlyHint": "Ein Backup pro Monat wird nach dem wöchentlichen Zeitraum aufbewahrt.",
     "saved": "Aufbewahrung gespeichert."
   },
   "password": {
