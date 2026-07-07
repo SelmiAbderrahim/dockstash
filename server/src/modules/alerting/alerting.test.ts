@@ -1,5 +1,14 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import mongoose from 'mongoose';
+
+// SSRF guard resolves the webhook host before fetch. The test URLs
+// (`hook.example`, `project.example`, `ops.example`, `same.example`) are not
+// registered domains — pin them to a public IP so `safeFetch` accepts them
+// and the spy on `globalThis.fetch` still observes the POST. The SSRF policy
+// itself is exercised in `shared/net/safe-fetch.test.ts`.
+vi.mock('node:dns/promises', () => ({
+  lookup: vi.fn(async () => [{ address: '203.0.113.10', family: 4 }]),
+}));
 import {
   clearCollections,
   startMemoryMongo,

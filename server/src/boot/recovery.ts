@@ -1,7 +1,9 @@
 import { spawn as nodeSpawn } from 'node:child_process';
+import { createHmac } from 'node:crypto';
 import type { Readable } from 'node:stream';
 import { env } from '../config/env.js';
 import { decryptSecret } from '../shared/crypto/index.js';
+import { decodeMasterKey } from '../shared/crypto/keys.js';
 import { configureRecoveryController } from '../modules/recovery/index.js';
 import type { MongoDumpRunner } from '../modules/recovery/index.js';
 import { getSettingsForUser, loadTransportForUser } from '../modules/settings/index.js';
@@ -71,13 +73,37 @@ export interface WireRecoveryOptions {
  * `SELF_BACKUP_REPO` (a local path or restic URL reachable from the api
  * container).
  */
+/**
+ * Derive the self-backup restic password from the master key WITHOUT reusing
+ * the master key material verbatim (S7-03). HMAC-SHA256 over the decoded
+ * master-key bytes with a fixed label:
+ *
+ *   - restic sees only the derived string; a leak of the restic subprocess
+ *     `stderr` / a stolen self-backup repo image cannot yield the master key.
+ *   - deterministic per-master-key so an operator restoring from scratch
+ *     recomputes the same password from `.env`.
+ *   - the label is a domain-separation tag — a future rotation label change
+ *     invalidates old repos deterministically instead of silently.
+ */
+const SELF_BACKUP_LABEL = 'dockstash:self-backup:v1';
+
+export function deriveSelfBackupPassword(masterKeyRaw: string): string {
+  const decoded = decodeMasterKey(masterKeyRaw);
+  /* c8 ignore next 3 -- env.MASTER_ENCRYPTION_KEY is validated at boot, so a null decode is unreachable here. */
+  if (!decoded) {
+    throw new Error('MASTER_ENCRYPTION_KEY missing or too short for self-backup derivation');
+  }
+  return createHmac('sha256', decoded).update(SELF_BACKUP_LABEL, 'utf8').digest('hex');
+}
+
 export function wireRecoveryController(opts: WireRecoveryOptions = {}): void {
   const spawnFn = opts.spawnFn ?? nodeSpawn;
   const selfBackupRunner = new ProcessResticRunner({
     repoUrl: env.SELF_BACKUP_REPO,
-    // The self-backup repo is protected by the master encryption key string —
-    // an operator restoring from scratch has it in the root .env by definition.
-    password: env.MASTER_ENCRYPTION_KEY,
+    // Self-backup restic password is HMAC-derived from the master key so a
+    // stolen self-backup repo image + restic-side subprocess `stderr` capture
+    // cannot yield MASTER_ENCRYPTION_KEY. See S7-03 in findings.md.
+    password: deriveSelfBackupPassword(env.MASTER_ENCRYPTION_KEY),
   });
   configureRecoveryController({
     loadStorage: async (userId: string) => {

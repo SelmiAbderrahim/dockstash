@@ -1,5 +1,5 @@
 import { Redis } from 'ioredis';
-import RedisStore from 'rate-limit-redis';
+import { RedisStore } from 'rate-limit-redis';
 import type { Store } from 'express-rate-limit';
 import type { RedisStoreFactory } from './rate-limit.js';
 

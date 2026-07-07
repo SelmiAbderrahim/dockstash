@@ -203,19 +203,28 @@ describe('rateLimitHandler', () => {
   });
 });
 
-describe('errorHandler development stack branch', () => {
+describe('errorHandler never leaks the stack (S7-04)', () => {
   const original = env.NODE_ENV;
   afterEach(() => {
     (env as { NODE_ENV: string }).NODE_ENV = original;
   });
 
-  it('includes the stack for a plain error in development', () => {
+  it('omits the stack from the response body even in development', () => {
     (env as { NODE_ENV: string }).NODE_ENV = 'development';
     const res = mockRes();
     const req = { language: 'en' } as unknown as Request;
     errorHandler(new Error('kaboom'), req, res, vi.fn());
     expect(res.statusCode).toBe(500);
-    expect((res.body as { error: { stack?: string } }).error.stack).toContain('kaboom');
+    expect((res.body as { error: Record<string, unknown> }).error.stack).toBeUndefined();
+    expect((res.body as { error: { message: string } }).error.message).toBeTruthy();
+  });
+
+  it('omits the stack from the response body in production', () => {
+    (env as { NODE_ENV: string }).NODE_ENV = 'production';
+    const res = mockRes();
+    const req = { language: 'en' } as unknown as Request;
+    errorHandler(new Error('kaboom'), req, res, vi.fn());
+    expect((res.body as { error: Record<string, unknown> }).error.stack).toBeUndefined();
   });
 });
 

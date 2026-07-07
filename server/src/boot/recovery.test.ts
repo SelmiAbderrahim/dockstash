@@ -16,6 +16,7 @@ import { createProject } from '../modules/backups/backups.service.js';
 import { ProcessResticRunner } from '../modules/backups/backups.restic-runner.js';
 import { resetRecoveryController } from '../modules/recovery/recovery.controller.js';
 import {
+  deriveSelfBackupPassword,
   makeMongoDumpRunner,
   probeProjectRepo,
   wireRecoveryController,
@@ -196,5 +197,26 @@ describe('wireRecoveryController (via /api/recovery/export)', () => {
 describe('wireRecoveryController defaults', () => {
   it('wires with the real spawn function when no override is given', () => {
     expect(() => wireRecoveryController()).not.toThrow();
+  });
+});
+
+describe('deriveSelfBackupPassword (S7-03)', () => {
+  it('never returns the master key verbatim', () => {
+    const master = 'a'.repeat(64); // 64 hex chars → 32 bytes
+    const password = deriveSelfBackupPassword(master);
+    expect(password).not.toBe(master);
+    // 32 bytes → 64 hex chars, and different from the master.
+    expect(password).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('is deterministic for the same master key (recoverable from `.env`)', () => {
+    const master = 'a'.repeat(64);
+    expect(deriveSelfBackupPassword(master)).toBe(deriveSelfBackupPassword(master));
+  });
+
+  it('produces a distinct output per master key', () => {
+    expect(deriveSelfBackupPassword('a'.repeat(64))).not.toBe(
+      deriveSelfBackupPassword('b'.repeat(64)),
+    );
   });
 });

@@ -23,6 +23,12 @@ export const ar: DictionaryShape = {
     emailAlreadyRegistered: 'هذا البريد الإلكتروني مسجل بالفعل.',
     passwordTooShort: 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.',
     emailNotVerified: 'يرجى تأكيد عنوان بريدك الإلكتروني للمتابعة.',
+    ssrf: {
+      scheme: 'هذا الرابط غير مسموح به. يُقبل فقط http(s) إلى مضيفين عامّين.',
+      private: 'يشير هذا الرابط إلى عنوان داخلي أو محجوز. استخدم اسم مضيف عام.',
+      dnsFailed: 'تعذّر تحليل هذا الرابط.',
+      tooManyRedirects: 'أعاد هذا الرابط توجيهاً كثيراً.',
+    },
   },
   auth: {
     login: {

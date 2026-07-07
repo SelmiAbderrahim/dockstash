@@ -21,6 +21,13 @@ export const en = {
     emailAlreadyRegistered: 'That email is already registered.',
     passwordTooShort: 'Password must be at least 8 characters.',
     emailNotVerified: 'Please verify your email address to continue.',
+    ssrf: {
+      scheme: 'That URL is not allowed. Only http(s) URLs to public hosts are accepted.',
+      private:
+        'That URL resolves to an internal or reserved address. Use a public hostname.',
+      dnsFailed: 'That URL could not be resolved.',
+      tooManyRedirects: 'That URL redirected too many times.',
+    },
   },
   auth: {
     login: {

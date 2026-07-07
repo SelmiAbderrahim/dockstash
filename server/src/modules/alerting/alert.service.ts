@@ -1,6 +1,7 @@
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { DEFAULT_LOCALE, type SupportedLocale } from '../../shared/i18n/index.js';
+import { safeFetch } from '../../shared/net/safe-fetch.js';
 import { Project } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
 import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
@@ -35,7 +36,10 @@ async function defaultWebhookPoster(
   payload: AlertWebhookPayload,
   url: string,
 ): Promise<void> {
-  const response = await fetch(url, {
+  // SSRF guard: safeFetch rejects non-http(s) schemes and hosts that resolve
+  // to loopback / link-local / private / metadata IPs, and re-validates on
+  // every redirect hop. Surface #6 finding S6-01.
+  const response = await safeFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

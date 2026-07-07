@@ -1,10 +1,11 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   clearCollections,
   startMemoryMongo,
   stopMemoryMongo,
 } from '../../shared/testing/mongo.js';
 import { env } from '../../config/env.js';
+import { logger } from '../../config/logger.js';
 import { verifyPassword } from '../auth/index.js';
 import { ROLE_MEMBER, ROLE_SUPERADMIN, User } from '../users/index.js';
 import { seedSuperadmin } from './superadmin.seed.js';
@@ -95,6 +96,33 @@ describe('seedSuperadmin', () => {
       env.SUPERADMIN_PASSWORD = PASSWORD;
       const result = await seedSuperadmin();
       expect(result).toEqual({ status: 'created', email: EMAIL });
+    });
+  });
+
+  describe('log-hygiene (surface #7 STEP 4)', () => {
+    it('never emits the plaintext password in any pino log line', async () => {
+      const captured: unknown[] = [];
+      const infoSpy = vi.spyOn(logger, 'info').mockImplementation(((...args: unknown[]) => {
+        captured.push(args);
+        return logger as never;
+      }) as never);
+      const warnSpy = vi.spyOn(logger, 'warn').mockImplementation(((...args: unknown[]) => {
+        captured.push(args);
+        return logger as never;
+      }) as never);
+      try {
+        // Seed the create path.
+        await seedSuperadmin({ email: EMAIL, password: PASSWORD });
+        // Seed the exists path.
+        await seedSuperadmin({ email: EMAIL, password: PASSWORD });
+        // Seed the skipped path.
+        await seedSuperadmin({});
+        const dump = JSON.stringify(captured);
+        expect(dump).not.toContain(PASSWORD);
+      } finally {
+        infoSpy.mockRestore();
+        warnSpy.mockRestore();
+      }
     });
   });
 });

@@ -23,6 +23,12 @@ export const zh: DictionaryShape = {
     emailAlreadyRegistered: '该邮箱已被注册。',
     passwordTooShort: '密码至少需要 8 个字符。',
     emailNotVerified: '请先验证您的电子邮件地址以继续。',
+    ssrf: {
+      scheme: '该 URL 不被允许。仅接受指向公共主机的 http(s) URL。',
+      private: '该 URL 指向内部或保留地址。请使用公共主机名。',
+      dnsFailed: '无法解析该 URL。',
+      tooManyRedirects: '该 URL 重定向次数过多。',
+    },
   },
   auth: {
     login: {

@@ -23,6 +23,14 @@ export const fr: DictionaryShape = {
     emailAlreadyRegistered: 'Cet e-mail est déjà enregistré.',
     passwordTooShort: 'Le mot de passe doit contenir au moins 8 caractères.',
     emailNotVerified: 'Veuillez vérifier votre adresse e-mail pour continuer.',
+    ssrf: {
+      scheme:
+        'Cette URL n’est pas autorisée. Seules les URL http(s) vers des hôtes publics sont acceptées.',
+      private:
+        'Cette URL pointe vers une adresse interne ou réservée. Utilisez un nom d’hôte public.',
+      dnsFailed: 'Cette URL n’a pas pu être résolue.',
+      tooManyRedirects: 'Cette URL a effectué trop de redirections.',
+    },
   },
   auth: {
     login: {

@@ -131,6 +131,28 @@ it is never silently retried.
   the primary's posture.
 - **Rotate** immediately invalidates the old token; **Remove** unassigns the
   agent's projects (they fall back to local) and cancels its queued jobs.
+- **Verify path is timing-flat.** Unknown `agentId` and wrong-secret both pay
+  the same HMAC cost and return the same generic 401 — the surface is not an
+  enumeration oracle for agentIds.
+- **Per-agent scope on every request.** Job claim / log-append / result-report
+  are all filtered by `(_id, agent: <caller>)` — agent A can never read agent
+  B's job, even by guessing its ObjectId.
+- **Rotation is atomic.** The new `apiKeyHash` is persisted BEFORE the new
+  token is composed and returned, so the old token dies at the moment of the
+  write — no request-response gap where both are valid.
+- **No secret echo.** Fleet and per-agent listings never include
+  `apiKeyHash`. The composite token is returned by `register` and `rotate`
+  exactly once and is never persisted anywhere on the server.
+- **Daemon `SERVER_URL` pin.** `DOCKSTASH_URL` is a required env var on the
+  daemon — there is no baked-in fallback host. The daemon's `api-client.ts`
+  emits no log lines, and pino redaction covers `repo.password` and
+  `ssh.privateKey` defensively.
+- **Cross-copy parity.** The agent vendors its own `restic-runner` and
+  `docker-client` copies alongside the server's. Twin meta-tests
+  (`server/src/shared/middleware/agent-machine-meta.test.ts` and
+  `agent/src/security-meta.test.ts`) assert the same argv-only spawn shape
+  on both copies — no `shell: true`, no `child_process.exec`, no raw
+  `/var/run/docker.sock`, no `dockerode`.
 
 ## Troubleshooting
 

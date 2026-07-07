@@ -2,13 +2,19 @@
 
 Governance rules for the MERN starter project. Each rule is a focused `.md` file in this directory.
 
-## Kept Rules (15)
+## Kept Rules (21)
 
 | Rule | Source | Summary |
 |------|--------|---------|
 | `git-destructive-commands.md` | ported as-is | Never run destructive git commands without explicit per-turn user confirmation |
 | `passport-jwt-algorithms-pin.md` | authored (surface #1 STEP 5) | Passport `'jwt'` strategy MUST pin `algorithms: ['HS256']`; no second `jwt.verify` path |
 | `owner-scoped-queries.md` | authored (surface #2 STEP 5) | Load owner-scoped resources with `findOne({_id, owner})` at query time; foreign owner → 404 existence-cloak; every product router has a cross-account test |
+| `entitlement-cap-ordering.md` | authored (surface #3 STEP 5) | Gated create/enable/cadence-change: `parse → own → assert → reserve → mutate/enqueue` at the API layer; countable resources reserve atomically |
+| `webhook-verify-before-parse.md` | authored (surface #4 STEP 5) | Verify HMAC over raw bytes BEFORE `JSON.parse`; `timingSafeEqual`; fail-closed on missing secret; insert-first idempotency; rate limit before `express.raw` |
+| `agent-machine-surface.md` | authored (surface #5 STEP 5) | `/api/agent`: composite-token verify (anchored regex + dummy-record HMAC + one 401), per-agent scope on every DB touch, rotation atomic, no secret echo, daemon `SERVER_URL` pin, cross-copy parity on spawn helpers |
+| `argv-only-spawn-and-ssrf.md` | authored (surface #6 STEP 5) | argv-only spawn (`shell:false`, secrets via env, no `child_process.exec` in backups/agent), SSH host-key pinning (`StrictHostKeyChecking=yes`), Docker socket-proxy only (no raw `/var/run/docker.sock` mount), SSRF guard on every user-URL fetch (scheme + IP blocklist + redirect re-validation via `safeFetch`) |
+| `no-query-injection-and-i18n-errors.md` | authored (surface #8 STEP 5) | No Mongoose query builder is fed a spread of `req.query`/`req.body`/`req.params`; every URL id is cast (`isValidObjectId` or anchored zod regex); no user-controlled `$where`/`$regex`/`$expr`; `/api/superadmin` gated at the app.ts mount only (sub-router imports no auth middleware); data-rights owner-scoped + grace-window purge + `legalHold` beats-purge; error handler returns i18n keys only (no `err.stack`, no raw `err.message`, no `...err` on the wire) |
+| `secrets-and-rotation.md` | authored (surface #7 STEP 5) | AES-256-GCM envelope everywhere (fresh IV per call, env-only master key), master-key rotation via `rotateStore` (decrypt-old→re-encrypt-new→atomic swap, all-or-nothing, idempotent re-run), pino redaction allowlist covers Authorization/Cookie/password/token/envelope/env vars, superadmin seeder idempotent + no `console.*`, no subdirectory `.env`, no `err.stack` on the wire, self-backup restic password HMAC-derived |
 | `docker-only-commands.md` | authored | Every build/test/runtime command runs inside Docker (`node:20-bookworm` dev tooling, `docker compose` stack ops); bare host `npm`/`node` forbidden |
 | `dockstash-design-system.md` | authored | Visual source of truth: monochrome shadcn tokens, serif-accent headlines, flat cards, inverted CTA bands (packaged as the `dockstash-design` skill) |
 | `environment-variables.md` | ported + adapted | Root `.env` only; MERN-typical vars (`MONGODB_URI`, `JWT_SECRET`, `PORT`, etc.) |

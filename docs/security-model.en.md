@@ -54,6 +54,78 @@ requests. A future cookie-authenticated surface MUST call
 - The `docker-socket-proxy` service is the only container with the socket, mounted `:ro`. Endpoints are limited to `CONTAINERS`/`EXEC`/`INFO`; everything else is denied.
 - The `api` and `docker-socket-proxy` services carry `cap_drop: [ALL]` and `security_opt: [no-new-privileges:true]`.
 
+## Fleet-agent machine surface (`/api/agent`)
+
+- **Composite-token verify.** `require-agent-auth.ts` parses `dsa_<24-hex
+  agentId>.<48-hex secret>` with an anchored regex, `findById`s the
+  agent, and calls `verifyApiSecret` (HMAC-SHA256 keyed by
+  `MASTER_ENCRYPTION_KEY`, compared with `crypto.timingSafeEqual`). The
+  unknown-agentId branch still pays the HMAC cost against a dummy record
+  so the timing is flat. Every failure branch returns ONE generic 401
+  (`agents.error.unauthorized`) — no distinguishing message.
+- **Per-agent scope.** Every `/api/agent` handler reads `req.agent` and
+  scopes DB queries by `agent: principal.id`. Bare
+  `AgentJob.findById(req.params.jobId)` is banned; the meta-test
+  `server/src/shared/middleware/agent-machine-meta.test.ts` fails on
+  regression.
+- **Token lifecycle.** Registration and rotation return the composite
+  token exactly ONCE — the server keeps only the HMAC. `rotateAgentKey`
+  overwrites `apiKeyHash` and persists BEFORE composing the new token,
+  so the old HMAC is invalid on the very next request. No listing or
+  detail route emits `apiKeyHash` or a plaintext secret.
+- **Daemon posture.** `agent/src/config.ts` requires `DOCKSTASH_URL`
+  (no baked-in fallback); `agent/src/api-client.ts` emits no log lines
+  and pino redaction covers `repo.password` + `ssh.privateKey`. The
+  spawn helpers in `agent/src/{restic-runner,docker-client}.ts` and
+  their server-side twins (`server/src/modules/backups/backups.restic-
+  runner.ts`, `backups.docker-client.ts`) share a cross-copy parity
+  meta-test — argv-only spawn, no `shell: true`, no
+  `child_process.exec`, no `/var/run/docker.sock`, no `dockerode`.
+
+## Command execution & SSRF (surface #6)
+
+- **Argv-only spawn.** Every `child_process.spawn` in server AND agent code
+  runs with `shell: false` and a `string[]` argv — never a concatenated
+  shell string, never `shell: true`, never `child_process.exec`. Restic
+  passwords travel via `env.RESTIC_PASSWORD`, not argv; a shell
+  metacharacter in a project name or repo URL reaches restic as one inert
+  argument. Enforced by ESLint (`no-restricted-syntax` on `shell: true`,
+  `no-restricted-imports` on `exec` in `modules/backups/**` and
+  `agent/src/**`) plus the meta-test at
+  `server/src/shared/middleware/command-execution-meta.test.ts`.
+- **SSH host-key pinning.** `backups.restic-runner.ts` and its agent copy
+  set `-o StrictHostKeyChecking=yes` + a pinned `UserKnownHostsFile` that
+  contains only the fingerprint stored in
+  `STORAGE_SSH_HOST_KEY_FINGERPRINT`. Auto-accept (`=no` /
+  `=accept-new`) is banned across the whole tree. The connection-test
+  path (`settings.ssh-probe.ts`) fails closed if the pinned fingerprint is
+  missing.
+- **Docker socket-proxy only.** `/var/run/docker.sock` is bind-mounted
+  only into `docker-socket-proxy` (RO, `cap_drop: ALL`,
+  `no-new-privileges`, endpoint allowlist
+  `CONTAINERS`/`EXEC`/`INFO`/`ALLOW_RESTARTS`+`POST`). The api reaches
+  Docker via `DOCKER_HOST=tcp://docker-socket-proxy:2375` — no `dockerode`,
+  no raw socket path anywhere else. `command-execution-meta.test.ts`
+  fails if a new service ever mounts the raw socket.
+- **SSRF guard on user URLs.** Every server-side `fetch` that takes a
+  user-supplied URL — today, the per-project `alertWebhookUrl` and the
+  operator `ALERT_WEBHOOK_URL` — routes through
+  `shared/net/safe-fetch.ts::safeFetch`. `safeFetch`:
+  (a) rejects non-`http:` / `https:` schemes;
+  (b) resolves the host (IPv4 + IPv6) and rejects if any resolved address
+      lies in loopback / private / link-local / cloud-metadata / IPv6
+      unique-local (`fc00::/7`, `fe80::/10`, `::1`, `::`) ranges;
+  (c) follows redirects manually and re-runs (a)+(b) on every hop, so a
+      public URL that 302s to `127.0.0.1` still fails;
+  (d) caps the chain at 5 hops.
+  Not-covered residual: TOCTOU DNS re-bind between the guard resolve and
+  Node's TCP connect. Mitigation there is DNS pinning at the socket layer,
+  out of scope for surface #6.
+- **zod-everywhere.** Every mutating route validates its body/params/query
+  with a zod schema at the router boundary before Mongoose or spawn ever
+  sees the input. No `as any`, no spreading `req.body` into a Mongoose
+  filter or argv element.
+
 ## Blast radius / threat model
 
 The `api` container is root-equivalent inside the Docker network: it reads
@@ -71,6 +143,55 @@ tracked container via the socket-proxy. Mitigations:
   offsite. Its SSH host key is pinned. Loss of `MASTER_ENCRYPTION_KEY`
   makes every ciphertext in Mongo unrecoverable; back it up out-of-band.
 
+## Secrets & data-at-rest (Surface #7)
+
+Full rule: `.claude/rules/secrets-and-rotation.md`.
+
+- **AES-256-GCM envelope** — `shared/crypto/encryptSecret` returns
+  `{ ciphertext, iv, authTag, keyVersion }`. Every persisted secret (restic
+  repo password, SSH private key, agent API secret) lands as an envelope in
+  Mongo; no plaintext schema field. IV is `crypto.randomBytes(12)` per call
+  — GCM's fatal IV-reuse mode is unreachable without going through the
+  test-only `__setIvGeneratorForTests` seam.
+- **Env-only master key** — `MASTER_ENCRYPTION_KEY` is required by the zod
+  env schema (`config/env.ts`); a decode-failing key fails startup fast.
+  There is no in-source default, no dev fallback.
+- **Rotation runbook** — `shared/crypto/rotate.ts::rotateStore` iterates a
+  store, decrypts each record with its own `keyVersion`, re-encrypts under
+  the target, and swaps atomically per record. On any swap throw it
+  returns `failedAt`; already-swapped records still decrypt under the
+  still-registered new key; un-swapped records still decrypt under the
+  still-registered old key. A re-run at the same target is a no-op — every
+  record's `keyVersion` already equals target, and rotation skips.
+- **pino redaction** — `config/logger.ts::REDACT_PATHS` covers
+  `req.headers.authorization`, `req.headers.cookie`,
+  `req.headers["x-csrf-token"]`, `res.headers["set-cookie"]`, the request-body
+  fields on auth/settings/backups create, deep wildcards `*.password`,
+  `*.token`, `*.secret`, `*.privateKey`, `*.apiKeyHash`, `*.ciphertext`,
+  `*.iv`, `*.authTag`, and the env-derived globals `MASTER_ENCRYPTION_KEY`,
+  `SUPERADMIN_PASSWORD`, `JWT_SECRET`, `POLAR_ACCESS_TOKEN`,
+  `POLAR_WEBHOOK_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`. Runtime
+  proof: `config/logger-redaction.test.ts` writes each shape to a captured
+  `Writable` and asserts every well-known secret collapses to `[REDACTED]`.
+- **Superadmin seeder idempotency** — `modules/superadmin/superadmin.seed.ts`
+  does `findOne({ email })` and skips when the account exists; a re-run
+  with different credentials is a no-op. No log line contains the plaintext
+  password. `console.*` is banned inside `modules/superadmin/**` at both
+  the ESLint layer (`server/eslint.config.js`) and the meta-test layer
+  (`shared/middleware/secrets-meta.test.ts`).
+- **No stack on the wire** — `shared/middleware/error-handler.ts` returns
+  `{ error: { message } }` for every 500; the stack is written to the
+  redacted pino logger, never the response. The historical
+  `NODE_ENV === 'development' ? { stack }` branch is gone.
+- **Root `.env` only** — every runtime env var lives in the repo-root
+  `.env`; there is no `.env` under `client/`, `server/`, or `agent/`.
+  The meta-test enforces this by walking each subtree.
+- **Self-backup password is derived** — `boot/recovery.ts::deriveSelfBackupPassword`
+  HMAC-SHA256s the decoded master key with the fixed label
+  `dockstash:self-backup:v1`. The restic subprocess only ever sees the
+  derived 64-hex string; a restic `stderr` capture or a stolen
+  self-backup repo image cannot yield `MASTER_ENCRYPTION_KEY`.
+
 ## Legal hold
 
 `Project.legalHold` (`modules/backups/backups.model.ts`) and `User.legalHold`
@@ -81,6 +202,47 @@ tracked container via the socket-proxy. Mitigations:
   deleted.
 - The account-deletion purge (`legal.service.ts::purgeAccount`) refuses to
   proceed on a held user and skips any held project.
+
+## Injection & Output (surface #8)
+
+Enforced by `.claude/rules/no-query-injection-and-i18n-errors.md` and the
+static guard at
+`server/src/shared/middleware/injection-and-output-meta.test.ts`:
+
+- **No operator injection.** Every list/get/update/delete controller in
+  `modules/**` zod-parses `req.body`/`req.query`/`req.params` BEFORE any
+  Mongoose call; the parsed, typed object is used as the filter.
+  `req.query`/`req.body`/`req.params` are NEVER spread into `.find(...)`
+  / `.findOne(...)` / `.updateOne(...)` / `.updateMany(...)` /
+  `.countDocuments(...)` / `.where(...)` / `.findOneAndUpdate(...)` /
+  `.findOneAndDelete(...)`. Zod's default `.strip()` drops
+  `$`-prefixed keys before they reach the DB; list surfaces use
+  `.strict()` to reject them outright with a 400.
+- **Every URL id is cast.** Superadmin schema (`superadmin.schema.ts`)
+  and every product schema use an anchored `[0-9a-fA-F]{24}$` regex or
+  `mongoose.isValidObjectId(...)` BEFORE Mongoose sees the id. Invalid
+  input returns 400/404, never a CastError 500.
+- **No user-controlled `$where` / `$regex` / `$expr`.** Grep-verified
+  clean across `server/src/modules/**`; any regex search is anchored on
+  caller-escaped input with a length cap.
+- **Superadmin isolation at the mount.** `/api/superadmin` is mounted
+  in `app.ts` behind
+  `[requireAuth, requireVerified, requireRole(ROLE_SUPERADMIN)]`; the
+  sub-router (`modules/superadmin/superadmin.routes.ts`) imports no
+  auth middleware. Every sub-route inherits the gate from the mount.
+- **Data-rights owner-scope + grace + `legalHold`.** `legal.controller.ts`
+  passes `req.user.id` to `exportUserData` / `scheduleAccountDeletion`
+  — never a body `userId`. Deletion enqueues a purge
+  `ACCOUNT_DELETION_GRACE_HOURS` in the future via `PurgeQueue`; no
+  synchronous hard delete. `purgeAccount` refuses on `user.legalHold`
+  and skips `project.legalHold`. See `docs/data-rights.en.md`.
+- **Error output = i18n keys only.** `shared/middleware/error-handler.ts`
+  returns `{ error: { message, details? } }` where `message` is an
+  `Accept-Language`-resolved i18n key. `HttpError` messages that look
+  like keys are translated; unknown throws resolve to `errors.internal`.
+  The stack is logged (pino-redacted), never sent on the wire — even in
+  `NODE_ENV=development`. No `err.stack`, no raw `err.message`, no
+  `...err` in the response body.
 
 ## What is out of scope
 

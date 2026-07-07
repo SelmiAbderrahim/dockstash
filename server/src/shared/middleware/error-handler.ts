@@ -2,7 +2,6 @@ import type { ErrorRequestHandler, Request } from 'express';
 import { ZodError } from 'zod';
 import { HttpError } from '../utils/http-error.js';
 import { logger } from '../../config/logger.js';
-import { env } from '../../config/env.js';
 import { DEFAULT_LOCALE, translate, DICTIONARIES } from '../i18n/index.js';
 
 const KEY_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/;
@@ -50,13 +49,14 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
 
+  // Log the full error (redacted by pino) but NEVER expose the stack in the
+  // response — even in development. Stack traces leak file paths, module
+  // boundaries, and anything captured in the thrown error (S7-04 in
+  // findings.md). Operators debug from the log line, not the wire response.
   logger.error({ reqId: req.id, err }, 'unhandled error');
   res.status(500).json({
     error: {
       message: translateMessage(req, 'errors.internal'),
-      ...(env.NODE_ENV === 'development' && err instanceof Error
-        ? { stack: err.stack }
-        : {}),
     },
   });
 };

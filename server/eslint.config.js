@@ -49,5 +49,61 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // Command execution / SSRF / input validation — surface #6 in
+    // prompts/dockstash-security/06-command-execution-ssrf-input-validation-opus-4.7.md
+    // Argv-only spawn everywhere; no shell strings; no host-key auto-accept.
+    // Meta-test at `shared/middleware/command-execution-meta.test.ts` covers
+    // the source-tree greps; this rule catches the shape at edit time.
+    files: ['src/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          // `spawn(..., { shell: true })` re-enables shell metacharacter
+          // interpretation — the exact shape command-injection rides in on.
+          selector:
+            "CallExpression[callee.name='spawn'] ObjectExpression > Property[key.name='shell'][value.value=true]",
+          message:
+            'argv-only spawn: never `shell: true`. Pass an argv array and set `shell: false`. See .claude/rules/argv-only-spawn-and-ssrf.md.',
+        },
+      ],
+    },
+  },
+  {
+    // `child_process.exec` runs its command string through /bin/sh — same
+    // shell-interpretation surface. `spawn(argv[])` is the only allowed form
+    // in backup/agent code.
+    files: ['src/modules/backups/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'node:child_process',
+              importNames: ['exec', 'execSync', 'execFile', 'execFileSync'],
+              message:
+                'exec runs a shell command string — use spawn(argv[]) instead. See .claude/rules/argv-only-spawn-and-ssrf.md.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Secrets & data-at-rest — surface #7 in
+    // prompts/dockstash-security/07-secrets-data-at-rest-opus-4.7.md
+    // The superadmin seeder handles the plaintext bootstrap password and
+    // MUST NOT use `console.*` — every log line goes through the redacted
+    // pino logger (`config/logger.ts`) so `SUPERADMIN_PASSWORD` collapses to
+    // `[REDACTED]` before it can reach stdout / log ingest.
+    files: ['src/modules/superadmin/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-console': 'error',
+    },
+  },
   prettier,
 );

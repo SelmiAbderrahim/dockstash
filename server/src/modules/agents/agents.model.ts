@@ -8,6 +8,10 @@ export type AgentStatus = (typeof AGENT_STATUSES)[number];
 // alone can never yield a usable credential.
 const hashedSecretSchema = new mongoose.Schema(
   {
+    // plaintext-safe: base64-encoded HMAC-SHA256 digest of the agent's API
+    // secret (see shared/crypto/hashApiSecret). One-way — a DB dump alone
+    // cannot yield the credential, so this hash is not "plaintext" in the
+    // sense that the secrets-meta guard cares about.
     hash: { type: String, required: true },
     keyVersion: { type: Number, required: true },
   },

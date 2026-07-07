@@ -23,7 +23,13 @@ const loginChallengeSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // plaintext-safe: sha256(secret||code) — one-way hash of the OTP, not
+    // the raw code. Even an attacker with DB read access must brute-force
+    // the 10^6 code space against the online 5-attempt cap.
     codeHash: { type: String, required: true },
+    // plaintext-safe: random 16-byte salt used only inside `codeHash`. Never
+    // used to authenticate; leaking it does not enable an offline compromise
+    // beyond what `codeHash` already permits.
     secret: { type: String, required: true },
     attempts: { type: Number, required: true, default: 0 },
     ip: { type: String, default: '' },
