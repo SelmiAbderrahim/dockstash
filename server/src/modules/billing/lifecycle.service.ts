@@ -13,6 +13,7 @@ import {
 import { ENTITLEMENTS } from './plans.js';
 import { getPlanForProductId } from './polar-config.js';
 import { getPaymentProvider } from './active-provider.js';
+import { reconcileProjectCounter } from './entitlements.service.js';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
 const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars);
@@ -125,17 +126,19 @@ export async function applyProjectCap(
     .sort({ createdAt: 1 })
     .select('_id');
   const overflow = active.slice(cap);
-  if (overflow.length === 0) return 0;
-  await Project.updateMany(
-    { _id: { $in: overflow.map((p) => p._id) } },
-    { $set: { paused: true } },
-  );
   if (overflow.length > 0) {
+    await Project.updateMany(
+      { _id: { $in: overflow.map((p) => p._id) } },
+      { $set: { paused: true } },
+    );
     await Subscription.updateOne(
       { userId, provider: { $exists: true } },
       { $set: { selectionRequired: true } },
     );
   }
+  // Reconcile the reservation ledger to the post-pause active count so a
+  // subsequent create is gated correctly under the new tier.
+  await reconcileProjectCounter(userId, active.length - overflow.length);
   return overflow.length;
 }
 
@@ -184,6 +187,8 @@ export async function handleUpgrade(
     { $set: { selectionRequired: false } },
   );
   const unpaused = result.modifiedCount ?? 0;
+  // Reconcile the reservation ledger: every project is now active.
+  await reconcileProjectCounter(userId, total);
   if (unpaused > 0) {
     logger.info(
       { userId, unpaused, target },
@@ -272,6 +277,12 @@ export async function selectProjectsToKeep(
     sub.selectionRequired = false;
     await sub.save();
   }
+  // Reconcile the reservation ledger to the post-selection active count.
+  const activeCount = await Project.countDocuments({
+    owner: userId,
+    paused: { $ne: true },
+  });
+  await reconcileProjectCounter(userId, activeCount);
   return {
     active: keepIds.length,
     paused: pausedResult.modifiedCount ?? 0,

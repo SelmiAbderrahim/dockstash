@@ -12,6 +12,7 @@ import {
   type Entitlements,
   type ScheduleFrequency,
 } from './plans.js';
+import { UsageCounter } from './usage-counter.model.js';
 
 export type Translator = (key: string, vars?: TranslationVars) => string;
 const identityT: Translator = (key, vars) => translate(DEFAULT_LOCALE, key, vars);
@@ -340,4 +341,115 @@ export function classifyCron(expr: string): ScheduleFrequency {
     return 'hourly';
   }
   return 'daily';
+}
+
+// ---------------------------------------------------------------------------
+// Reservation ledger — atomic project-cap enforcement (S3-01 / S3-03).
+// The per-owner UsageCounter is the single source of truth for "how many
+// active projects does this user have". `reserveProjectSlot` increments
+// BEFORE `Project.create` so a concurrent second request at `remaining == 1`
+// fails the `$lt cap` atomic guard — closing the TOCTOU window between
+// `countDocuments` and `Project.create`.
+// ---------------------------------------------------------------------------
+
+export interface ReserveProjectSlotDeps {
+  t?: Translator;
+  /** Fallback counter (unused when the ledger row exists; kept for the
+   *  bootstrap-reconciliation path and test injection). */
+  countActiveProjects?: (userId: string) => Promise<number>;
+}
+
+/**
+ * Atomically reserve a project slot by incrementing the per-owner counter
+ * BEFORE the Project record is created. On the infinite (business) tier no
+ * counter row is ever written. At cap, throws 403 `projectLimitReached`.
+ *
+ * The `findOneAndUpdate`/`updateOne` with `{ projects: { $lt: cap } }` filter
+ * is the sole concurrency authority: exactly one concurrent request can
+ * succeed at `remaining == 1`; the rest fail the filter or collide on the
+ * unique `owner` index (E11000 → caught and retried without upsert).
+ */
+export async function reserveProjectSlot(
+  userId: string,
+  deps: ReserveProjectSlotDeps = {},
+): Promise<void> {
+  const t = deps.t ?? identityT;
+  const resolved = await resolveEntitlements(userId);
+  const cap = resolved.entitlements.projects;
+  // Infinite tier (business / OSS self-host): no counter row is ever written.
+  if (!Number.isFinite(cap)) return;
+
+  const filter = { owner: userId, projects: { $lt: cap } };
+  const update = { $inc: { projects: 1 } };
+
+  try {
+    const result = await UsageCounter.updateOne(filter, update, { upsert: true });
+    if (result.matchedCount > 0 || result.upsertedCount > 0) return;
+    // Filter didn't match → at cap.
+    throw HttpError.forbidden(t('billing.entitlements.projectLimitReached'), {
+      reason: 'projectLimitReached',
+      cap: capForClient(cap),
+    });
+  } catch (err) {
+    // E11000 (dup key on upsert) means a concurrent bootstrap insert won the
+    // race — the row now exists. Fall through to a second atomic attempt
+    // WITHOUT upsert so we don't collide again.
+    if ((err as { code?: number }).code === 11000) {
+      const retry = await UsageCounter.updateOne(filter, update);
+      if (retry.matchedCount > 0) return;
+      throw HttpError.forbidden(t('billing.entitlements.projectLimitReached'), {
+        reason: 'projectLimitReached',
+        cap: capForClient(cap),
+      });
+    }
+    throw err;
+  }
+}
+
+/**
+ * Release a previously reserved slot (decrement, clamped at zero). Called on
+ * `createProject` failure rollback and on project pause/delete.
+ */
+export async function releaseProjectSlot(userId: string): Promise<void> {
+  // Only decrement if the counter is above zero — never goes negative.
+  await UsageCounter.updateOne(
+    { owner: userId, projects: { $gt: 0 } },
+    { $inc: { projects: -1 } },
+  );
+}
+
+/**
+ * Adjust the counter by a signed delta. `delta === 0` is a no-op (no row
+ * created). Negative deltas clamp at zero via `$max`.
+ */
+export async function adjustProjectCounter(
+  userId: string,
+  delta: number,
+): Promise<void> {
+  if (delta === 0) return;
+  // Aggregation-pipeline update: $inc + $max on the same field in one plain
+  // update doc is rejected by MongoDB as a path conflict, so clamp via a
+  // computed $set instead — still a single atomic op.
+  await UsageCounter.updateOne(
+    { owner: userId },
+    [{ $set: { projects: { $max: [{ $add: [{ $ifNull: ['$projects', 0] }, delta] }, 0] } } }],
+    { upsert: true },
+  );
+}
+
+/**
+ * Reconcile the counter to an absolute value (clamped ≥ 0). Used by the
+ * lifecycle paths (pause/unpause/select) to correct drift after bulk state
+ * changes. Upserts the row if it doesn't exist.
+ */
+export async function reconcileProjectCounter(
+  userId: string,
+  count: number,
+): Promise<void> {
+  const clamped = Math.max(0, count);
+  await UsageCounter.updateOne(
+    { owner: userId },
+    { $set: { projects: clamped } },
+    { upsert: true },
+  );
 }

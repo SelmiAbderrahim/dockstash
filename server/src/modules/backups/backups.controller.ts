@@ -30,6 +30,8 @@ import {
   assertAlertsAllowed,
   assertMirrorAllowed,
   assertMultiVpsAllowed,
+  reserveProjectSlot,
+  releaseProjectSlot,
 } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
 
@@ -57,8 +59,17 @@ export const create: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
   // Assigning to a fleet agent at creation is a Business-tier operation.
   if (input.agentId) await assertMultiVpsAllowed(userId, { t: req.t });
-  const project = await createProject(userId, input, { t: req.t });
-  res.status(201).json({ project: serializeProject(project) });
+  // Reserve a slot BEFORE creating the record — the atomic counter closes the
+  // TOCTOU window between countDocuments and Project.create (S3-01/S3-03).
+  await reserveProjectSlot(userId, { t: req.t });
+  try {
+    const project = await createProject(userId, input, { t: req.t });
+    res.status(201).json({ project: serializeProject(project) });
+  } catch (err) {
+    // Rollback the reservation if createProject failed.
+    await releaseProjectSlot(userId);
+    throw err;
+  }
 });
 
 export const list: RequestHandler = asyncHandler(async (req, res) => {

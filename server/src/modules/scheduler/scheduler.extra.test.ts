@@ -389,12 +389,15 @@ describe('scheduler.extra: service branch coverage', () => {
       cron: '0 3 * * *',
     });
     // keepDaily omitted (falls back to existing), keepWeekly + keepMonthly set.
+    // Values stay within the (business-tier, PAYMENT_PROVIDER=none) retention
+    // ceiling of 90 days so clampRetentionPolicy is a no-op here — this test
+    // is about the omitted-field merge, not the clamp (covered separately).
     const updated = await updateSchedule(s._id.toString(), userId, {
-      retention: { keepWeekly: 9, keepMonthly: 5 },
+      retention: { keepWeekly: 9, keepMonthly: 3 },
     });
     expect(updated.retention.keepDaily).toBe(7);
     expect(updated.retention.keepWeekly).toBe(9);
-    expect(updated.retention.keepMonthly).toBe(5);
+    expect(updated.retention.keepMonthly).toBe(3);
   });
 
   it('enqueueNow uses the identity translator when none is provided (deny path)', async () => {
@@ -451,7 +454,7 @@ describe('scheduler.extra: service branch coverage', () => {
       retention: undefined,
     };
     const spy = vi
-      .spyOn(Schedule, 'findById')
+      .spyOn(Schedule, 'findOne')
       .mockResolvedValue(fakeSchedule as never);
     try {
       const job = await enqueueNow(
