@@ -4,6 +4,7 @@ import {
   assertArgvSafe,
   collectStats,
   drainStream,
+  isPartialReadFailure,
   runBackupJob,
   type BackupDeps,
 } from './backup.js';
@@ -184,6 +185,15 @@ describe('collectStats', () => {
     const stats = await collectStats(restic);
     expect(stats.snapshotCount).toBe(1);
     expect(stats.lastBackupBytes).toBeUndefined();
+  });
+});
+
+describe('isPartialReadFailure', () => {
+  it('matches only the restic backup exit-3 error shape', () => {
+    expect(isPartialReadFailure('restic backup exit 3: error: open x: permission denied')).toBe(true);
+    expect(isPartialReadFailure('restic backup exit 1: Fatal: repo locked')).toBe(false);
+    expect(isPartialReadFailure('restic restore exit 3: whatever')).toBe(false);
+    expect(isPartialReadFailure('wrapped: restic backup exit 3: not anchored')).toBe(false);
   });
 });
 
@@ -462,6 +472,46 @@ describe('runBackupJob', () => {
     });
     await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
       /restic paths failed: raw paths failure/,
+    );
+  });
+
+  it('exit 3 (partial read) on the paths backup: warns and succeeds — the snapshot exists', async () => {
+    const { restic } = makeFakeRestic({
+      onBackup: (args) => {
+        if (args[0] === 'backup' && args.includes('/var/www/app')) {
+          throw new Error('restic backup exit 3: error: open /var/www/app/.env: permission denied');
+        }
+      },
+    });
+    const { docker } = makeFakeDocker();
+    const deps = makeDeps(restic, docker);
+    const job = baseJob({
+      plan: { paths: ['/var/www/app'], configs: [], databases: [] },
+    });
+    await expect(runBackupJob(job, deps)).resolves.toEqual({ snapshotCount: 0 });
+    expect(deps.log).toHaveBeenCalledWith(
+      expect.stringMatching(/^warning: snapshot created but some files were unreadable:/),
+    );
+  });
+
+  it('exit 3 tolerance is scoped to the paths layer — a DB-layer exit 3 still fails the job', async () => {
+    const { restic } = makeFakeRestic({
+      onBackup: (args) => {
+        if (args.includes('--stdin')) {
+          throw new Error('restic backup exit 3: partial stdin');
+        }
+      },
+    });
+    const { docker } = makeFakeDocker();
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /restic dump failed/,
     );
   });
 

@@ -32,6 +32,16 @@ function assertAllowedPath(p: string, roots: readonly string[]): void {
 }
 
 /**
+ * restic `backup` exit code 3: the snapshot was created but some source files
+ * could not be read (e.g. permission denied). Matches the error format the
+ * restic-runner produces (`restic backup exit 3: <stderr>`). Kept in sync with
+ * server/src/modules/backups/backups.service.ts.
+ */
+export function isPartialReadFailure(message: string): boolean {
+  return /^restic backup exit 3:/.test(message);
+}
+
+/**
  * Consume a container-exec stream to completion (file-artifact adapters only
  * need the dump command to finish before restic backs up the produced path).
  */
@@ -163,7 +173,15 @@ export async function runBackupJob(
       await deps.restic.backup(['backup', ...pathArgs]);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(`restic paths failed: ${message}`);
+      // restic exit 3 = snapshot WAS created but some source files were
+      // unreadable. Warn and keep the (partial) snapshot instead of failing
+      // the job — a hard fail here pressures operators into chmod'ing their
+      // project trees, which is worse than a flagged partial backup.
+      if (isPartialReadFailure(message)) {
+        deps.log(`warning: snapshot created but some files were unreadable: ${message}`);
+      } else {
+        throw new Error(`restic paths failed: ${message}`);
+      }
     }
   }
 

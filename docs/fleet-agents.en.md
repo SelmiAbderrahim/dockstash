@@ -177,6 +177,18 @@ it is never silently retried.
   periodic 401s in the server logs, an old agent container somewhere still
   heartbeats with a revoked token. Find it (`docker ps | grep agent`) and take
   it down (`docker compose -f <old-dir>/docker-compose.agent.yml down`).
+- **Backup fails with `permission denied`** — **never `chmod`/`chown` your
+  project tree to "fix" this.** Loosening permissions weakens your app's
+  security and flips file modes, so git suddenly reports every file as
+  modified. The shipped `docker-compose.agent.yml` grants the agent
+  `CAP_DAC_READ_SEARCH` — a *read-only* permission bypass that lets restic read
+  root-owned `0600` files (e.g. `.env`) exactly as they are; write bypass
+  (`DAC_OVERRIDE`) stays dropped, so a backup physically cannot modify
+  protected files. If you installed the agent before this capability was added,
+  add `cap_add: [DAC_READ_SEARCH]` to the `agent` service and recreate it. If
+  restic still cannot read some files (exit code 3), the snapshot is kept and
+  the job succeeds with a warning listing the skipped files in the job log —
+  backups never require changing anything inside the project.
 
 ### Troubleshooting empty folders
 

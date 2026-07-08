@@ -24,6 +24,8 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # NOTE: the proxy keeps zero capabilities; only the agent below adds
+    # the read-only DAC_READ_SEARCH bypass.
 
   agent:
     image: selmiabderrahim/agent:latest
@@ -51,3 +53,10 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    cap_add:
+      # Read-only DAC bypass: restic can read every file regardless of
+      # mode/owner, so backups work without loosening permissions on the
+      # project tree (never chmod your projects to "fix" a backup).
+      # DAC_OVERRIDE stays dropped — this grants NO write bypass; backups
+      # remain physically unable to modify protected files.
+      - DAC_READ_SEARCH

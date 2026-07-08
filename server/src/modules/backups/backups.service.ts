@@ -34,6 +34,16 @@ export type Translator = (key: string, vars?: TranslationVars) => string;
  */
 const identityT: Translator = (key) => key;
 
+/**
+ * restic `backup` exit code 3: the snapshot was created but some source files
+ * could not be read (e.g. permission denied). Matches the error format the
+ * restic-runner produces (`restic backup exit 3: <stderr>`). Kept in sync with
+ * agent/src/backup.ts.
+ */
+export function isPartialReadFailure(message: string): boolean {
+  return /^restic backup exit 3:/.test(message);
+}
+
 function assertAllowedPath(input: string, t: Translator, roots?: readonly string[]): void {
   // Local execution keeps the strict legacy /var/www allowlist; agent-assigned
   // projects validate against the roots THAT agent reported (see
@@ -360,6 +370,7 @@ export async function runBackup(
       layers.push({ kind: 'database', label: db.service, ok: true });
     }
 
+    let pathsWarning = '';
     const pathArgs = [...project.plan.paths, ...project.plan.configs];
     if (pathArgs.length > 0) {
       try {
@@ -367,11 +378,21 @@ export async function runBackup(
         layers.push({ kind: 'paths', label: 'files', ok: true });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`restic paths failed: ${message}`);
+        // restic exit 3 = snapshot WAS created but some source files were
+        // unreadable. Warn and keep the (partial) snapshot instead of failing
+        // the run — a hard fail here pressures operators into chmod'ing their
+        // project trees, which is worse than a flagged partial backup. Kept in
+        // sync with agent/src/backup.ts::isPartialReadFailure.
+        if (isPartialReadFailure(message)) {
+          pathsWarning = `warning: snapshot created but some files were unreadable: ${message}`;
+          layers.push({ kind: 'paths', label: 'files', ok: true });
+        } else {
+          throw new Error(`restic paths failed: ${message}`);
+        }
       }
     }
 
-    await markStatus(project, 'success', '');
+    await markStatus(project, 'success', pathsWarning);
     return { status: 'success', layers };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

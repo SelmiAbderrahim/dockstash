@@ -186,6 +186,62 @@ describe('backups: failure injection (runBackup)', () => {
     expect(persisted?.lastError).toMatch(/ECONNREFUSED/);
   });
 
+  it('exit 3 (partial read) on the paths phase → success with warning stamped, snapshot kept', async () => {
+    const { id } = await seedUser();
+    const projectId = await seedProject(id);
+    const restic = makeBaseRestic({
+      async backup(args, opts) {
+        if (opts?.stdin) {
+          opts.stdin.resume();
+          return;
+        }
+        if (args[0] === 'backup') {
+          throw new Error(
+            'restic backup exit 3: error: open /var/www/faildemo/.env: permission denied',
+          );
+        }
+      },
+    });
+    const result = await runBackup(projectId, id, {
+      resticRunner: restic,
+      dockerClient: makeBaseDocker(),
+      composeServices: { pg: { image: 'postgres:16' } },
+    });
+    expect(result.status).toBe('success');
+    expect(result.layers).toContainEqual({ kind: 'paths', label: 'files', ok: true });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastStatus).toBe('success');
+    expect(persisted?.lastError).toMatch(
+      /^warning: snapshot created but some files were unreadable:/,
+    );
+  });
+
+  it('exit 3 tolerance is anchored — a wrapped or non-backup exit 3 still fails', async () => {
+    const { id } = await seedUser();
+    const projectId = await seedProject(id);
+    const restic = makeBaseRestic({
+      async backup(args, opts) {
+        if (opts?.stdin) {
+          opts.stdin.resume();
+          return;
+        }
+        if (args[0] === 'backup') {
+          throw new Error('wrapped: restic backup exit 3: not anchored');
+        }
+      },
+    });
+    await expect(
+      runBackup(projectId, id, {
+        resticRunner: restic,
+        dockerClient: makeBaseDocker(),
+        composeServices: { pg: { image: 'postgres:16' } },
+      }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastStatus).toBe('failed');
+    expect(persisted?.lastError).toMatch(/restic paths failed/);
+  });
+
   it('stale lock — restic reports locked repo → failed, NEVER a false success', async () => {
     const { id } = await seedUser();
     const projectId = await seedProject(id);
