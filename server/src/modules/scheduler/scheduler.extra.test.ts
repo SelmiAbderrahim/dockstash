@@ -75,8 +75,14 @@ function makeDocker(): DockerClient {
     async exec() {
       return Readable.from(['dump-bytes']);
     },
+    async execStream() {
+      return {
+        stream: Readable.from(['dump-bytes']),
+        exit: async () => ({ exitCode: 0, stderrTail: '' }),
+      };
+    },
     async execCollect() {
-      throw new Error('execCollect not stubbed');
+      return { exitCode: 0, stdout: 'OK', stderr: '' };
     },
     async execWithStdin() {
       throw new Error('execWithStdin not stubbed');
@@ -85,7 +91,7 @@ function makeDocker(): DockerClient {
       throw new Error('restart not stubbed');
     },
     async inspect(container) {
-      return { id: container, running: true, env: [], image: '' };
+      return { id: container, running: true, env: [], cmd: [], image: '' };
     },
     async listContainers() {
       return [];

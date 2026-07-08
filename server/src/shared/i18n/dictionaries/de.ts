@@ -217,6 +217,8 @@ export const de: DictionaryShape = {
       discoverFailed: 'Erkennung fehlgeschlagen: {{message}}',
       noAdapter: 'Kein Backup-Adapter passt zum Dienst {{service}}.',
       dumpFailed: 'Datenbank-Dump fehlgeschlagen für {{service}}: {{message}}',
+      containerNotRunning:
+        'Container {{container}} läuft nicht — starten Sie ihn oder deaktivieren Sie diese Datenbankschicht.',
       resticFailed: 'Restic-Backup fehlgeschlagen: {{message}}',
       backupFailed: 'Backup fehlgeschlagen: {{message}}',
       noSpace: 'Nicht genügend Speicherplatz (frei={{free}} Bytes).',

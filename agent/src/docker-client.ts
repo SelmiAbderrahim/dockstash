@@ -23,21 +23,50 @@ export interface DockerExecResult {
   stderr: string;
 }
 
+/** Cap on the buffered stderr tail an execStream keeps for error reporting. */
+const STDERR_TAIL_BYTES = 4096;
+
 /**
  * `docker inspect` subset. `env` is Config.Env (`["KEY=VAL"]`) — the
- * credential source for DB restores; `image` the configured image reference.
+ * credential source for DB dumps and restores; `cmd` is Config.Cmd (e.g. a
+ * redis `--requirepass` flag); `image` the configured image reference.
  */
 export interface DockerInspectResult {
   id: string;
   running: boolean;
   env: string[];
+  cmd: string[];
   image: string;
+}
+
+/**
+ * A streaming exec whose completion is observable: `stream` is the demuxed
+ * stdout; `exit()` resolves once the attach stream ends with the exec exit
+ * code and the last ~4KB of stderr — the dump-side truth restic cannot see.
+ */
+export interface DockerExecStream {
+  stream: Readable;
+  exit(): Promise<{ exitCode: number; stderrTail: string }>;
 }
 
 export interface DockerClient {
   exec(container: string, argv: string[]): Promise<Readable>;
+  /**
+   * Streaming exec with exit-code + stderr observability. `env` entries
+   * (`KEY=VAL`) reach the in-container process environment — the transport
+   * for dump credentials so secrets never ride argv.
+   */
+  execStream(
+    container: string,
+    argv: string[],
+    opts?: { env?: string[] },
+  ): Promise<DockerExecStream>;
   /** Exec to completion; buffers stdout/stderr and reports the exit code. */
-  execCollect(container: string, argv: string[]): Promise<DockerExecResult>;
+  execCollect(
+    container: string,
+    argv: string[],
+    env?: string[],
+  ): Promise<DockerExecResult>;
   /** Exec with `stdin` streamed to the process (`docker exec -i` equivalent). */
   execWithStdin(
     container: string,
@@ -288,6 +317,7 @@ export class HttpDockerClient implements DockerClient {
     container: string,
     argv: string[],
     attachStdin: boolean,
+    env?: string[],
   ): Promise<string> {
     const create = await this.request({
       method: 'POST',
@@ -296,6 +326,7 @@ export class HttpDockerClient implements DockerClient {
         ...(attachStdin ? { AttachStdin: true } : {}),
         AttachStdout: true,
         AttachStderr: true,
+        ...(env && env.length > 0 ? { Env: env } : {}),
         Cmd: argv,
       },
     });
@@ -338,9 +369,73 @@ export class HttpDockerClient implements DockerClient {
     return demuxDockerStream(raw);
   }
 
+  /**
+   * Streaming exec that keeps the failure channel: demuxed stdout plus an
+   * `exit()` that reports the exec exit code and a stderr tail. `exit()`
+   * drains any unconsumed stdout first so an abandoned stream (e.g. restic
+   * bailed early) cannot buffer a multi-GB dump in memory.
+   */
+  async execStream(
+    container: string,
+    argv: string[],
+    opts?: { env?: string[] },
+  ): Promise<DockerExecStream> {
+    const execId = await this.createExec(container, argv, false, opts?.env);
+    const raw = await this.streamRequest({
+      method: 'POST',
+      path: `/exec/${execId}/start`,
+      body: { Detach: false, Tty: false },
+    });
+    const out = new PassThrough();
+    let pending = Buffer.alloc(0);
+    let stderrTail = Buffer.alloc(0);
+    const finished = new Promise<void>((resolve) => {
+      raw.on('data', (chunk: Buffer) => {
+        pending = Buffer.concat([pending, chunk]);
+        while (pending.length >= 8) {
+          const type = pending[0];
+          const len = pending.readUInt32BE(4);
+          if (pending.length < 8 + len) break;
+          const payload = pending.subarray(8, 8 + len);
+          pending = pending.subarray(8 + len);
+          if (type === 1) out.write(payload);
+          else if (type === 2) {
+            stderrTail = Buffer.concat([stderrTail, payload]);
+            if (stderrTail.length > STDERR_TAIL_BYTES) {
+              stderrTail = stderrTail.subarray(stderrTail.length - STDERR_TAIL_BYTES);
+            }
+          }
+        }
+      });
+      raw.on('end', () => {
+        out.end();
+        resolve();
+      });
+      raw.on('error', (err) => {
+        out.destroy(err);
+        // exit() still resolves — the exec-inspect exit code (or its own
+        // error) is more useful than a hung promise.
+        resolve();
+      });
+    });
+    return {
+      stream: out,
+      exit: async () => {
+        out.resume(); // discard unread stdout so the attach stream can drain
+        await finished;
+        const exitCode = await this.execExitCode(execId);
+        return { exitCode, stderrTail: stderrTail.toString().trim() };
+      },
+    };
+  }
+
   /** Run to completion, buffering both channels, and report the exit code. */
-  async execCollect(container: string, argv: string[]): Promise<DockerExecResult> {
-    const execId = await this.createExec(container, argv, false);
+  async execCollect(
+    container: string,
+    argv: string[],
+    env?: string[],
+  ): Promise<DockerExecResult> {
+    const execId = await this.createExec(container, argv, false, env);
     const raw = await this.streamRequest({
       method: 'POST',
       path: `/exec/${execId}/start`,
@@ -451,7 +546,7 @@ export class HttpDockerClient implements DockerClient {
     let parsed: {
       Id?: string;
       State?: { Running?: boolean };
-      Config?: { Env?: unknown; Image?: string };
+      Config?: { Env?: unknown; Cmd?: unknown; Image?: string };
     };
     try {
       parsed = JSON.parse(res.body.toString()) as typeof parsed;
@@ -460,14 +555,19 @@ export class HttpDockerClient implements DockerClient {
     }
     // Config.Env is a ["KEY=VAL"] array — exactly the ComposeService
     // environment shape the adapters' readServiceEnv accepts. It is the
-    // credential source for DB restores.
+    // credential source for DB dumps and restores. Config.Cmd carries flags
+    // like a redis `--requirepass` that never appear in env.
     const env = Array.isArray(parsed.Config?.Env)
       ? parsed.Config.Env.filter((e): e is string => typeof e === 'string')
+      : [];
+    const cmd = Array.isArray(parsed.Config?.Cmd)
+      ? parsed.Config.Cmd.filter((c): c is string => typeof c === 'string')
       : [];
     return {
       id: parsed.Id ?? container,
       running: Boolean(parsed.State?.Running),
       env,
+      cmd,
       image: parsed.Config?.Image ?? '',
     };
   }

@@ -215,6 +215,7 @@ export const zh: DictionaryShape = {
       discoverFailed: '发现失败：{{message}}',
       noAdapter: '没有备份适配器与服务 {{service}} 匹配。',
       dumpFailed: '{{service}} 的数据库转储失败：{{message}}',
+      containerNotRunning: '容器 {{container}} 未运行 — 请启动它或禁用此数据库层。',
       resticFailed: 'Restic 备份失败：{{message}}',
       backupFailed: '备份失败：{{message}}',
       noSpace: '磁盘空间不足（剩余={{free}} 字节）。',

@@ -70,9 +70,33 @@ async function seedUser(email = 'owner@test.com'): Promise<{ id: string; token: 
   return { id: u._id.toString(), token: signToken(u._id.toString()) };
 }
 
+interface StreamOutcome {
+  stdout?: string;
+  exitCode?: number;
+  stderrTail?: string;
+  streamError?: Error;
+}
+interface CollectOutcome {
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
+}
+
+interface MockDocker extends DockerClient {
+  calls: Array<{ container: string; argv: string[]; env?: string[] }>;
+  /** Mutable inspect result — env is the dump-credential source (was composeServices). */
+  inspectEnv: string[];
+  inspectCmd: string[];
+  inspectImage: string;
+  inspectRunning: boolean;
+  /** Optional per-call outcome hooks (may throw to fail exec setup). */
+  onExecStream?: (argv: string[]) => StreamOutcome;
+  onExecCollect?: (argv: string[]) => CollectOutcome;
+}
+
 function makeMocks(): {
   restic: ResticRunner & { calls: Array<{ args: string[]; hasStdin: boolean }> };
-  docker: DockerClient & { calls: Array<{ container: string; argv: string[] }> };
+  docker: MockDocker;
 } {
   const restic = {
     calls: [] as Array<{ args: string[]; hasStdin: boolean }>,
@@ -93,14 +117,36 @@ function makeMocks(): {
       throw new Error('dump not stubbed');
     },
   };
-  const docker = {
-    calls: [] as Array<{ container: string; argv: string[] }>,
+  const docker: MockDocker = {
+    calls: [] as Array<{ container: string; argv: string[]; env?: string[] }>,
+    inspectEnv: [] as string[],
+    inspectCmd: [] as string[],
+    inspectImage: '',
+    inspectRunning: true,
     async exec(container: string, argv: string[]) {
       docker.calls.push({ container, argv });
       return Readable.from(['dump-bytes']);
     },
-    async execCollect(): Promise<never> {
-      throw new Error('execCollect not stubbed');
+    async execStream(container: string, argv: string[], opts?: { env?: string[] }) {
+      docker.calls.push({ container, argv, env: opts?.env });
+      const r = docker.onExecStream ? docker.onExecStream(argv) : {};
+      const stream = new Readable({ read() {} });
+      if (r.streamError) {
+        const err = r.streamError;
+        queueMicrotask(() => stream.destroy(err));
+      } else {
+        stream.push(r.stdout ?? 'dump-bytes');
+        stream.push(null);
+      }
+      return {
+        stream,
+        exit: async () => ({ exitCode: r.exitCode ?? 0, stderrTail: r.stderrTail ?? '' }),
+      };
+    },
+    async execCollect(container: string, argv: string[], env?: string[]) {
+      docker.calls.push({ container, argv, env });
+      const r = docker.onExecCollect ? docker.onExecCollect(argv) : {};
+      return { exitCode: r.exitCode ?? 0, stdout: r.stdout ?? 'OK', stderr: r.stderr ?? '' };
     },
     async execWithStdin(): Promise<never> {
       throw new Error('execWithStdin not stubbed');
@@ -109,7 +155,13 @@ function makeMocks(): {
       throw new Error('restart not stubbed');
     },
     async inspect(container: string) {
-      return { id: container, running: true, env: [] as string[], image: '' };
+      return {
+        id: container,
+        running: docker.inspectRunning,
+        env: docker.inspectEnv,
+        cmd: docker.inspectCmd,
+        image: docker.inspectImage,
+      };
     },
     async listContainers() {
       return [];
@@ -226,60 +278,66 @@ describe('backups: adapters', () => {
       'postgres',
     ]);
 
-    const mysqlArgs = mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] });
-    expect(mysqlArgs).toEqual([
+    // mysql/mariadb: the password NEVER rides argv (a bare `-p` prompts on the
+    // non-tty exec); it travels via MYSQL_PWD in dumpEnv.
+    const MYSQL_ARGV = [
       'mysqldump',
       '--single-transaction',
       '--routines',
       '--triggers',
       '--all-databases',
       '-uroot',
-      '-ps3cret',
+    ];
+    expect(mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual(
+      MYSQL_ARGV,
+    );
+    expect(mysqlAdapter.dumpEnv?.({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual([
+      'MYSQL_PWD=s3cret',
     ]);
-    expect(mysqlAdapter.dumpCmd({})).toEqual([
-      'mysqldump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-p',
-    ]);
+    expect(mysqlAdapter.dumpCmd({})).toEqual(MYSQL_ARGV);
+    expect(mysqlAdapter.dumpEnv?.({})).toEqual([]);
 
-    // MariaDB uses mariadb-dump and prefers MARIADB_ROOT_PASSWORD, falling back
-    // to the legacy MYSQL_ROOT_PASSWORD key.
-    expect(
-      mariadbAdapter.dumpCmd({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } }),
-    ).toEqual([
+    const MARIADB_ARGV = [
       'mariadb-dump',
       '--single-transaction',
       '--routines',
       '--triggers',
       '--all-databases',
       '-uroot',
-      '-pmm',
+    ];
+    expect(mariadbAdapter.dumpCmd({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } })).toEqual(
+      MARIADB_ARGV,
+    );
+    // prefers MARIADB_ROOT_PASSWORD, falls back to the legacy MYSQL_ROOT_PASSWORD key.
+    expect(mariadbAdapter.dumpEnv?.({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } })).toEqual([
+      'MYSQL_PWD=mm',
     ]);
-    const mariaLegacy = { environment: { MYSQL_ROOT_PASSWORD: 'm' } };
-    expect(mariadbAdapter.dumpCmd(mariaLegacy)).toEqual([
-      'mariadb-dump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-pm',
+    expect(mariadbAdapter.dumpEnv?.({ environment: { MYSQL_ROOT_PASSWORD: 'm' } })).toEqual([
+      'MYSQL_PWD=m',
     ]);
-    expect(mariadbAdapter.dumpCmd({})).toEqual([
-      'mariadb-dump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-p',
-    ]);
+    expect(mariadbAdapter.dumpCmd({})).toEqual(MARIADB_ARGV);
+    expect(mariadbAdapter.dumpEnv?.({})).toEqual([]);
 
     expect(mongoAdapter.dumpCmd({})).toEqual(['mongodump', '--archive', '--oplog']);
+    // mongo root creds ride argv inside the container when present.
+    expect(
+      mongoAdapter.dumpCmd({
+        environment: {
+          MONGO_INITDB_ROOT_USERNAME: 'root',
+          MONGO_INITDB_ROOT_PASSWORD: 'pw',
+        },
+      }),
+    ).toEqual([
+      'mongodump',
+      '--archive',
+      '--oplog',
+      '-u',
+      'root',
+      '-p',
+      'pw',
+      '--authenticationDatabase',
+      'admin',
+    ]);
   });
 
   it('file-artifact adapters expose mode + artifactType + artifact path + argv commands', () => {
@@ -442,12 +500,68 @@ describe('backups: serialize optional fields', () => {
 });
 
 describe('backups: injection guard', () => {
-  it('shell metacharacters in env become literal argv tokens', () => {
+  it('a metacharacter password stays out of argv and rides MYSQL_PWD (inert env value)', () => {
     const evil = '$(rm -rf /);`whoami`';
     const argv = mysqlAdapter.dumpCmd({ environment: { MYSQL_ROOT_PASSWORD: evil } });
-    expect(argv[argv.length - 1]).toBe(`-p${evil}`);
+    // The password is NOT in argv at all — no shell, and no argv token to split.
+    expect(argv.some((tok) => tok.includes('rm -rf'))).toBe(false);
+    expect(argv).not.toContain('-p');
     expect(argv.every((tok) => typeof tok === 'string')).toBe(true);
     expect(argv.some((tok) => tok === 'sh' || tok === '-c')).toBe(false);
+    // It travels via env, where it is a literal value no shell ever interprets.
+    expect(mysqlAdapter.dumpEnv?.({ environment: { MYSQL_ROOT_PASSWORD: evil } })).toEqual([
+      `MYSQL_PWD=${evil}`,
+    ]);
+  });
+});
+
+describe('backups: adapter credential matrix', () => {
+  it('postgres does NOT match pooler/API sidecars named like postgres', () => {
+    expect(postgresAdapter.match('postgrest/postgrest:v12')).toBe(false);
+    expect(postgresAdapter.match('mycorp/postgres-pgbouncer')).toBe(false);
+    expect(postgresAdapter.match('postgres:15-alpine')).toBe(true);
+    expect(matchAdapter('postgrest/postgrest')).toBeUndefined();
+  });
+
+  it('mongo offers an --oplog-dropped fallback only for oplog/replica-set failures', () => {
+    expect(
+      mongoAdapter.fallbackDumpCmd?.({}, 'error: --oplog mode only works on replica sets'),
+    ).toEqual(['mongodump', '--archive']);
+    expect(mongoAdapter.fallbackDumpCmd?.({}, 'Authentication failed')).toBeNull();
+  });
+
+  it('redis: REDISCLI_AUTH from REDIS_PASSWORD env, else --requirepass in Cmd', () => {
+    expect(redisAdapter.dumpEnv?.({ environment: ['REDIS_PASSWORD=pw'] })).toEqual([
+      'REDISCLI_AUTH=pw',
+    ]);
+    expect(
+      redisAdapter.dumpEnv?.({ command: ['redis-server', '--requirepass', 'cmdpw'] }),
+    ).toEqual(['REDISCLI_AUTH=cmdpw']);
+    expect(redisAdapter.dumpEnv?.({})).toEqual([]);
+  });
+
+  it('valkey: ships VALKEYCLI_AUTH + REDISCLI_AUTH; reads --requirepass from Cmd', () => {
+    expect(valkeyAdapter.dumpEnv?.({ environment: ['VALKEY_PASSWORD=vp'] })).toEqual([
+      'VALKEYCLI_AUTH=vp',
+      'REDISCLI_AUTH=vp',
+    ]);
+    expect(
+      valkeyAdapter.dumpEnv?.({ command: ['valkey-server', '--requirepass', 'vc'] }),
+    ).toEqual(['VALKEYCLI_AUTH=vc', 'REDISCLI_AUTH=vc']);
+    expect(valkeyAdapter.dumpEnv?.({})).toEqual([]);
+  });
+
+  it('verifyDump throws unless SAVE replied OK (redis-cli exits 0 even on NOAUTH)', () => {
+    expect(() => redisAdapter.verifyDump?.({ exitCode: 0, stdout: 'OK', stderr: '' })).not.toThrow();
+    expect(() =>
+      redisAdapter.verifyDump?.({ exitCode: 0, stdout: 'NOAUTH Authentication required.', stderr: '' }),
+    ).toThrow(/redis-cli SAVE did not return OK: NOAUTH/);
+    expect(() =>
+      valkeyAdapter.verifyDump?.({ exitCode: 0, stdout: '', stderr: 'boom' }),
+    ).toThrow(/valkey-cli SAVE did not return OK: boom/);
+    expect(() =>
+      redisAdapter.verifyDump?.({ exitCode: 0, stdout: '', stderr: '' }),
+    ).toThrow(/redis-cli SAVE did not return OK: empty reply/);
   });
 });
 
@@ -778,10 +892,12 @@ describe('backups: runBackup orchestration', () => {
   it('streams dump → restic --stdin and then backs up paths+configs', async () => {
     const { userId, projectId } = await seedProject();
     const { restic, docker } = makeMocks();
+    // The dump credential (POSTGRES_USER) now comes from the container inspect,
+    // exactly as it does in production (was composeServices).
+    docker.inspectEnv = ['POSTGRES_USER=app'];
     const result = await runBackup(projectId, userId, {
       resticRunner: restic,
       dockerClient: docker,
-      composeServices: { pg: { image: 'postgres:16', environment: { POSTGRES_USER: 'app' } } },
     });
     expect(result.status).toBe('success');
     expect(docker.calls[0]).toMatchObject({
@@ -822,7 +938,6 @@ describe('backups: runBackup orchestration', () => {
     const result = await runBackup(projectId, userId, {
       resticRunner: restic,
       dockerClient: docker,
-      composeServices: { cache: { image: 'redis:7' } },
     });
     expect(result.status).toBe('success');
     // Two execs: the SAVE dump, then cat of the produced artifact.
@@ -860,7 +975,6 @@ describe('backups: runBackup orchestration', () => {
     const result = await runBackup(projectId, userId, {
       resticRunner: restic,
       dockerClient: docker,
-      composeServices: { objects: { image: 'minio/minio' } },
     });
     expect(result.status).toBe('success');
     expect(docker.calls[1]).toMatchObject({
@@ -889,15 +1003,16 @@ describe('backups: runBackup orchestration', () => {
     }
     const { restic } = makeMocks();
     const docker: DockerClient = {
-      async exec() {
-        return new Readable({
-          read() {
-            this.destroy(new Error('stream boom'));
-          },
-        });
+      async exec(): Promise<never> {
+        throw new Error('exec not stubbed');
       },
-      async execCollect(): Promise<never> {
-        throw new Error('execCollect not stubbed');
+      async execStream(): Promise<never> {
+        throw new Error('execStream not stubbed');
+      },
+      // File-mode dump runs via execCollect; a rejection here fails the layer
+      // before the artifact is ever read.
+      async execCollect() {
+        throw new Error('stream boom');
       },
       async execWithStdin(): Promise<never> {
         throw new Error('execWithStdin not stubbed');
@@ -906,7 +1021,7 @@ describe('backups: runBackup orchestration', () => {
         throw new Error('restart not stubbed');
       },
       async inspect() {
-        return { id: '', running: true, env: [], image: '' };
+        return { id: '', running: true, env: [], cmd: [], image: '' };
       },
       async listContainers() {
         return [];
@@ -916,13 +1031,12 @@ describe('backups: runBackup orchestration', () => {
       runBackup(projectId, userId, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { cache: { image: 'redis:7' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
     expect(persisted?.lastStatus).toBe('failed');
     expect(persisted?.lastError).toMatch(/stream boom/);
-    // restic never ran because the dump stream errored first
+    // restic never ran because the dump errored first
     expect(restic.calls).toHaveLength(0);
   });
 
@@ -930,7 +1044,10 @@ describe('backups: runBackup orchestration', () => {
     const { userId, projectId } = await seedProject();
     const { restic } = makeMocks();
     const docker: DockerClient = {
-      async exec() {
+      async exec(): Promise<never> {
+        throw new Error('exec not stubbed');
+      },
+      async execStream() {
         throw new Error('docker down');
       },
       async execCollect(): Promise<never> {
@@ -942,8 +1059,8 @@ describe('backups: runBackup orchestration', () => {
       async restart(): Promise<never> {
         throw new Error('restart not stubbed');
       },
-      async inspect() {
-        return { id: '', running: false, env: [], image: '' };
+      async inspect(container) {
+        return { id: container, running: true, env: [], cmd: [], image: '' };
       },
       async listContainers() {
         return [];
@@ -953,12 +1070,273 @@ describe('backups: runBackup orchestration', () => {
       runBackup(projectId, userId, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
     expect(persisted?.lastStatus).toBe('failed');
     expect(restic.calls).toHaveLength(0);
+  });
+
+  it('marks failed when the target DB container is not running', async () => {
+    const { userId, projectId } = await seedProject();
+    const { restic, docker } = makeMocks();
+    docker.inspectRunning = false;
+    await expect(
+      runBackup(projectId, userId, {
+        resticRunner: restic,
+        dockerClient: docker,
+      }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastStatus).toBe('failed');
+    // The identity translator returns the key; production resolves it per-locale.
+    expect(persisted?.lastError).toMatch(/containerNotRunning/);
+    expect(restic.calls).toHaveLength(0);
+  });
+
+  // Swap the enabled DB layer's engine for a focused failure-branch test.
+  async function useDbLayer(
+    projectId: string,
+    layer: { service: string; type: string; container: string },
+  ): Promise<void> {
+    const p = await Project.findById(projectId);
+    if (!p) throw new Error('missing project');
+    p.plan.paths = [];
+    p.plan.configs = [];
+    p.plan.databases = [{ ...layer, enabled: true }] as typeof p.plan.databases;
+    await p.save();
+  }
+
+  it('surfaces the dump exit code + real stderr (not restic\'s "no data read")', async () => {
+    const { userId, projectId } = await seedProject();
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => ({
+      stdout: '',
+      exitCode: 1,
+      stderrTail: 'pg_dumpall: error: FATAL: role "postgres" does not exist',
+    });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/dumpFailed/); // key (identity t); exact text proven agent-side
+  });
+
+  it('partial-dump guard: restic succeeds but the dump exited non-zero → still fails', async () => {
+    const { userId, projectId } = await seedProject();
+    const { restic, docker } = makeMocks(); // restic resolves
+    docker.onExecStream = () => ({ stdout: 'partial', exitCode: 2, stderrTail: 'killed' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+  });
+
+  it('a non-fallback dump failure with empty stderr falls back to "no stderr"', async () => {
+    const { userId, projectId } = await seedProject();
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => ({ exitCode: 5, stderrTail: '' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/dumpFailed/);
+  });
+
+  it('mongo: appends root creds from inspect env and keeps --oplog when it works', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });
+    const { restic, docker } = makeMocks();
+    docker.inspectEnv = [
+      'MONGO_INITDB_ROOT_USERNAME=root',
+      'MONGO_INITDB_ROOT_PASSWORD=s3cret',
+    ];
+    const res = await runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker });
+    expect(res.status).toBe('success');
+    expect(docker.calls[0]?.argv).toEqual([
+      'mongodump',
+      '--archive',
+      '--oplog',
+      '-u',
+      'root',
+      '-p',
+      's3cret',
+      '--authenticationDatabase',
+      'admin',
+    ]);
+  });
+
+  it('mongo: retries without --oplog once on a standalone server', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = (argv) =>
+      argv.includes('--oplog')
+        ? { exitCode: 1, stderrTail: '--oplog mode only works on replica sets' }
+        : { exitCode: 0 };
+    const res = await runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker });
+    expect(res.status).toBe('success');
+    expect(docker.calls.map((c) => c.argv)).toEqual([
+      ['mongodump', '--archive', '--oplog'],
+      ['mongodump', '--archive'],
+    ]);
+  });
+
+  it('mongo: a retry that also fails surfaces the retry exit (+ "no stderr" fallback)', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = (argv) =>
+      argv.includes('--oplog')
+        ? { exitCode: 1, stderrTail: 'only works on replica sets' }
+        : { exitCode: 4, stderrTail: '' };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/dumpFailed/);
+  });
+
+  it('mongo: does NOT retry when the failure is unrelated to --oplog', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => ({ exitCode: 1, stderrTail: 'Authentication failed' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    expect(docker.calls).toHaveLength(1); // no retry
+  });
+
+  it('mongo: a restic failure after a successful --oplog-dropped retry surfaces the restic error', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });
+    const { docker } = makeMocks();
+    docker.onExecStream = (argv) =>
+      argv.includes('--oplog') ? { exitCode: 1, stderrTail: 'replica sets' } : { exitCode: 0 };
+    const restic: ResticRunner = {
+      async init() {},
+      async backup(_a, opts) {
+        if (opts?.stdin) opts.stdin.resume();
+        throw new Error('network down');
+      },
+      async snapshots() {
+        return [];
+      },
+      async snapshotsDetailed() {
+        return [];
+      },
+      async check() {},
+      async restore() {},
+      async dump(): Promise<never> {
+        throw new Error('dump not stubbed');
+      },
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/restic dump failed: network down/);
+  });
+
+  it('redis: forwards REDISCLI_AUTH via exec env and never puts it in argv', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.inspectEnv = ['REDIS_PASSWORD=hunter2'];
+    const res = await runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker });
+    expect(res.status).toBe('success');
+    const save = docker.calls.find((c) => c.argv.includes('SAVE'));
+    expect(save?.env).toEqual(['REDISCLI_AUTH=hunter2']);
+    expect(save?.argv).toEqual(['redis-cli', 'SAVE']);
+  });
+
+  it('redis: a non-OK SAVE reply fails the layer (NOAUTH → never a stale backup)', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecCollect = () => ({ exitCode: 0, stdout: 'NOAUTH Authentication required.' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/SAVE did not return OK: NOAUTH/);
+    expect(restic.calls).toHaveLength(0);
+  });
+
+  it('file-mode: a non-zero dump exit fails before the artifact read (+ "no stderr")', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecCollect = () => ({ exitCode: 1, stdout: '', stderr: '' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/dumpFailed/);
+    // Only the SAVE ran — the cat artifact-read never fired.
+    expect(docker.calls).toHaveLength(1);
+  });
+
+  it('file-mode: a non-zero artifact-read exit fails the layer (+ "no stderr")', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => ({ exitCode: 1, stderrTail: '' });
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/artifact read failed.*exit 1.*no stderr/);
+  });
+
+  it('file-mode: a restic failure on the artifact stream surfaces "restic dump failed"', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { docker } = makeMocks();
+    const restic: ResticRunner = {
+      async init() {},
+      async backup(_a, opts) {
+        if (opts?.stdin) opts.stdin.resume();
+        throw new Error('repo locked');
+      },
+      async snapshots() {
+        return [];
+      },
+      async snapshotsDetailed() {
+        return [];
+      },
+      async check() {},
+      async restore() {},
+      async dump(): Promise<never> {
+        throw new Error('dump not stubbed');
+      },
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/restic dump failed: repo locked/);
+  });
+
+  it('file-mode: wraps a non-Error artifact-read setup rejection', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic } = makeMocks();
+    const base = makeMocks().docker;
+    const docker: DockerClient = {
+      ...base,
+      async execCollect() {
+        return { exitCode: 0, stdout: 'OK', stderr: '' };
+      },
+      async execStream(): Promise<never> {
+        throw 'raw cat failure';
+      },
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/artifact read failed for cache: raw cat failure/);
   });
 
   it('marks failed when the paths layer errors after a successful DB layer', async () => {
@@ -988,7 +1366,6 @@ describe('backups: runBackup orchestration', () => {
       runBackup(projectId, userId, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -996,14 +1373,16 @@ describe('backups: runBackup orchestration', () => {
     expect(persisted?.lastError).toMatch(/restic path fail/);
   });
 
-  it('bubbles a localized error when no adapter matches the compose service', async () => {
+  it('bubbles a localized error when no adapter matches the inspected image', async () => {
     const { userId, projectId } = await seedProject();
     const { restic, docker } = makeMocks();
+    // The plan says type "postgres" but the running image is unrecognized —
+    // the inspected image wins and matches nothing.
+    docker.inspectImage = 'unknown';
     await expect(
       runBackup(projectId, userId, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { pg: { image: 'unknown' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
   });
@@ -1030,7 +1409,6 @@ describe('backups: runBackup orchestration', () => {
       resticRunner: restic,
       dockerClient: docker,
       diskProbe: { freeBytes: async () => 10 ** 12 },
-      composeServices: { pg: { image: 'postgres:16' } },
     });
     expect(result.status).toBe('success');
   });
@@ -1043,12 +1421,11 @@ describe('backups: runBackup orchestration', () => {
       runBackup(projectId, stranger.id, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 404 });
   });
 
-  it('emits argv (never a shell string) even when compose env carries metacharacters', async () => {
+  it('emits argv (never a shell string) and keeps a metacharacter password out of argv', async () => {
     const { userId, projectId } = await seedProject();
     // switch the enabled DB layer to mysql so we exercise the MYSQL_ROOT_PASSWORD path
     const p = await Project.findById(projectId);
@@ -1059,23 +1436,24 @@ describe('backups: runBackup orchestration', () => {
       await p.save();
     }
     const { restic, docker } = makeMocks();
+    docker.inspectImage = 'mysql:8';
+    docker.inspectEnv = ['MYSQL_ROOT_PASSWORD=$(rm -rf /);`id`'];
     const result = await runBackup(projectId, userId, {
       resticRunner: restic,
       dockerClient: docker,
-      composeServices: {
-        my: {
-          image: 'mysql:8',
-          environment: { MYSQL_ROOT_PASSWORD: '$(rm -rf /);`id`' },
-        },
-      },
     });
     expect(result.status).toBe('success');
-    const argv = docker.calls[0]?.argv ?? [];
+    const call = docker.calls[0];
+    const argv = call?.argv ?? [];
     expect(Array.isArray(argv)).toBe(true);
     expect(argv).toContain('mysqldump');
     expect(argv).not.toContain('sh');
     expect(argv).not.toContain('-c');
-    expect(argv[argv.length - 1]).toBe('-p$(rm -rf /);`id`');
+    // The password NEVER rides argv — it travels via MYSQL_PWD in the exec env,
+    // where it is an inert env value (no shell ever interprets it).
+    expect(argv.some((a) => a.includes('rm -rf'))).toBe(false);
+    expect(argv).not.toContain('-p');
+    expect(call?.env).toEqual(['MYSQL_PWD=$(rm -rf /);`id`']);
   });
 });
 

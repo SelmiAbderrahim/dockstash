@@ -3,12 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   assertArgvSafe,
   collectStats,
-  drainStream,
   isPartialReadFailure,
   runBackupJob,
   type BackupDeps,
 } from './backup.js';
-import type { DockerClient } from './docker-client.js';
+import type { DockerClient, DockerInspectResult } from './docker-client.js';
 import type { ResticRunnerExt, ResticSnapshotDetail, ResticStats } from './restic-runner.js';
 import type { ClaimedJob } from './types.js';
 
@@ -67,25 +66,69 @@ function makeFakeRestic(opts: FakeResticOptions = {}): {
   return { restic, calls };
 }
 
-interface FakeDockerOptions {
-  exec?(container: string, argv: string[]): Promise<Readable>;
+interface StreamOutcome {
+  stdout?: string;
+  exitCode?: number;
+  stderrTail?: string;
+  streamError?: Error;
+}
+interface CollectOutcome {
+  exitCode?: number;
+  stdout?: string;
+  stderr?: string;
 }
 
-function makeFakeDocker(opts: FakeDockerOptions = {}): {
+interface FakeDockerOptions {
+  /** Override the inspect result (merged over sensible running defaults). */
+  inspect?(container: string): Partial<DockerInspectResult>;
+  /** Control an execStream: return the dump's stdout + exit, or throw to fail setup. */
+  onExecStream?(container: string, argv: string[]): StreamOutcome;
+  /** Control an execCollect: return the dump's exit + channels, or throw to fail setup. */
+  onExecCollect?(container: string, argv: string[]): CollectOutcome;
+}
+
+interface FakeDocker {
   docker: DockerClient;
+  /** Every execStream/execCollect as {container, argv} in call order (inspect excluded). */
   calls: Array<{ container: string; argv: string[] }>;
-} {
-  const calls: Array<{ container: string; argv: string[] }> = [];
+  /** execStream invocations with the env passed — for asserting secrets ride env, not argv. */
+  streams: Array<{ container: string; argv: string[]; env?: string[] }>;
+  /** execCollect invocations with the env passed. */
+  collects: Array<{ container: string; argv: string[]; env?: string[] }>;
+  inspects: string[];
+}
+
+function makeFakeDocker(opts: FakeDockerOptions = {}): FakeDocker {
+  const calls: FakeDocker['calls'] = [];
+  const streams: FakeDocker['streams'] = [];
+  const collects: FakeDocker['collects'] = [];
+  const inspects: string[] = [];
   const docker: DockerClient = {
-    async exec(container, argv) {
-      calls.push({ container, argv });
-      if (opts.exec) return opts.exec(container, argv);
-      const stream = new PassThrough();
-      stream.end('dump-output');
-      return stream;
+    async exec() {
+      throw new Error('exec not used by runBackupJob');
     },
-    async execCollect() {
-      throw new Error('execCollect not stubbed');
+    async execStream(container, argv, execOpts) {
+      calls.push({ container, argv });
+      streams.push({ container, argv, env: execOpts?.env });
+      const r = opts.onExecStream ? opts.onExecStream(container, argv) : {};
+      const stream = new PassThrough();
+      if (r.streamError) {
+        const err = r.streamError;
+        queueMicrotask(() => stream.destroy(err));
+      } else {
+        stream.end(r.stdout ?? 'dump-output');
+      }
+      return {
+        stream,
+        exit: async () => ({ exitCode: r.exitCode ?? 0, stderrTail: r.stderrTail ?? '' }),
+      };
+    },
+    async execCollect(container, argv, env) {
+      calls.push({ container, argv });
+      collects.push({ container, argv, env });
+      const r = opts.onExecCollect ? opts.onExecCollect(container, argv) : {};
+      // Default stdout 'OK' so redis/valkey verifyDump passes on the happy path.
+      return { exitCode: r.exitCode ?? 0, stdout: r.stdout ?? 'OK', stderr: r.stderr ?? '' };
     },
     async execWithStdin() {
       throw new Error('execWithStdin not stubbed');
@@ -94,13 +137,21 @@ function makeFakeDocker(opts: FakeDockerOptions = {}): {
       throw new Error('restart not stubbed');
     },
     async inspect(container) {
-      return { id: container, running: true, env: [], image: '' };
+      inspects.push(container);
+      return {
+        id: container,
+        running: true,
+        env: [],
+        cmd: [],
+        image: '',
+        ...(opts.inspect ? opts.inspect(container) : {}),
+      };
     },
     async listContainers() {
       return [];
     },
   };
-  return { docker, calls };
+  return { docker, calls, streams, collects, inspects };
 }
 
 function baseJob(overrides: Partial<ClaimedJob> = {}): ClaimedJob {
@@ -131,22 +182,6 @@ describe('assertArgvSafe', () => {
 
   it('throws when a token contains a NUL byte', () => {
     expect(() => assertArgvSafe(['ok', 'bad\0token'])).toThrow(/NUL byte/);
-  });
-});
-
-describe('drainStream', () => {
-  it('resolves once the stream ends', async () => {
-    const stream = new PassThrough();
-    const done = drainStream(stream);
-    stream.end('ignored payload');
-    await expect(done).resolves.toBeUndefined();
-  });
-
-  it('rejects when the stream errors', async () => {
-    const stream = new PassThrough();
-    const done = drainStream(stream);
-    stream.emit('error', new Error('stream broke'));
-    await expect(done).rejects.toThrow('stream broke');
   });
 });
 
@@ -351,11 +386,11 @@ describe('runBackupJob', () => {
     );
   });
 
-  it('wraps docker exec failures as "dump failed for <service>"', async () => {
+  it('wraps docker exec-stream setup failures as "dump failed for <service>"', async () => {
     const { restic } = makeFakeRestic();
     const { docker } = makeFakeDocker({
-      exec: async () => {
-        throw new Error('container not running');
+      onExecStream: () => {
+        throw new Error('exec create failed');
       },
     });
     const job = baseJob({
@@ -366,14 +401,16 @@ describe('runBackupJob', () => {
       },
     });
     await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
-      /dump failed for db: container not running/,
+      /dump failed for db: exec create failed/,
     );
   });
 
   it('normalizes a non-Error docker exec rejection into a string message', async () => {
     const { restic } = makeFakeRestic();
     const { docker } = makeFakeDocker({
-      exec: () => Promise.reject('container gone'),
+      onExecStream: () => {
+        throw 'container gone';
+      },
     });
     const job = baseJob({
       plan: {
@@ -545,5 +582,513 @@ describe('runBackupJob', () => {
     );
     expect(resticCalls).toHaveLength(0);
     expect(dockerCalls).toHaveLength(0);
+  });
+
+  // ── Container env → real dump credentials (the labib root cause) ──────────
+
+  it('postgres: uses POSTGRES_USER from the inspected container env (labib repro)', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({ image: 'postgres:15-alpine', env: ['POSTGRES_USER=labib_user'] }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'labib_db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(streams[0]?.argv).toEqual([
+      'pg_dumpall',
+      '--clean',
+      '--if-exists',
+      '-U',
+      'labib_user',
+    ]);
+  });
+
+  it('fails fast when the target container is not running — restic is never touched', async () => {
+    const { restic, calls: resticCalls } = makeFakeRestic();
+    const { docker, calls: dockerCalls } = makeFakeDocker({
+      inspect: () => ({ running: false }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /container c1 is not running — start it or disable this database layer/,
+    );
+    // Only the inspect ran; no dump exec, no restic.
+    expect(dockerCalls).toHaveLength(0);
+    expect(resticCalls.filter((c) => c.op === 'backup')).toHaveLength(0);
+  });
+
+  it('surfaces the dump exit code + real stderr, not restic\'s "no data read"', async () => {
+    // The dump exits 1 writing nothing; restic then fails on empty stdin. The
+    // job error must quote the DUMP failure (role does not exist), the real
+    // cause — never the downstream "no data read" symptom.
+    const { restic } = makeFakeRestic({
+      onBackup: () => {
+        throw new Error('restic backup exit 3: read /db.dump: no data read');
+      },
+    });
+    const { docker } = makeFakeDocker({
+      onExecStream: () => ({
+        stdout: '',
+        exitCode: 1,
+        stderrTail: 'pg_dumpall: error: FATAL: role "postgres" does not exist',
+      }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for db \(exit 1\): pg_dumpall: error: FATAL: role "postgres" does not exist/,
+    );
+  });
+
+  it('partial-dump guard: restic SUCCEEDS but the dump exited non-zero → job still FAILS', async () => {
+    // Regression: a dump that dies after emitting partial bytes leaves restic
+    // happy (snapshot created) — without the exit check this was recorded as a
+    // successful backup of a corrupt dump.
+    const { restic } = makeFakeRestic(); // restic.backup resolves fine
+    const { docker } = makeFakeDocker({
+      onExecStream: () => ({ stdout: 'partial', exitCode: 2, stderrTail: 'killed mid-dump' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for db \(exit 2\): killed mid-dump/,
+    );
+  });
+
+  it('a non-fallback dump failure with empty stderr falls back to "no stderr"', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      onExecStream: () => ({ exitCode: 5, stderrTail: '' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'postgres', container: 'c1', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for db \(exit 5\): no stderr/,
+    );
+  });
+
+  // ── Mongo credentials + standalone --oplog fallback ───────────────────────
+
+  it('mongo: appends root creds from env and keeps --oplog when it works', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({
+        image: 'mongo:7',
+        env: ['MONGO_INITDB_ROOT_USERNAME=root', 'MONGO_INITDB_ROOT_PASSWORD=s3cr3t'],
+      }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(streams).toHaveLength(1);
+    expect(streams[0]?.argv).toEqual([
+      'mongodump',
+      '--archive',
+      '--oplog',
+      '-u',
+      'root',
+      '-p',
+      's3cr3t',
+      '--authenticationDatabase',
+      'admin',
+    ]);
+  });
+
+  it('mongo: retries WITHOUT --oplog once when the server is standalone', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({ image: 'mongo:7' }),
+      onExecStream: (_c, argv) =>
+        argv.includes('--oplog')
+          ? { exitCode: 1, stderrTail: 'error: --oplog mode only works on replica sets' }
+          : { exitCode: 0 },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(streams.map((s) => s.argv)).toEqual([
+      ['mongodump', '--archive', '--oplog'],
+      ['mongodump', '--archive'], // retry dropped --oplog
+    ]);
+  });
+
+  it('mongo: does NOT retry when the failure is unrelated to --oplog', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({ image: 'mongo:7' }),
+      onExecStream: () => ({ exitCode: 1, stderrTail: 'Authentication failed' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for mongo \(exit 1\): Authentication failed/,
+    );
+    expect(streams).toHaveLength(1); // no retry
+  });
+
+  // ── MySQL/MariaDB: password via env, never argv ───────────────────────────
+
+  it('mysql: password rides MYSQL_PWD in the exec env, never the argv; no bare -p', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({ image: 'mysql:8', env: ['MYSQL_ROOT_PASSWORD=rootpw'] }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'mysql', container: 'c-mysql', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(streams[0]?.argv).toEqual([
+      'mysqldump',
+      '--single-transaction',
+      '--routines',
+      '--triggers',
+      '--all-databases',
+      '-uroot',
+    ]);
+    expect(streams[0]?.env).toEqual(['MYSQL_PWD=rootpw']);
+    expect(streams[0]?.argv.some((a) => a.includes('rootpw'))).toBe(false);
+    expect(streams[0]?.argv).not.toContain('-p');
+  });
+
+  it('mariadb: empty password → no MYSQL_PWD env and no -p token', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, streams } = makeFakeDocker({
+      inspect: () => ({ image: 'mariadb:11' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'db', type: 'mariadb', container: 'c-maria', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    expect(streams[0]?.env).toEqual([]); // no MYSQL_PWD → docker-client omits Env
+    expect(streams[0]?.argv).not.toContain('-p');
+  });
+
+  // ── Redis/Valkey: auth via env, requirepass from Cmd, SAVE reply verified ──
+
+  it('redis: REDISCLI_AUTH from REDIS_PASSWORD env; secret never in argv', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, collects } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7', env: ['REDIS_PASSWORD=hunter2'] }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    const saveCall = collects.find((c) => c.argv.includes('SAVE'));
+    expect(saveCall?.env).toEqual(['REDISCLI_AUTH=hunter2']);
+    expect(saveCall?.argv).toEqual(['redis-cli', 'SAVE']);
+  });
+
+  it('redis: reads --requirepass from the container Cmd when no env password', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, collects } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7', cmd: ['redis-server', '--requirepass', 'fromcmd'] }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await runBackupJob(job, makeDeps(restic, docker));
+    const saveCall = collects.find((c) => c.argv.includes('SAVE'));
+    expect(saveCall?.env).toEqual(['REDISCLI_AUTH=fromcmd']);
+  });
+
+  it('redis: a non-OK SAVE reply fails the layer (NOAUTH → never a stale backup)', async () => {
+    const { restic, calls: resticCalls } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      onExecCollect: () => ({ exitCode: 0, stdout: 'NOAUTH Authentication required.' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /redis-cli SAVE did not return OK: NOAUTH Authentication required\./,
+    );
+    // The stale /data/dump.rdb was never streamed to restic.
+    expect(resticCalls.filter((c) => c.op === 'backup')).toHaveLength(0);
+  });
+
+  it('file-mode: a non-zero dump exit fails BEFORE the artifact read (cat)', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker, calls: dockerCalls } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      // Empty stderr exercises the "no stderr" fallback in the message.
+      onExecCollect: () => ({ exitCode: 1, stdout: '', stderr: '' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for cache \(exit 1\): no stderr/,
+    );
+    // Only the SAVE ran; the cat artifact-read never fired.
+    expect(dockerCalls).toEqual([{ container: 'c-redis', argv: ['redis-cli', 'SAVE'] }]);
+  });
+
+  it('file-mode: a non-zero artifact-read exit fails the layer', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      onExecStream: () => ({ exitCode: 1, stderrTail: 'cat: /data/dump.rdb: No such file' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /artifact read failed for cache \(exit 1\): cat: \/data\/dump\.rdb: No such file/,
+    );
+  });
+
+  it('file-mode: an artifact-read exit with empty stderr falls back to "no stderr"', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      onExecStream: () => ({ exitCode: 1, stderrTail: '' }),
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /artifact read failed for cache \(exit 1\): no stderr/,
+    );
+  });
+
+  it('file-mode: normalizes a non-Error artifact-read setup rejection', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      onExecStream: () => {
+        throw 'raw cat failure';
+      },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /artifact read failed for cache: raw cat failure/,
+    );
+  });
+
+  it('file-mode: wraps an execCollect (dump) setup failure as "dump failed for <service>"', async () => {
+    const { restic } = makeFakeRestic();
+    const docker: DockerClient = {
+      ...makeFakeDocker({ inspect: () => ({ image: 'redis:7' }) }).docker,
+      async execCollect() {
+        throw new Error('exec create failed');
+      },
+    };
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for cache: exec create failed/,
+    );
+  });
+
+  it('file-mode: wraps an artifact-read execStream setup failure', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'redis:7' }),
+      onExecStream: () => {
+        throw new Error('cat exec create failed');
+      },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /artifact read failed for cache: cat exec create failed/,
+    );
+  });
+
+  it('file-mode: a restic failure on the artifact stream surfaces as "restic dump failed"', async () => {
+    const { restic } = makeFakeRestic({
+      onBackup: () => {
+        throw new Error('repo locked');
+      },
+    });
+    const { docker } = makeFakeDocker({ inspect: () => ({ image: 'redis:7' }) });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /restic dump failed: repo locked/,
+    );
+  });
+
+  it('mongo: a retry that also fails surfaces the retry exit + stderr', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'mongo:7' }),
+      onExecStream: (_c, argv) =>
+        argv.includes('--oplog')
+          ? { exitCode: 1, stderrTail: '--oplog mode only works on replica sets' }
+          : { exitCode: 1, stderrTail: 'disk full' },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for mongo \(exit 1\): disk full/,
+    );
+  });
+
+  it('mongo: a retry that fails with empty stderr falls back to "no stderr"', async () => {
+    const { restic } = makeFakeRestic();
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'mongo:7' }),
+      onExecStream: (_c, argv) =>
+        argv.includes('--oplog')
+          ? { exitCode: 1, stderrTail: 'only works on replica sets' }
+          : { exitCode: 4, stderrTail: '' },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for mongo \(exit 4\): no stderr/,
+    );
+  });
+
+  it('file-mode: normalizes a non-Error execCollect (dump) setup rejection', async () => {
+    const { restic } = makeFakeRestic();
+    const docker: DockerClient = {
+      ...makeFakeDocker({ inspect: () => ({ image: 'redis:7' }) }).docker,
+      async execCollect() {
+        throw 'raw dump setup failure';
+      },
+    };
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'cache', type: 'redis', container: 'c-redis', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /dump failed for cache: raw dump setup failure/,
+    );
+  });
+
+  it('mongo: a restic failure AFTER a successful --oplog-dropped retry surfaces as "restic dump failed"', async () => {
+    const { restic } = makeFakeRestic({
+      onBackup: () => {
+        throw new Error('network down');
+      },
+    });
+    const { docker } = makeFakeDocker({
+      inspect: () => ({ image: 'mongo:7' }),
+      onExecStream: (_c, argv) =>
+        argv.includes('--oplog')
+          ? { exitCode: 1, stderrTail: 'only works on replica sets' }
+          : { exitCode: 0 },
+    });
+    const job = baseJob({
+      plan: {
+        paths: [],
+        configs: [],
+        databases: [{ service: 'mongo', type: 'mongo', container: 'c-mongo', enabled: true }],
+      },
+    });
+    await expect(runBackupJob(job, makeDeps(restic, docker))).rejects.toThrow(
+      /restic dump failed: network down/,
+    );
   });
 });

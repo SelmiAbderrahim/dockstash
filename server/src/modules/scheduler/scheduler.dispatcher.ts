@@ -12,7 +12,6 @@ import type {
   DbDiffer,
   DiskSpaceProbe,
 } from '../backups/backups.boundaries.js';
-import type { ComposeService } from '../backups/backups.adapters.js';
 import { runRestore } from '../backups/backups.restore.service.js';
 import { runMirror } from '../backups/backups.mirror.service.js';
 import { runPrune } from './scheduler.prune.service.js';
@@ -37,7 +36,6 @@ export interface DispatchDeps {
   fileDiff?: FileDiffer;
   dbDiff?: DbDiffer;
   diskProbe?: DiskSpaceProbe;
-  composeServices?: Record<string, ComposeService>;
 }
 
 /**
@@ -58,7 +56,6 @@ export async function dispatchJob(job: Job, deps: DispatchDeps): Promise<void> {
         resticRunner: deps.resticRunner,
         dockerClient: deps.dockerClient,
         diskProbe: deps.diskProbe,
-        composeServices: deps.composeServices,
       });
       return;
     }

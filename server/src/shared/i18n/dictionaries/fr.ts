@@ -217,6 +217,8 @@ export const fr: DictionaryShape = {
       discoverFailed: 'Échec de la découverte : {{message}}',
       noAdapter: 'Aucun adaptateur de sauvegarde ne correspond au service {{service}}.',
       dumpFailed: 'Échec du dump de la base de données pour {{service}} : {{message}}',
+      containerNotRunning:
+        "Le conteneur {{container}} n'est pas en cours d'exécution — démarrez-le ou désactivez cette couche de base de données.",
       resticFailed: 'Échec de la sauvegarde Restic : {{message}}',
       backupFailed: 'Échec de la sauvegarde : {{message}}',
       noSpace: 'Espace disque insuffisant (libre={{free}} octets).',

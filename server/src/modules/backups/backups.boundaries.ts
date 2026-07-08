@@ -91,19 +91,45 @@ export interface DockerExecResult {
 
 /**
  * `docker inspect` subset. `env` is Config.Env (`["KEY=VAL"]`) — the
- * credential source for DB restores; `image` the configured image reference.
+ * credential source for DB dumps and restores; `cmd` is Config.Cmd (e.g. a
+ * redis `--requirepass` flag); `image` the configured image reference.
  */
 export interface DockerInspectResult {
   id: string;
   running: boolean;
   env: string[];
+  cmd: string[];
   image: string;
+}
+
+/**
+ * A streaming exec whose completion is observable: `stream` is the demuxed
+ * stdout; `exit()` resolves once the attach stream ends with the exec exit
+ * code and the last ~4KB of stderr — the dump-side truth restic cannot see.
+ */
+export interface DockerExecStream {
+  stream: Readable;
+  exit(): Promise<{ exitCode: number; stderrTail: string }>;
 }
 
 export interface DockerClient {
   exec(container: string, argv: string[]): Promise<Readable>;
+  /**
+   * Streaming exec with exit-code + stderr observability. `env` entries
+   * (`KEY=VAL`) reach the in-container process environment — the transport
+   * for dump credentials so secrets never ride argv.
+   */
+  execStream(
+    container: string,
+    argv: string[],
+    opts?: { env?: string[] },
+  ): Promise<DockerExecStream>;
   /** Exec to completion; buffers stdout/stderr and reports the exit code. */
-  execCollect(container: string, argv: string[]): Promise<DockerExecResult>;
+  execCollect(
+    container: string,
+    argv: string[],
+    env?: string[],
+  ): Promise<DockerExecResult>;
   /** Exec with `stdin` streamed to the process (`docker exec -i` equivalent). */
   execWithStdin(
     container: string,

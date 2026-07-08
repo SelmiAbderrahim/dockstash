@@ -458,6 +458,9 @@ describe('runRestore: overwrite classification (paths pre-flight + DB restore)',
       async exec() {
         throw new Error('unused');
       },
+      async execStream() {
+        throw new Error('unused');
+      },
       async execCollect(container, argv) {
         execCalls.push({ container, argv });
         return { exitCode: 0, stdout: '', stderr: '' };
@@ -470,7 +473,7 @@ describe('runRestore: overwrite classification (paths pre-flight + DB restore)',
         restartCalls.push(container);
       },
       async inspect(container) {
-        return opts.inspect ?? { id: container, running: true, env: [], image: 'redis:7-alpine' };
+        return opts.inspect ?? { id: container, running: true, env: [], cmd: [], image: 'redis:7-alpine' };
       },
       async listContainers() {
         return [];
@@ -559,7 +562,7 @@ describe('runRestore: overwrite classification (paths pre-flight + DB restore)',
     const { id, projectId } = await seedRedisProject();
     const runner = dumpingRunner();
     const { docker, restartCalls } = stubDocker({
-      inspect: { id: 'thakaatprodredis', running: true, env: [], image: '' },
+      inspect: { id: 'thakaatprodredis', running: true, env: [], cmd: [], image: '' },
     });
     await runRestore(
       projectId,
@@ -624,7 +627,7 @@ describe('runRestore: overwrite classification (paths pre-flight + DB restore)',
     const { id, projectId } = await seedRedisProject();
     const runner = dumpingRunner();
     const { docker } = stubDocker({
-      inspect: { id: 'thakaatprodredis', running: false, env: [], image: 'redis:7-alpine' },
+      inspect: { id: 'thakaatprodredis', running: false, env: [], cmd: [], image: 'redis:7-alpine' },
     });
     await expect(
       runRestore(
@@ -653,7 +656,7 @@ describe('runRestore: overwrite classification (paths pre-flight + DB restore)',
       ]),
     });
     const { docker } = stubDocker({
-      inspect: { id: 'c-ch', running: true, env: [], image: 'clickhouse/clickhouse-server:24' },
+      inspect: { id: 'c-ch', running: true, env: [], cmd: [], image: 'clickhouse/clickhouse-server:24' },
     });
     await expect(
       runRestore(

@@ -49,44 +49,42 @@ describe('readServiceEnv', () => {
   });
 });
 
-describe('readServiceEnvAny (via mariadbAdapter)', () => {
-  it('prefers MARIADB_ROOT_PASSWORD', () => {
-    expect(
-      mariadbAdapter.dumpCmd({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } }),
-    ).toEqual([
-      'mariadb-dump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-pmm',
+const MARIADB_ARGV = [
+  'mariadb-dump',
+  '--single-transaction',
+  '--routines',
+  '--triggers',
+  '--all-databases',
+  '-uroot',
+];
+const MYSQL_ARGV = [
+  'mysqldump',
+  '--single-transaction',
+  '--routines',
+  '--triggers',
+  '--all-databases',
+  '-uroot',
+];
+
+describe('mariadbAdapter password (via MYSQL_PWD env, never argv)', () => {
+  it('argv carries no password token in any case', () => {
+    expect(mariadbAdapter.dumpCmd({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } })).toEqual(
+      MARIADB_ARGV,
+    );
+    expect(mariadbAdapter.dumpCmd({})).toEqual(MARIADB_ARGV);
+  });
+
+  it('prefers MARIADB_ROOT_PASSWORD, falls back to legacy MYSQL_ROOT_PASSWORD', () => {
+    expect(mariadbAdapter.dumpEnv?.({ environment: { MARIADB_ROOT_PASSWORD: 'mm' } })).toEqual([
+      'MYSQL_PWD=mm',
+    ]);
+    expect(mariadbAdapter.dumpEnv?.({ environment: { MYSQL_ROOT_PASSWORD: 'm' } })).toEqual([
+      'MYSQL_PWD=m',
     ]);
   });
 
-  it('falls back to the legacy MYSQL_ROOT_PASSWORD key', () => {
-    const legacy = { environment: { MYSQL_ROOT_PASSWORD: 'm' } };
-    expect(mariadbAdapter.dumpCmd(legacy)).toEqual([
-      'mariadb-dump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-pm',
-    ]);
-  });
-
-  it('falls back to an empty password when neither key is present', () => {
-    expect(mariadbAdapter.dumpCmd({})).toEqual([
-      'mariadb-dump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-p',
-    ]);
+  it('emits no env when neither password key is present (no bare -p prompt)', () => {
+    expect(mariadbAdapter.dumpEnv?.({})).toEqual([]);
   });
 });
 
@@ -107,34 +105,97 @@ describe('postgresAdapter', () => {
       'postgres',
     ]);
   });
+
+  it('does NOT match pooler/API sidecars whose image name contains "postgres"', () => {
+    expect(postgresAdapter.match('postgrest/postgrest:v12')).toBe(false);
+    expect(postgresAdapter.match('mycorp/postgres-pgbouncer')).toBe(false);
+    expect(postgresAdapter.match('postgres:15-alpine')).toBe(true);
+  });
 });
 
-describe('mysqlAdapter', () => {
-  it('reads MYSQL_ROOT_PASSWORD, defaulting to empty', () => {
-    expect(mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual([
-      'mysqldump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-ps3cret',
+describe('mysqlAdapter password (via MYSQL_PWD env, never argv)', () => {
+  it('argv carries no password token; env carries MYSQL_PWD when set', () => {
+    expect(mysqlAdapter.dumpCmd({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual(
+      MYSQL_ARGV,
+    );
+    expect(mysqlAdapter.dumpEnv?.({ environment: ['MYSQL_ROOT_PASSWORD=s3cret'] })).toEqual([
+      'MYSQL_PWD=s3cret',
     ]);
-    expect(mysqlAdapter.dumpCmd({})).toEqual([
-      'mysqldump',
-      '--single-transaction',
-      '--routines',
-      '--triggers',
-      '--all-databases',
-      '-uroot',
-      '-p',
-    ]);
+    expect(mysqlAdapter.dumpCmd({})).toEqual(MYSQL_ARGV);
+    expect(mysqlAdapter.dumpEnv?.({})).toEqual([]);
   });
 });
 
 describe('mongoAdapter', () => {
-  it('dumps via mongodump --archive --oplog', () => {
+  it('dumps via mongodump --archive --oplog when no root creds are set', () => {
     expect(mongoAdapter.dumpCmd({})).toEqual(['mongodump', '--archive', '--oplog']);
+  });
+
+  it('appends root credentials from MONGO_INITDB_ROOT_* env', () => {
+    expect(
+      mongoAdapter.dumpCmd({
+        environment: {
+          MONGO_INITDB_ROOT_USERNAME: 'root',
+          MONGO_INITDB_ROOT_PASSWORD: 'pw',
+        },
+      }),
+    ).toEqual([
+      'mongodump',
+      '--archive',
+      '--oplog',
+      '-u',
+      'root',
+      '-p',
+      'pw',
+      '--authenticationDatabase',
+      'admin',
+    ]);
+  });
+
+  it('offers an --oplog-dropped fallback only for oplog/replica-set failures', () => {
+    const dropped = mongoAdapter.fallbackDumpCmd?.({}, 'error: --oplog mode only works on replica sets');
+    expect(dropped).toEqual(['mongodump', '--archive']);
+    expect(mongoAdapter.fallbackDumpCmd?.({}, 'Authentication failed')).toBeNull();
+  });
+});
+
+describe('redis/valkey credentials + SAVE verification', () => {
+  it('redis: REDISCLI_AUTH from REDIS_PASSWORD env, else --requirepass in Cmd', () => {
+    expect(redisAdapter.dumpEnv?.({ environment: ['REDIS_PASSWORD=pw'] })).toEqual([
+      'REDISCLI_AUTH=pw',
+    ]);
+    expect(
+      redisAdapter.dumpEnv?.({ command: ['redis-server', '--requirepass', 'cmdpw'] }),
+    ).toEqual(['REDISCLI_AUTH=cmdpw']);
+    expect(redisAdapter.dumpEnv?.({})).toEqual([]);
+  });
+
+  it('valkey: ships both VALKEYCLI_AUTH and REDISCLI_AUTH', () => {
+    expect(valkeyAdapter.dumpEnv?.({ environment: ['VALKEY_PASSWORD=vp'] })).toEqual([
+      'VALKEYCLI_AUTH=vp',
+      'REDISCLI_AUTH=vp',
+    ]);
+    expect(valkeyAdapter.dumpEnv?.({})).toEqual([]);
+  });
+
+  it('verifyDump throws unless SAVE replied OK (redis-cli exits 0 even on NOAUTH)', () => {
+    expect(() => redisAdapter.verifyDump?.({ exitCode: 0, stdout: 'OK', stderr: '' })).not.toThrow();
+    expect(() =>
+      redisAdapter.verifyDump?.({ exitCode: 0, stdout: 'NOAUTH Authentication required.', stderr: '' }),
+    ).toThrow(/redis-cli SAVE did not return OK: NOAUTH/);
+    expect(() =>
+      valkeyAdapter.verifyDump?.({ exitCode: 0, stdout: '', stderr: 'boom' }),
+    ).toThrow(/valkey-cli SAVE did not return OK: boom/);
+    // Neither stdout nor stderr → the "empty reply" fallback.
+    expect(() =>
+      redisAdapter.verifyDump?.({ exitCode: 0, stdout: '', stderr: '' }),
+    ).toThrow(/redis-cli SAVE did not return OK: empty reply/);
+  });
+
+  it('valkey: reads --requirepass from Cmd when no env password is set', () => {
+    expect(
+      valkeyAdapter.dumpEnv?.({ command: ['valkey-server', '--requirepass', 'vp'] }),
+    ).toEqual(['VALKEYCLI_AUTH=vp', 'REDISCLI_AUTH=vp']);
   });
 });
 
@@ -252,6 +313,9 @@ describe('ADAPTER_REGISTRY', () => {
       ['influxdb:2.7', ['influxdb']],
       ['neo4j:5', ['neo4j']],
       ['node:20', []],
+      // pooler/API sidecars whose name resembles postgres must match nothing.
+      ['postgrest/postgrest:v12', []],
+      ['mycorp/postgres-pgbouncer', []],
     ];
     for (const [img, expected] of cases) {
       const matched = ADAPTER_REGISTRY.filter((a) => a.match(img)).map((a) => a.type);

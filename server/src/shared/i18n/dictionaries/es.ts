@@ -217,6 +217,8 @@ export const es: DictionaryShape = {
       discoverFailed: 'Fallo en la detección: {{message}}',
       noAdapter: 'Ningún adaptador de copia de seguridad coincide con el servicio {{service}}.',
       dumpFailed: 'Fallo del volcado de base de datos para {{service}}: {{message}}',
+      containerNotRunning:
+        'El contenedor {{container}} no está en ejecución — inícialo o desactiva esta capa de base de datos.',
       resticFailed: 'Fallo de la copia Restic: {{message}}',
       backupFailed: 'La copia de seguridad falló: {{message}}',
       noSpace: 'Espacio en disco insuficiente (libre={{free}} bytes).',

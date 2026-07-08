@@ -217,6 +217,8 @@ export const ru: DictionaryShape = {
       discoverFailed: 'Не удалось выполнить обнаружение: {{message}}',
       noAdapter: 'Не найден адаптер резервного копирования для сервиса {{service}}.',
       dumpFailed: 'Ошибка дампа базы данных для {{service}}: {{message}}',
+      containerNotRunning:
+        'Контейнер {{container}} не запущен — запустите его или отключите этот слой базы данных.',
       resticFailed: 'Ошибка резервного копирования Restic: {{message}}',
       backupFailed: 'Резервное копирование завершилось с ошибкой: {{message}}',
       noSpace: 'Недостаточно места на диске (свободно={{free}} байт).',

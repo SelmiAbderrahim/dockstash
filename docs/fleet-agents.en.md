@@ -189,6 +189,28 @@ it is never silently retried.
   restic still cannot read some files (exit code 3), the snapshot is kept and
   the job succeeds with a warning listing the skipped files in the job log —
   backups never require changing anything inside the project.
+- **Database backup fails (`restic ... no data read`)** — this means the
+  dump command produced nothing. The agent inspects each database container
+  and derives credentials from its environment automatically — `POSTGRES_USER`
+  for Postgres, `MONGO_INITDB_ROOT_USERNAME`/`MONGO_INITDB_ROOT_PASSWORD` for
+  Mongo, and `REDIS_PASSWORD` (or a `--requirepass` flag) for Redis/Valkey — so
+  a wrong-user or missing-password dump is no longer silent: the failure now
+  quotes the real dump `stderr` (e.g. `role "labib_user" does not exist`).
+  Common causes and fixes:
+  - **Container not running** — a stopped database (including profile-gated
+    services) fails fast with `container <name> is not running`. Start it, or
+    disable that database layer for the project.
+  - **Standalone Mongo** — `mongodump --oplog` needs a replica set; on a
+    single-node Mongo the agent automatically retries once without `--oplog`,
+    so the backup still succeeds.
+  - **Password-protected Redis** — the `SAVE` reply is verified; a `NOAUTH`
+    reply fails the layer loudly instead of backing up a stale `dump.rdb`.
+    Ensure the password is exposed via `REDIS_PASSWORD` or the container's
+    `--requirepass` argument. (Note: `SAVE` briefly blocks the Redis event
+    loop while it forks the RDB snapshot.)
+  - **Non-default DB user with a hardened `pg_hba`** — if the dump `stderr`
+    now shows `password authentication failed`, the Postgres image requires a
+    password for the local socket; set it in the container environment.
 
 ### Troubleshooting empty folders
 

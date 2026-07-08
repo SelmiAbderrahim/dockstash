@@ -15,11 +15,17 @@ import { isAllowedProjectPath, isPathUnderRoots } from './backups.paths.js';
 import { scanProject, type BackupPlan } from './backups.scan.js';
 import type {
   DockerClient,
+  DockerExecStream,
   ResticRunner,
   DiskSpaceProbe,
 } from './backups.boundaries.js';
 import { MIN_FREE_BYTES_DEFAULT } from './backups.boundaries.js';
-import { matchAdapter, type ComposeService, type FileAdapter } from './backups.adapters.js';
+import {
+  matchAdapter,
+  type ComposeService,
+  type FileAdapter,
+  type StdinAdapter,
+} from './backups.adapters.js';
 import { dbSnapshotTag } from './backups.restore-plan.js';
 import type { CreateProjectInput } from './backups.schema.js';
 import path from 'node:path';
@@ -236,18 +242,12 @@ export async function scanProjectPath(
   }
 }
 
-/**
- * Compose services are only carried forward for their env — the adapter uses
- * them to build the dump argv. The service always trusts the plan for the
- * `container` identifier so we never re-derive it at run time.
- */
 export interface RunBackupDeps {
   t?: Translator;
   resticRunner: ResticRunner;
   dockerClient: DockerClient;
   diskProbe?: DiskSpaceProbe;
   minFreeBytes?: number;
-  composeServices?: Record<string, ComposeService>;
 }
 
 export interface RunBackupResult {
@@ -304,68 +304,31 @@ export async function runBackup(
   await markStatus(project, 'running', '');
 
   const layers: RunBackupResult['layers'] = [];
-  const composeServices = deps.composeServices ?? {};
 
   try {
     for (const db of project.plan.databases) {
       if (!db.enabled) continue;
-      const svc = composeServices[db.service] ?? { image: db.type };
-      const adapter = matchAdapter(svc.image ?? db.type);
+      // Inspect the container for its real image/env/cmd — the credential
+      // source the dump adapters need (POSTGRES_USER, MONGO creds, redis
+      // requirepass). A stopped container can never dump, so fail fast with an
+      // actionable hint. Mirrors the restore path's inspect step.
+      const inspected = await deps.dockerClient.inspect(db.container);
+      if (!inspected.running) {
+        throw new Error(t('backups.error.containerNotRunning', { container: db.container }));
+      }
+      const svc: ComposeService = {
+        image: inspected.image || db.type,
+        environment: inspected.env,
+        command: inspected.cmd,
+      };
+      const adapter = matchAdapter(svc.image);
       if (!adapter) {
         throw new Error(`no adapter matched service ${db.service}`);
       }
-      const argv = adapter.dumpCmd(svc);
-      assertArgvSafe(argv);
-      let stream;
-      try {
-        stream = await deps.dockerClient.exec(db.container, argv);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`dump failed for ${db.service}: ${message}`);
-      }
-      try {
-        if (adapter.mode === 'file') {
-          // File-artifact engines (RDB, snapshot-API, mirror/export tools): the
-          // dump produces an artifact INSIDE the container. restic runs
-          // host-side and cannot read that in-container path (a bare
-          // `restic backup <path>` fails "<path> does not exist, skipping").
-          // Wait for the dump, then stream the artifact OUT via a second exec
-          // (`cat` for a file, `tar` for a directory) into restic --stdin.
-          // `mode: 'file'` narrows the adapter union so dumpArtifactPath exists.
-          await drainStream(stream);
-          const { readArgv, stdinFilename } = artifactReadPlan(adapter, svc, db.service);
-          assertArgvSafe(readArgv);
-          const artifact = await deps.dockerClient.exec(db.container, readArgv);
-          await deps.resticRunner.backup(
-            [
-              'backup',
-              '--stdin',
-              '--stdin-filename',
-              stdinFilename,
-              // Tag DB-layer snapshots so restore can classify them without
-              // the filename heuristic (see classifySnapshot).
-              '--tag',
-              dbSnapshotTag(db.service, adapter.type),
-            ],
-            { stdin: artifact },
-          );
-        } else {
-          // stdin engines stream their dump straight into restic (no disk hop).
-          await deps.resticRunner.backup(
-            [
-              'backup',
-              '--stdin',
-              '--stdin-filename',
-              `${db.service}.dump`,
-              '--tag',
-              dbSnapshotTag(db.service, adapter.type),
-            ],
-            { stdin: stream },
-          );
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`restic dump failed: ${message}`);
+      if (adapter.mode === 'file') {
+        await backupFileLayer(db, adapter, svc, deps, t);
+      } else {
+        await backupStdinLayer(db, adapter, svc, deps, t);
       }
       layers.push({ kind: 'database', label: db.service, ok: true });
     }
@@ -454,17 +417,159 @@ function artifactReadPlan(
   };
 }
 
+/** A DB layer, narrowed to the fields the dump helpers read. */
+interface DbLayer {
+  service: string;
+  container: string;
+  type: string;
+}
+
 /**
- * Consume a container-exec stream to completion. For file-artifact adapters we
- * only need the dump command to finish before we stream the produced artifact
- * back out (see artifactReadPlan).
+ * Pipe a streaming exec's stdout into `restic backup --stdin`, then read the
+ * dump's OWN exit code and stderr tail. restic will happily snapshot an empty
+ * or truncated stdin and report success — the dump exit code is the only
+ * signal that the source command actually produced a complete dump. Kept in
+ * sync with agent/src/backup.ts.
  */
-function drainStream(stream: NodeJS.ReadableStream): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    stream.on('error', reject);
-    stream.on('end', resolve);
-    stream.resume();
-  });
+async function streamIntoRestic(
+  es: DockerExecStream,
+  resticArgs: string[],
+  deps: RunBackupDeps,
+): Promise<{ exitCode: number; stderrTail: string; resticErr?: string }> {
+  let resticErr: string | undefined;
+  try {
+    await deps.resticRunner.backup(resticArgs, { stdin: es.stream });
+  } catch (err) {
+    resticErr = err instanceof Error ? err.message : String(err);
+  }
+  const { exitCode, stderrTail } = await es.exit();
+  return { exitCode, stderrTail, resticErr };
+}
+
+/** One stdin-dump attempt: open the exec, stream it into restic, report the dump exit. */
+async function runStdinDumpAttempt(
+  db: DbLayer,
+  adapter: StdinAdapter,
+  argv: string[],
+  env: string[] | undefined,
+  deps: RunBackupDeps,
+): Promise<{ exitCode: number; stderrTail: string; resticErr?: string }> {
+  assertArgvSafe(argv);
+  let es: DockerExecStream;
+  try {
+    es = await deps.dockerClient.execStream(db.container, argv, { env });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`dump failed for ${db.service}: ${message}`);
+  }
+  return streamIntoRestic(
+    es,
+    [
+      'backup',
+      '--stdin',
+      '--stdin-filename',
+      `${db.service}.dump`,
+      '--tag',
+      dbSnapshotTag(db.service, adapter.type),
+    ],
+    deps,
+  );
+}
+
+/**
+ * stdin-adapter layer. A clean dump (exit 0) that restic then fails on is a
+ * real restic error (network/disk/lock). A non-zero dump exit is the dump's
+ * own failure — surfaced with its stderr, or retried ONCE if the adapter
+ * offers a fallback argv (mongodump dropping `--oplog` on standalone mongo).
+ */
+async function backupStdinLayer(
+  db: DbLayer,
+  adapter: StdinAdapter,
+  svc: ComposeService,
+  deps: RunBackupDeps,
+  t: Translator,
+): Promise<void> {
+  const env = adapter.dumpEnv?.(svc);
+  const first = await runStdinDumpAttempt(db, adapter, adapter.dumpCmd(svc), env, deps);
+  if (first.exitCode === 0) {
+    if (first.resticErr) throw new Error(`restic dump failed: ${first.resticErr}`);
+    return;
+  }
+  const alt = adapter.fallbackDumpCmd?.(svc, first.stderrTail) ?? null;
+  const attempt = alt ? await runStdinDumpAttempt(db, adapter, alt, env, deps) : first;
+  if (alt && attempt.exitCode === 0) {
+    if (attempt.resticErr) throw new Error(`restic dump failed: ${attempt.resticErr}`);
+    return;
+  }
+  throw new Error(
+    t('backups.error.dumpFailed', {
+      service: db.service,
+      message: `exit ${attempt.exitCode}: ${attempt.stderrTail || 'no stderr'}`,
+    }),
+  );
+}
+
+/**
+ * file-adapter layer. The dump writes an artifact INSIDE the container; run it
+ * to completion (execCollect gives the exit code + both channels), assert it
+ * succeeded (and pass any adapter `verifyDump`, e.g. redis SAVE must reply OK —
+ * redis-cli exits 0 even on NOAUTH), THEN stream the artifact out — checking
+ * that read's exit too so a missing artifact is a clear error, not "no data".
+ * Kept in sync with agent/src/backup.ts.
+ */
+async function backupFileLayer(
+  db: DbLayer,
+  adapter: FileAdapter,
+  svc: ComposeService,
+  deps: RunBackupDeps,
+  t: Translator,
+): Promise<void> {
+  const argv = adapter.dumpCmd(svc);
+  assertArgvSafe(argv);
+  let res;
+  try {
+    res = await deps.dockerClient.execCollect(db.container, argv, adapter.dumpEnv?.(svc));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`dump failed for ${db.service}: ${message}`);
+  }
+  if (res.exitCode !== 0) {
+    throw new Error(
+      t('backups.error.dumpFailed', {
+        service: db.service,
+        message: `exit ${res.exitCode}: ${res.stderr.trim() || 'no stderr'}`,
+      }),
+    );
+  }
+  adapter.verifyDump?.(res);
+
+  const { readArgv, stdinFilename } = artifactReadPlan(adapter, svc, db.service);
+  assertArgvSafe(readArgv);
+  let es: DockerExecStream;
+  try {
+    es = await deps.dockerClient.execStream(db.container, readArgv);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`artifact read failed for ${db.service}: ${message}`);
+  }
+  const { exitCode, stderrTail, resticErr } = await streamIntoRestic(
+    es,
+    [
+      'backup',
+      '--stdin',
+      '--stdin-filename',
+      stdinFilename,
+      '--tag',
+      dbSnapshotTag(db.service, adapter.type),
+    ],
+    deps,
+  );
+  if (exitCode !== 0) {
+    throw new Error(
+      `artifact read failed for ${db.service} (exit ${exitCode}): ${stderrTail || 'no stderr'}`,
+    );
+  }
+  if (resticErr) throw new Error(`restic dump failed: ${resticErr}`);
 }
 
 /**

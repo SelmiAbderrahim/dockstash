@@ -215,6 +215,8 @@ export const ar: DictionaryShape = {
       discoverFailed: 'فشل الاكتشاف: {{message}}',
       noAdapter: 'لا يوجد محول نسخ احتياطي مطابق للخدمة {{service}}.',
       dumpFailed: 'فشل تفريغ قاعدة البيانات لـ {{service}}: {{message}}',
+      containerNotRunning:
+        'الحاوية {{container}} لا تعمل — شغّلها أو عطّل طبقة قاعدة البيانات هذه.',
       resticFailed: 'فشل النسخ الاحتياطي لـ Restic: {{message}}',
       backupFailed: 'فشل النسخ الاحتياطي: {{message}}',
       noSpace: 'مساحة القرص غير كافية (المتاح={{free}} بايت).',

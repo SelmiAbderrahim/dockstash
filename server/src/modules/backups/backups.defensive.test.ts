@@ -76,8 +76,14 @@ function makeDocker(overrides: Partial<DockerClient> = {}): DockerClient {
     async exec() {
       return Readable.from(['dump-bytes']);
     },
+    async execStream() {
+      return {
+        stream: Readable.from(['dump-bytes']),
+        exit: async () => ({ exitCode: 0, stderrTail: '' }),
+      };
+    },
     async execCollect() {
-      throw new Error('execCollect not stubbed');
+      return { exitCode: 0, stdout: 'OK', stderr: '' };
     },
     async execWithStdin() {
       throw new Error('execWithStdin not stubbed');
@@ -86,7 +92,7 @@ function makeDocker(overrides: Partial<DockerClient> = {}): DockerClient {
       throw new Error('restart not stubbed');
     },
     async inspect(container) {
-      return { id: container, running: true, env: [], image: '' };
+      return { id: container, running: true, env: [], cmd: [], image: '' };
     },
     async listContainers() {
       return [];
@@ -137,7 +143,6 @@ describe('backups.service: defensive guards', () => {
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 403 });
   });
@@ -152,7 +157,6 @@ describe('backups.service: defensive guards', () => {
         dockerClient: makeDocker(),
         diskProbe,
         minFreeBytes: 1_000_000,
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -167,7 +171,6 @@ describe('backups.service: defensive guards', () => {
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -182,7 +185,6 @@ describe('backups.service: defensive guards', () => {
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
   });
@@ -195,7 +197,6 @@ describe('backups.service: defensive guards', () => {
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
   });
@@ -240,7 +241,6 @@ describe('backups.service: defensive guards', () => {
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 400 });
   });
@@ -257,13 +257,16 @@ describe('backups.service: defensive guards', () => {
     expect(persisted?.lastStatus).toBe('success');
   });
 
-  it('falls back to the db type when the compose service has no image', async () => {
-    const id = await seedUser('noimage@test.com');
+  it('uses the inspected container image when present (else falls back to db type)', async () => {
+    const id = await seedUser('image@test.com');
     const projectId = await seedProject(id);
     const res = await runBackup(projectId, id, {
       resticRunner: makeRestic(),
-      dockerClient: makeDocker(),
-      composeServices: { pg: {} },
+      dockerClient: makeDocker({
+        async inspect(container) {
+          return { id: container, running: true, env: [], cmd: [], image: 'postgres:16' };
+        },
+      }),
     });
     expect(res.status).toBe('success');
   });
@@ -280,14 +283,14 @@ describe('backups.service: defensive guards', () => {
     ).rejects.toMatchObject({ status: 500 });
   });
 
-  it('handles a non-Error thrown by docker exec', async () => {
+  it('handles a non-Error thrown by docker exec-stream setup', async () => {
     const id = await seedUser('dockerthrow@test.com');
     const projectId = await seedProject(id);
     await expect(
       runBackup(projectId, id, {
         resticRunner: makeRestic(),
         dockerClient: makeDocker({
-          async exec() {
+          async execStream() {
             throw 'exec blew up';
           },
         }),

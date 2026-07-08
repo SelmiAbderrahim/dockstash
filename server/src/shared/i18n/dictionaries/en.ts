@@ -214,6 +214,8 @@ export const en = {
       discoverFailed: 'Discovery failed: {{message}}',
       noAdapter: 'No backup adapter matched service {{service}}.',
       dumpFailed: 'Database dump failed for {{service}}: {{message}}',
+      containerNotRunning:
+        'Container {{container}} is not running — start it or disable this database layer.',
       resticFailed: 'Restic backup failed: {{message}}',
       backupFailed: 'Backup failed: {{message}}',
       noSpace: 'Insufficient disk space (free={{free}} bytes).',

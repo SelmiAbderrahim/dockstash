@@ -151,6 +151,7 @@ describe('HttpDockerClient', () => {
       id: 'abc',
       running: true,
       env: [],
+      cmd: [],
       image: '',
     });
     expect(calls[0]).toMatchObject({ method: 'GET', path: '/containers/db-1/json' });
@@ -167,6 +168,7 @@ describe('HttpDockerClient', () => {
       id: 'db-1',
       running: false,
       env: [],
+      cmd: [],
       image: '',
     });
   });
@@ -370,6 +372,7 @@ describe('HttpDockerClient over a real HTTP endpoint', () => {
       id: 'live-id',
       running: true,
       env: [],
+      cmd: [],
       image: '',
     });
   });
@@ -706,6 +709,7 @@ describe('HttpDockerClient.inspect env/image parsing', () => {
       id: 'abc',
       running: true,
       env: ['POSTGRES_USER=app'],
+      cmd: [],
       image: 'postgres:16',
     });
   });
@@ -723,7 +727,141 @@ describe('HttpDockerClient.inspect env/image parsing', () => {
       id: 'abc',
       running: false,
       env: [],
+      cmd: [],
       image: '',
     });
+  });
+
+  it('carries Config.Cmd through and tolerates a non-array Cmd', async () => {
+    const withCmd = fakeRequest([
+      {
+        status: 200,
+        body: {
+          Id: 'r',
+          State: { Running: true },
+          Config: { Cmd: ['redis-server', '--requirepass', 'pw'], Env: [], Image: 'redis:7' },
+        },
+      },
+    ]);
+    const c1 = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: withCmd.fn,
+      streamRequestFn: async () => new PassThrough(),
+    });
+    await expect(c1.inspect('r')).resolves.toEqual({
+      id: 'r',
+      running: true,
+      env: [],
+      cmd: ['redis-server', '--requirepass', 'pw'],
+      image: 'redis:7',
+    });
+
+    const badCmd = fakeRequest([{ status: 200, body: { Id: 'r', Config: { Cmd: 'nope' } } }]);
+    const c2 = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: badCmd.fn,
+      streamRequestFn: async () => new PassThrough(),
+    });
+    await expect(c2.inspect('r')).resolves.toMatchObject({ cmd: [] });
+  });
+});
+
+describe('HttpDockerClient.execStream', () => {
+  it('demuxes stdout and reports the dump exit code + stderr tail; forwards Env', async () => {
+    const { fn, calls } = fakeRequest([
+      { status: 201, body: { Id: 'exec-s1' } },
+      { status: 200, body: { ExitCode: 3 } },
+    ]);
+    const raw = new PassThrough();
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => raw,
+    });
+    const es = await client.execStream('db-1', ['pg_dumpall'], { env: ['PGUSER=app'] });
+    raw.write(frame(1, 'dump-bytes'));
+    raw.write(frame(2, 'FATAL: boom'));
+    raw.end();
+    await expect(collect(es.stream)).resolves.toBe('dump-bytes');
+    await expect(es.exit()).resolves.toEqual({ exitCode: 3, stderrTail: 'FATAL: boom' });
+    // Secret credentials ride the exec Env, never the argv.
+    expect((calls[0]!.body as { Env?: string[]; Cmd: string[] }).Env).toEqual(['PGUSER=app']);
+    expect((calls[0]!.body as { Cmd: string[] }).Cmd).toEqual(['pg_dumpall']);
+  });
+
+  it('omits Env from the exec-create body when none is passed', async () => {
+    const { fn, calls } = fakeRequest([
+      { status: 201, body: { Id: 'exec-s2' } },
+      { status: 200, body: { ExitCode: 0 } },
+    ]);
+    const raw = new PassThrough();
+    raw.end();
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => raw,
+    });
+    const es = await client.execStream('db-1', ['true']);
+    await collect(es.stream);
+    await es.exit();
+    expect((calls[0]!.body as { Env?: string[] }).Env).toBeUndefined();
+  });
+
+  it('caps the buffered stderr tail at ~4KB', async () => {
+    const { fn } = fakeRequest([
+      { status: 201, body: { Id: 'exec-s4' } },
+      { status: 200, body: { ExitCode: 1 } },
+    ]);
+    const raw = new PassThrough();
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => raw,
+    });
+    const es = await client.execStream('db-1', ['noisy']);
+    raw.write(frame(2, 'X'.repeat(5000)));
+    raw.write(frame(2, 'TAIL'));
+    raw.end();
+    await collect(es.stream);
+    const { stderrTail } = await es.exit();
+    expect(stderrTail.endsWith('TAIL')).toBe(true);
+    expect(stderrTail.length).toBeLessThanOrEqual(4096);
+  });
+
+  it('reassembles a stdout frame split across chunks', async () => {
+    const { fn } = fakeRequest([
+      { status: 201, body: { Id: 'exec-s5' } },
+      { status: 200, body: { ExitCode: 0 } },
+    ]);
+    const raw = new PassThrough();
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => raw,
+    });
+    const es = await client.execStream('db-1', ['cat', '/x']);
+    const f = frame(1, 'split-dump-bytes');
+    raw.write(f.subarray(0, 12)); // full header + partial payload → the `break` path
+    raw.write(f.subarray(12));
+    raw.end();
+    await expect(collect(es.stream)).resolves.toBe('split-dump-bytes');
+    await es.exit();
+  });
+
+  it('exit() still resolves when the raw stream errors (exec-inspect is the truth)', async () => {
+    const { fn } = fakeRequest([
+      { status: 201, body: { Id: 'exec-s3' } },
+      { status: 200, body: { ExitCode: 1 } },
+    ]);
+    const raw = new PassThrough();
+    const client = new HttpDockerClient({
+      dockerHost: 'tcp://proxy:2375',
+      requestFn: fn,
+      streamRequestFn: async () => raw,
+    });
+    const es = await client.execStream('db-1', ['pg_dumpall']);
+    es.stream.on('error', () => {});
+    raw.destroy(new Error('socket reset'));
+    await expect(es.exit()).resolves.toEqual({ exitCode: 1, stderrTail: '' });
   });
 });

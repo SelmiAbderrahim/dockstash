@@ -74,8 +74,14 @@ function makeBaseDocker(overrides: Partial<DockerClient> = {}): DockerClient {
     async exec() {
       return Readable.from(['dump-bytes']);
     },
+    async execStream() {
+      return {
+        stream: Readable.from(['dump-bytes']),
+        exit: async () => ({ exitCode: 0, stderrTail: '' }),
+      };
+    },
     async execCollect() {
-      throw new Error('execCollect not stubbed');
+      return { exitCode: 0, stdout: 'OK', stderr: '' };
     },
     async execWithStdin() {
       throw new Error('execWithStdin not stubbed');
@@ -84,7 +90,7 @@ function makeBaseDocker(overrides: Partial<DockerClient> = {}): DockerClient {
       throw new Error('restart not stubbed');
     },
     async inspect(container) {
-      return { id: container, running: true, env: [], image: '' };
+      return { id: container, running: true, env: [], cmd: [], image: '' };
     },
     async listContainers() {
       return [];
@@ -103,7 +109,7 @@ describe('backups: failure injection (runBackup)', () => {
     const projectId = await seedProject(id);
     let backupCalls = 0;
     const docker = makeBaseDocker({
-      async exec() {
+      async execStream() {
         const stream = new Readable({
           read() {
             /* pushed manually */
@@ -114,7 +120,7 @@ describe('backups: failure injection (runBackup)', () => {
           stream.push('partial');
           stream.emit('error', new Error('stream killed mid-backup'));
         });
-        return stream;
+        return { stream, exit: async () => ({ exitCode: 1, stderrTail: 'killed' }) };
       },
     });
     const restic = makeBaseRestic({
@@ -134,7 +140,6 @@ describe('backups: failure injection (runBackup)', () => {
       runBackup(projectId, id, {
         resticRunner: restic,
         dockerClient: docker,
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -158,7 +163,6 @@ describe('backups: failure injection (runBackup)', () => {
       runBackup(projectId, id, {
         resticRunner: restic,
         dockerClient: makeBaseDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -178,7 +182,6 @@ describe('backups: failure injection (runBackup)', () => {
       runBackup(projectId, id, {
         resticRunner: restic,
         dockerClient: makeBaseDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -205,7 +208,6 @@ describe('backups: failure injection (runBackup)', () => {
     const result = await runBackup(projectId, id, {
       resticRunner: restic,
       dockerClient: makeBaseDocker(),
-      composeServices: { pg: { image: 'postgres:16' } },
     });
     expect(result.status).toBe('success');
     expect(result.layers).toContainEqual({ kind: 'paths', label: 'files', ok: true });
@@ -234,7 +236,6 @@ describe('backups: failure injection (runBackup)', () => {
       runBackup(projectId, id, {
         resticRunner: restic,
         dockerClient: makeBaseDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
@@ -254,7 +255,6 @@ describe('backups: failure injection (runBackup)', () => {
       runBackup(projectId, id, {
         resticRunner: restic,
         dockerClient: makeBaseDocker(),
-        composeServices: { pg: { image: 'postgres:16' } },
       }),
     ).rejects.toMatchObject({ status: 500 });
     const persisted = await Project.findById(projectId);
