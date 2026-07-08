@@ -196,6 +196,15 @@ export async function enqueueNow(
   const allowed = await deps.entitlements.canEnqueue(userId, kind);
   if (!allowed) throw HttpError.forbidden(t('scheduler.error.entitlementDenied'));
 
+  // Reject a manual double-submit (double-click, double-tab) outright rather
+  // than silently queueing a duplicate run behind the active one — cron
+  // ticks go through scheduler.cron.ts, not this path, and are still meant
+  // to queue behind a running job.
+  const activeCount = await deps.queue.activeCountForProject(projectId);
+  if (activeCount > 0) {
+    throw HttpError.conflict(t('scheduler.error.repoBusy', { projectId }));
+  }
+
   const job = await deps.queue.add({
     projectId,
     owner: userId,

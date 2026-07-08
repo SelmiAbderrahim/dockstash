@@ -21,7 +21,7 @@ import {
   EmptyTitle,
 } from '@shared/ui/empty';
 import { fetchProjects, runBackupNow } from '../store/thunks';
-import { clearActiveJob } from '../store/slice';
+import { clearActiveJob, PENDING_JOB_ID } from '../store/slice';
 import {
   selectActiveJobForProject,
   selectProjects,
@@ -107,7 +107,7 @@ const ProjectCard = ({ project }: CardProps) => {
             <Link to={`/projects/${project.id}`}>{t('actions.open')}</Link>
           </Button>
         </div>
-        {jobId && (
+        {jobId && jobId !== PENDING_JOB_ID && (
           <ResticLogPanel
             jobId={jobId}
             onDone={() => {

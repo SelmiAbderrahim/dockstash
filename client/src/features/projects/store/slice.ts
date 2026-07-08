@@ -91,6 +91,10 @@ const initialPitr: PitrState = {
   restoreStatus: 'idle',
 };
 
+/** Placeholder job id while an enqueue request is in flight — disables the
+ * "Backup Now" button immediately without a real jobId to subscribe logs to. */
+export const PENDING_JOB_ID = '__pending__';
+
 const initialState: ProjectsState = {
   items: [],
   status: 'idle',
@@ -168,11 +172,18 @@ const projectsSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload ?? 'Could not load projects.';
       })
+      .addCase(runBackupNow.pending, (state, action) => {
+        // Disable the button the instant the click happens — not after the
+        // round-trip resolves — so a second click can't fire a duplicate
+        // enqueue while the first request is in flight.
+        state.activeJobByProject[action.meta.arg.projectId] = PENDING_JOB_ID;
+      })
       .addCase(runBackupNow.fulfilled, (state, action) => {
         state.activeJobByProject[action.payload.projectId] = action.payload.jobId;
       })
       .addCase(runBackupNow.rejected, (state, action) => {
         state.error = action.payload ?? 'Could not start backup.';
+        state.activeJobByProject[action.meta.arg.projectId] = null;
       })
       .addCase(savePlan.pending, (state) => {
         state.planSaveStatus = 'loading';

@@ -945,6 +945,38 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
     expect(enqueueCalls).toHaveLength(0);
   });
 
+  it('POST /enqueue rejects a duplicate manual enqueue while a job is active for the project (409)', async () => {
+    const a = await seedUser('a@t.com');
+    const projectId = await seedProject(a.id);
+
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    localQueue.setProcessor(async () => {
+      await gate;
+    });
+
+    try {
+      const first = await request(app)
+        .post('/api/scheduler/enqueue')
+        .set('Authorization', `JWT ${a.token}`)
+        .send({ projectId, kind: 'backup' });
+      expect(first.status).toBe(202);
+
+      const second = await request(app)
+        .post('/api/scheduler/enqueue')
+        .set('Authorization', `JWT ${a.token}`)
+        .send({ projectId, kind: 'backup' });
+      expect(second.status).toBe(409);
+      expect(enqueueCalls).toEqual(['backup']);
+    } finally {
+      release();
+      await localQueue.waitIdle();
+      localQueue.setProcessor(async () => {});
+    }
+  });
+
   it('POST /enqueue with scheduleId adds a job + marks schedule queued', async () => {
     const a = await seedUser('a@t.com');
     const projectId = await seedProject(a.id);

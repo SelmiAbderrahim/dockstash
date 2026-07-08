@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { projectsReducer, clearActiveJob, resetSaveStatus, resetAddFlow, clearPitr } from './slice';
+import {
+  projectsReducer,
+  clearActiveJob,
+  resetSaveStatus,
+  resetAddFlow,
+  clearPitr,
+  PENDING_JOB_ID,
+} from './slice';
 import {
   fetchProjectJobs,
   fetchProjects,
@@ -66,6 +73,28 @@ describe('projects slice', () => {
     expect(s.error).toBe('boom');
   });
 
+  it('runBackupNow.pending disables the button before the request resolves', () => {
+    const s = projectsReducer(initial(), {
+      type: runBackupNow.pending.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s.activeJobByProject['p1']).toBe(PENDING_JOB_ID);
+  });
+
+  it('runBackupNow.rejected clears the pending marker so the button re-enables', () => {
+    let s = projectsReducer(initial(), {
+      type: runBackupNow.pending.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    s = projectsReducer(s, {
+      type: runBackupNow.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
+      payload: 'busy',
+    });
+    expect(s.activeJobByProject['p1']).toBeNull();
+    expect(s.error).toBe('busy');
+  });
+
   it('runBackupNow.fulfilled tracks the active job', () => {
     const s = projectsReducer(initial(), {
       type: runBackupNow.fulfilled.type,
@@ -92,10 +121,14 @@ describe('projects slice', () => {
   it('runBackupNow.rejected records the error (payload and fallback)', () => {
     let s = projectsReducer(initial(), {
       type: runBackupNow.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
       payload: 'no dice',
     });
     expect(s.error).toBe('no dice');
-    s = projectsReducer(initial(), { type: runBackupNow.rejected.type });
+    s = projectsReducer(initial(), {
+      type: runBackupNow.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
     expect(s.error).toBe('Could not start backup.');
   });
 
