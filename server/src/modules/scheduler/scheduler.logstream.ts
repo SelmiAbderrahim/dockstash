@@ -23,7 +23,13 @@ interface AuthedSocket extends Socket {
 
 function verifyToken(token: string, secret: string): string | null {
   try {
-    const decoded = jwt.verify(token, secret) as { id?: string; _id?: string };
+    // Pin HS256 (mirrors passport.strategies.ts + oauth-state.ts) — never leave
+    // `algorithms` undefined: it widens acceptance to the whole HS/none family
+    // and would enable alg-confusion if JWT_SECRET ever became an asymmetric key.
+    const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] }) as {
+      id?: string;
+      _id?: string;
+    };
     return decoded.id ?? decoded._id ?? null;
   } catch {
     return null;

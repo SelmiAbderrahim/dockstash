@@ -67,11 +67,13 @@ export interface DockerClient {
     argv: string[],
     env?: string[],
   ): Promise<DockerExecResult>;
-  /** Exec with `stdin` streamed to the process (`docker exec -i` equivalent). */
+  /** Exec with `stdin` streamed to the process (`docker exec -i` equivalent).
+   *  `env` (e.g. `MYSQL_PWD=…`) keeps secrets off argv. */
   execWithStdin(
     container: string,
     argv: string[],
     stdin: Readable,
+    env?: string[],
   ): Promise<{ exitCode: number; stderr: string }>;
   /** `POST /containers/{id}/restart` — needs ALLOW_RESTARTS=1 on the socket proxy. */
   restart(container: string): Promise<void>;
@@ -456,8 +458,9 @@ export class HttpDockerClient implements DockerClient {
     container: string,
     argv: string[],
     stdin: Readable,
+    env?: string[],
   ): Promise<{ exitCode: number; stderr: string }> {
-    const execId = await this.createExec(container, argv, true);
+    const execId = await this.createExec(container, argv, true, env);
     const { socket } = await this.hijackRequest({
       path: `/exec/${execId}/start`,
       body: { Detach: false, Tty: false },

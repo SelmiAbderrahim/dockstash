@@ -199,6 +199,13 @@ services:
       # Loopback-only — nginx is the sole public entrypoint. Host port off the
       # 3000 default to avoid colliding with other stacks on this box.
       - "127.0.0.1:${WEB_PORT:-43000}:3000"
+    # Least-privilege hardening (mirrors api). The SSR server runs as a non-root
+    # user (client/Dockerfile) and never needs privilege escalation or extra
+    # capabilities.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
       interval: 30s

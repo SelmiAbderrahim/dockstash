@@ -187,15 +187,16 @@ describe('buildDbRestorePlan', () => {
     expect(re.test('84\n')).toBe(false);
   });
 
-  it('mysql: root password from env, empty fallback', () => {
+  it('mysql: root password rides MYSQL_PWD env (never argv), empty fallback', () => {
     expect(
       buildDbRestorePlan(db('sql', 'mysql'), {
         image: 'mysql:8',
         environment: ['MYSQL_ROOT_PASSWORD=s3cret'],
       }).steps,
-    ).toEqual([{ kind: 'exec-stdin', argv: ['mysql', '-uroot', '-ps3cret'] }]);
+    ).toEqual([{ kind: 'exec-stdin', argv: ['mysql', '-uroot'], env: ['MYSQL_PWD=s3cret'] }]);
+    // No password → no env, no bare `-p` (which would prompt on the non-tty exec).
     expect(buildDbRestorePlan(db('sql', 'mysql'), { image: 'mysql:8' }).steps).toEqual([
-      { kind: 'exec-stdin', argv: ['mysql', '-uroot', '-p'] },
+      { kind: 'exec-stdin', argv: ['mysql', '-uroot'], env: [] },
     ]);
   });
 
@@ -205,16 +206,32 @@ describe('buildDbRestorePlan', () => {
         image: 'mariadb:11',
         environment: ['MARIADB_ROOT_PASSWORD=mm'],
       }).steps,
-    ).toEqual([{ kind: 'exec-stdin', argv: ['mariadb', '-uroot', '-pmm'] }]);
+    ).toEqual([{ kind: 'exec-stdin', argv: ['mariadb', '-uroot'], env: ['MYSQL_PWD=mm'] }]);
     expect(
       buildDbRestorePlan(db('m', 'mariadb'), {
         image: 'mariadb:11',
         environment: ['MYSQL_ROOT_PASSWORD=legacy'],
       }).steps,
-    ).toEqual([{ kind: 'exec-stdin', argv: ['mariadb', '-uroot', '-plegacy'] }]);
+    ).toEqual([{ kind: 'exec-stdin', argv: ['mariadb', '-uroot'], env: ['MYSQL_PWD=legacy'] }]);
     expect(buildDbRestorePlan(db('m', 'mariadb'), { image: 'mariadb:11' }).steps).toEqual([
-      { kind: 'exec-stdin', argv: ['mariadb', '-uroot', '-p'] },
+      { kind: 'exec-stdin', argv: ['mariadb', '-uroot'], env: [] },
     ]);
+  });
+
+  it('mysql/mariadb: the DB password never appears in argv (regression guard for the /proc + log leak)', () => {
+    const secret = 'sup3r-s3cret-pw';
+    for (const type of ['mysql', 'mariadb'] as const) {
+      const steps = buildDbRestorePlan(db('d', type), {
+        image: `${type}:latest`,
+        environment: [`${type === 'mysql' ? 'MYSQL' : 'MARIADB'}_ROOT_PASSWORD=${secret}`],
+      }).steps;
+      for (const step of steps) {
+        if (step.kind === 'exec-stdin') {
+          expect(step.argv.some((a) => a.includes(secret))).toBe(false);
+          expect(step.env).toContain(`MYSQL_PWD=${secret}`);
+        }
+      }
+    }
   });
 
   it('mongo: mongorestore --archive --oplogReplay --drop', () => {

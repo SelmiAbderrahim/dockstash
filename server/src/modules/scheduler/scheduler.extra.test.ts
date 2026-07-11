@@ -534,6 +534,26 @@ describe('scheduler.extra: logstream token payload shapes', () => {
     expect(err).toBeInstanceOf(Error);
     expect(sock.data.userId).toBeUndefined();
   });
+
+  it('rejects a token signed with a non-HS256 algorithm (algorithms pin)', async () => {
+    // The verify path pins algorithms: ['HS256']. A token minted with the same
+    // secret but a different HMAC alg must NOT authenticate — this is the guard
+    // against alg-confusion / an expanded acceptance list.
+    const run = makeAuthRunner();
+    const sock = socketWith(jwt.sign({ _id: 'user-9' }, env.JWT_SECRET, { algorithm: 'HS512' }));
+    const err = await run(sock);
+    expect(err).toBeInstanceOf(Error);
+    expect(sock.data.userId).toBeUndefined();
+  });
+
+  it('rejects an unsigned (alg:none) token', async () => {
+    const run = makeAuthRunner();
+    const noneToken = jwt.sign({ _id: 'user-9' }, '', { algorithm: 'none' });
+    const sock = socketWith(noneToken);
+    const err = await run(sock);
+    expect(err).toBeInstanceOf(Error);
+    expect(sock.data.userId).toBeUndefined();
+  });
 });
 
 describe('scheduler.extra: cron reconciliation extras', () => {

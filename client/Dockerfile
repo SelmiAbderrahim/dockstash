@@ -47,6 +47,13 @@ RUN npm ci --omit=dev
 COPY server.js app-paths.mjs ./
 COPY --from=build /app/dist ./dist
 
+# Non-root runtime user (mirrors agent/Dockerfile). The SSR server binds an
+# unprivileged port (3000) and only reads from /app, so no root is needed.
+RUN groupadd --system --gid 10001 app \
+ && useradd  --system --uid 10001 --gid app --home /app --shell /usr/sbin/nologin app \
+ && chown -R app:app /app
+USER app
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

@@ -87,7 +87,7 @@ export function classifySnapshot(
 export type RestoreStep =
   | { kind: 'exec'; argv: string[] }
   | { kind: 'exec-guard'; argv: string[]; failIfStdoutMatches: string; error: string }
-  | { kind: 'exec-stdin'; argv: string[] }
+  | { kind: 'exec-stdin'; argv: string[]; env?: string[] }
   | { kind: 'exec-stdin-text'; argv: string[]; text: string }
   | { kind: 'restart' };
 
@@ -149,15 +149,21 @@ function restoreSteps(type: string, svc: ComposeService): RestoreStep[] | null {
       return postgresRestoreSteps(user);
     }
     case 'mysql': {
+      // Password rides MYSQL_PWD env, never argv — argv is visible in the
+      // target container's /proc and gets logged by performDbRestore. Mirrors
+      // the backup adapter (adapters.ts dumpEnv). No `-p` flag: a bare `-p`
+      // would prompt on the non-tty exec.
       const pw = readServiceEnv(svc, 'MYSQL_ROOT_PASSWORD') ?? '';
-      return [{ kind: 'exec-stdin', argv: ['mysql', '-uroot', `-p${pw}`] }];
+      return [{ kind: 'exec-stdin', argv: ['mysql', '-uroot'], env: pw ? [`MYSQL_PWD=${pw}`] : [] }];
     }
     case 'mariadb': {
       const pw =
         readServiceEnv(svc, 'MARIADB_ROOT_PASSWORD') ??
         readServiceEnv(svc, 'MYSQL_ROOT_PASSWORD') ??
         '';
-      return [{ kind: 'exec-stdin', argv: ['mariadb', '-uroot', `-p${pw}`] }];
+      return [
+        { kind: 'exec-stdin', argv: ['mariadb', '-uroot'], env: pw ? [`MYSQL_PWD=${pw}`] : [] },
+      ];
     }
     case 'mongo':
       return [
@@ -293,6 +299,7 @@ export interface DbRestoreDocker {
     container: string,
     argv: string[],
     stdin: Readable,
+    env?: string[],
   ): Promise<{ exitCode: number; stderr: string }>;
   restart(container: string): Promise<void>;
 }
@@ -364,7 +371,7 @@ export async function performDbRestore(
         // (e.g. `dd`) exits 0 on early EOF. allSettled: if one side rejects,
         // the other side's rejection must not become an unhandled rejection.
         const [execSettled, doneSettled] = await Promise.allSettled([
-          deps.docker.execWithStdin(plan.container, step.argv, dumped.stream),
+          deps.docker.execWithStdin(plan.container, step.argv, dumped.stream, step.env),
           dumped.done,
         ]);
         const errors: string[] = [];

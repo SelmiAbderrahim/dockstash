@@ -169,4 +169,41 @@ describe('command-execution-meta: docker-compose socket-proxy invariants', () =>
     expect(/no-new-privileges:true/.test(compose!)).toBe(true);
     expect(/cap_drop:\s*\n\s*-\s*ALL/.test(compose!)).toBe(true);
   });
+
+  // Slice one service's YAML block (2-space service key → next 2-space key).
+  function serviceBlock(name: string): string {
+    const lines = compose!.split('\n');
+    const start = lines.findIndex((l) => new RegExp(`^ {2}${name}:\\s*$`).test(l));
+    if (start === -1) return '';
+    let end = lines.length;
+    for (let i = start + 1; i < lines.length; i++) {
+      if (/^ {2}[a-z][a-z0-9-]*:\s*$/.test(lines[i] ?? '')) {
+        end = i;
+        break;
+      }
+    }
+    return lines.slice(start, end).join('\n');
+  }
+
+  it.skipIf(!compose)('the public web (SSR) service is hardened: cap_drop ALL + no-new-privileges', () => {
+    // The public-facing SSR container must not diverge from the uniform
+    // least-privilege posture the api/agent carry (finding F3).
+    const web = serviceBlock('web');
+    expect(web).not.toBe('');
+    expect(/no-new-privileges:true/.test(web)).toBe(true);
+    expect(/cap_drop:\s*\n\s*-\s*ALL/.test(web)).toBe(true);
+  });
+
+  const clientDockerfilePath = path.resolve(SERVER_SRC, '../../client/Dockerfile');
+  const clientDockerfile = existsSync(clientDockerfilePath)
+    ? readFileSync(clientDockerfilePath, 'utf8')
+    : null;
+
+  // skipIf: like the compose tests, the client tree is not in the server-only
+  // test mount, so this asserts only when the repo root is available.
+  it.skipIf(!clientDockerfile)('the client (web) Dockerfile runs as a non-root USER', () => {
+    // A runtime `USER app` (or any non-root user) must be declared — root is the
+    // Docker default when omitted.
+    expect(/^USER\s+(?!root\s*$)\S+/m.test(clientDockerfile!)).toBe(true);
+  });
 });

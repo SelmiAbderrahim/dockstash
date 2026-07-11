@@ -11,7 +11,7 @@ import { env, envSchema } from '../../../config/env.js';
 import { ROLE_SUPERADMIN, User } from '../../users/index.js';
 import { hashPassword } from '../auth.service.js';
 import { LoginChallenge } from '../login-challenge.model.js';
-import { computeFingerprint, trustDevice } from '../login-otp.service.js';
+import { computeFingerprint, hashUserAgent, trustDevice } from '../login-otp.service.js';
 import { setOAuthHttp } from './oauth-http.js';
 import {
   PROVIDER_DEFINITIONS,
@@ -86,7 +86,7 @@ function stubHttp(routes: HttpStub): string[] {
   return calls;
 }
 
-function googleHappyRoutes(overrides: Partial<HttpStub> = {}): HttpStub {
+function googleHappyRoutes(overrides: HttpStub = {}): HttpStub {
   return {
     [PROVIDER_DEFINITIONS.google.tokenUrl]: () => jsonResponse({ access_token: 'g-access' }),
     [GOOGLE_USERINFO_URL]: () =>
@@ -101,7 +101,7 @@ function googleHappyRoutes(overrides: Partial<HttpStub> = {}): HttpStub {
   };
 }
 
-function githubHappyRoutes(overrides: Partial<HttpStub> = {}): HttpStub {
+function githubHappyRoutes(overrides: HttpStub = {}): HttpStub {
   return {
     [PROVIDER_DEFINITIONS.github.tokenUrl]: () => jsonResponse({ access_token: 'gh-access' }),
     [GITHUB_USER_URL]: () => jsonResponse({ id: 4242, name: 'Ada Love Lace', login: 'adal' }),
@@ -687,7 +687,12 @@ describe('oauth module', () => {
       const first = stateFor('google');
       await callback('google', { code: 'c', state: first.state }, first.cookie);
       const challenge = await LoginChallenge.findOne({});
-      await trustDevice(id, computeFingerprint(challenge?.ip ?? '', 'vitest-ua'));
+      await trustDevice(
+        id,
+        computeFingerprint(challenge?.ip ?? '', 'vitest-ua'),
+        challenge?.ip ?? '',
+        hashUserAgent('vitest-ua'),
+      );
 
       const second = stateFor('google');
       const res = await callback('google', { code: 'c', state: second.state }, second.cookie);

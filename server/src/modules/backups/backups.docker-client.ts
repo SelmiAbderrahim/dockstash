@@ -387,8 +387,9 @@ export class HttpDockerClient implements DockerClient {
     container: string,
     argv: string[],
     stdin: Readable,
+    env?: string[],
   ): Promise<{ exitCode: number; stderr: string }> {
-    const execId = await this.createExec(container, argv, true);
+    const execId = await this.createExec(container, argv, true, env);
     const { socket } = await this.hijackRequest({
       path: `/exec/${execId}/start`,
       body: { Detach: false, Tty: false },

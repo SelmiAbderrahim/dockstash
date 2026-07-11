@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -77,5 +77,42 @@ describe('security-meta: mount-order invariants for surface #1', () => {
     expect(/secure:\s*env\.NODE_ENV\s*===\s*'production'/.test(csrfSrc)).toBe(true);
     // And the exemption is bearer-only — never extended to cookie-only.
     expect(/req\.headers\.authorization/.test(csrfSrc)).toBe(true);
+  });
+});
+
+/**
+ * Whole-tree guard for `passport-jwt-algorithms-pin.md`. The per-file check
+ * above only reads `passport.strategies.ts`; a second, hand-rolled `jwt.verify`
+ * elsewhere (e.g. the Socket.IO log-stream, an OAuth-state helper) is exactly
+ * the "second verify path" the rule forbids. This scans EVERY non-test source
+ * file under `server/src` and fails if any `jwt.verify(` call is not pinned to
+ * `algorithms: ['HS256']`. This is the guard that should have caught F1.
+ */
+const SERVER_SRC = path.resolve(HERE, '../..');
+
+function collectTsSources(root: string): string[] {
+  return (readdirSync(root, { recursive: true, encoding: 'utf8' }) as string[])
+    .filter(
+      (rel) =>
+        rel.endsWith('.ts') && !rel.endsWith('.d.ts') && !/\.test\.ts$/.test(rel),
+    )
+    .map((rel) => path.join(root, rel));
+}
+
+describe('security-meta: no unpinned jwt.verify anywhere in server/src (surface #1)', () => {
+  it('every jwt.verify() call pins algorithms: ["HS256"]', () => {
+    const HS256_PIN = /algorithms:\s*\[\s*'HS256'\s*\]/;
+    const offenders: string[] = [];
+    for (const file of collectTsSources(SERVER_SRC)) {
+      const src = readFileSync(file, 'utf8');
+      for (let idx = src.indexOf('jwt.verify('); idx !== -1; idx = src.indexOf('jwt.verify(', idx + 1)) {
+        // A pinned call fits comfortably in the following window; an unpinned
+        // one does not carry the HS256 array at all.
+        if (!HS256_PIN.test(src.slice(idx, idx + 240))) {
+          offenders.push(path.relative(SERVER_SRC, file));
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

@@ -395,6 +395,23 @@ describe('HttpDockerClient over a real HTTP endpoint', () => {
     await expect(p).resolves.toEqual({ exitCode: 0, stderr: '' });
   });
 
+  it('execWithStdin: threads env into the exec-create body (secret rides Env, not argv)', async () => {
+    const { fn, calls } = fakeRequest([
+      { status: 201, body: { Id: 'exec-stdin' } },
+      { status: 200, body: { ExitCode: 0 } },
+    ]);
+    const client = new HttpDockerClient({
+      dockerHost: `tcp://127.0.0.1:${port}`,
+      requestFn: fn,
+    });
+    const stdin = new PassThrough();
+    const p = client.execWithStdin('db-live', ['mysql', '-uroot'], stdin, ['MYSQL_PWD=s3cret']);
+    stdin.end('dump');
+    await expect(p).resolves.toEqual({ exitCode: 0, stderr: '' });
+    // The create call carries the password in Env; argv stays password-free.
+    expect(calls[0]?.body).toMatchObject({ Env: ['MYSQL_PWD=s3cret'], Cmd: ['mysql', '-uroot'] });
+  });
+
   it('execWithStdin over real HTTP: bytes arriving with the 101 packet are not lost', async () => {
     const { fn } = fakeRequest([
       { status: 201, body: { Id: 'exec-stdin-head' } },
