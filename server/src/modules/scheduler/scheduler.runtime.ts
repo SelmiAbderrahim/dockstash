@@ -110,6 +110,15 @@ export async function startScheduler(
     }
   });
 
+  // Re-reconcile every minute so schedules created/edited/disabled via the
+  // API (or flipped by billing) arm WITHOUT an api restart. Boot-only
+  // reconcile silently skipped every new schedule until the next deploy —
+  // for a backup product that is lost protection, not a cosmetic lag. Runs
+  // at second :30 so task replacement never races a minute-boundary fire.
+  cron.register('__reconcile__', '30 * * * * *', () =>
+    reconcileCron({ cron, queue, entitlements }),
+  );
+
   configureSchedulerController({ queue, entitlements });
 
   logger.info(

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
@@ -54,10 +54,21 @@ beforeEach(() => {
   initI18n({ initialLocale: 'en' });
 });
 
+afterEach(async () => {
+  // initI18n is init-once — undo any per-test changeLanguage explicitly.
+  await i18n.changeLanguage('en');
+});
+
 describe('AppSidebar', () => {
   it('renders nothing for an anonymous visitor', () => {
     const { container } = renderSidebar(false);
     expect(container.querySelector('[data-slot="sidebar"]')).toBeNull();
+  });
+
+  it('anchors on the right for an RTL locale', async () => {
+    await i18n.changeLanguage('ar');
+    const { container } = renderSidebar(true);
+    expect(container.querySelector('[data-side="right"]')).not.toBeNull();
   });
 
   it('renders the SPEC-02 groups for an authed Member', () => {

@@ -54,6 +54,8 @@ export {
   createSchedule,
   updateSchedule,
   deleteSchedule,
+  ensureDefaultBackupSchedule,
+  DEFAULT_BACKUP_CRON,
   listSchedulesForUser,
   loadOwnedSchedule,
   enqueueNow,

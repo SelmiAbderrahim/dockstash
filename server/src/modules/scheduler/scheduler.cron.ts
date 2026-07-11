@@ -23,6 +23,9 @@ export async function reconcileCron(deps: ReconcileDeps): Promise<void> {
     deps.cron.register(id, schedule.cron, () => enqueueFromSchedule(schedule, deps));
   }
   for (const id of deps.cron.list()) {
+    // `__`-prefixed ids are runtime system tasks (heartbeat, fleet sweeps,
+    // the periodic reconcile itself) — never schedule-owned, never swept.
+    if (id.startsWith('__')) continue;
     if (!wantedIds.has(id)) deps.cron.unregister(id);
   }
 }

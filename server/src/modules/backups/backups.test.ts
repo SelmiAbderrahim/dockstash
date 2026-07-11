@@ -1142,6 +1142,50 @@ describe('backups: runBackup orchestration', () => {
     expect(persisted?.lastError).toMatch(/dumpFailed/);
   });
 
+  it('a non-Error throw from the dump exec surfaces via String(err)', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecCollect = () => {
+      // Non-Error throw on purpose: pins the String(err) fallback branch.
+      throw 'collect-blew-up';
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/collect-blew-up/);
+  });
+
+  it('an Error throw from the artifact-read exec surfaces its message', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => {
+      throw new Error('exec stream down');
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/artifact read failed for cache: exec stream down/);
+  });
+
+  it('a non-Error throw from the artifact-read exec surfaces via String(err)', async () => {
+    const { userId, projectId } = await seedProject();
+    await useDbLayer(projectId, { service: 'cache', type: 'redis', container: 'c_1' });
+    const { restic, docker } = makeMocks();
+    docker.onExecStream = () => {
+      // Non-Error throw on purpose: pins the String(err) fallback branch.
+      throw 'stream-blew-up';
+    };
+    await expect(
+      runBackup(projectId, userId, { resticRunner: restic, dockerClient: docker }),
+    ).rejects.toMatchObject({ status: 500 });
+    const persisted = await Project.findById(projectId);
+    expect(persisted?.lastError).toMatch(/stream-blew-up/);
+  });
+
   it('mongo: appends root creds from inspect env and keeps --oplog when it works', async () => {
     const { userId, projectId } = await seedProject();
     await useDbLayer(projectId, { service: 'mongo', type: 'mongo', container: 'm_1' });

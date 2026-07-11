@@ -192,6 +192,9 @@ describe('scheduler.runtime: startScheduler', () => {
     });
     expect(runtime.queue).toBeDefined();
     expect(runtime.cron).toBeDefined();
+    // Periodic reconcile is registered so post-boot schedule mutations arm
+    // without an api restart (thakaat incident regression).
+    expect(runtime.cron.list()).toContain('__reconcile__');
 
     // Drive a job through the runtime's queue processor (covers the
     // setProcessor callback: owner index, resticRunnerFor, processJob).

@@ -1,4 +1,5 @@
 import { isValidObjectId } from 'mongoose';
+import { logger } from '../../config/logger.js';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
@@ -60,6 +61,42 @@ export async function createSchedule(
     enabled: input.enabled ?? true,
   });
   return schedule;
+}
+
+/** Cadence provisioned for projects created without an explicit schedule. */
+export const DEFAULT_BACKUP_CRON = '0 3 * * *';
+
+/**
+ * Safe-by-default provisioning: give a freshly created project a daily backup
+ * schedule unless one already exists. Never throws — a tier with schedules
+ * locked (or any other failure) returns null and the project creation
+ * proceeds; the heartbeat sweep remains the dead-man's-switch for projects
+ * that end up unscheduled.
+ */
+export async function ensureDefaultBackupSchedule(
+  userId: string,
+  projectId: string,
+  ctx: ServiceCtx = {},
+): Promise<ScheduleHydrated | null> {
+  try {
+    const existing = await Schedule.findOne({
+      project: projectId,
+      owner: userId,
+      kind: 'backup',
+    });
+    if (existing) return existing;
+    return await createSchedule(
+      userId,
+      { projectId, kind: 'backup', cron: DEFAULT_BACKUP_CRON },
+      ctx,
+    );
+  } catch (err) {
+    logger.error(
+      { err, projectId, userId },
+      'scheduler: default backup schedule provisioning failed',
+    );
+    return null;
+  }
 }
 
 export async function listSchedulesForUser(userId: string): Promise<ScheduleHydrated[]> {

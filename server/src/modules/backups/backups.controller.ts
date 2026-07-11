@@ -33,6 +33,7 @@ import {
   releaseProjectSlot,
 } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
+import { ensureDefaultBackupSchedule } from '../scheduler/index.js';
 
 export const scan: RequestHandler = asyncHandler(async (req, res) => {
   const { path: projectPath } = scanProjectSchema.parse(req.body);
@@ -64,6 +65,10 @@ export const create: RequestHandler = asyncHandler(async (req, res) => {
   await reserveProjectSlot(userId, { t: req.t });
   try {
     const project = await createProject(userId, input, { t: req.t });
+    // Safe-by-default: a created project must never sit silently unprotected.
+    // Provisions the daily backup schedule when the tier allows it; never
+    // throws (schedule-locked tiers simply skip).
+    await ensureDefaultBackupSchedule(userId, String(project._id), { t: req.t });
     res.status(201).json({ project: serializeProject(project) });
   } catch (err) {
     // Rollback the reservation if createProject failed.

@@ -98,3 +98,15 @@ describe('UsageTab — connected-servers (agents) stat', () => {
     expect(over).toHaveClass('text-destructive');
   });
 });
+
+describe('UsageTab — entitlement flag badges', () => {
+  it('renders only the email-alerts badge when schedules are locked', async () => {
+    mockedApi.fetchUsage.mockResolvedValue({
+      ...usageAllStatuses,
+      flags: { schedules: false, emailAlerts: true },
+    });
+    renderTab();
+    expect(await screen.findByText('Email alerts')).toBeInTheDocument();
+    expect(screen.queryByText('Scheduled backups')).not.toBeInTheDocument();
+  });
+});

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
@@ -13,6 +13,11 @@ import { Header } from './Header';
 
 beforeEach(() => {
   initI18n({ initialLocale: 'en' });
+});
+
+afterEach(async () => {
+  // initI18n is init-once — undo any per-test changeLanguage explicitly.
+  await i18n.changeLanguage('en');
 });
 
 const makeStore = (authenticated: boolean, role = '') =>
@@ -65,6 +70,14 @@ describe('Header mobile menu', () => {
     await user.click(screen.getByRole('button', { name: /open menu/i }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByRole('link', { name: 'Login' })).toBeInTheDocument();
+  });
+
+  it('anchors the mobile sheet on the left for an RTL locale', async () => {
+    await i18n.changeLanguage('ar');
+    const user = userEvent.setup();
+    renderHeader(true);
+    await user.click(screen.getByRole('button', { name: i18n.t('nav.menu') }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('shows the Superadmin link only for a superadmin', () => {
