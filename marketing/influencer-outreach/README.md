@@ -103,3 +103,4 @@ coverage. If a creator asks "what do I have to post?", the correct answer is
 | [linkedin-dm.md](linkedin-dm.md) | LinkedIn DM, connection note, 2 follow-ups |
 | [x-dm.md](x-dm.md) | X DM + public-reply opener for closed DMs |
 | [other-platforms.md](other-platforms.md) | Reddit, YouTube business inquiry, Bluesky |
+| [examples/](examples/) | Worked, filled examples per creator type — YouTube homelab, X indie hacker, agency lead, Reddit, Mastodon, newsletter, podcast — plus the two special cases: reactive data-loss (do-not-pitch) and warm inbound |

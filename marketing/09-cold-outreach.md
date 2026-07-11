@@ -49,7 +49,10 @@ Legal note: B2B cold email is CAN-SPAM-legal (US) with accurate headers + addres
 
 ## LinkedIn parallel track (for EU or no-email prospects)
 
-Connect with 1-line note (no pitch) → after accept, the E1 question as a short message. Founder profile warmed by doc-07 LinkedIn posts makes this land.
+Superseded by `linkedin-growth/03-outbound-dm-playbook.md` — the full DM motion
+(Sales Navigator list build, blank-invite → value-DM sequence, scripts, follow-ups).
+It shares this doc's prospect sheet and personalization rules; one prospect is never
+in both sequences at once.
 
 ## Ops & metrics
 

@@ -25,6 +25,9 @@ Your buyers (self-hosters, indie devs, agencies) live on Reddit, HN, and YouTube
 | [11-analytics-and-kpis.md](11-analytics-and-kpis.md) | Funnel, GA4 events, UTM convention, CAC targets | Week 1 (instrument before launch) |
 | [12-calendar-90-day.md](12-calendar-90-day.md) | Week-by-week execution plan tying it all together | Your operating doc |
 | [x-growth/](x-growth/) | X-only deep dive: profile, daily routine, 50-post bank, X Ads (extends doc 07) | Week 1, ongoing |
+| [linkedin-growth/](linkedin-growth/) | LinkedIn-only deep dive: profile, outbound DM motion, ads funnel (extends docs 07 + 09) | Week 1 profile, Week 3+ outbound |
+| [social-posts/](social-posts/) | Ready-to-ship posts, one file each: 8 X posts/threads + 4 LinkedIn posts + 2 LinkedIn articles, built on the viral-anatomy breakdown in its README | Week 1, ongoing |
+| [influencer-outreach/examples/](influencer-outreach/examples/) | Worked DM examples per creator type + the do-not-pitch and inbound cases | With influencer outreach |
 
 ## Budget allocation
 

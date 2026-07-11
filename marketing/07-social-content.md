@@ -16,6 +16,13 @@ Platforms: **X/Twitter** (indie dev + build-in-public), **Mastodon/fediverse** (
 > AI writing system, and the X Ads funnel — lives in `x-growth/`. It inherits these
 > pillars, this cadence, and the rules below; it does not redraft the calendar.
 
+> **Ready-to-ship posts.** Finished, full-length renderings (8 X posts/threads, 4
+> LinkedIn posts, 2 LinkedIn articles — one file per post) live in `social-posts/`.
+> They apply the viral-post anatomy documented in `social-posts/README.md`
+> (hook → contrast → reframe → ladder → named public proof → system → lead-magnet CTA),
+> with the genre's invented numbers and fake urgency deliberately stripped. Schedule
+> from there; this calendar stays the cadence authority.
+
 ## 30-day drafted calendar (repeatable skeleton — refresh specifics each cycle)
 
 **Week 1**
@@ -45,6 +52,12 @@ Platforms: **X/Twitter** (indie dev + build-in-public), **Mastodon/fediverse** (
 ## LinkedIn adaptation (1–2/wk, not 4)
 
 Longer form, agency/compliance angle: turn #2, #14, and the week-12 data post into 150–250 word posts. Hook line first ("An agency lost 14 client sites because one backup script never dumped the database…"), no hashtags-soup, end with a question. Founder personal profile, not company page (10× reach).
+
+> **LinkedIn deep-dive.** This doc owns LinkedIn as one of three cross-adapted
+> platforms. The LinkedIn-only operating manual — profile setup, the Sales Navigator
+> outbound-DM motion, a 10-post adapted bank, and the (unfunded) ads funnel — lives in
+> `linkedin-growth/`. It inherits this cadence, these pillars, and the rules below; it
+> does not redraft the calendar.
 
 ## Rules
 
