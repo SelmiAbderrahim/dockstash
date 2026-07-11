@@ -116,5 +116,36 @@
   },
   "plans": {
     "portal": "Gestionar facturación"
+  },
+  "invite": {
+    "duration": {
+      "one_month": "1 mes",
+      "one_year": "1 año"
+    },
+    "offer": {
+      "title": "Activa tu invitación",
+      "plan": "Plan",
+      "duration": "Gratis durante",
+      "linkExpires": "El enlace caduca",
+      "activate": "Activar"
+    },
+    "success": {
+      "title": "Todo listo",
+      "body": "Tu plan {{plan}} está activo hasta el {{endsOn}}.",
+      "cta": "Ir al panel"
+    },
+    "verifyFirst": {
+      "title": "Verifica tu correo primero",
+      "body": "Confirma tu dirección de correo y vuelve a este enlace para activar tu plan.",
+      "cta": "Verificar correo"
+    },
+    "dead": {
+      "title": "Este enlace no se puede usar",
+      "cta": "Ir al panel",
+      "plansCta": "Ver planes",
+      "expired": "Este enlace de invitación ha caducado.",
+      "revoked": "Este enlace de invitación fue revocado.",
+      "claimed": "Este enlace de invitación ya se ha utilizado."
+    }
   }
 }

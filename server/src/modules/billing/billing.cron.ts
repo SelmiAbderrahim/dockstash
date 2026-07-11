@@ -4,11 +4,14 @@ import type { SchedulerCron } from '../scheduler/scheduler.boundaries.js';
 import { getPaymentProvider } from './active-provider.js';
 import { reconcileSubscriptions } from './reconcile.js';
 import { expireAllOverdueGraces } from './lifecycle.service.js';
+import { sweepExpiredInviteGrants } from './invitation.service.js';
 
 export const RECONCILE_CRON_ID = 'billing.reconcile';
 export const RECONCILE_CRON_EXPR = '*/15 * * * *'; // every 15 min
 export const GRACE_EXPIRY_CRON_ID = 'billing.grace-expiry';
 export const GRACE_EXPIRY_CRON_EXPR = '0 * * * *'; // hourly
+export const INVITE_GRANT_EXPIRY_CRON_ID = 'billing.invite-grant-expiry';
+export const INVITE_GRANT_EXPIRY_CRON_EXPR = '30 3 * * *'; // nightly
 
 let sharedScheduler: NodeCronScheduler | null = null;
 
@@ -42,6 +45,10 @@ export function registerBillingCrons(deps: BillingCronDeps = {}): boolean {
     const summary = await expireAllOverdueGraces();
     logger.info({ ...summary }, 'billing.grace-expiry: run complete');
   });
+  scheduler.register(INVITE_GRANT_EXPIRY_CRON_ID, INVITE_GRANT_EXPIRY_CRON_EXPR, async () => {
+    const summary = await sweepExpiredInviteGrants();
+    logger.info({ ...summary }, 'billing.invite-grant-expiry: run complete');
+  });
   return true;
 }
 
@@ -49,4 +56,5 @@ export function unregisterBillingCrons(deps: BillingCronDeps = {}): void {
   const scheduler = deps.scheduler ?? defaultScheduler();
   scheduler.unregister(RECONCILE_CRON_ID);
   scheduler.unregister(GRACE_EXPIRY_CRON_ID);
+  scheduler.unregister(INVITE_GRANT_EXPIRY_CRON_ID);
 }

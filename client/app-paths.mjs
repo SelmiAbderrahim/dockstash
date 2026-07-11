@@ -8,6 +8,7 @@ export const APP_PREFIXES = [
   '/dashboard',
   '/profile',
   '/billing',
+  '/invite',
   '/checkout',
   '/admin',
   '/login',

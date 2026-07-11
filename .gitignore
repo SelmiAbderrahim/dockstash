@@ -2,7 +2,7 @@
 logs
 *.log
 npm-debug.log*
-
+graphify-out
 # Runtime data
 pids
 *.pid

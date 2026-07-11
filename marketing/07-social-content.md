@@ -11,6 +11,11 @@ Platforms: **X/Twitter** (indie dev + build-in-public), **Mastodon/fediverse** (
 | P3 Build-in-public | 20% | Numbers, lessons, launch retro, stack decisions |
 | P4 Community/curation | 15% | Amplify self-host projects, restic tips, answer QTs |
 
+> **X deep-dive.** This doc owns X as one of three cross-adapted platforms. The X-only
+> operating manual — profile/pin drafts, daily engagement routine, a 50-post bank, the
+> AI writing system, and the X Ads funnel — lives in `x-growth/`. It inherits these
+> pillars, this cadence, and the rules below; it does not redraft the calendar.
+
 ## 30-day drafted calendar (repeatable skeleton — refresh specifics each cycle)
 
 **Week 1**

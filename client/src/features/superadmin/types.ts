@@ -103,6 +103,43 @@ export interface SuperadminSystem {
   };
 }
 
+export type InvitationStatus = 'pending' | 'claimed' | 'expired' | 'revoked';
+export type GrantDuration = 'one_month' | 'one_year';
+export type GrantablePlan = 'pro' | 'business';
+
+export interface SuperadminInvitation {
+  id: string;
+  /** Superadmin-only: the raw token, used to build the `/invite/:token` URL. */
+  token: string;
+  plan: GrantablePlan;
+  grantDuration: GrantDuration;
+  label: string;
+  expiresAt: string;
+  claimedAt: string | null;
+  claimedByEmail: string | null;
+  createdAt: string;
+  status: InvitationStatus;
+}
+
+export interface SuperadminInvitationsPage {
+  invitations: SuperadminInvitation[];
+  total: number;
+  page: number;
+  pages: number;
+}
+
+export interface CreateInvitationInput {
+  planSlug: GrantablePlan;
+  grantDuration: GrantDuration;
+  expiresInDays: number;
+  label?: string;
+}
+
+export interface InvitationMutationResponse {
+  message: string;
+  invitation: SuperadminInvitation;
+}
+
 export interface MutationResponse {
   message: string;
   user: SuperadminUser;
@@ -128,6 +165,8 @@ export interface SuperadminState {
   auditFilters: AuditFilters;
   system: SuperadminSystem | null;
   loadingSystem: boolean;
+  invitations: SuperadminInvitationsPage | null;
+  loadingInvitations: boolean;
   actionPending: boolean;
   error: string;
   message: string;

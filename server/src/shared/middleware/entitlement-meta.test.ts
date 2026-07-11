@@ -291,6 +291,16 @@ describe('entitlement-meta: every free-landing transition pauses via applyProjec
     expect(/getSubscription\s*\(/.test(src)).toBe(true);
   });
 
+  it('the invite-grant expiry sweep pauses on the free landing', () => {
+    const body = fnBody(
+      'billing/invitation.service.ts',
+      /export\s+async\s+function\s+sweepExpiredInviteGrants\b/,
+    );
+    expect(/applyProjectCap\s*\(/.test(body)).toBe(true);
+    // Free landing, never a delete: the row flips to canceled + planSlug free.
+    expect(/status:\s*'canceled'/.test(body)).toBe(true);
+  });
+
   it('expireGraceIfNeeded and handleRefund pause on the free landing', () => {
     const grace = fnBody(
       'billing/lifecycle.service.ts',

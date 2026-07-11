@@ -3,6 +3,14 @@ import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { HttpError } from '../../shared/utils/http-error.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { extractIp } from '../audit/index.js';
+import {
+  createInvitation,
+  createInvitationSchema,
+  invitationIdParamsSchema,
+  listInvitations,
+  listInvitationsSchema,
+  revokeInvitation,
+} from '../billing/index.js';
 import type { PurgeQueue, WarningMailer } from '../legal/index.js';
 import {
   changeUserRole,
@@ -101,4 +109,29 @@ export const getAudit: RequestHandler = asyncHandler(async (req, res) => {
 
 export const getSystem: RequestHandler = asyncHandler(async (_req, res) => {
   res.status(200).json(await getSystemSummary());
+});
+
+// Invitation links. Business logic lives in the billing module's public API;
+// these handlers stay thin (parse → delegate → respond), and auth/role gating
+// comes from the `/api/superadmin` mount in app.ts.
+
+export const createInvitationHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const input = createInvitationSchema.parse(req.body);
+  const invitation = await createInvitation(requireUserId(req.user), input);
+  res
+    .status(201)
+    .json({ message: req.t('superadmin.success.invitationCreated'), invitation });
+});
+
+export const listInvitationsHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const query = listInvitationsSchema.parse(req.query);
+  res.status(200).json(await listInvitations(query));
+});
+
+export const revokeInvitationHandler: RequestHandler = asyncHandler(async (req, res) => {
+  const { id } = invitationIdParamsSchema.parse(req.params);
+  const invitation = await revokeInvitation(id);
+  res
+    .status(200)
+    .json({ message: req.t('superadmin.success.invitationRevoked'), invitation });
 });

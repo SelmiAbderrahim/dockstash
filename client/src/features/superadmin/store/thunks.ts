@@ -2,21 +2,27 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
 import {
   changeUserRoleRequest,
+  createInvitationRequest,
   fetchAuditRequest,
   fetchBillingRequest,
+  fetchInvitationsRequest,
   fetchStatsRequest,
   fetchSystemRequest,
   fetchUsersRequest,
   forceVerifyUserRequest,
+  revokeInvitationRequest,
   scheduleDeletionRequest,
   setLegalHoldRequest,
 } from '../api';
 import type {
   AuditFilters,
+  CreateInvitationInput,
   DeletionResponse,
+  InvitationMutationResponse,
   MutationResponse,
   SuperadminAuditPage,
   SuperadminBillingPage,
+  SuperadminInvitationsPage,
   SuperadminStats,
   SuperadminSystem,
   SuperadminUsersPage,
@@ -128,5 +134,41 @@ export const fetchSuperadminSystem = createAsyncThunk<
     return await fetchSystemRequest();
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not load system status.'));
+  }
+});
+
+export const fetchSuperadminInvitations = createAsyncThunk<
+  SuperadminInvitationsPage,
+  { page: number },
+  { rejectValue: string }
+>('superadmin/fetchInvitations', async (input, { rejectWithValue }) => {
+  try {
+    return await fetchInvitationsRequest(input);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not load invitations.'));
+  }
+});
+
+export const createSuperadminInvitation = createAsyncThunk<
+  InvitationMutationResponse,
+  CreateInvitationInput,
+  { rejectValue: string }
+>('superadmin/createInvitation', async (input, { rejectWithValue }) => {
+  try {
+    return await createInvitationRequest(input);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not create the invitation.'));
+  }
+});
+
+export const revokeSuperadminInvitation = createAsyncThunk<
+  InvitationMutationResponse,
+  { id: string },
+  { rejectValue: string }
+>('superadmin/revokeInvitation', async ({ id }, { rejectWithValue }) => {
+  try {
+    return await revokeInvitationRequest(id);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not revoke the invitation.'));
   }
 });

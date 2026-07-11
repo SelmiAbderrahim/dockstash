@@ -1,5 +1,6 @@
 import { logger } from '../../config/logger.js';
 import { Subscription, type SubscriptionHydrated } from './subscription.model.js';
+import { INVITE_GRANT_RE } from './invitation.model.js';
 import type { IPaymentProvider, NormalizedSubscription } from './payment-provider.js';
 import { getPaymentProvider } from './active-provider.js';
 import { toPersistedStatus } from './status-map.js';
@@ -125,10 +126,12 @@ export async function reconcileSubscriptions(
   }
 
   // F4 second pass: local paid rows the active listing did not report.
+  // Comped invitation grants have no Polar counterpart to reconcile against —
+  // without the prefix exclusion every sweep window would heal them to `free`.
   const orphans = await Subscription.find({
     provider: provider.name,
     status: { $in: ['active', 'past_due'] },
-    providerSubscriptionId: { $nin: [...seen] },
+    providerSubscriptionId: { $nin: [...seen], $not: INVITE_GRANT_RE },
   });
   for (const local of orphans) {
     try {

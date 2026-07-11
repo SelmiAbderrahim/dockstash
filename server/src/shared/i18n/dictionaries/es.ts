@@ -125,6 +125,16 @@ export const es: DictionaryShape = {
         'Te damos la bienvenida a Dockstash, {{name}}.\n\n' +
         'Inicia sesión y gestiona tus copias de seguridad en {{clientUrl}}.\n',
     },
+    inviteClaimed: {
+      subject: 'Invitación canjeada: {{plan}}',
+      body:
+        'Se ha activado un enlace de invitación.\n\n' +
+        'Beneficiario: {{claimantName}} <{{claimantEmail}}>\n' +
+        'Plan: {{plan}} ({{grantDuration}})\n' +
+        'Periodo concedido: {{claimedAt}} → {{currentPeriodEnd}}\n' +
+        'Etiqueta: {{label}}\n\n' +
+        'Gestionar invitaciones: {{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: 'Tu recibo de Dockstash',
       body:
@@ -318,6 +328,15 @@ export const es: DictionaryShape = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: 'Ese enlace de invitación no es válido.',
+      expired: 'Ese enlace de invitación ha caducado.',
+      revoked: 'Ese enlace de invitación fue revocado.',
+      alreadyClaimed: 'Ese enlace de invitación ya se ha utilizado.',
+      alreadySubscribed: 'Ya tienes un plan de pago activo.',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: 'Las cuentas de superadministrador no se pueden modificar ni eliminar.',
@@ -327,6 +346,8 @@ export const es: DictionaryShape = {
       userVerified: 'Correo del usuario marcado como verificado.',
       legalHoldUpdated: 'Retención legal actualizada.',
       deletionScheduled: 'Eliminación de la cuenta programada.',
+      invitationCreated: 'Enlace de invitación creado.',
+      invitationRevoked: 'Enlace de invitación revocado.',
     },
   },
   security: {

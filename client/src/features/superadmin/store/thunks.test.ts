@@ -3,12 +3,15 @@ import { configureStore } from '@reduxjs/toolkit';
 import { superadminReducer } from './slice';
 import {
   changeUserRole,
+  createSuperadminInvitation,
   fetchSuperadminAudit,
   fetchSuperadminBilling,
+  fetchSuperadminInvitations,
   fetchSuperadminStats,
   fetchSuperadminSystem,
   fetchSuperadminUsers,
   forceVerifyUser,
+  revokeSuperadminInvitation,
   scheduleUserDeletion,
   setLegalHold,
 } from './thunks';
@@ -24,6 +27,9 @@ vi.mock('../api', () => ({
   fetchBillingRequest: vi.fn(),
   fetchAuditRequest: vi.fn(),
   fetchSystemRequest: vi.fn(),
+  fetchInvitationsRequest: vi.fn(),
+  createInvitationRequest: vi.fn(),
+  revokeInvitationRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -161,6 +167,55 @@ describe('superadmin thunks', () => {
     mocked.fetchSystemRequest.mockRejectedValue(new Error('x'));
     expect(
       fetchSuperadminSystem.rejected.match(await store.dispatch(fetchSuperadminSystem())),
+    ).toBe(true);
+  });
+
+  it('fetchSuperadminInvitations resolves and rejects', async () => {
+    mocked.fetchInvitationsRequest.mockResolvedValue({ invitations: [] } as never);
+    const store = makeStore();
+    expect(
+      fetchSuperadminInvitations.fulfilled.match(
+        await store.dispatch(fetchSuperadminInvitations({ page: 1 })),
+      ),
+    ).toBe(true);
+    mocked.fetchInvitationsRequest.mockRejectedValue(new Error('x'));
+    expect(
+      fetchSuperadminInvitations.rejected.match(
+        await store.dispatch(fetchSuperadminInvitations({ page: 1 })),
+      ),
+    ).toBe(true);
+  });
+
+  it('createSuperadminInvitation resolves and rejects', async () => {
+    const input = { planSlug: 'pro', grantDuration: 'one_month', expiresInDays: 30 } as const;
+    mocked.createInvitationRequest.mockResolvedValue({ message: 'ok' } as never);
+    const store = makeStore();
+    expect(
+      createSuperadminInvitation.fulfilled.match(
+        await store.dispatch(createSuperadminInvitation(input)),
+      ),
+    ).toBe(true);
+    mocked.createInvitationRequest.mockRejectedValue(new Error('x'));
+    expect(
+      createSuperadminInvitation.rejected.match(
+        await store.dispatch(createSuperadminInvitation(input)),
+      ),
+    ).toBe(true);
+  });
+
+  it('revokeSuperadminInvitation resolves and rejects', async () => {
+    mocked.revokeInvitationRequest.mockResolvedValue({ message: 'ok' } as never);
+    const store = makeStore();
+    expect(
+      revokeSuperadminInvitation.fulfilled.match(
+        await store.dispatch(revokeSuperadminInvitation({ id: 'i1' })),
+      ),
+    ).toBe(true);
+    mocked.revokeInvitationRequest.mockRejectedValue(new Error('x'));
+    expect(
+      revokeSuperadminInvitation.rejected.match(
+        await store.dispatch(revokeSuperadminInvitation({ id: 'i1' })),
+      ),
     ).toBe(true);
   });
 });

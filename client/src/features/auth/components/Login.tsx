@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '@shared/ui/card';
 import { OAuthButtons } from './OAuthButtons';
+import { inviteTokenFrom } from '../inviteToken';
 import { loginUser, verifyLoginOtp } from '../store/thunks';
 import { cancelOtp, clearError } from '../store/slice';
 import {
@@ -48,6 +49,8 @@ type OtpFormValues = z.infer<ReturnType<typeof buildOtpSchema>>;
 export const Login = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const invite = inviteTokenFrom(searchParams.get('invite'));
   const errorMessage = useAppSelector(selectAuthError);
   const authenticated = useAppSelector(selectAuthenticated);
   const emailVerified = useAppSelector(selectEmailVerified);
@@ -87,10 +90,13 @@ export const Login = () => {
 
   useEffect(() => {
     if (authenticated) {
-      // Superadmins land on their console; everyone else keeps the existing flow.
-      navigate(role === 'Superadmin' ? '/superadmin' : emailVerified ? '/dashboard' : '/verify-email');
+      // Superadmins land on their console; a verified invitee lands on the
+      // claim page; everyone else keeps the existing flow.
+      if (role === 'Superadmin') navigate('/superadmin');
+      else if (!emailVerified) navigate('/verify-email');
+      else navigate(invite ? `/invite/${invite}` : '/dashboard');
     }
-  }, [authenticated, emailVerified, role, navigate]);
+  }, [authenticated, emailVerified, invite, role, navigate]);
 
   const onSubmit = handleSubmit(async (values) => {
     await dispatch(loginUser(values));
@@ -191,6 +197,11 @@ export const Login = () => {
           </form>
           <Button asChild variant="link" className="mt-2 px-0">
             <Link to="/forgot-password">{t('login.forgot')}</Link>
+          </Button>
+          <Button asChild variant="link" className="mt-2 px-0 ms-4">
+            <Link to={invite ? `/register?invite=${invite}` : '/register'}>
+              {t('login.register')}
+            </Link>
           </Button>
           <OAuthButtons />
         </CardContent>

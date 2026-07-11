@@ -4,6 +4,7 @@
 **/cov-*
 **/coverage-*
 **/.nyc_output
+graphify-out
 **/*.lcov
 **/.vite
 **/.vite-cache

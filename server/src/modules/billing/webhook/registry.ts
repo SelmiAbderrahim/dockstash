@@ -24,6 +24,7 @@ import {
   notifyLifecycleEvent,
   GRACE_WINDOW_MS,
 } from '../lifecycle.service.js';
+import { cancelLiveInviteGrants } from '../invitation.service.js';
 
 export type DispatchResultStatus = 'processed' | 'skipped' | 'failed';
 
@@ -120,6 +121,9 @@ async function upsertSubscription(
   // Lifecycle side effects only run once payment is settled (`active`);
   // `incomplete` rows must not pause/unpause anything.
   if (status === 'active') {
+    // A real purchase supersedes any live comped grant. No applyProjectCap —
+    // the user is landing on a paid plan, not on free.
+    await cancelLiveInviteGrants(userId);
     if (priorSub && priorSub.planSlug !== planSlug) {
       // Plan changed: smaller tier pauses over-cap projects (never deletes);
       // bigger tier reactivates what fits.

@@ -123,6 +123,16 @@ export const zh: DictionaryShape = {
         '欢迎使用 Dockstash，{{name}}。\n\n' +
         '请在 {{clientUrl}} 登录并管理您的备份。\n',
     },
+    inviteClaimed: {
+      subject: '邀请已激活：{{plan}}',
+      body:
+        '有一个邀请链接已被激活。\n\n' +
+        '领取人：{{claimantName}} <{{claimantEmail}}>\n' +
+        '套餐：{{plan}}（{{grantDuration}}）\n' +
+        '赠送周期：{{claimedAt}} → {{currentPeriodEnd}}\n' +
+        '标签：{{label}}\n\n' +
+        '管理邀请：{{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: '您的 Dockstash 收据',
       body:
@@ -315,6 +325,15 @@ export const zh: DictionaryShape = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: '该邀请链接无效。',
+      expired: '该邀请链接已过期。',
+      revoked: '该邀请链接已被撤销。',
+      alreadyClaimed: '该邀请链接已被使用。',
+      alreadySubscribed: '您已拥有有效的付费套餐。',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: '超级管理员账户不能被修改或删除。',
@@ -324,6 +343,8 @@ export const zh: DictionaryShape = {
       userVerified: '用户邮箱已标记为已验证。',
       legalHoldUpdated: '法律保留状态已更新。',
       deletionScheduled: '账户删除已排期。',
+      invitationCreated: '邀请链接已创建。',
+      invitationRevoked: '邀请链接已撤销。',
     },
   },
   security: {

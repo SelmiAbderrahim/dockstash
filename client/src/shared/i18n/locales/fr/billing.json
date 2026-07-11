@@ -116,5 +116,36 @@
   },
   "plans": {
     "portal": "Gérer la facturation"
+  },
+  "invite": {
+    "duration": {
+      "one_month": "1 mois",
+      "one_year": "1 an"
+    },
+    "offer": {
+      "title": "Activez votre invitation",
+      "plan": "Offre",
+      "duration": "Offert pendant",
+      "linkExpires": "Expiration du lien",
+      "activate": "Activer"
+    },
+    "success": {
+      "title": "Tout est prêt",
+      "body": "Votre offre {{plan}} est active jusqu’au {{endsOn}}.",
+      "cta": "Aller au tableau de bord"
+    },
+    "verifyFirst": {
+      "title": "Vérifiez d’abord votre e-mail",
+      "body": "Confirmez votre adresse e-mail, puis revenez sur ce lien pour activer votre offre.",
+      "cta": "Vérifier l’e-mail"
+    },
+    "dead": {
+      "title": "Ce lien ne peut pas être utilisé",
+      "cta": "Aller au tableau de bord",
+      "plansCta": "Voir les offres",
+      "expired": "Ce lien d’invitation a expiré.",
+      "revoked": "Ce lien d’invitation a été révoqué.",
+      "claimed": "Ce lien d’invitation a déjà été utilisé."
+    }
   }
 }

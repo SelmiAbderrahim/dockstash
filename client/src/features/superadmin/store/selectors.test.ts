@@ -26,6 +26,8 @@ describe('superadmin selectors', () => {
     });
     expect(selectors.selectSuperadminSystem(state)).toBeNull();
     expect(selectors.selectLoadingSystem(state)).toBe(false);
+    expect(selectors.selectSuperadminInvitations(state)).toBeNull();
+    expect(selectors.selectLoadingInvitations(state)).toBe(false);
     expect(selectors.selectActionPending(state)).toBe(false);
     expect(selectors.selectSuperadminError(state)).toBe('');
     expect(selectors.selectSuperadminMessage(state)).toBe('');

@@ -5,7 +5,8 @@
     "users": "用户",
     "billing": "账单",
     "audit": "审计",
-    "system": "系统"
+    "system": "系统",
+    "invitations": "邀请"
   },
   "loading": "加载中…",
   "errorPrefix": "错误！",
@@ -124,5 +125,45 @@
     "previous": "上一页",
     "next": "下一页",
     "pageOf": "第 {{page}} 页，共 {{pages}} 页"
+  },
+  "invitations": {
+    "createTitle": "创建邀请链接",
+    "listTitle": "邀请链接",
+    "empty": "暂无邀请链接。",
+    "planLabel": "套餐",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "赠送时长",
+    "duration": {
+      "one_month": "1 个月",
+      "one_year": "1 年"
+    },
+    "expiryLabel": "链接有效期",
+    "expiryDays": "{{days}} 天",
+    "labelLabel": "标签（可选）",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "归因备注。永不向收件人展示。",
+    "submit": "创建链接",
+    "copy": "复制链接",
+    "copied": "已复制",
+    "revoke": "撤销",
+    "status": {
+      "pending": "待领取",
+      "claimed": "已领取",
+      "expired": "已过期",
+      "revoked": "已撤销"
+    },
+    "columns": {
+      "label": "标签",
+      "plan": "套餐",
+      "duration": "时长",
+      "status": "状态",
+      "claimant": "领取人",
+      "expires": "链接过期时间",
+      "created": "创建时间",
+      "actions": "操作"
+    }
   }
 }

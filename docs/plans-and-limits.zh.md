@@ -29,3 +29,21 @@ Dockstash 提供三个方案。**Free** 是开源 / 自托管的默认方案，�
 
 Polar 是 **Merchant of Record**：增值税、销售税与开票由 Polar 负责，Dockstash 不
 内置税务引擎。
+
+## 邀请赠送
+
+超级管理员可以创建一次性邀请链接（**超级管理员 → 邀请**），赠送 `pro` 或
+`business` 套餐，时长为 **1 个月**或 **1 年**。收件人打开 `/invite/<token>`，登录
+（或注册）后激活。
+
+- **前缀语义。** 领取时写入一行 `Subscription`，其 `providerSubscriptionId` 为
+  `invite-grant-<invitationId>`。该前缀是唯一的区分标志：权益解析器、每夜清扫、
+  webhook 覆盖以及 reconcile 排除都以它为准。Polar 行仍保持纯状态语义。
+- **失效。** 一旦越过 `currentPeriodEnd`，赠送立即停止授予权益 —— 在读取时强制执
+  行，而非依赖清扫。每夜任务（`billing.invite-grant-expiry`，03:30）随后将该行置
+  为 `canceled`，并通过 `applyProjectCap` 让用户回落到 `free`：超出上限的项目会被
+  **暂停，绝不删除**。
+- **购买覆盖赠送。** Polar 订阅激活时，该用户所有生效中的赠送先被取消。已持有有效
+  付费套餐的用户无法领取链接（`invitations.error.alreadySubscribed`）。
+- **reconcile 从不触碰赠送行** —— 它们在 Polar 没有对应记录。
+- **撤销**是软撤销（`revokedAt`），仅对未领取的链接生效。

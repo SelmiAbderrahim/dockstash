@@ -116,5 +116,36 @@
   },
   "plans": {
     "portal": "管理账单"
+  },
+  "invite": {
+    "duration": {
+      "one_month": "1 个月",
+      "one_year": "1 年"
+    },
+    "offer": {
+      "title": "激活您的邀请",
+      "plan": "套餐",
+      "duration": "免费时长",
+      "linkExpires": "链接过期时间",
+      "activate": "激活"
+    },
+    "success": {
+      "title": "一切就绪",
+      "body": "您的 {{plan}} 套餐有效期至 {{endsOn}}。",
+      "cta": "前往仪表板"
+    },
+    "verifyFirst": {
+      "title": "请先验证邮箱",
+      "body": "确认您的邮箱地址，然后回到此链接激活套餐。",
+      "cta": "验证邮箱"
+    },
+    "dead": {
+      "title": "此链接无法使用",
+      "cta": "前往仪表板",
+      "plansCta": "查看套餐",
+      "expired": "该邀请链接已过期。",
+      "revoked": "该邀请链接已被撤销。",
+      "claimed": "该邀请链接已被使用。"
+    }
   }
 }

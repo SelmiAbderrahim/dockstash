@@ -125,6 +125,16 @@ export const de: DictionaryShape = {
         'Willkommen bei Dockstash, {{name}}.\n\n' +
         'Sie können sich anmelden und Ihre Backups auf {{clientUrl}} verwalten.\n',
     },
+    inviteClaimed: {
+      subject: 'Einladung eingelöst: {{plan}}',
+      body:
+        'Ein Einladungslink wurde aktiviert.\n\n' +
+        'Empfänger: {{claimantName}} <{{claimantEmail}}>\n' +
+        'Tarif: {{plan}} ({{grantDuration}})\n' +
+        'Freischaltzeitraum: {{claimedAt}} → {{currentPeriodEnd}}\n' +
+        'Bezeichnung: {{label}}\n\n' +
+        'Einladungen verwalten: {{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: 'Ihre Dockstash-Quittung',
       body:
@@ -318,6 +328,15 @@ export const de: DictionaryShape = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: 'Dieser Einladungslink ist ungültig.',
+      expired: 'Dieser Einladungslink ist abgelaufen.',
+      revoked: 'Dieser Einladungslink wurde widerrufen.',
+      alreadyClaimed: 'Dieser Einladungslink wurde bereits verwendet.',
+      alreadySubscribed: 'Sie haben bereits einen aktiven kostenpflichtigen Tarif.',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: 'Superadmin-Konten können nicht geändert oder gelöscht werden.',
@@ -327,6 +346,8 @@ export const de: DictionaryShape = {
       userVerified: 'Benutzer-E-Mail als bestätigt markiert.',
       legalHoldUpdated: 'Legal Hold aktualisiert.',
       deletionScheduled: 'Kontolöschung geplant.',
+      invitationCreated: 'Einladungslink erstellt.',
+      invitationRevoked: 'Einladungslink widerrufen.',
     },
   },
   security: {

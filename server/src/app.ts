@@ -19,7 +19,12 @@ import {
 import { issueCsrfToken } from './shared/middleware/csrf.js';
 import { authRouter, oauthPublicRouter, requireVerified } from './modules/auth/index.js';
 import { requireAuth } from './shared/middleware/require-auth.js';
-import { billingRouter, billingPublicRouter, webhookHandler } from './modules/billing/index.js';
+import {
+  billingRouter,
+  billingPublicRouter,
+  invitationRouter,
+  webhookHandler,
+} from './modules/billing/index.js';
 import { communicationRouter } from './modules/communication/index.js';
 import { usersRouter } from './modules/users/index.js';
 import { backupsRouter } from './modules/backups/index.js';
@@ -132,6 +137,9 @@ export function createApp(): Express {
   // reaches `requireAuth`. All other billing surfaces stay gated below.
   app.use('/api/billing', billingPublicRouter);
   app.use('/api/billing', verified, billingRouter);
+  // Invitation links. `GET /:token` is public (sanitized offer summary only);
+  // the claim carries its own [requireAuth, requireVerified] at the route.
+  app.use('/api/invitations', invitationRouter);
   app.use('/api/backups', verified, backupsRouter);
   app.use('/api/scheduler', verified, schedulerRouter);
   app.use('/api/recovery', verified, recoveryRouter);

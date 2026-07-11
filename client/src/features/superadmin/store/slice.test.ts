@@ -7,16 +7,19 @@ import {
 } from './slice';
 import {
   changeUserRole,
+  createSuperadminInvitation,
   fetchSuperadminAudit,
   fetchSuperadminBilling,
+  fetchSuperadminInvitations,
   fetchSuperadminStats,
   fetchSuperadminSystem,
   fetchSuperadminUsers,
   forceVerifyUser,
+  revokeSuperadminInvitation,
   scheduleUserDeletion,
   setLegalHold,
 } from './thunks';
-import type { SuperadminUser } from '../types';
+import type { SuperadminInvitation, SuperadminUser } from '../types';
 
 const init = () => superadminReducer(undefined, { type: 'unknown' });
 
@@ -179,5 +182,98 @@ describe('superadmin slice', () => {
     expect(
       superadminReducer(init(), { type: scheduleUserDeletion.pending.type }).actionPending,
     ).toBe(true);
+  });
+
+  it('invitation fetch: pending / fulfilled / rejected', () => {
+    expect(
+      superadminReducer(
+        { ...init(), error: 'x' },
+        { type: fetchSuperadminInvitations.pending.type },
+      ),
+    ).toMatchObject({ loadingInvitations: true, error: '' });
+
+    const page = { invitations: [], total: 0, page: 1, pages: 0 };
+    expect(
+      superadminReducer(init(), {
+        type: fetchSuperadminInvitations.fulfilled.type,
+        payload: page,
+      }),
+    ).toMatchObject({ loadingInvitations: false, invitations: page });
+
+    expect(
+      superadminReducer(init(), {
+        type: fetchSuperadminInvitations.rejected.type,
+        payload: undefined,
+      }).error,
+    ).toBe('Could not load invitations.');
+  });
+
+  it('invitation create: pending / fulfilled / rejected', () => {
+    expect(
+      superadminReducer(init(), { type: createSuperadminInvitation.pending.type }).actionPending,
+    ).toBe(true);
+    expect(
+      superadminReducer(init(), {
+        type: createSuperadminInvitation.fulfilled.type,
+        payload: { message: 'created' },
+      }),
+    ).toMatchObject({ actionPending: false, message: 'created' });
+    expect(
+      superadminReducer(init(), {
+        type: createSuperadminInvitation.rejected.type,
+        payload: undefined,
+      }).error,
+    ).toBe('Could not create the invitation.');
+  });
+
+  it('invitation revoke patches the matching row only', () => {
+    const row = (over: Partial<SuperadminInvitation> = {}): SuperadminInvitation => ({
+      id: 'i1',
+      token: 't1',
+      plan: 'pro',
+      grantDuration: 'one_month',
+      label: '',
+      expiresAt: '2030-01-01T00:00:00.000Z',
+      claimedAt: null,
+      claimedByEmail: null,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      status: 'pending',
+      ...over,
+    });
+    const seeded = {
+      ...init(),
+      invitations: { invitations: [row()], total: 1, page: 1, pages: 1 },
+    };
+
+    expect(
+      superadminReducer(seeded, { type: revokeSuperadminInvitation.pending.type }).actionPending,
+    ).toBe(true);
+
+    const patched = superadminReducer(seeded, {
+      type: revokeSuperadminInvitation.fulfilled.type,
+      payload: { message: 'revoked', invitation: row({ status: 'revoked' }) },
+    });
+    expect(patched.invitations?.invitations[0]?.status).toBe('revoked');
+    expect(patched.message).toBe('revoked');
+
+    // Unknown id → list untouched; null list → no throw.
+    const foreign = superadminReducer(seeded, {
+      type: revokeSuperadminInvitation.fulfilled.type,
+      payload: { message: 'x', invitation: row({ id: 'other', status: 'revoked' }) },
+    });
+    expect(foreign.invitations?.invitations[0]?.status).toBe('pending');
+    expect(
+      superadminReducer(init(), {
+        type: revokeSuperadminInvitation.fulfilled.type,
+        payload: { message: 'x', invitation: row() },
+      }).invitations,
+    ).toBeNull();
+
+    expect(
+      superadminReducer(init(), {
+        type: revokeSuperadminInvitation.rejected.type,
+        payload: undefined,
+      }).error,
+    ).toBe('Could not revoke the invitation.');
   });
 });

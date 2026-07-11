@@ -5,7 +5,8 @@
     "users": "Utilisateurs",
     "billing": "Facturation",
     "audit": "Audit",
-    "system": "Système"
+    "system": "Système",
+    "invitations": "Invitations"
   },
   "loading": "Chargement…",
   "errorPrefix": "Erreur !",
@@ -124,5 +125,45 @@
     "previous": "Précédent",
     "next": "Suivant",
     "pageOf": "Page {{page}} sur {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "Créer un lien d’invitation",
+    "listTitle": "Liens d’invitation",
+    "empty": "Aucun lien d’invitation pour le moment.",
+    "planLabel": "Offre",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "Durée offerte",
+    "duration": {
+      "one_month": "1 mois",
+      "one_year": "1 an"
+    },
+    "expiryLabel": "Le lien expire dans",
+    "expiryDays": "{{days}} jours",
+    "labelLabel": "Libellé (facultatif)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "Note d’attribution. Jamais montrée au destinataire.",
+    "submit": "Créer le lien",
+    "copy": "Copier le lien",
+    "copied": "Copié",
+    "revoke": "Révoquer",
+    "status": {
+      "pending": "En attente",
+      "claimed": "Utilisé",
+      "expired": "Expiré",
+      "revoked": "Révoqué"
+    },
+    "columns": {
+      "label": "Libellé",
+      "plan": "Offre",
+      "duration": "Durée",
+      "status": "Statut",
+      "claimant": "Utilisé par",
+      "expires": "Expiration du lien",
+      "created": "Créé le",
+      "actions": "Actions"
+    }
   }
 }

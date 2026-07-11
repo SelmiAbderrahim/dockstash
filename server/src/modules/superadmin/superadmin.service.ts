@@ -319,7 +319,7 @@ export async function getBillingOverview(input: BillingOverviewInput): Promise<B
       email: customer.email,
       createdAt: customer.createdAt.toISOString(),
       subscriptions: subscriptions
-        .filter((sub) => sub.customerId.toString() === customer._id.toString())
+        .filter((sub) => sub.customerId?.toString() === customer._id.toString())
         .map((sub) => ({
           id: sub._id.toString(),
           planSlug: sub.planSlug,

@@ -188,6 +188,43 @@ export async function deliverReactivationEmail(
   });
 }
 
+export interface InvitationClaimedInput {
+  claimantEmail: string;
+  claimantName: string;
+  plan: string;
+  grantDuration: string;
+  claimedAt: string;
+  currentPeriodEnd: string;
+  label: string;
+}
+
+/**
+ * Operator notification: someone activated an invitation link. Goes to
+ * `CONTACT_RECIPIENT` — never to the claimant. Silent skip when no operator
+ * inbox is configured; `sendEmail` additionally skips (and never throws) when
+ * Resend is unconfigured, so a claim never fails on mail.
+ */
+export async function deliverInvitationClaimedEmail(
+  input: InvitationClaimedInput,
+): Promise<void> {
+  if (!env.CONTACT_RECIPIENT) return;
+  const vars = {
+    claimantName: input.claimantName,
+    claimantEmail: input.claimantEmail,
+    plan: input.plan,
+    grantDuration: input.grantDuration,
+    claimedAt: input.claimedAt,
+    currentPeriodEnd: input.currentPeriodEnd,
+    label: input.label,
+    invitationsUrl: `${normalizedClientUrl()}/superadmin?tab=invitations`,
+  };
+  await sendEmail({
+    to: env.CONTACT_RECIPIENT,
+    subject: translate(DEFAULT_LOCALE, 'email.inviteClaimed.subject', vars),
+    text: translate(DEFAULT_LOCALE, 'email.inviteClaimed.body', vars),
+  });
+}
+
 export type AlertKind = 'backup' | 'restore' | 'drill' | 'mirror' | 'heartbeat';
 
 export interface AlertEmailInput {

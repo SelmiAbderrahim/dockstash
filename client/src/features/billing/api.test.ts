@@ -8,6 +8,8 @@ import {
   openPortalRequest,
   changePlan,
   selectProjectsToKeep,
+  fetchInvitation,
+  claimInvitationRequest,
 } from './api';
 
 vi.mock('@shared/api/client', () => ({ apiClient: vi.fn() }));
@@ -72,6 +74,20 @@ describe('billing api wrappers', () => {
       method: 'POST',
       auth: true,
       body: { keepIds: ['a', 'b'] },
+    });
+  });
+
+  it('fetchInvitation resolves the public offer without auth', async () => {
+    await fetchInvitation('tok-1');
+    expect(apiClient).toHaveBeenCalledWith('/invitations/tok-1');
+  });
+
+  it('claimInvitationRequest posts the authed claim', async () => {
+    await claimInvitationRequest('tok-1');
+    expect(apiClient).toHaveBeenCalledWith('/invitations/tok-1/claim', {
+      method: 'POST',
+      auth: true,
+      body: {},
     });
   });
 });

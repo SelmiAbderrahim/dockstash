@@ -5,7 +5,8 @@
     "users": "Users",
     "billing": "Billing",
     "audit": "Audit",
-    "system": "System"
+    "system": "System",
+    "invitations": "Invitations"
   },
   "loading": "Loading…",
   "errorPrefix": "Error!",
@@ -124,5 +125,45 @@
     "previous": "Previous",
     "next": "Next",
     "pageOf": "Page {{page}} of {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "Create an invitation link",
+    "listTitle": "Invitation links",
+    "empty": "No invitation links yet.",
+    "planLabel": "Plan",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "Grant duration",
+    "duration": {
+      "one_month": "1 month",
+      "one_year": "1 year"
+    },
+    "expiryLabel": "Link expires in",
+    "expiryDays": "{{days}} days",
+    "labelLabel": "Label (optional)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "Attribution note. Never shown to the recipient.",
+    "submit": "Create link",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "revoke": "Revoke",
+    "status": {
+      "pending": "Pending",
+      "claimed": "Claimed",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "columns": {
+      "label": "Label",
+      "plan": "Plan",
+      "duration": "Duration",
+      "status": "Status",
+      "claimant": "Claimed by",
+      "expires": "Link expires",
+      "created": "Created",
+      "actions": "Actions"
+    }
   }
 }

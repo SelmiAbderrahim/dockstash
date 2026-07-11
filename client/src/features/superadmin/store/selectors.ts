@@ -3,6 +3,7 @@ import type {
   AuditFilters,
   SuperadminAuditPage,
   SuperadminBillingPage,
+  SuperadminInvitationsPage,
   SuperadminStats,
   SuperadminSystem,
   SuperadminUsersPage,
@@ -26,6 +27,10 @@ export const selectAuditFilters = (state: RootState): AuditFilters =>
 export const selectSuperadminSystem = (state: RootState): SuperadminSystem | null =>
   state.superadmin.system;
 export const selectLoadingSystem = (state: RootState): boolean => state.superadmin.loadingSystem;
+export const selectSuperadminInvitations = (state: RootState): SuperadminInvitationsPage | null =>
+  state.superadmin.invitations;
+export const selectLoadingInvitations = (state: RootState): boolean =>
+  state.superadmin.loadingInvitations;
 export const selectActionPending = (state: RootState): boolean => state.superadmin.actionPending;
 export const selectSuperadminError = (state: RootState): string => state.superadmin.error;
 export const selectSuperadminMessage = (state: RootState): string => state.superadmin.message;

@@ -125,6 +125,16 @@ export const ru: DictionaryShape = {
         'Добро пожаловать в Dockstash, {{name}}.\n\n' +
         'Войдите и управляйте резервными копиями на {{clientUrl}}.\n',
     },
+    inviteClaimed: {
+      subject: 'Приглашение активировано: {{plan}}',
+      body:
+        'Ссылка-приглашение активирована.\n\n' +
+        'Получатель: {{claimantName}} <{{claimantEmail}}>\n' +
+        'Тариф: {{plan}} ({{grantDuration}})\n' +
+        'Период предоставления: {{claimedAt}} → {{currentPeriodEnd}}\n' +
+        'Метка: {{label}}\n\n' +
+        'Управление приглашениями: {{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: 'Ваш чек Dockstash',
       body:
@@ -318,6 +328,15 @@ export const ru: DictionaryShape = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: 'Эта ссылка-приглашение недействительна.',
+      expired: 'Срок действия этой ссылки-приглашения истёк.',
+      revoked: 'Эта ссылка-приглашение отозвана.',
+      alreadyClaimed: 'Эта ссылка-приглашение уже использована.',
+      alreadySubscribed: 'У вас уже есть активный платный тариф.',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: 'Учётные записи суперадминистратора нельзя изменить или удалить.',
@@ -327,6 +346,8 @@ export const ru: DictionaryShape = {
       userVerified: 'Адрес электронной почты пользователя отмечен как подтверждённый.',
       legalHoldUpdated: 'Юридическое удержание обновлено.',
       deletionScheduled: 'Удаление учётной записи запланировано.',
+      invitationCreated: 'Ссылка-приглашение создана.',
+      invitationRevoked: 'Ссылка-приглашение отозвана.',
     },
   },
   security: {

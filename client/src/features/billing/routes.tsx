@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import type { RouteObject } from 'react-router-dom';
 import { RequireVerified } from '@features/auth';
 import { BillingPage } from './components/BillingPage';
+import { InvitationClaimPage } from './components/InvitationClaimPage';
 
 // NOTE: the public `/pricing` route is owned by the marketing feature
 // (client/src/features/marketing/components/Pricing.tsx) so it is
@@ -21,4 +22,7 @@ export const billingRoutes: RouteObject[] = [
       </RequireVerified>
     ),
   },
+  // Unguarded on purpose: the public resolve must render for a logged-out
+  // visitor, who is then bounced to /login?invite=<token> by the page itself.
+  { path: 'invite/:token', element: <InvitationClaimPage /> },
 ];

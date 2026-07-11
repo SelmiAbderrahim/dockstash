@@ -2,8 +2,10 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { messageFromError } from '@shared/utils/errors';
 import {
   changePlan as changePlanRequest,
+  claimInvitationRequest,
   createCheckout as createCheckoutRequest,
   fetchBillingOverview,
+  fetchInvitation,
   fetchPricingTiers,
   fetchUsage,
   openPortalRequest,
@@ -13,8 +15,10 @@ import type {
   BillingOverview,
   ChangePlanResponse,
   CheckoutResponse,
+  ClaimInvitationResponse,
   PortalResponse,
   PricingTier,
+  PublicInvitation,
   SelectProjectsResponse,
   UsageResponse,
 } from '../types';
@@ -97,5 +101,29 @@ export const selectProjectsToKeep = createAsyncThunk<
     return await selectProjectsRequest(input.keepIds);
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not update selection.'));
+  }
+});
+
+export const resolveInvitation = createAsyncThunk<
+  PublicInvitation,
+  { token: string },
+  { rejectValue: string }
+>('billing/resolveInvitation', async ({ token }, { rejectWithValue }) => {
+  try {
+    return await fetchInvitation(token);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'That invitation link is not valid.'));
+  }
+});
+
+export const claimInvitation = createAsyncThunk<
+  ClaimInvitationResponse,
+  { token: string },
+  { rejectValue: string }
+>('billing/claimInvitation', async ({ token }, { rejectWithValue }) => {
+  try {
+    return await claimInvitationRequest(token);
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not activate the invitation.'));
   }
 });

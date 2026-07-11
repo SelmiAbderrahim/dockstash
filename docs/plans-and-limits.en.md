@@ -78,3 +78,30 @@ tax engine.
 2. Reload the pricing grid — the new price is served immediately.
 3. Re-running `seedPricingTiers` on boot never overwrites operator edits
    to `priceMonthly` / `priceYearly` / `active`.
+
+## Invitation grants
+
+A superadmin can mint a single-use invitation link (**Superadmin → Invitations**)
+that comps `pro` or `business` for **1 month** or **1 year**. The recipient opens
+`/invite/<token>`, signs in (or signs up) and activates it.
+
+- **Prefix semantics.** A claim writes one `Subscription` row whose
+  `providerSubscriptionId` is `invite-grant-<invitationId>`. That prefix is the
+  only discriminator: the entitlement resolver, the nightly expiry sweep, the
+  webhook supersede, and the reconcile exclusion all scope on it. Polar rows keep
+  status-only semantics and are never affected.
+- **Lapse.** The grant stops entitling the instant `currentPeriodEnd` passes —
+  enforced at read time, not by the sweep. A nightly job
+  (`billing.invite-grant-expiry`, 03:30) then flips the row to `canceled` and
+  lands the user on `free` through the same `applyProjectCap` funnel as every
+  other free landing: over-cap projects are **paused, never deleted**, and the
+  retention grandfather window is stamped. The user sees the normal upgrade
+  surfaces at `/billing?tab=plans`.
+- **A purchase supersedes a grant.** When a Polar subscription activates, any
+  live grant row for that user is canceled first. A user who already holds an
+  active paid plan cannot claim a link (`invitations.error.alreadySubscribed`);
+  the link stays pending for someone else.
+- **Reconcile never touches grants.** They have no Polar counterpart, so the
+  drift healer skips `invite-grant-` rows entirely.
+- **Revocation** is soft (`revokedAt`) and only applies to an unclaimed link. It
+  never cancels an already-activated grant.

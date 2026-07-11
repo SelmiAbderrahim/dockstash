@@ -1,12 +1,15 @@
 import { Router } from 'express';
 import {
   changeRole,
+  createInvitationHandler,
   deleteUser,
   getAudit,
   getBilling,
   getStats,
   getSystem,
+  listInvitationsHandler,
   listUsersHandler,
+  revokeInvitationHandler,
   updateLegalHold,
   verifyUser,
 } from './superadmin.controller.js';
@@ -24,3 +27,6 @@ superadminRouter.delete('/users/:id', deleteUser);
 superadminRouter.get('/billing', getBilling);
 superadminRouter.get('/audit', getAudit);
 superadminRouter.get('/system', getSystem);
+superadminRouter.post('/invitations', createInvitationHandler);
+superadminRouter.get('/invitations', listInvitationsHandler);
+superadminRouter.patch('/invitations/:id/revoke', revokeInvitationHandler);

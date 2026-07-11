@@ -9,6 +9,8 @@ import {
   startCheckout,
   changePlan,
   selectProjectsToKeep,
+  resolveInvitation,
+  claimInvitation,
 } from './thunks';
 import * as api from '../api';
 
@@ -20,6 +22,8 @@ vi.mock('../api', () => ({
   openPortalRequest: vi.fn(),
   changePlan: vi.fn(),
   selectProjectsToKeep: vi.fn(),
+  fetchInvitation: vi.fn(),
+  claimInvitationRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -147,5 +151,29 @@ describe('billing thunks — rejected paths', () => {
     mocked.selectProjectsToKeep.mockRejectedValue(new Error('x'));
     const res = await makeStore().dispatch(selectProjectsToKeep({ keepIds: [] }));
     expect(selectProjectsToKeep.rejected.match(res)).toBe(true);
+  });
+
+  it('resolveInvitation resolves and rejects', async () => {
+    mocked.fetchInvitation.mockResolvedValue({ status: 'pending' } as never);
+    const store = makeStore();
+    expect(
+      resolveInvitation.fulfilled.match(await store.dispatch(resolveInvitation({ token: 't' }))),
+    ).toBe(true);
+    mocked.fetchInvitation.mockRejectedValue(new Error('x'));
+    expect(
+      resolveInvitation.rejected.match(await store.dispatch(resolveInvitation({ token: 't' }))),
+    ).toBe(true);
+  });
+
+  it('claimInvitation resolves and rejects', async () => {
+    mocked.claimInvitationRequest.mockResolvedValue({ plan: 'pro' } as never);
+    const store = makeStore();
+    expect(
+      claimInvitation.fulfilled.match(await store.dispatch(claimInvitation({ token: 't' }))),
+    ).toBe(true);
+    mocked.claimInvitationRequest.mockRejectedValue(new Error('x'));
+    expect(
+      claimInvitation.rejected.match(await store.dispatch(claimInvitation({ token: 't' }))),
+    ).toBe(true);
   });
 });

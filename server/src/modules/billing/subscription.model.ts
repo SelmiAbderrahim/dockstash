@@ -34,10 +34,12 @@ const subscriptionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    // Null on comped invitation-grant rows: a grant has no payment customer.
+    // Every provider-originated row sets it (webhook `upsertCustomer` runs first).
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
-      required: true,
+      default: null,
     },
     provider: {
       type: String,

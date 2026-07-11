@@ -5,7 +5,8 @@
     "users": "Usuarios",
     "billing": "Facturación",
     "audit": "Auditoría",
-    "system": "Sistema"
+    "system": "Sistema",
+    "invitations": "Invitaciones"
   },
   "loading": "Cargando…",
   "errorPrefix": "¡Error!",
@@ -124,5 +125,45 @@
     "previous": "Anterior",
     "next": "Siguiente",
     "pageOf": "Página {{page}} de {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "Crear un enlace de invitación",
+    "listTitle": "Enlaces de invitación",
+    "empty": "Todavía no hay enlaces de invitación.",
+    "planLabel": "Plan",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "Duración concedida",
+    "duration": {
+      "one_month": "1 mes",
+      "one_year": "1 año"
+    },
+    "expiryLabel": "El enlace caduca en",
+    "expiryDays": "{{days}} días",
+    "labelLabel": "Etiqueta (opcional)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "Nota de atribución. Nunca se muestra al destinatario.",
+    "submit": "Crear enlace",
+    "copy": "Copiar enlace",
+    "copied": "Copiado",
+    "revoke": "Revocar",
+    "status": {
+      "pending": "Pendiente",
+      "claimed": "Canjeado",
+      "expired": "Caducado",
+      "revoked": "Revocado"
+    },
+    "columns": {
+      "label": "Etiqueta",
+      "plan": "Plan",
+      "duration": "Duración",
+      "status": "Estado",
+      "claimant": "Canjeado por",
+      "expires": "Caducidad del enlace",
+      "created": "Creado",
+      "actions": "Acciones"
+    }
   }
 }

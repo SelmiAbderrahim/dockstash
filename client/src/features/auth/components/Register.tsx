@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from '@shared/ui/card';
 import { OAuthButtons } from './OAuthButtons';
+import { inviteTokenFrom } from '../inviteToken';
 import { registerUser } from '../store/thunks';
 import { clearError } from '../store/slice';
 import {
@@ -43,6 +44,8 @@ type RegisterFormValues = z.infer<ReturnType<typeof buildRegisterSchema>>;
 export const Register = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const invite = inviteTokenFrom(searchParams.get('invite'));
   const errorMessage = useAppSelector(selectAuthError);
   const authenticated = useAppSelector(selectAuthenticated);
   const emailVerified = useAppSelector(selectEmailVerified);
@@ -73,9 +76,10 @@ export const Register = () => {
   useEffect(() => {
     if (authenticated) {
       // Unverified accounts must confirm their email before the product shell.
-      navigate(emailVerified ? '/dashboard' : '/verify-email');
+      if (!emailVerified) navigate('/verify-email');
+      else navigate(invite ? `/invite/${invite}` : '/dashboard');
     }
-  }, [authenticated, emailVerified, navigate]);
+  }, [authenticated, emailVerified, invite, navigate]);
 
   const onSubmit = handleSubmit(async (values) => {
     await dispatch(registerUser(values));
@@ -165,6 +169,9 @@ export const Register = () => {
               .
             </p>
           </form>
+          <Button asChild variant="link" className="mt-2 px-0">
+            <Link to={invite ? `/login?invite=${invite}` : '/login'}>{t('register.login')}</Link>
+          </Button>
           <OAuthButtons />
         </CardContent>
       </Card>

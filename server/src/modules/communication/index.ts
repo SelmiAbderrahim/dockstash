@@ -11,6 +11,8 @@ export {
   deliverDowngradeNoticeEmail,
   deliverReactivationEmail,
   deliverAlertEmail,
+  deliverInvitationClaimedEmail,
+  type InvitationClaimedInput,
   type WelcomeEmailInput,
   type PaymentReceiptInput,
   type DunningInput,

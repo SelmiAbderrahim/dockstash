@@ -123,6 +123,16 @@ export const ar: DictionaryShape = {
         'مرحباً بك في Dockstash يا {{name}}.\n\n' +
         'يمكنك تسجيل الدخول وإدارة نسخك الاحتياطية على {{clientUrl}}.\n',
     },
+    inviteClaimed: {
+      subject: 'تم تفعيل دعوة: {{plan}}',
+      body:
+        'تم تفعيل رابط دعوة.\n\n' +
+        'المستفيد: {{claimantName}} <{{claimantEmail}}>\n' +
+        'الخطة: {{plan}} ({{grantDuration}})\n' +
+        'نافذة المنح: {{claimedAt}} → {{currentPeriodEnd}}\n' +
+        'التسمية: {{label}}\n\n' +
+        'إدارة الدعوات: {{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: 'إيصال Dockstash الخاص بك',
       body:
@@ -316,6 +326,15 @@ export const ar: DictionaryShape = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: 'رابط الدعوة هذا غير صالح.',
+      expired: 'انتهت صلاحية رابط الدعوة هذا.',
+      revoked: 'تم إبطال رابط الدعوة هذا.',
+      alreadyClaimed: 'تم استخدام رابط الدعوة هذا بالفعل.',
+      alreadySubscribed: 'لديك بالفعل خطة مدفوعة نشطة.',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: 'لا يمكن تعديل حسابات المشرف الأعلى أو حذفها.',
@@ -325,6 +344,8 @@ export const ar: DictionaryShape = {
       userVerified: 'تم وضع علامة على بريد المستخدم كمُتحقق منه.',
       legalHoldUpdated: 'تم تحديث الحجز القانوني.',
       deletionScheduled: 'تمت جدولة حذف الحساب.',
+      invitationCreated: 'تم إنشاء رابط الدعوة.',
+      invitationRevoked: 'تم إبطال رابط الدعوة.',
     },
   },
   security: {

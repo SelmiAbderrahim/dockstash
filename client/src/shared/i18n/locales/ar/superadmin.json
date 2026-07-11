@@ -5,7 +5,8 @@
     "users": "المستخدمون",
     "billing": "الفوترة",
     "audit": "سجل التدقيق",
-    "system": "النظام"
+    "system": "النظام",
+    "invitations": "الدعوات"
   },
   "loading": "جارٍ التحميل…",
   "errorPrefix": "خطأ!",
@@ -124,5 +125,45 @@
     "previous": "السابق",
     "next": "التالي",
     "pageOf": "صفحة {{page}} من {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "إنشاء رابط دعوة",
+    "listTitle": "روابط الدعوة",
+    "empty": "لا توجد روابط دعوة بعد.",
+    "planLabel": "الخطة",
+    "plan": {
+      "pro": "برو",
+      "business": "الأعمال"
+    },
+    "durationLabel": "مدة المنح",
+    "duration": {
+      "one_month": "شهر واحد",
+      "one_year": "سنة واحدة"
+    },
+    "expiryLabel": "تنتهي صلاحية الرابط خلال",
+    "expiryDays": "{{days}} يوماً",
+    "labelLabel": "تسمية (اختياري)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "ملاحظة للإسناد. لا تُعرض للمستلم أبداً.",
+    "submit": "إنشاء الرابط",
+    "copy": "نسخ الرابط",
+    "copied": "تم النسخ",
+    "revoke": "إبطال",
+    "status": {
+      "pending": "قيد الانتظار",
+      "claimed": "تم الاستخدام",
+      "expired": "منتهي الصلاحية",
+      "revoked": "مُبطَل"
+    },
+    "columns": {
+      "label": "التسمية",
+      "plan": "الخطة",
+      "duration": "المدة",
+      "status": "الحالة",
+      "claimant": "استخدمها",
+      "expires": "انتهاء الرابط",
+      "created": "تاريخ الإنشاء",
+      "actions": "إجراءات"
+    }
   }
 }

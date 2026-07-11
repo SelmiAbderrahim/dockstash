@@ -74,6 +74,7 @@ const renderComp = (
               <Route path="/verify-email" element={<div>VERIFY</div>} />
               <Route path="/login" element={<div>LOGIN</div>} />
               <Route path="/superadmin" element={<div>SUPERADMIN</div>} />
+              <Route path="/invite/:token" element={<div>CLAIM</div>} />
             </Routes>
           </MemoryRouter>
         </HelmetProvider>
@@ -350,5 +351,74 @@ describe('auth page head tags (PageMeta)', () => {
     await waitFor(() => {
       expect(document.title).toContain('Create your account');
     });
+  });
+});
+
+describe('?invite= handoff', () => {
+  const verified = { authenticated: true, emailVerified: true };
+
+  it('Login sends a verified invitee to the claim page and carries the param cross-link', () => {
+    renderComp(<Login />, { entry: '/?invite=tok-1', auth: verified });
+    expect(screen.getByText('CLAIM')).toBeInTheDocument();
+  });
+
+  it('Login ignores a path-shaped invite value', () => {
+    renderComp(<Login />, { entry: '/?invite=%2Fevil', auth: verified });
+    expect(screen.getByText('DASHBOARD')).toBeInTheDocument();
+  });
+
+  it('Login still routes an unverified invitee to verify-email', () => {
+    renderComp(<Login />, {
+      entry: '/?invite=tok-1',
+      auth: { authenticated: true, emailVerified: false },
+    });
+    expect(screen.getByText('VERIFY')).toBeInTheDocument();
+  });
+
+  it('Login keeps a superadmin on the console even with an invite param', () => {
+    renderComp(<Login />, { entry: '/?invite=tok-1', auth: { ...verified, role: 'Superadmin' } });
+    expect(screen.getByText('SUPERADMIN')).toBeInTheDocument();
+  });
+
+  it('Login cross-links to register with and without the param', () => {
+    const first = renderComp(<Login />, { entry: '/?invite=tok-1' });
+    expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute(
+      'href',
+      '/register?invite=tok-1',
+    );
+    first.unmount();
+    renderComp(<Login />);
+    expect(screen.getByRole('link', { name: /create an account/i })).toHaveAttribute(
+      'href',
+      '/register',
+    );
+  });
+
+  it('Register sends a verified invitee to the claim page', () => {
+    renderComp(<Register />, { entry: '/?invite=tok-1', auth: verified });
+    expect(screen.getByText('CLAIM')).toBeInTheDocument();
+  });
+
+  it('Register cross-links to login with and without the param', () => {
+    const first = renderComp(<Register />, { entry: '/?invite=tok-1' });
+    expect(screen.getByRole('link', { name: /already have an account/i })).toHaveAttribute(
+      'href',
+      '/login?invite=tok-1',
+    );
+    first.unmount();
+
+    renderComp(<Register />);
+    expect(screen.getByRole('link', { name: /already have an account/i })).toHaveAttribute(
+      'href',
+      '/login',
+    );
+  });
+
+  it('Register still routes a fresh unverified signup to verify-email', () => {
+    renderComp(<Register />, {
+      entry: '/?invite=tok-1',
+      auth: { authenticated: true, emailVerified: false },
+    });
+    expect(screen.getByText('VERIFY')).toBeInTheDocument();
   });
 });

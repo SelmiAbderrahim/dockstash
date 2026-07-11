@@ -24,6 +24,7 @@ Your buyers (self-hosters, indie devs, agencies) live on Reddit, HN, and YouTube
 | [10-partnerships-and-referrals.md](10-partnerships-and-referrals.md) | YouTube sponsorships, directories, referral program | Weeks 4–12 |
 | [11-analytics-and-kpis.md](11-analytics-and-kpis.md) | Funnel, GA4 events, UTM convention, CAC targets | Week 1 (instrument before launch) |
 | [12-calendar-90-day.md](12-calendar-90-day.md) | Week-by-week execution plan tying it all together | Your operating doc |
+| [x-growth/](x-growth/) | X-only deep dive: profile, daily routine, 50-post bank, X Ads (extends doc 07) | Week 1, ongoing |
 
 ## Budget allocation
 

@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { billingReducer, clearBillingMessages } from './slice';
 import {
   changePlan,
+  claimInvitation,
   loadOverview,
   loadPricingTiers,
   loadUsage,
   openPortal,
+  resolveInvitation,
   selectProjectsToKeep,
   startCheckout,
 } from './thunks';
@@ -182,5 +184,57 @@ describe('billing slice — rejected fallbacks (undefined payload)', () => {
       payload: undefined,
     });
     expect(s.usageError).toBe('Could not load usage.');
+  });
+
+  it('resolveInvitation: pending resets, fulfilled stores, rejected falls back', () => {
+    const dirty = {
+      ...initial(),
+      invite: { plan: 'pro', grantDuration: 'one_month', expiresAt: 'x', status: 'pending' },
+      inviteError: 'old',
+      claimError: 'old',
+      claimResult: { plan: 'pro', grantDuration: 'one_month', currentPeriodEnd: 'x' },
+    } as ReturnType<typeof initial>;
+    expect(
+      billingReducer(dirty, { type: resolveInvitation.pending.type }),
+    ).toMatchObject({ invite: null, inviteError: '', claimError: '', claimResult: null });
+
+    const invite = {
+      plan: 'business',
+      grantDuration: 'one_year',
+      expiresAt: '2030-01-01T00:00:00.000Z',
+      status: 'pending',
+    } as const;
+    expect(
+      billingReducer(initial(), { type: resolveInvitation.fulfilled.type, payload: invite }).invite,
+    ).toEqual(invite);
+
+    expect(
+      billingReducer(initial(), { type: resolveInvitation.rejected.type, payload: undefined })
+        .inviteError,
+    ).toBe('That invitation link is not valid.');
+    expect(
+      billingReducer(initial(), { type: resolveInvitation.rejected.type, payload: 'gone' })
+        .inviteError,
+    ).toBe('gone');
+  });
+
+  it('claimInvitation: pending / fulfilled / rejected', () => {
+    expect(
+      billingReducer({ ...initial(), claimError: 'x' }, { type: claimInvitation.pending.type }),
+    ).toMatchObject({ claiming: true, claimError: '' });
+
+    const result = {
+      plan: 'pro',
+      grantDuration: 'one_month',
+      currentPeriodEnd: '2030-01-01T00:00:00.000Z',
+    } as const;
+    expect(
+      billingReducer(initial(), { type: claimInvitation.fulfilled.type, payload: result }),
+    ).toMatchObject({ claiming: false, claimResult: result });
+
+    expect(
+      billingReducer(initial(), { type: claimInvitation.rejected.type, payload: undefined })
+        .claimError,
+    ).toBe('Could not activate the invitation.');
   });
 });

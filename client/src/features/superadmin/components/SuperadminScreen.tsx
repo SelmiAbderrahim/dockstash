@@ -11,9 +11,10 @@ import { OverviewTab } from './OverviewTab';
 import { UsersTab } from './UsersTab';
 import { BillingTab } from './BillingTab';
 import { AuditTab } from './AuditTab';
+import { InvitationsTab } from './InvitationsTab';
 import { SystemTab } from './SystemTab';
 
-const TABS = ['overview', 'users', 'billing', 'audit', 'system'] as const;
+const TABS = ['overview', 'users', 'billing', 'invitations', 'audit', 'system'] as const;
 
 export const SuperadminScreen = () => {
   const dispatch = useAppDispatch();
@@ -54,6 +55,9 @@ export const SuperadminScreen = () => {
         </TabsContent>
         <TabsContent value="billing">
           <BillingTab />
+        </TabsContent>
+        <TabsContent value="invitations">
+          <InvitationsTab />
         </TabsContent>
         <TabsContent value="audit">
           <AuditTab />

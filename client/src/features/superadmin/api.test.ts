@@ -2,12 +2,15 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import * as client from '@shared/api/client';
 import {
   changeUserRoleRequest,
+  createInvitationRequest,
   fetchAuditRequest,
   fetchBillingRequest,
+  fetchInvitationsRequest,
   fetchStatsRequest,
   fetchSystemRequest,
   fetchUsersRequest,
   forceVerifyUserRequest,
+  revokeInvitationRequest,
   scheduleDeletionRequest,
   setLegalHoldRequest,
 } from './api';
@@ -100,5 +103,29 @@ describe('superadmin api wrappers', () => {
   it('fetchSystemRequest gets the system summary', async () => {
     await fetchSystemRequest();
     expect(apiClient).toHaveBeenCalledWith('/superadmin/system', { auth: true });
+  });
+
+  it('fetchInvitationsRequest gets a page of invitations', async () => {
+    await fetchInvitationsRequest({ page: 2 });
+    expect(apiClient).toHaveBeenCalledWith('/superadmin/invitations?page=2', { auth: true });
+  });
+
+  it('createInvitationRequest posts the create body', async () => {
+    const input = { planSlug: 'pro', grantDuration: 'one_year', expiresInDays: 30 } as const;
+    await createInvitationRequest(input);
+    expect(apiClient).toHaveBeenCalledWith('/superadmin/invitations', {
+      method: 'POST',
+      body: input,
+      auth: true,
+    });
+  });
+
+  it('revokeInvitationRequest patches the revoke route', async () => {
+    await revokeInvitationRequest('inv1');
+    expect(apiClient).toHaveBeenCalledWith('/superadmin/invitations/inv1/revoke', {
+      method: 'PATCH',
+      body: {},
+      auth: true,
+    });
   });
 });

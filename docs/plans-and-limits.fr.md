@@ -33,3 +33,28 @@ L’annuel = **10× le mensuel** (deux mois offerts). Les prix vivent dans les l
 
 Polar est **Merchant of Record** : TVA, taxes et facturation sont gérées par
 Polar. Aucun moteur de taxes n’est intégré.
+
+## Offres par invitation
+
+Un superadministrateur peut créer un lien d’invitation à usage unique
+(**Superadmin → Invitations**) qui offre `pro` ou `business` pour **1 mois** ou
+**1 an**. Le destinataire ouvre `/invite/<token>`, se connecte (ou s’inscrit) et
+l’active.
+
+- **Sémantique du préfixe.** Une activation écrit une ligne `Subscription` dont
+  `providerSubscriptionId` vaut `invite-grant-<invitationId>`. Ce préfixe est le
+  seul discriminant : le résolveur d’entitlements, le balayage nocturne, la
+  supersession par webhook et l’exclusion de réconciliation s’y appuient. Les
+  lignes Polar conservent leur sémantique fondée sur le statut.
+- **Expiration.** L’offre cesse de donner droit dès que `currentPeriodEnd` est
+  dépassé — appliqué à la lecture, pas par le balayage. Le job nocturne
+  (`billing.invite-grant-expiry`, 03:30) passe ensuite la ligne à `canceled` et
+  fait atterrir l’utilisateur sur `free` via `applyProjectCap` : les projets
+  au-delà du plafond sont **mis en pause, jamais supprimés**.
+- **Un achat prime sur une offre.** À l’activation d’un abonnement Polar, toute
+  offre active de cet utilisateur est annulée. Un abonné payant actif ne peut pas
+  activer un lien (`invitations.error.alreadySubscribed`) ; le lien reste en
+  attente pour quelqu’un d’autre.
+- **La réconciliation ignore les offres.** Elles n’ont pas d’équivalent Polar.
+- **La révocation** est logique (`revokedAt`) et ne concerne qu’un lien non
+  utilisé. Elle n’annule jamais une offre déjà activée.

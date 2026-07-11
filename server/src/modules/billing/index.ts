@@ -1,4 +1,44 @@
 export { billingRouter, billingPublicRouter } from './billing.routes.js';
+export { invitationRouter } from './invitation.routes.js';
+export {
+  Invitation,
+  INVITE_GRANT_PREFIX,
+  INVITE_GRANT_PRODUCT_ID,
+  INVITE_GRANT_RE,
+  GRANT_DURATIONS,
+  GRANTABLE_PLAN_SLUGS,
+  deriveInvitationStatus,
+  isInviteGrantExpired,
+  type GrantDuration,
+  type GrantablePlanSlug,
+  type InvitationDocument,
+  type InvitationHydrated,
+  type InvitationStatus,
+} from './invitation.model.js';
+export {
+  createInvitationSchema,
+  listInvitationsSchema,
+  invitationIdParamsSchema,
+  invitationTokenParamsSchema,
+  type CreateInvitationInput,
+  type ListInvitationsQuery,
+} from './invitation.schema.js';
+export {
+  createInvitation,
+  listInvitations,
+  revokeInvitation,
+  getPublicInvitation,
+  claimInvitation,
+  cancelLiveInviteGrants,
+  sweepExpiredInviteGrants,
+  grantEndFor,
+  toPublicInvitation,
+  type AdminInvitation,
+  type PublicInvitation,
+  type ClaimResult,
+  type ListInvitationsResult,
+  type InviteGrantSweepSummary,
+} from './invitation.service.js';
 export { webhookHandler } from './webhook/handler.js';
 export { getPaymentProvider, __setPaymentProviderForTests } from './active-provider.js';
 export { ingestWebhook } from './webhook/ingest.js';

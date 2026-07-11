@@ -1,13 +1,21 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { AuditFilters, SuperadminState, SuperadminUser } from '../types';
+import type {
+  AuditFilters,
+  SuperadminInvitation,
+  SuperadminState,
+  SuperadminUser,
+} from '../types';
 import {
   changeUserRole,
+  createSuperadminInvitation,
   fetchSuperadminAudit,
   fetchSuperadminBilling,
+  fetchSuperadminInvitations,
   fetchSuperadminStats,
   fetchSuperadminSystem,
   fetchSuperadminUsers,
   forceVerifyUser,
+  revokeSuperadminInvitation,
   scheduleUserDeletion,
   setLegalHold,
 } from './thunks';
@@ -32,6 +40,8 @@ const initialState: SuperadminState = {
   auditFilters: EMPTY_AUDIT_FILTERS,
   system: null,
   loadingSystem: false,
+  invitations: null,
+  loadingInvitations: false,
   actionPending: false,
   error: '',
   message: '',
@@ -42,6 +52,14 @@ function patchUserRow(state: SuperadminState, user: SuperadminUser): void {
   const index = state.users.users.findIndex((row) => row.id === user.id);
   if (index !== -1) {
     state.users.users[index] = user;
+  }
+}
+
+function patchInvitationRow(state: SuperadminState, invitation: SuperadminInvitation): void {
+  if (!state.invitations) return;
+  const index = state.invitations.invitations.findIndex((row) => row.id === invitation.id);
+  if (index !== -1) {
+    state.invitations.invitations[index] = invitation;
   }
 }
 
@@ -176,6 +194,43 @@ const superadminSlice = createSlice({
       .addCase(scheduleUserDeletion.rejected, (state, action) => {
         state.actionPending = false;
         state.error = action.payload ?? 'Could not schedule the deletion.';
+      })
+      .addCase(fetchSuperadminInvitations.pending, (state) => {
+        state.loadingInvitations = true;
+        state.error = '';
+      })
+      .addCase(fetchSuperadminInvitations.fulfilled, (state, action) => {
+        state.loadingInvitations = false;
+        state.invitations = action.payload;
+      })
+      .addCase(fetchSuperadminInvitations.rejected, (state, action) => {
+        state.loadingInvitations = false;
+        state.error = action.payload ?? 'Could not load invitations.';
+      })
+      .addCase(createSuperadminInvitation.pending, (state) => {
+        state.actionPending = true;
+        state.error = '';
+      })
+      .addCase(createSuperadminInvitation.fulfilled, (state, action) => {
+        state.actionPending = false;
+        state.message = action.payload.message;
+      })
+      .addCase(createSuperadminInvitation.rejected, (state, action) => {
+        state.actionPending = false;
+        state.error = action.payload ?? 'Could not create the invitation.';
+      })
+      .addCase(revokeSuperadminInvitation.pending, (state) => {
+        state.actionPending = true;
+        state.error = '';
+      })
+      .addCase(revokeSuperadminInvitation.fulfilled, (state, action) => {
+        state.actionPending = false;
+        state.message = action.payload.message;
+        patchInvitationRow(state, action.payload.invitation);
+      })
+      .addCase(revokeSuperadminInvitation.rejected, (state, action) => {
+        state.actionPending = false;
+        state.error = action.payload ?? 'Could not revoke the invitation.';
       });
   },
 });

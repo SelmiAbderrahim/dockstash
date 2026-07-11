@@ -33,3 +33,26 @@ Facturación anual = **10× mensual** (dos meses gratis). Los precios viven en
 
 Polar es **Merchant of Record**: IVA, impuestos y facturación los gestiona Polar.
 No hay motor fiscal interno.
+
+## Concesiones por invitación
+
+Un superadministrador puede crear un enlace de invitación de un solo uso
+(**Superadmin → Invitaciones**) que concede `pro` o `business` durante **1 mes**
+o **1 año**. El destinatario abre `/invite/<token>`, inicia sesión (o se
+registra) y lo activa.
+
+- **Semántica del prefijo.** Al canjearlo se escribe una fila `Subscription` con
+  `providerSubscriptionId` = `invite-grant-<invitationId>`. Ese prefijo es el
+  único discriminante: el resolvedor de entitlements, el barrido nocturno, la
+  sustitución por webhook y la exclusión de reconciliación se basan en él. Las
+  filas de Polar conservan su semántica basada solo en el estado.
+- **Caducidad.** La concesión deja de otorgar derechos en el instante en que se
+  supera `currentPeriodEnd` — se aplica en lectura, no en el barrido. El trabajo
+  nocturno (`billing.invite-grant-expiry`, 03:30) pasa la fila a `canceled` y
+  lleva al usuario a `free` mediante `applyProjectCap`: los proyectos por encima
+  del límite se **pausan, nunca se eliminan**.
+- **Una compra sustituye a una concesión.** Al activarse una suscripción de
+  Polar, se cancela cualquier concesión activa. Quien ya tiene un plan de pago
+  activo no puede canjear un enlace (`invitations.error.alreadySubscribed`).
+- **La reconciliación nunca toca las concesiones** — no tienen equivalente en Polar.
+- **La revocación** es lógica (`revokedAt`) y solo afecta a enlaces sin canjear.

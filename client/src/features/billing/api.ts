@@ -3,8 +3,10 @@ import type {
   ChangePlanResponse,
   CheckoutResponse,
   BillingOverview,
+  ClaimInvitationResponse,
   PortalResponse,
   PricingTier,
+  PublicInvitation,
   SelectProjectsResponse,
   UsageResponse,
 } from './types';
@@ -46,4 +48,15 @@ export const selectProjectsToKeep = (
     method: 'POST',
     auth: true,
     body: { keepIds },
+  });
+
+/** Public — resolves logged-out so the claim page can render the offer. */
+export const fetchInvitation = (token: string): Promise<PublicInvitation> =>
+  apiClient<PublicInvitation>(`/invitations/${encodeURIComponent(token)}`);
+
+export const claimInvitationRequest = (token: string): Promise<ClaimInvitationResponse> =>
+  apiClient<ClaimInvitationResponse>(`/invitations/${encodeURIComponent(token)}/claim`, {
+    method: 'POST',
+    auth: true,
+    body: {},
   });

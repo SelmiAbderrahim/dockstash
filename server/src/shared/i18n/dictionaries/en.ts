@@ -122,6 +122,16 @@ export const en = {
         'Welcome to Dockstash, {{name}}.\n\n' +
         'You can sign in and manage your backups at {{clientUrl}}.\n',
     },
+    inviteClaimed: {
+      subject: 'Invitation claimed: {{plan}}',
+      body:
+        'An invitation link was activated.\n\n' +
+        'Claimant: {{claimantName}} <{{claimantEmail}}>\n' +
+        'Plan: {{plan}} ({{grantDuration}})\n' +
+        'Grant window: {{claimedAt}} → {{currentPeriodEnd}}\n' +
+        'Label: {{label}}\n\n' +
+        'Manage invitations: {{invitationsUrl}}\n',
+    },
     paymentReceipt: {
       subject: 'Your Dockstash receipt',
       body:
@@ -317,6 +327,15 @@ export const en = {
       zh: '中文',
     },
   },
+  invitations: {
+    error: {
+      notFound: 'That invitation link is not valid.',
+      expired: 'That invitation link has expired.',
+      revoked: 'That invitation link was revoked.',
+      alreadyClaimed: 'That invitation link has already been used.',
+      alreadySubscribed: 'You already have an active paid plan.',
+    },
+  },
   superadmin: {
     error: {
       cannotModifySuperadmin: 'Superadmin accounts cannot be modified or deleted.',
@@ -326,6 +345,8 @@ export const en = {
       userVerified: 'User email marked as verified.',
       legalHoldUpdated: 'Legal hold updated.',
       deletionScheduled: 'Account deletion scheduled.',
+      invitationCreated: 'Invitation link created.',
+      invitationRevoked: 'Invitation link revoked.',
     },
   },
   security: {

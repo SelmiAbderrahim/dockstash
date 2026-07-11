@@ -116,5 +116,36 @@
   },
   "plans": {
     "portal": "Abrechnung verwalten"
+  },
+  "invite": {
+    "duration": {
+      "one_month": "1 Monat",
+      "one_year": "1 Jahr"
+    },
+    "offer": {
+      "title": "Einladung aktivieren",
+      "plan": "Tarif",
+      "duration": "Kostenlos für",
+      "linkExpires": "Link läuft ab",
+      "activate": "Aktivieren"
+    },
+    "success": {
+      "title": "Alles bereit",
+      "body": "Ihr {{plan}}-Tarif ist bis zum {{endsOn}} aktiv.",
+      "cta": "Zum Dashboard"
+    },
+    "verifyFirst": {
+      "title": "Bestätigen Sie zuerst Ihre E-Mail",
+      "body": "Bestätigen Sie Ihre E-Mail-Adresse und kehren Sie dann zu diesem Link zurück, um Ihren Tarif zu aktivieren.",
+      "cta": "E-Mail bestätigen"
+    },
+    "dead": {
+      "title": "Dieser Link kann nicht verwendet werden",
+      "cta": "Zum Dashboard",
+      "plansCta": "Tarife ansehen",
+      "expired": "Dieser Einladungslink ist abgelaufen.",
+      "revoked": "Dieser Einladungslink wurde widerrufen.",
+      "claimed": "Dieser Einladungslink wurde bereits verwendet."
+    }
   }
 }

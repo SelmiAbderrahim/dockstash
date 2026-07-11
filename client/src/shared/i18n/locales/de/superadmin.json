@@ -5,7 +5,8 @@
     "users": "Benutzer",
     "billing": "Abrechnung",
     "audit": "Audit",
-    "system": "System"
+    "system": "System",
+    "invitations": "Einladungen"
   },
   "loading": "Wird geladen…",
   "errorPrefix": "Fehler!",
@@ -124,5 +125,45 @@
     "previous": "Zurück",
     "next": "Weiter",
     "pageOf": "Seite {{page}} von {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "Einladungslink erstellen",
+    "listTitle": "Einladungslinks",
+    "empty": "Noch keine Einladungslinks.",
+    "planLabel": "Tarif",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "Freischaltdauer",
+    "duration": {
+      "one_month": "1 Monat",
+      "one_year": "1 Jahr"
+    },
+    "expiryLabel": "Link läuft ab in",
+    "expiryDays": "{{days}} Tagen",
+    "labelLabel": "Bezeichnung (optional)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "Zuordnungsnotiz. Für den Empfänger nie sichtbar.",
+    "submit": "Link erstellen",
+    "copy": "Link kopieren",
+    "copied": "Kopiert",
+    "revoke": "Widerrufen",
+    "status": {
+      "pending": "Offen",
+      "claimed": "Eingelöst",
+      "expired": "Abgelaufen",
+      "revoked": "Widerrufen"
+    },
+    "columns": {
+      "label": "Bezeichnung",
+      "plan": "Tarif",
+      "duration": "Dauer",
+      "status": "Status",
+      "claimant": "Eingelöst von",
+      "expires": "Link läuft ab",
+      "created": "Erstellt",
+      "actions": "Aktionen"
+    }
   }
 }

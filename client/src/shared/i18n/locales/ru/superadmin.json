@@ -5,7 +5,8 @@
     "users": "Пользователи",
     "billing": "Биллинг",
     "audit": "Аудит",
-    "system": "Система"
+    "system": "Система",
+    "invitations": "Приглашения"
   },
   "loading": "Загрузка…",
   "errorPrefix": "Ошибка!",
@@ -124,5 +125,45 @@
     "previous": "Назад",
     "next": "Далее",
     "pageOf": "Страница {{page}} из {{pages}}"
+  },
+  "invitations": {
+    "createTitle": "Создать ссылку-приглашение",
+    "listTitle": "Ссылки-приглашения",
+    "empty": "Пока нет ссылок-приглашений.",
+    "planLabel": "Тариф",
+    "plan": {
+      "pro": "Pro",
+      "business": "Business"
+    },
+    "durationLabel": "Срок предоставления",
+    "duration": {
+      "one_month": "1 месяц",
+      "one_year": "1 год"
+    },
+    "expiryLabel": "Ссылка истекает через",
+    "expiryDays": "{{days}} дней",
+    "labelLabel": "Метка (необязательно)",
+    "labelPlaceholder": "li-adalovelace",
+    "labelHelp": "Заметка для атрибуции. Никогда не видна получателю.",
+    "submit": "Создать ссылку",
+    "copy": "Копировать ссылку",
+    "copied": "Скопировано",
+    "revoke": "Отозвать",
+    "status": {
+      "pending": "Ожидает",
+      "claimed": "Использована",
+      "expired": "Истекла",
+      "revoked": "Отозвана"
+    },
+    "columns": {
+      "label": "Метка",
+      "plan": "Тариф",
+      "duration": "Срок",
+      "status": "Статус",
+      "claimant": "Использовал",
+      "expires": "Истечение ссылки",
+      "created": "Создана",
+      "actions": "Действия"
+    }
   }
 }

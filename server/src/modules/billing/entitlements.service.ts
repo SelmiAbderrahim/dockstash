@@ -5,6 +5,7 @@ import type { TranslationVars } from '../../shared/i18n/index.js';
 import { getPaymentProvider } from './active-provider.js';
 import { findEffectiveSubscription } from './subscription.model.js';
 import type { PlanSlug, SubscriptionStatusName } from './subscription.model.js';
+import { isInviteGrantExpired } from './invitation.model.js';
 import {
   ENTITLEMENTS,
   getEntitlements,
@@ -71,7 +72,11 @@ export async function resolveEntitlements(
   let slug: PlanSlug = 'free';
 
   if (sub.status === 'active') {
-    slug = sub.planSlug;
+    // A comped invitation grant stops entitling the instant its window
+    // elapses — exact-time, no sweep-lag. Polar rows are untouched: they may
+    // legitimately carry a past `currentPeriodEnd` while `active` until the
+    // renewal webhook lands.
+    slug = isInviteGrantExpired(sub, now) ? 'free' : sub.planSlug;
   } else if (sub.status === 'past_due') {
     if (graceEndsAt && graceEndsAt.getTime() > now) {
       slug = sub.planSlug;

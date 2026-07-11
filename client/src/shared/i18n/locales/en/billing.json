@@ -116,5 +116,36 @@
   },
   "plans": {
     "portal": "Manage billing"
+  },
+  "invite": {
+    "duration": {
+      "one_month": "1 month",
+      "one_year": "1 year"
+    },
+    "offer": {
+      "title": "Activate your invitation",
+      "plan": "Plan",
+      "duration": "Free for",
+      "linkExpires": "Link expires",
+      "activate": "Activate"
+    },
+    "success": {
+      "title": "You are all set",
+      "body": "Your {{plan}} plan is active until {{endsOn}}.",
+      "cta": "Go to the dashboard"
+    },
+    "verifyFirst": {
+      "title": "Verify your email first",
+      "body": "Confirm your email address, then come back to this link to activate your plan.",
+      "cta": "Verify email"
+    },
+    "dead": {
+      "title": "This link cannot be used",
+      "cta": "Go to the dashboard",
+      "plansCta": "See plans",
+      "expired": "This invitation link has expired.",
+      "revoked": "This invitation link was revoked.",
+      "claimed": "This invitation link has already been used."
+    }
   }
 }

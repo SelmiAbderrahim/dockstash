@@ -5,6 +5,7 @@ import { __setPaymentProviderForTests } from './active-provider.js';
 import type { IPaymentProvider } from './payment-provider.js';
 import {
   GRACE_EXPIRY_CRON_ID,
+  INVITE_GRANT_EXPIRY_CRON_ID,
   RECONCILE_CRON_ID,
   registerBillingCrons,
   unregisterBillingCrons,
@@ -68,24 +69,25 @@ describe('registerBillingCrons', () => {
     expect(scheduler.registered.size).toBe(0);
   });
 
-  it('registers reconcile + grace-expiry jobs whose callbacks run', async () => {
+  it('registers reconcile + grace-expiry + invite-grant-expiry jobs whose callbacks run', async () => {
     __setPaymentProviderForTests(providerConfigured(true));
     const scheduler = fakeScheduler();
     expect(registerBillingCrons({ scheduler })).toBe(true);
     expect(scheduler.list().sort()).toEqual(
-      [GRACE_EXPIRY_CRON_ID, RECONCILE_CRON_ID].sort(),
+      [GRACE_EXPIRY_CRON_ID, INVITE_GRANT_EXPIRY_CRON_ID, RECONCILE_CRON_ID].sort(),
     );
     // Callbacks execute without throwing: reconcile polls an empty remote
-    // list; the grace sweep runs against an empty in-memory Mongo.
+    // list; both sweeps run against an empty in-memory Mongo.
     await scheduler.registered.get(RECONCILE_CRON_ID)!();
     await scheduler.registered.get(GRACE_EXPIRY_CRON_ID)!();
+    await scheduler.registered.get(INVITE_GRANT_EXPIRY_CRON_ID)!();
   });
 
-  it('unregisterBillingCrons removes both jobs', () => {
+  it('unregisterBillingCrons removes every job', () => {
     const scheduler = fakeScheduler();
     unregisterBillingCrons({ scheduler });
     expect(scheduler.unregistered.sort()).toEqual(
-      [GRACE_EXPIRY_CRON_ID, RECONCILE_CRON_ID].sort(),
+      [GRACE_EXPIRY_CRON_ID, INVITE_GRANT_EXPIRY_CRON_ID, RECONCILE_CRON_ID].sort(),
     );
   });
 

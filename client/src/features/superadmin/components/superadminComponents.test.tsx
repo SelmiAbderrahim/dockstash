@@ -9,10 +9,11 @@ import { configureStore } from '@reduxjs/toolkit';
 import { TooltipProvider } from '@shared/ui/tooltip';
 import { i18n, initI18n } from '@shared/i18n';
 import { superadminReducer } from '../store/slice';
-import type { SuperadminState, SuperadminUser } from '../types';
+import type { SuperadminInvitation, SuperadminState, SuperadminUser } from '../types';
 import { OverviewTab } from './OverviewTab';
 import { UsersTab } from './UsersTab';
 import { BillingTab } from './BillingTab';
+import { InvitationsTab } from './InvitationsTab';
 import { AuditTab } from './AuditTab';
 import { SystemTab } from './SystemTab';
 import { SuperadminScreen } from './SuperadminScreen';
@@ -28,6 +29,9 @@ vi.mock('../api', () => ({
   fetchBillingRequest: vi.fn(),
   fetchAuditRequest: vi.fn(),
   fetchSystemRequest: vi.fn(),
+  fetchInvitationsRequest: vi.fn(),
+  createInvitationRequest: vi.fn(),
+  revokeInvitationRequest: vi.fn(),
 }));
 
 const mocked = vi.mocked(api);
@@ -41,6 +45,7 @@ beforeEach(() => {
   mocked.fetchBillingRequest.mockReturnValue(new Promise(() => {}) as never);
   mocked.fetchAuditRequest.mockReturnValue(new Promise(() => {}) as never);
   mocked.fetchSystemRequest.mockReturnValue(new Promise(() => {}) as never);
+  mocked.fetchInvitationsRequest.mockReturnValue(new Promise(() => {}) as never);
 });
 
 const baseState = (over: Partial<SuperadminState> = {}): SuperadminState => ({
@@ -56,6 +61,8 @@ const baseState = (over: Partial<SuperadminState> = {}): SuperadminState => ({
   auditFilters: { action: '', actorUserId: '', from: '', to: '' },
   system: null,
   loadingSystem: false,
+  invitations: null,
+  loadingInvitations: false,
   actionPending: false,
   error: '',
   message: '',
@@ -681,5 +688,159 @@ describe('SuperadminScreen', () => {
   it('renders a status banner when there is a message', () => {
     renderScreen({ message: 'Saved.' });
     expect(screen.getByRole('status')).toHaveTextContent('Saved.');
+  });
+
+  it('exposes the invitations tab', () => {
+    renderScreen({}, '/superadmin?tab=invitations');
+    expect(screen.getByRole('tab', { name: /invitations/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+});
+
+describe('InvitationsTab', () => {
+  const invitation = (over: Partial<SuperadminInvitation> = {}): SuperadminInvitation => ({
+    id: 'i1',
+    token: 'tok-1',
+    plan: 'business',
+    grantDuration: 'one_year',
+    label: 'li-ada',
+    expiresAt: '2030-01-01T00:00:00.000Z',
+    claimedAt: null,
+    claimedByEmail: null,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    status: 'pending',
+    ...over,
+  });
+
+  const pageOf = (rows: SuperadminInvitation[]) => ({
+    invitations: rows,
+    total: rows.length,
+    page: 1,
+    pages: 1,
+  });
+
+  it('fetches on mount and shows the empty state', () => {
+    const { unmount } = renderWithStore(<InvitationsTab />);
+    expect(mocked.fetchInvitationsRequest).toHaveBeenCalledWith({ page: 1 });
+    unmount();
+
+    renderWithStore(<InvitationsTab />, { invitations: pageOf([]) });
+    expect(screen.getByText(/no invitation links yet/i)).toBeInTheDocument();
+  });
+
+  it('shows the skeleton while loading and an error alert on failure', async () => {
+    const { container, unmount } = renderWithStore(<InvitationsTab />, {
+      loadingInvitations: true,
+    });
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeTruthy();
+    unmount();
+
+    mocked.fetchInvitationsRequest.mockRejectedValue(new Error('nope'));
+    renderWithStore(<InvitationsTab />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('nope');
+  });
+
+  it('renders every status tone, the em-dash fallbacks, and disables revoke', () => {
+    renderWithStore(<InvitationsTab />, {
+      invitations: pageOf([
+        invitation(),
+        invitation({ id: 'i2', status: 'claimed', label: '', claimedByEmail: 'a@b.co' }),
+        invitation({ id: 'i3', status: 'expired' }),
+        invitation({ id: 'i4', status: 'revoked' }),
+      ]),
+    });
+    const tones = Array.from(document.querySelectorAll('[data-slot="status-chip"]')).map((el) =>
+      el.getAttribute('data-tone'),
+    );
+    expect(tones).toEqual(['warning', 'success', 'muted', 'destructive']);
+    expect(screen.getByText('a@b.co')).toBeInTheDocument();
+    // Unlabelled row + three unclaimed rows all render the em-dash fallback.
+    expect(screen.getAllByText('—')).toHaveLength(4);
+
+    const revokeButtons = screen.getAllByRole('button', { name: /revoke/i });
+    expect(revokeButtons[0]).toBeEnabled();
+    expect(revokeButtons[1]).toBeDisabled();
+    expect(revokeButtons[2]).toBeDisabled();
+    expect(revokeButtons[3]).toBeDisabled();
+  });
+
+  it('copies the claim URL built from the current origin', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+    renderWithStore(<InvitationsTab />, { invitations: pageOf([invitation()]) });
+    await user.click(screen.getByRole('button', { name: /copy link/i }));
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/invite/tok-1`);
+    expect(await screen.findByText(/copied/i)).toBeInTheDocument();
+  });
+
+  it('revokes a pending row', async () => {
+    const user = userEvent.setup();
+    mocked.revokeInvitationRequest.mockResolvedValue({
+      message: 'revoked',
+      invitation: invitation({ status: 'revoked' }),
+    });
+    renderWithStore(<InvitationsTab />, { invitations: pageOf([invitation()]) });
+    await user.click(screen.getByRole('button', { name: /revoke/i }));
+    await waitFor(() => expect(mocked.revokeInvitationRequest).toHaveBeenCalledWith('i1'));
+  });
+
+  it('paginates', async () => {
+    const user = userEvent.setup();
+    renderWithStore(<InvitationsTab />, {
+      invitations: { invitations: [invitation()], total: 40, page: 1, pages: 2 },
+    });
+    await user.click(screen.getByRole('button', { name: /next/i }));
+    expect(mocked.fetchInvitationsRequest).toHaveBeenCalledWith({ page: 2 });
+  });
+
+  it('submits the create form with the chosen plan, duration, expiry, and label', async () => {
+    const user = userEvent.setup();
+    mocked.createInvitationRequest.mockResolvedValue({
+      message: 'created',
+      invitation: invitation(),
+    });
+    renderWithStore(<InvitationsTab />, { invitations: pageOf([]) });
+
+    await user.click(screen.getByRole('combobox', { name: /^plan$/i }));
+    await user.click(await screen.findByRole('option', { name: 'Pro' }));
+    await user.click(screen.getByRole('radio', { name: /1 month/i }));
+    await user.click(screen.getByRole('combobox', { name: /link expires in/i }));
+    await user.click(await screen.findByRole('option', { name: '90 days' }));
+    await user.type(screen.getByLabelText(/label \(optional\)/i), '  x-ada  ');
+
+    await user.click(screen.getByRole('button', { name: /create link/i }));
+    await waitFor(() =>
+      expect(mocked.createInvitationRequest).toHaveBeenCalledWith({
+        planSlug: 'pro',
+        grantDuration: 'one_month',
+        expiresInDays: 90,
+        label: 'x-ada',
+      }),
+    );
+    // The list refetches so the new link (newest first) shows up with its token.
+    await waitFor(() =>
+      expect(mocked.fetchInvitationsRequest).toHaveBeenCalledWith({ page: 1 }),
+    );
+  });
+
+  it('omits a blank label and keeps the form usable when the create fails', async () => {
+    const user = userEvent.setup();
+    mocked.createInvitationRequest.mockRejectedValue(new Error('boom'));
+    renderWithStore(<InvitationsTab />, { invitations: pageOf([]) });
+
+    await user.click(screen.getByRole('button', { name: /create link/i }));
+    await waitFor(() =>
+      expect(mocked.createInvitationRequest).toHaveBeenCalledWith({
+        planSlug: 'business',
+        grantDuration: 'one_year',
+        expiresInDays: 30,
+        label: undefined,
+      }),
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent('boom');
   });
 });

@@ -1,10 +1,13 @@
 import { apiClient } from '@shared/api/client';
 import type {
   AuditFilters,
+  CreateInvitationInput,
   DeletionResponse,
+  InvitationMutationResponse,
   MutationResponse,
   SuperadminAuditPage,
   SuperadminBillingPage,
+  SuperadminInvitationsPage,
   SuperadminStats,
   SuperadminSystem,
   SuperadminUsersPage,
@@ -73,3 +76,27 @@ export const fetchAuditRequest = (input: {
 
 export const fetchSystemRequest = (): Promise<SuperadminSystem> =>
   apiClient<SuperadminSystem>('/superadmin/system', { auth: true });
+
+export const fetchInvitationsRequest = (input: {
+  page: number;
+}): Promise<SuperadminInvitationsPage> =>
+  apiClient<SuperadminInvitationsPage>(
+    withQuery('/superadmin/invitations', { page: String(input.page) }),
+    { auth: true },
+  );
+
+export const createInvitationRequest = (
+  input: CreateInvitationInput,
+): Promise<InvitationMutationResponse> =>
+  apiClient<InvitationMutationResponse>('/superadmin/invitations', {
+    method: 'POST',
+    body: input,
+    auth: true,
+  });
+
+export const revokeInvitationRequest = (id: string): Promise<InvitationMutationResponse> =>
+  apiClient<InvitationMutationResponse>(`/superadmin/invitations/${id}/revoke`, {
+    method: 'PATCH',
+    body: {},
+    auth: true,
+  });

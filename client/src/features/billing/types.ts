@@ -83,6 +83,23 @@ export interface SelectProjectsResponse {
   paused: number;
 }
 
+export type InvitationStatus = 'pending' | 'claimed' | 'expired' | 'revoked';
+export type GrantDuration = 'one_month' | 'one_year';
+
+/** Sanitized shape of `GET /api/invitations/:token` — no label, no ids. */
+export interface PublicInvitation {
+  plan: 'pro' | 'business';
+  grantDuration: GrantDuration;
+  expiresAt: string;
+  status: InvitationStatus;
+}
+
+export interface ClaimInvitationResponse {
+  plan: 'pro' | 'business';
+  grantDuration: GrantDuration;
+  currentPeriodEnd: string;
+}
+
 export interface BillingState {
   message: string;
   error: string;
@@ -94,4 +111,10 @@ export interface BillingState {
   loadingTiers: boolean;
   loadingOverview: boolean;
   loadingUsage: boolean;
+  /** `/invite/:token` claim flow. */
+  invite: PublicInvitation | null;
+  inviteError: string;
+  claiming: boolean;
+  claimError: string;
+  claimResult: ClaimInvitationResponse | null;
 }
