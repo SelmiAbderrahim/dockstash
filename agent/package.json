@@ -3,7 +3,17 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "Dockstash fleet agent — pull-based backup daemon for remote VPS hosts",
+  "description": "Dockstash fleet agent — pull-based backup daemon for remote VPS hosts.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SelmiAbderrahim/dockstash.com.git",
+    "directory": "agent"
+  },
+  "homepage": "https://github.com/SelmiAbderrahim/dockstash.com#readme",
+  "bugs": {
+    "url": "https://github.com/SelmiAbderrahim/dockstash.com/issues"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

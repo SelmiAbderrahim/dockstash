@@ -2,7 +2,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
-import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { Login } from './Login';
@@ -18,7 +17,6 @@ import * as api from '../api';
 
 vi.mock('../api', () => ({
   loginRequest: vi.fn(),
-  verifyLoginOtpRequest: vi.fn(),
   registerRequest: vi.fn(),
   forgotPasswordRequest: vi.fn(),
   resetPasswordRequest: vi.fn(),
@@ -47,7 +45,6 @@ const makeStore = (auth: Partial<AuthState> = {}) =>
         authenticated: false,
         emailVerified: false,
         role: '',
-        otpChallengeId: '',
         pendingVerificationEmail: '',
         providers: { google: false, github: false },
         providersLoaded: false,
@@ -65,19 +62,16 @@ const renderComp = (
   render(
     <Provider store={makeStore(auth)}>
       <I18nextProvider i18n={i18n}>
-        <HelmetProvider>
-          <MemoryRouter initialEntries={[entry]}>
-            <Routes>
-              <Route path="/" element={ui} />
-              <Route path="/reset-password/:resetToken" element={ui} />
-              <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-              <Route path="/verify-email" element={<div>VERIFY</div>} />
-              <Route path="/login" element={<div>LOGIN</div>} />
-              <Route path="/superadmin" element={<div>SUPERADMIN</div>} />
-              <Route path="/invite/:token" element={<div>CLAIM</div>} />
-            </Routes>
-          </MemoryRouter>
-        </HelmetProvider>
+        <MemoryRouter initialEntries={[entry]}>
+          <Routes>
+            <Route path="/" element={ui} />
+            <Route path="/reset-password/:resetToken" element={ui} />
+            <Route path="/dashboard" element={<div>DASHBOARD</div>} />
+            <Route path="/verify-email" element={<div>VERIFY</div>} />
+            <Route path="/login" element={<div>LOGIN</div>} />
+            <Route path="/invite/:token" element={<div>CLAIM</div>} />
+          </Routes>
+        </MemoryRouter>
       </I18nextProvider>
     </Provider>,
   );
@@ -114,81 +108,9 @@ describe('Login', () => {
     expect(screen.getByText('VERIFY')).toBeInTheDocument();
   });
 
-  it('redirects an authenticated superadmin to the console', () => {
-    renderComp(<Login />, {
-      auth: { authenticated: true, emailVerified: true, role: 'Superadmin' },
-    });
-    expect(screen.getByText('SUPERADMIN')).toBeInTheDocument();
-  });
-
   it('renders the error banner when there is an auth error', () => {
     renderComp(<Login />, { auth: { error: 'Bad login' } });
     expect(screen.getByRole('alert')).toHaveTextContent('Bad login');
-  });
-
-  it('shows the OTP step, submits the code, and lands on the superadmin console', async () => {
-    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
-    mocked.verifyLoginOtpRequest.mockResolvedValue({
-      token: 'JWT t',
-      user: { id: '1', email: 'root@b.co', emailVerified: true, role: 'Superadmin' },
-    });
-    renderComp(<Login />);
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'root@b.co' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'secret12' } });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-
-    const codeInput = await screen.findByLabelText(/verification code/i);
-    fireEvent.change(codeInput, { target: { value: '123456' } });
-    fireEvent.click(screen.getByRole('button', { name: /^verify$/i }));
-
-    await waitFor(() =>
-      expect(mocked.verifyLoginOtpRequest).toHaveBeenCalledWith({
-        challengeId: 'ch1',
-        code: '123456',
-      }),
-    );
-    expect(await screen.findByText('SUPERADMIN')).toBeInTheDocument();
-  });
-
-  it('rejects a malformed OTP code without calling the API', async () => {
-    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
-    renderComp(<Login />);
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'root@b.co' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'secret12' } });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-
-    const codeInput = await screen.findByLabelText(/verification code/i);
-    fireEvent.change(codeInput, { target: { value: '12' } });
-    fireEvent.click(screen.getByRole('button', { name: /^verify$/i }));
-    expect(await screen.findByText(/enter the 6-digit code/i)).toBeInTheDocument();
-    expect(mocked.verifyLoginOtpRequest).not.toHaveBeenCalled();
-  });
-
-  it('keeps the OTP step and shows the error when verification fails', async () => {
-    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
-    mocked.verifyLoginOtpRequest.mockRejectedValue(new Error('bad code'));
-    renderComp(<Login />);
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'root@b.co' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'secret12' } });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-
-    const codeInput = await screen.findByLabelText(/verification code/i);
-    fireEvent.change(codeInput, { target: { value: '000000' } });
-    fireEvent.click(screen.getByRole('button', { name: /^verify$/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('bad code');
-    expect(screen.getByLabelText(/verification code/i)).toBeInTheDocument();
-  });
-
-  it('returns to the credentials form when Back is clicked', async () => {
-    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
-    renderComp(<Login />);
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'root@b.co' } });
-    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'secret12' } });
-    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
-
-    await screen.findByLabelText(/verification code/i);
-    fireEvent.click(screen.getByRole('button', { name: /back to sign in/i }));
-    expect(await screen.findByLabelText(/password/i)).toBeInTheDocument();
   });
 });
 
@@ -334,16 +256,12 @@ describe('RequireAuth', () => {
   });
 });
 
-describe('auth page head tags (PageMeta)', () => {
-  it('sets a noindex robots meta and a page title on Login', async () => {
+describe('auth page titles (useDocumentTitle)', () => {
+  it('sets the Login page title, brand-suffixed', async () => {
     renderComp(<Login />);
     await waitFor(() => {
-      expect(document.title).toContain('Log in');
+      expect(document.title).toBe('Log in · Dockstash');
     });
-    const robots = document.head.querySelector('meta[name="robots"]');
-    expect(robots?.getAttribute('content')).toBe('noindex, follow');
-    const description = document.head.querySelector('meta[name="description"]');
-    expect(description?.getAttribute('content')).toContain('Dockstash');
   });
 
   it('sets the Register page title', async () => {
@@ -373,11 +291,6 @@ describe('?invite= handoff', () => {
       auth: { authenticated: true, emailVerified: false },
     });
     expect(screen.getByText('VERIFY')).toBeInTheDocument();
-  });
-
-  it('Login keeps a superadmin on the console even with an invite param', () => {
-    renderComp(<Login />, { entry: '/?invite=tok-1', auth: { ...verified, role: 'Superadmin' } });
-    expect(screen.getByText('SUPERADMIN')).toBeInTheDocument();
   });
 
   it('Login cross-links to register with and without the param', () => {

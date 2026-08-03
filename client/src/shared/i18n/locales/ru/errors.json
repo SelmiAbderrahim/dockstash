@@ -13,7 +13,6 @@
   "passwordTooShort": "Пароль должен содержать не менее 8 символов.",
   "emailRequired": "Введите email",
   "passwordRequired": "Введите пароль",
-  "otpCodeInvalid": "Введите 6-значный код.",
   "firstNameRequired": "Введите имя",
   "lastNameRequired": "Введите фамилию"
 }

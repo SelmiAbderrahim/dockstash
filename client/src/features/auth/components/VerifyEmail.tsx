@@ -6,7 +6,7 @@ import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Alert, AlertDescription } from '@shared/ui/alert';
-import { PageMeta } from '@shared/seo';
+import { useDocumentTitle } from '@shared/hooks/useDocumentTitle';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
 } from '../store/selectors';
 
 export const VerifyEmail = () => {
+  useDocumentTitle('Verify your email');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
@@ -60,10 +61,6 @@ export const VerifyEmail = () => {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
-      <PageMeta
-        title="Verify your email"
-        description="Confirm your email address to activate your Dockstash account and unlock backups for your Docker projects."
-      />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">{t('verify.title')}</CardTitle>

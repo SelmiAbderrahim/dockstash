@@ -41,10 +41,3 @@ export interface RegisterAgentResult {
   token: string;
 }
 
-export type FleetLockedReason = 'agentLimitReached';
-
-/** Cap details carried on an `agentLimitReached` 403 (used === cap at the block). */
-export interface AgentCapInfo {
-  used: number;
-  cap: number;
-}

@@ -6,7 +6,6 @@ import {
 } from '../../shared/testing/mongo.js';
 import { Project } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
-import { env } from '../../config/env.js';
 
 // Force the in-app alert persistence to explode: both senders must swallow
 // the failure — alert bookkeeping can never fail the job path.
@@ -19,14 +18,11 @@ vi.mock('../health/index.js', () => ({
 import { sendFailureAlert } from './alert.service.js';
 import { runHeartbeatSweep } from './heartbeat.service.js';
 
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 
 beforeAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
   await startMemoryMongo();
 });
 afterAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
   await stopMemoryMongo();
 });
 beforeEach(async () => {

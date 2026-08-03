@@ -7,57 +7,18 @@ import {
   registerAgentRequest,
   rotateAgentKeyRequest,
 } from '../api';
-import type {
-  AgentCapInfo,
-  FleetEntry,
-  FleetLockedReason,
-  RegisterAgentInput,
-  RegisterAgentResult,
-} from '../types';
+import type { FleetEntry, RegisterAgentInput, RegisterAgentResult } from '../types';
 
 export interface FleetRejection {
   message: string;
-  lockedReason: FleetLockedReason | null;
-  /** Cap details (`{ used, cap }`) when the reason is `agentLimitReached`. */
-  capInfo: AgentCapInfo | null;
   /** True when the server rejected a duplicate registration (HTTP 409). */
   conflict: boolean;
 }
 
-/**
- * Extract the entitlement lock reason (+ cap details) from a 403 response. The
- * server error handler emits
- * `{ error: { message, details: { reason: 'agentLimitReached', used, cap } } }`
- * (see server entitlements.service.ts) and ApiError exposes the parsed body as
- * `.data`. Returns null when the response is not an `agentLimitReached` 403.
- */
-export const lockedReasonFromError = (
-  err: unknown,
-): { reason: FleetLockedReason; capInfo: AgentCapInfo | null } | null => {
-  if (!(err instanceof ApiError) || err.status !== 403) return null;
-  if (!err.data || typeof err.data !== 'object') return null;
-  const errorField = (err.data as { error?: unknown }).error;
-  if (!errorField || typeof errorField !== 'object') return null;
-  const details = (errorField as { details?: unknown }).details;
-  if (!details || typeof details !== 'object') return null;
-  const d = details as { reason?: unknown; used?: unknown; cap?: unknown };
-  if (d.reason !== 'agentLimitReached') return null;
-  const capInfo =
-    typeof d.used === 'number' && typeof d.cap === 'number'
-      ? { used: d.used, cap: d.cap }
-      : null;
-  return { reason: 'agentLimitReached', capInfo };
-};
-
-const toRejection = (err: unknown, fallback: string): FleetRejection => {
-  const locked = lockedReasonFromError(err);
-  return {
-    message: messageFromError(err, fallback),
-    lockedReason: locked?.reason ?? null,
-    capInfo: locked?.capInfo ?? null,
-    conflict: err instanceof ApiError && err.status === 409,
-  };
-};
+const toRejection = (err: unknown, fallback: string): FleetRejection => ({
+  message: messageFromError(err, fallback),
+  conflict: err instanceof ApiError && err.status === 409,
+});
 
 /**
  * `silent: true` polls in the background — the slice keeps the current data +

@@ -28,7 +28,6 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Projects' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Snapshots' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Billing' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument();
   });
 

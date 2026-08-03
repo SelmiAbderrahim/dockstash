@@ -113,7 +113,7 @@ export type Adapter = StdinAdapter | FileAdapter;
  * Every adapter returns an **argument array**, never a shell string. The
  * orchestration layer feeds these arrays directly to `dockerode.exec` (which
  * accepts an argv array — no shell parsing). This is the command-injection
- * guard from IDEA.md §1: even a compose env value like `$(rm -rf /)` becomes
+ * guard: even a compose env value like `$(rm -rf /)` becomes
  * a literal argv token — the shell never sees it. Tokens may themselves
  * contain spaces (e.g. a ClickHouse `--query` SQL statement); that is safe
  * precisely because there is no shell to re-split them.

@@ -2,7 +2,7 @@
 
 > **Locale note.** This page ships in English in all seven locale files
 > (`fleet-agents.{en,ar,fr,de,es,ru,zh}.md`) until the translation pass lands —
-> matching the `running-with-docker.md` precedent.
+> matching the `self-hosting.md` precedent.
 
 A **fleet agent** is a small daemon you run on another VPS so Dockstash can
 back up the containers on *that* host, not just the primary. The control plane

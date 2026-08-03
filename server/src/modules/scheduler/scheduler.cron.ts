@@ -1,11 +1,9 @@
-import { logger } from '../../config/logger.js';
 import { Schedule, type ScheduleHydrated } from './scheduler.model.js';
-import type { EntitlementChecker, SchedulerCron, SchedulerQueue } from './scheduler.boundaries.js';
+import type { SchedulerCron, SchedulerQueue } from './scheduler.boundaries.js';
 
 export interface ReconcileDeps {
   cron: SchedulerCron;
   queue: SchedulerQueue;
-  entitlements: EntitlementChecker;
 }
 
 /**
@@ -32,14 +30,9 @@ export async function reconcileCron(deps: ReconcileDeps): Promise<void> {
 
 export async function enqueueFromSchedule(
   schedule: ScheduleHydrated,
-  deps: Pick<ReconcileDeps, 'queue' | 'entitlements'>,
+  deps: Pick<ReconcileDeps, 'queue'>,
 ): Promise<void> {
   const owner = schedule.owner.toString();
-  const allowed = await deps.entitlements.canEnqueue(owner, schedule.kind);
-  if (!allowed) {
-    logger.warn({ scheduleId: schedule._id.toString() }, 'scheduler.cron: entitlement denied');
-    return;
-  }
   await deps.queue.add({
     projectId: schedule.project.toString(),
     owner,

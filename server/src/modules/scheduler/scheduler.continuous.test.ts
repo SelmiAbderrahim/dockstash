@@ -4,29 +4,18 @@ import {
   startMemoryMongo,
   stopMemoryMongo,
 } from '../../shared/testing/mongo.js';
-import { env } from '../../config/env.js';
 import { User } from '../users/index.js';
 import { createProject } from '../backups/backups.service.js';
-import { __setPaymentProviderForTests } from '../billing/active-provider.js';
-import { PolarProvider } from '../billing/providers/polar.js';
-import { Customer } from '../billing/customer.model.js';
-import { Subscription } from '../billing/subscription.model.js';
 import { Schedule } from './scheduler.model.js';
 import { CONTINUOUS_PRESET, createScheduleSchema } from './scheduler.schema.js';
 import { createSchedule, enqueueNow, updateSchedule } from './scheduler.service.js';
 import { serializeSchedule } from './scheduler.serialize.js';
-import { billingEntitlements } from './scheduler.entitlements.js';
 import type { Job, JobData, SchedulerQueue } from './scheduler.boundaries.js';
 
-// Suite default: OSS self-host mode → business ceiling, so schedule creation
-// is unrestricted. Tier-specific denial tests flip the provider on locally.
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
   await startMemoryMongo();
 });
 afterAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
   await stopMemoryMongo();
 });
 beforeEach(async () => {
@@ -176,7 +165,7 @@ describe('continuous preset: service expansion', () => {
     await enqueueNow(
       owner,
       { scheduleId: schedule._id.toString() },
-      { queue, entitlements: { async canEnqueue() { return true; } } },
+      { queue },
     );
     expect(queue.added[0]?.retention).toMatchObject({ keepHourly: 24, keepLast: 12 });
   });
@@ -205,62 +194,5 @@ describe('serializeSchedule: legacy rows', () => {
     const serialized = serializeSchedule(doc!);
     expect(serialized.retention.keepHourly).toBe(0);
     expect(serialized.retention.keepLast).toBe(0);
-  });
-});
-
-describe('billingEntitlements checker', () => {
-  const provider = new PolarProvider({
-    nowSeconds: () => 1_700_000_000,
-    getWebhookSecret: () => 'test-webhook-secret',
-  });
-
-  it('OSS self-host (PAYMENT_PROVIDER=none) allows every kind', async () => {
-    const owner = await seedUser('oss@t.com');
-    expect(await billingEntitlements.canEnqueue(owner, 'drill')).toBe(true);
-    expect(await billingEntitlements.canEnqueue(owner, 'backup')).toBe(true);
-  });
-
-  it('free tier: drill denied, baseline kinds allowed', async () => {
-    const prev = env.PAYMENT_PROVIDER;
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(provider);
-    try {
-      const owner = await seedUser('free-check@t.com');
-      expect(await billingEntitlements.canEnqueue(owner, 'drill')).toBe(false);
-      expect(await billingEntitlements.canEnqueue(owner, 'backup')).toBe(true);
-      expect(await billingEntitlements.canEnqueue(owner, 'restore')).toBe(true);
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prev;
-      __setPaymentProviderForTests(null);
-    }
-  });
-
-  it('pro tier: drill allowed', async () => {
-    const prev = env.PAYMENT_PROVIDER;
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(provider);
-    try {
-      const owner = await seedUser('pro-check@t.com');
-      const customer = await Customer.create({
-        userId: owner,
-        provider: 'polar',
-        providerCustomerId: `pc_${owner}`,
-        email: 'pro-check@t.com',
-      });
-      await Subscription.create({
-        userId: owner,
-        customerId: customer._id,
-        provider: 'polar',
-        providerSubscriptionId: `sub_${owner}`,
-        productId: 'prod_pro',
-        planSlug: 'pro',
-        status: 'active',
-        cancelAtPeriodEnd: false,
-      });
-      expect(await billingEntitlements.canEnqueue(owner, 'drill')).toBe(true);
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prev;
-      __setPaymentProviderForTests(null);
-    }
   });
 });

@@ -4,9 +4,8 @@ import { store, makeStore } from './store';
 describe('store after demo strip', () => {
   const state = store.getState();
 
-  it('registers auth, billing, profile slices', () => {
+  it('registers auth, profile slices', () => {
     expect(state).toHaveProperty('auth');
-    expect(state).toHaveProperty('billing');
     expect(state).toHaveProperty('profile');
     expect(state).toHaveProperty('guide');
   });

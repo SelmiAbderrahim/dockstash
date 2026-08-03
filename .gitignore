@@ -47,8 +47,6 @@ server/dist
 .env
 .env.local
 
-# Docker secret files (mounted via compose `secrets:` block — never commit)
-/secrets/
 
 # TypeScript incremental build info
 *.tsbuildinfo
@@ -61,6 +59,7 @@ server/dist
 
 # IDE
 .idea/
+.vscode/
 
 # Claude Code local settings (per-machine overrides)
 .claude/settings.local.json
@@ -69,3 +68,12 @@ server/dist
 .opencode/local.json
 .opencode/local.jsonc
 .opencode/node_modules/
+
+# Working prompts and the local prompt runner — not part of the product
+prompts/
+prompt-executor/
+
+# Playwright
+client/playwright-report/
+client/test-results/
+server/test-results/

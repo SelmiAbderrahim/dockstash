@@ -3,15 +3,9 @@ import { EventEmitter } from 'node:events';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
 
-// Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
-// entitlements (schedules) are unrestricted here — billing tiering itself is
-// covered by the billing suites.
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
 });
 afterAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
 });
 import {
   clearCollections,
@@ -33,7 +27,6 @@ import { Schedule } from './scheduler.model.js';
 import { MemoryQueue } from './scheduler.queue.memory.js';
 import { dispatchJob, processJob } from './scheduler.dispatcher.js';
 import { enqueueFromSchedule, reconcileCron } from './scheduler.cron.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
 import { createSchedule, updateSchedule, enqueueNow } from './scheduler.service.js';
 import { serializeSchedule } from './scheduler.serialize.js';
 import { runPrune } from './scheduler.prune.service.js';
@@ -395,7 +388,7 @@ describe('scheduler.extra: service branch coverage', () => {
       cron: '0 3 * * *',
     });
     // keepDaily omitted (falls back to existing), keepWeekly + keepMonthly set.
-    // Values stay within the (business-tier, PAYMENT_PROVIDER=none) retention
+    // Values stay within the retention
     // ceiling of 90 days so clampRetentionPolicy is a no-op here — this test
     // is about the omitted-field merge, not the clamp (covered separately).
     const updated = await updateSchedule(s._id.toString(), userId, {
@@ -404,35 +397,6 @@ describe('scheduler.extra: service branch coverage', () => {
     expect(updated.retention.keepDaily).toBe(7);
     expect(updated.retention.keepWeekly).toBe(9);
     expect(updated.retention.keepMonthly).toBe(3);
-  });
-
-  it('enqueueNow uses the identity translator when none is provided (deny path)', async () => {
-    const userId = await seedUser('a@t.com');
-    const projectId = await seedProject(userId);
-    const queue: SchedulerQueue = {
-      async add(data) {
-        return { id: '1', data, attempts: 0 };
-      },
-      async activeCountForProject() {
-        return 0;
-      },
-      async waitIdle() {},
-      async close() {},
-    };
-    await expect(
-      enqueueNow(
-        userId,
-        { projectId, kind: 'backup' },
-        {
-          queue,
-          entitlements: {
-            async canEnqueue() {
-              return false;
-            },
-          },
-        },
-      ),
-    ).rejects.toMatchObject({ status: 403 });
   });
 
   it('enqueueNow via scheduleId tolerates a schedule with no retention', async () => {
@@ -466,7 +430,7 @@ describe('scheduler.extra: service branch coverage', () => {
       const job = await enqueueNow(
         userId,
         { scheduleId: '507f1f77bcf86cd799439099' },
-        { queue, entitlements: allowAllEntitlements },
+        { queue },
       );
       expect(job.data.retention).toBeUndefined();
     } finally {
@@ -580,7 +544,7 @@ describe('scheduler.extra: cron reconciliation extras', () => {
     };
     const queue = new MemoryQueue();
     queue.setProcessor(async () => {});
-    await reconcileCron({ cron, queue, entitlements: allowAllEntitlements });
+    await reconcileCron({ cron, queue });
     expect(unregistered).toEqual(['stale-id-999']);
     expect(registered.has(s._id.toString())).toBe(true);
   });
@@ -611,7 +575,6 @@ describe('scheduler.extra: cron reconciliation extras', () => {
     };
     await enqueueFromSchedule(fakeSchedule as never, {
       queue,
-      entitlements: allowAllEntitlements,
     });
     expect(added[0]?.retention).toBeUndefined();
     expect(save).toHaveBeenCalledOnce();
@@ -639,7 +602,7 @@ describe('scheduler.extra: restore enqueue validates targetPath against the proj
     const userId = await seedUser('rt1@t.com');
     const projectId = await seedProject(userId);
     const { queue, added } = captureQueue();
-    const deps = { queue, entitlements: allowAllEntitlements };
+    const deps = { queue };
 
     await enqueueNow(
       userId,
@@ -677,7 +640,7 @@ describe('scheduler.extra: restore enqueue validates targetPath against the proj
     await enqueueNow(
       userId,
       { projectId, kind: 'restore', snapshotId: 'latest', overwrite: true },
-      { queue, entitlements: allowAllEntitlements },
+      { queue },
     );
     expect(added[0]?.payload).toMatchObject({ overwrite: true });
   });
@@ -704,7 +667,7 @@ describe('scheduler.extra: restore enqueue validates targetPath against the proj
       agentId: String(agent._id),
     });
     const { queue, added } = captureQueue();
-    const deps = { queue, entitlements: allowAllEntitlements };
+    const deps = { queue };
 
     await enqueueNow(
       userId,
@@ -753,7 +716,7 @@ describe('scheduler.extra: restore enqueue with a missing targetPath (service-di
       enqueueNow(
         userId,
         { projectId, kind: 'restore', snapshotId: 'latest', overwrite: false },
-        { queue, entitlements: allowAllEntitlements },
+        { queue },
       ),
     ).rejects.toMatchObject({ status: 400 });
   });

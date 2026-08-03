@@ -1,7 +1,17 @@
 {
-  "name": "mern-starter-server",
+  "name": "dockstash-server",
   "version": "2.0.0",
-  "description": "API server for MERN Starter (Express + Mongoose 8 + TypeScript).",
+  "description": "Dockstash API server — Express 4 + Mongoose 8 + Socket.IO.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SelmiAbderrahim/dockstash.com.git",
+    "directory": "server"
+  },
+  "homepage": "https://github.com/SelmiAbderrahim/dockstash.com#readme",
+  "bugs": {
+    "url": "https://github.com/SelmiAbderrahim/dockstash.com/issues"
+  },
   "private": true,
   "type": "module",
   "main": "dist/server.js",
@@ -23,8 +33,6 @@
     "mongoose",
     "typescript"
   ],
-  "author": "Joshua Slate",
-  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "bullmq": "^5.79.2",
@@ -45,7 +53,6 @@
     "pino-pretty": "^13.0.0",
     "rate-limit-redis": "^4.3.1",
     "socket.io": "^4.8.1",
-    "stripe": "^17.7.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

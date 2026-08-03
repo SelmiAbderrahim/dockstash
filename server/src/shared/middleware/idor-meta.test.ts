@@ -22,11 +22,8 @@ const MODULES_DIR = path.resolve(HERE, '../../modules');
 //
 // - `auth`: no owner-scoped resource; identity IS the auth flow.
 // - `communication`: public contact form.
-// - `seo`: public robots/sitemap.
 // - `health`: covered by health.backup-health.test.ts cross-account matrix
 //   (see `getProjectHealth 404s both unknown AND foreign projects`).
-// - `superadmin`: role-gated, superadmin sees everything by design; the 403
-//   for a non-superadmin lives in superadmin.test.ts.
 // - `billing`: billing routes bind to the authenticated JWT id only — a
 //   caller cannot pass another user's id. The one cross-owner path
 //   (`selectProjectsToKeep`) has a `notOwner` test in entitlements.test.ts.

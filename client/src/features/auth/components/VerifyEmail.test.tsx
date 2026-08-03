@@ -2,7 +2,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
-import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { VerifyEmail } from './VerifyEmail';
@@ -46,15 +45,13 @@ const renderAt = (entry: string, auth: Partial<AuthState> = {}) =>
   render(
     <Provider store={makeStore(auth)}>
       <I18nextProvider i18n={i18n}>
-        <HelmetProvider>
-          <MemoryRouter initialEntries={[entry]}>
-            <Routes>
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/verify-email/:token" element={<VerifyEmail />} />
-              <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-            </Routes>
-          </MemoryRouter>
-        </HelmetProvider>
+        <MemoryRouter initialEntries={[entry]}>
+          <Routes>
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/verify-email/:token" element={<VerifyEmail />} />
+            <Route path="/dashboard" element={<div>DASHBOARD</div>} />
+          </Routes>
+        </MemoryRouter>
       </I18nextProvider>
     </Provider>,
   );

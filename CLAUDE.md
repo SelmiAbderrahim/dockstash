@@ -2,11 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# MERN Starter — Claude Code Guide
+# Dockstash — Claude Code Guide
 
 ## 1. Project Overview
 
-This is a MERN stack starter (MongoDB, Express, React, Node) organized as feature modules on both client and server. The client runs React 18 with Redux Toolkit and Vite; the server runs Express with Mongoose 8. Both sides use TypeScript.
+Dockstash is **open-source, self-hosted backup orchestration for Docker**: encrypted restic snapshots on storage the operator owns, a pull-based agent fleet, schedules, restore drills, health monitoring and alerting. It is organized as feature modules on both client and server. The client runs React 18 with Redux Toolkit and Vite; the server runs Express with Mongoose 8. Both sides use TypeScript. A third package, `agent/`, is the VPS daemon.
+
+There is no hosted tier, no payment surface, no per-account limits, and no telemetry — see §9.
 
 ## 2. Stack
 
@@ -28,17 +30,16 @@ This is a MERN stack starter (MongoDB, Express, React, Node) organized as featur
 - Socket.IO 4
 - pino / pino-http for structured logging
 - zod for env validation (`src/config/env.ts`)
-- Stripe, Mailgun integrations
 - Vitest + supertest for integration tests; `mongodb-memory-server` for in-process MongoDB
 
 ## 3. Repo Layout
 
 ```
-mern-starter/
+dockstash/
 ├── client/
 │   └── src/
 │       ├── app/              # Store (store.ts), router (router.tsx), providers
-│       ├── features/         # auth/, billing/, dashboard/, messaging/, admin/, pages/, sales/, template/
+│       ├── features/         # auth/, dashboard/, projects/, snapshots/, fleet/, health/, settings/, profile/, guide/, admin/
 │       │   └── <name>/
 │       │       ├── components/
 │       │       ├── store/        # slice.ts, thunks.ts, selectors.ts
@@ -55,7 +56,7 @@ mern-starter/
 │       ├── app.ts            # createApp() — Express wiring, middleware, route mounts
 │       ├── server.ts         # Entry point — connects DB, starts HTTP server
 │       ├── config/           # env.ts (zod), db.ts, passport.ts, logger.ts
-│       ├── modules/          # auth/, users/, billing/, chat/, communication/
+│       ├── modules/          # auth/, users/, backups/, scheduler/, agents/, alerting/, health/, audit/, recovery/, settings/, legal/, communication/
 │       │   └── <name>/
 │       │       ├── <name>.controller.ts
 │       │       ├── <name>.service.ts
@@ -118,7 +119,7 @@ docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run build   #
 ```env
 NODE_ENV=development
 PORT=8080
-MONGODB_URI=mongodb://localhost:27017/mern-starter
+MONGODB_URI=mongodb://localhost:27017/dockstash
 JWT_SECRET=your-random-64-char-hex-string
 SESSION_SECRET=your-random-64-char-hex-string
 CLIENT_URL=http://localhost:3000
@@ -128,23 +129,16 @@ LOG_LEVEL=info
 # Fails startup if missing or decodes to < 32 bytes. See
 # `server/src/shared/crypto/README.md` for the rotation runbook.
 MASTER_ENCRYPTION_KEY=your-random-64-char-hex-string
-# Optional payments (Polar) — Free / self-host boots without these:
-PAYMENT_PROVIDER=none
-POLAR_ACCESS_TOKEN=
-POLAR_WEBHOOK_SECRET=
-POLAR_SERVER=
-POLAR_PRO_PRODUCT_ID=
-POLAR_BUSINESS_PRODUCT_ID=
-# Optional email (Resend) — Free / self-host boots without these:
+# Optional email (Resend) — the stack boots without these:
 RESEND_API_KEY=
 RESEND_FROM=
 # Optional alerting — sane default (24):
 ALERT_HEARTBEAT_HOURS=24
-# Optional legacy integrations:
-STRIPE_SECRET_KEY=
-MAILGUN_PRIVATE_KEY=
-MAILGUN_DOMAIN=
 ```
+
+`.env.example` is the authority; it is split into a REQUIRED block and an
+OPTIONAL block, and every var in it maps to `server/src/config/env.ts` or
+`docker-compose.yml`.
 
 Client-side env vars (Vite — prefix `VITE_`):
 
@@ -178,10 +172,10 @@ These are the load-bearing rules. Each links to the full rule file in `.claude/r
 - **Argv-only spawn + SSRF guard.** Every `child_process.spawn` in server AND agent code uses `shell: false` with a `string[]` argv; secrets travel via `env` (`RESTIC_PASSWORD`), never argv. `child_process.exec` is banned in `modules/backups/**` and `agent/src/**`. Every SSH invocation pins the host key (`StrictHostKeyChecking=yes` + pinned `UserKnownHostsFile`); `=no` / `=accept-new` is banned repo-wide. `/var/run/docker.sock` is bind-mounted ONLY into the least-privilege `docker-socket-proxy`; the api uses `DOCKER_HOST=tcp://docker-socket-proxy:2375`. Every server-side `fetch` on a user-supplied URL routes through `shared/net/safe-fetch.ts::safeFetch`, which enforces http(s) scheme, blocks loopback/private/link-local/metadata IPs (v4 + v6), and re-validates every redirect hop. Enforced by ESLint (`no-restricted-syntax` for `shell:true`, `no-restricted-imports` for `exec` in backups/agent) and `server/src/shared/middleware/command-execution-meta.test.ts`.
   → `.claude/rules/argv-only-spawn-and-ssrf.md`
 
-- **No query injection + i18n-keys-only errors.** No Mongoose query builder in `server/src/modules/**` is fed a spread of `req.query`/`req.body`/`req.params` — every filter is a zod-parsed, typed object; every URL id is cast (`isValidObjectId` or an anchored `[0-9a-fA-F]{24}$` zod regex) BEFORE it reaches Mongoose (invalid → 400, never a CastError 500); no user-controlled `$where`/`$regex`/`$expr` anywhere. `/api/superadmin` is gated at the `app.ts` mount by `[requireAuth, requireVerified, requireRole(ROLE_SUPERADMIN)]` — the sub-router imports no auth middleware. Data-rights export uses `req.user.id` (never a body `userId`); deletion schedules a purge `ACCOUNT_DELETION_GRACE_HOURS` in the future via `PurgeQueue.enqueuePurge` (never a synchronous hard delete); `legalHold` on the user OR project blocks/skips purge. `error-handler.ts` emits i18n keys (resolved per `Accept-Language`) plus optional zod details only — never `err.stack`, never a raw `err.message`, never `...err` on the wire, even in development. Enforced by `server/src/shared/middleware/injection-and-output-meta.test.ts` + `server/src/shared/middleware/coverage.test.ts` (error-handler branches).
+- **No query injection + i18n-keys-only errors.** No Mongoose query builder in `server/src/modules/**` is fed a spread of `req.query`/`req.body`/`req.params` — every filter is a zod-parsed, typed object; every URL id is cast (`isValidObjectId` or an anchored `[0-9a-fA-F]{24}$` zod regex) BEFORE it reaches Mongoose (invalid → 400, never a CastError 500); no user-controlled `$where`/`$regex`/`$expr` anywhere. Data-rights export uses `req.user.id` (never a body `userId`); deletion schedules a purge `ACCOUNT_DELETION_GRACE_HOURS` in the future via `PurgeQueue.enqueuePurge` (never a synchronous hard delete); `legalHold` on the user OR project blocks/skips purge. `error-handler.ts` emits i18n keys (resolved per `Accept-Language`) plus optional zod details only — never `err.stack`, never a raw `err.message`, never `...err` on the wire, even in development. Enforced by `server/src/shared/middleware/injection-and-output-meta.test.ts` + `server/src/shared/middleware/coverage.test.ts` (error-handler branches).
   → `.claude/rules/no-query-injection-and-i18n-errors.md`
 
-- **Secrets & data-at-rest.** Every persisted secret (restic repo password, SSH private key, agent API secret) is an AES-256-GCM envelope produced by `shared/crypto/encryptSecret` — never plaintext, never a reused IV (fresh `randomBytes(12)` per call). `MASTER_ENCRYPTION_KEY` is env-only (no in-source default), rotation runs via `rotateStore` (decrypt-old → re-encrypt-new → atomic swap, all-or-nothing, idempotent re-run). The pino logger (`config/logger.ts`) has a `redact` block covering Authorization / Cookie / password / token / envelope / `MASTER_ENCRYPTION_KEY` / `SUPERADMIN_PASSWORD` / Polar creds / SSH keys — sourced from `REDACT_PATHS`. The superadmin seeder is idempotent and NEVER emits the plaintext password on any log line; `console.*` is banned repo-wide in `modules/superadmin/**`. `errorHandler` returns no `stack` in the response body. The self-backup restic password is HMAC-derived from the master key via `deriveSelfBackupPassword` — never the master key verbatim. Enforced by ESLint (`no-console` in `modules/superadmin/**`) and `server/src/shared/middleware/secrets-meta.test.ts` + `server/src/config/logger-redaction.test.ts`.
+- **Secrets & data-at-rest.** Every persisted secret (restic repo password, SSH private key, agent API secret) is an AES-256-GCM envelope produced by `shared/crypto/encryptSecret` — never plaintext, never a reused IV (fresh `randomBytes(12)` per call). `MASTER_ENCRYPTION_KEY` is env-only (no in-source default), rotation runs via `rotateStore` (decrypt-old → re-encrypt-new → atomic swap, all-or-nothing, idempotent re-run). The pino logger (`config/logger.ts`) has a `redact` block covering Authorization / Cookie / password / token / envelope / `MASTER_ENCRYPTION_KEY` / `JWT_SECRET` / `SESSION_SECRET` / SSH keys — sourced from `REDACT_PATHS`. `errorHandler` returns no `stack` in the response body. The self-backup restic password is HMAC-derived from the master key via `deriveSelfBackupPassword` — never the master key verbatim. Enforced by `server/src/shared/middleware/secrets-meta.test.ts` + `server/src/config/logger-redaction.test.ts`.
   → `.claude/rules/secrets-and-rotation.md`
 
 - **Environment variables from root `.env` only.** Never create `.env` files in subdirectories. Server config flows through `src/config/env.ts` (zod-validated). Client config uses `import.meta.env.VITE_*`.
@@ -193,7 +187,7 @@ These are the load-bearing rules. Each links to the full rule file in `.claude/r
 - **Tab state in URL query params.** Every tabbed interface persists active tab as `?tab=` so links are shareable and refresh-safe. Never use `useState` for tab state.
   → `.claude/rules/url-tab-state.md`
 
-- **Monochrome design system (visual source of truth).** Achromatic shadcn neutral tokens (near-black primary ↔ near-white in dark mode; color only for destructive/success state), one Instrument Serif italic accent max per display headline, flat 1px-border cards (`shadow-xs` max), whitespace-separated sections, token-inverted dark CTA bands, `pattern-dot-grid` hero backdrop, lucide icons only. Never reintroduce a brand hue, palette classes, or hex colors. The `dockstash-design` skill has canonical snippets.
+- **Monochrome design system (visual source of truth).** Achromatic shadcn neutral tokens (near-black primary ↔ near-white in dark mode; color only for destructive/success state), one Instrument Serif italic accent max per display headline, flat 1px-border cards (`shadow-xs` max), whitespace-separated sections, token-inverted dark bands, lucide icons only. Never reintroduce a brand hue, palette classes, or hex colors. The `dockstash-design` skill has canonical snippets.
   → `.claude/rules/dockstash-design-system.md`
 
 - **Anti-Codex UI patterns.** No card-lift-on-hover, gradient text, pill buttons, bounce/pulse animations, or `transition: all`. Accessibility/forms/loading-state sections in force; visuals superseded by the design-system rule above.
@@ -202,7 +196,7 @@ These are the load-bearing rules. Each links to the full rule file in `.claude/r
 - **Interaction hygiene (promoted).** Every clickable shows pointer/not-allowed cursors from the base primitive; async actions disable + show the shared `Spinner` via `Button` `loading`, restore on success AND error; all six states (default/hover/focus-visible/active/disabled/loading) present.
   → `.claude/rules/interaction-hygiene.md`
 
-- **Shared layout system (promoted).** Exactly one Header/Footer/shell system in `client/src/shared/components/` — two variants (app sidebar shell + marketing top-nav), never inlined `<header>`/`<footer>` in feature layouts, `Sheet` mobile menu + `ThemeToggle` + locale switcher on both.
+- **Shared layout system (promoted).** Exactly one Header/Footer/shell system in `client/src/shared/components/` — the authenticated sidebar shell plus the lightweight anonymous top-nav used by the auth screens. Never inline `<header>`/`<footer>` in a feature layout; `Sheet` mobile menu + `ThemeToggle` + locale switcher on both.
   → `.claude/rules/shared-layout-system.md`
 
 - **Destructive git commands require explicit confirmation.** `git stash`, `git reset --hard`, `git clean -f`, `git commit --amend`, `git push --force`, and similar commands must never run without per-turn user approval.
@@ -349,19 +343,22 @@ beforeEach(() => clearCollections());
 **Conventions:**
 - Test the public API of each module, not internal implementation details.
 - Each test file is self-contained: imports what it needs, sets up its own fixtures.
-- No hard coverage percentage requirement — aim for meaningful coverage on business logic.
+- Coverage is gated at **100%** (lines/branches/functions/statements) on all three packages. Delete source and its tests in the same change.
 
 ## 9. Things This Repo Does NOT Do
 
 This list prevents agent assumptions from drifting into unrelated territory:
 
-- **~~No Docker.~~** Superseded by `prompts/dockstash-build/00-dockerize-stack-and-strip-demo-*.md`. Dockstash is now Docker-first: `docker-compose.yml` at the repo root orchestrates `api`, `web`, `mongo`, `redis`, and a least-privilege `docker-socket-proxy`. See `docs/running-with-docker.md`.
-- **~~No SSR.~~** Superseded. The public marketing surface (`client/src/features/marketing/`) is now server-rendered via Vite native SSR — the public entrypoint is a Node server (`client/server.js`) that renders marketing routes with `client/src/entry-server.tsx` (React Router `createStaticHandler` + `renderToString` + `react-helmet-async`) so crawlers and AI engines receive full HTML with `<title>`, meta, Open Graph, hreflang, and JSON-LD. The authenticated dashboard stays a CSR SPA (`entry-client.tsx` hydrates only when server-rendered). Still no Next.js and no RSC. SEO infra (`/robots.txt`, `/sitemap*.xml`) is served by `server/src/modules/seo/` and proxied through the web server. See `client/server.js` and `client/src/shared/seo/`.
+- **~~No Docker.~~** Superseded. Dockstash is Docker-first: `docker-compose.yml` at the repo root orchestrates `api`, `web`, `mongo`, `redis`, and a least-privilege `docker-socket-proxy`. See `docs/self-hosting.md`.
+- **No public marketing surface.** There is no landing page, pricing page, blog, or docs site inside the app. `/` — and any unmatched URL — redirects to `/login` (signed out) or `/dashboard` (signed in) via `client/src/app/RootRedirect.tsx`.
+- **No SSR, no SEO infrastructure.** The client is a pure CSR SPA. `client/server.js` is a static server: hashed assets from `dist/` plus an `index.html` history fallback. No `entry-server.tsx`, no `react-helmet-async`, no `/robots.txt` / `/sitemap*.xml` / `/llms.txt`. There is nothing public to index. Page titles are set with the `useDocumentTitle` hook.
+- **No payment integration and no platform-operator tier.** No billing module, no entitlements, no plan/tier concept, no per-account caps: projects, agents, cron cadence and retention are unlimited by construction. The role ladder tops out at `Admin` (`Member` < `Client` < `Owner` < `Admin`) — there is no console above the account owner. Do not reintroduce a payment provider, a `Superadmin` role, or a usage cap.
+- **No telemetry, analytics, or phone-home.** No Google Analytics, no third-party script tags, no crash reporters. The app makes only the network calls the operator configures. Do not add one, even behind a flag.
 - **No monorepo tooling.** No Turborepo, no Nx, no Lerna. `client/`, `server/`, and `agent/` are independent npm packages. (`agent/` is the fleet-agent daemon — a pull-based backup worker installed on remote VPS hosts, image `selmiabderrahim/agent`; it authenticates to the server's `/api/agent/*` machine surface with a per-agent Bearer token and vendors copies of the backup adapters/restic-runner/docker-client. See `docs/fleet-agents.en.md`.)
 - **No GraphQL.** REST API via Express routes. No Apollo, no Relay.
 - **No tRPC.** Standard Express route handlers returning JSON.
-- **No PostgreSQL.** MongoDB via Mongoose is the primary database. Redis is now available (via the compose `redis` service, `REDIS_URL`) — reserved for BullMQ scheduling in a later phase.
-- **~~No CSS-in-JS / No Tailwind.~~** Superseded. The client now uses **Tailwind CSS v4** (CSS-first, via `@tailwindcss/vite`; tokens in `client/src/styles/tailwind.css`, no `tailwind.config.js`). Still no styled-components / emotion. Legacy `.scss` is being retired as components migrate to Tailwind utilities.
-- **~~No CI/CD pipeline.~~** Superseded by `prompts/dockstash-build/11-security-legal-and-ci-in-docker-*.md`. CI now runs in Docker (`node:20-bookworm` containers) via `.github/workflows/ci.yml`. Pipeline gates: typecheck → lint → vitest + coverage (v8 **100%** on lines/branches/functions/statements) → `npm audit --audit-level=high` (**zero high/critical**). No allow-list. See `docs/ci-gates.en.md`. App-layer hardening (helmet, express-rate-limit on `/api/auth/*` and the Polar webhook, CORS locked to `env.CLIENT_URL`, double-submit CSRF for cookie surfaces) and the GDPR data-rights module live under `server/src/modules/legal/` — see `docs/security-model.en.md` and `docs/data-rights.en.md`.
-- **~~No i18n framework.~~** Superseded by `prompts/dockstash-build/01-i18n-foundation-seven-locales-autodetect-*.md`. i18n is now first-class: seven locales (`en, ar, fr, de, es, ru, zh`) with auto-detection (client uses `navigator.language`; server parses `Accept-Language` + honours `x-lang` header / `lang` cookie), RTL for Arabic, localized backend response messages, and full parity across every namespace. Client uses `i18next` + `react-i18next`; server uses a hand-written typed dictionary under `server/src/shared/i18n/`. See both `shared/i18n/README.md` files.
-- **~~No design system.~~** Superseded. The client uses **shadcn/ui** (Radix-based, `new-york` style) as its component library, styled by the **Dockstash monochrome design system** (`.claude/rules/dockstash-design-system.md`): achromatic neutral tokens in oklch, Inter + JetBrains Mono + Instrument Serif (italic display accent only), flat bordered surfaces, dot-grid hero backdrops, token-inverted dark CTA bands. Generated primitives live in `client/src/shared/ui/` (imported via `@shared/ui/*`); the `cn()` helper is in `client/src/shared/lib/utils.ts`; theme tokens + light/dark (`.dark` class, manual toggle via `@shared/theme/ThemeProvider` + no-flash head script) live in `client/src/styles/tailwind.css`. `client/src/shared/ui/**` is excluded from coverage as vendored source. Note: the client is **React 18**, so native form primitives (`Input`, `Textarea`) are patched to use `forwardRef`.
+- **No PostgreSQL.** MongoDB via Mongoose is the primary database. Redis (compose `redis` service, `REDIS_URL`) backs the distributed rate-limit store and is reserved for queue work.
+- **~~No CSS-in-JS / No Tailwind.~~** Superseded. The client uses **Tailwind CSS v4** (CSS-first, via `@tailwindcss/vite`; tokens in `client/src/styles/tailwind.css`, no `tailwind.config.js`). No styled-components / emotion, and no `.scss` left in the tree.
+- **~~No CI/CD pipeline.~~** Superseded. CI runs in Docker (`node:20-bookworm` containers) via `.github/workflows/ci.yml`. Pipeline gates: typecheck → lint → vitest + coverage (v8 **100%** on lines/branches/functions/statements) → `npm audit --audit-level=high` (**zero high/critical**). No allow-list. See `docs/ci-gates.en.md`. App-layer hardening (helmet, express-rate-limit on `/api/auth/*` and `/api/agent/*`, CORS locked to `env.CLIENT_URL`, double-submit CSRF for cookie surfaces) and the GDPR data-rights module live under `server/src/modules/legal/` — see `docs/security-model.en.md` and `docs/data-rights.en.md`.
+- **~~No i18n framework.~~** Superseded. i18n is first-class: seven locales (`en, ar, fr, de, es, ru, zh`) with auto-detection (client uses `navigator.language`; server parses `Accept-Language` + honours `x-lang` header / `lang` cookie), RTL for Arabic, localized backend response messages, and full parity across every namespace. Client uses `i18next` + `react-i18next`; server uses a hand-written typed dictionary under `server/src/shared/i18n/`. See both `shared/i18n/README.md` files.
+- **~~No design system.~~** Superseded. The client uses **shadcn/ui** (Radix-based, `new-york` style) as its component library, styled by the **Dockstash monochrome design system** (`.claude/rules/dockstash-design-system.md`): achromatic neutral tokens in oklch, Inter + JetBrains Mono + Instrument Serif (italic display accent only), flat bordered surfaces, token-inverted dark bands. Generated primitives live in `client/src/shared/ui/` (imported via `@shared/ui/*`); the `cn()` helper is in `client/src/shared/lib/utils.ts`; theme tokens + light/dark (`.dark` class, manual toggle via `@shared/theme/ThemeProvider` + no-flash head script) live in `client/src/styles/tailwind.css`. `client/src/shared/ui/**` is excluded from coverage as vendored source. Note: the client is **React 18**, so native form primitives (`Input`, `Textarea`) are patched to use `forwardRef`.

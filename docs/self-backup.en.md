@@ -8,7 +8,7 @@ distinct from every user project's repo.
 
 - `Project` docs (paths, plan, encrypted repo passwords).
 - `Schedule` docs (cron, retention, kind).
-- Encrypted secrets (Polar token, storage SSH key, restic repo passwords) —
+- Encrypted secrets (storage SSH key, restic repo passwords) —
   as ciphertext, never plaintext.
 - Backup / verify / drill history rows.
 

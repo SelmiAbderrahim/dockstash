@@ -10,22 +10,18 @@ import { describe, expect, it } from 'vitest';
  * `.claude/rules/no-query-injection-and-i18n-errors.md`, and
  * `docs/security-model.en.md` § "Injection & Output".
  *
- * Three static invariants held by this file:
+ * Two static invariants held by this file:
  *   1. No Mongoose query builder inside `server/src/modules/**` is fed a
  *      spread of `req.query` / `req.body` / `req.params`, and no controller
  *      calls `.find(req.query)` / `.findOne(req.body)` / `.updateOne(req.body)`
  *      / `.where(req.query)`. Every filter is a zod-parsed, typed object.
- *   2. `app.ts` mounts `/api/superadmin` behind both `requireAuth` and
- *      `requireRole(ROLE_SUPERADMIN)` at the router level — every sub-route
- *      inherits the gate from the mount, not from a per-handler hope.
- *   3. `error-handler.ts` never emits `err.stack` on the wire and never
+ *   2. `error-handler.ts` never emits `err.stack` on the wire and never
  *      spreads a raw exception body into the response — the response body
  *      is an i18n key (resolved) plus optional zod details.
  */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const MODULES_DIR = path.resolve(HERE, '../../modules');
-const APP_TS = path.resolve(HERE, '../../app.ts');
 const ERROR_HANDLER_TS = path.resolve(HERE, './error-handler.ts');
 
 function listTsFiles(dir: string): string[] {
@@ -75,43 +71,6 @@ describe('injection-and-output-meta: no Mongoose query call spreads req.query/re
       });
     }
     expect(offenders, offenders.join('\n')).toEqual([]);
-  });
-});
-
-describe('injection-and-output-meta: /api/superadmin is gated at the app.ts mount', () => {
-  it('the superadmin router mount carries requireAuth + requireVerified + requireRole(ROLE_SUPERADMIN)', () => {
-    const src = readFileSync(APP_TS, 'utf8');
-    // Grab the whole mount line (or block up to the closing `);`). The
-    // middleware list may contain nested calls like `requireRole(...)`, so we
-    // do not try to close-match parens with a naive character class.
-    const lines = src.split('\n');
-    const mountLines = lines.filter((l) => /app\.use\(\s*['"]\/api\/superadmin['"]/.test(l));
-    expect(mountLines.length, 'no /api/superadmin mount found in app.ts').toBe(1);
-    const mounts = mountLines[0];
-    // The `verified` local (declared once in createApp) is
-    // `[requireAuth, requireVerified]`; either spelling counts, but the role
-    // gate MUST be spelled inline so the mount is auditable.
-    expect(mounts).toMatch(/verified/);
-    expect(mounts).toMatch(/requireRole\(\s*ROLE_SUPERADMIN\s*\)/);
-    expect(mounts).toMatch(/superadminRouter/);
-  });
-
-  it('the superadmin sub-router never imports its own auth middleware', () => {
-    // The sub-router intentionally does NOT re-apply requireAuth/requireRole:
-    // the parent mount is the single source of the gate. A per-handler gate
-    // is redundant at best and drifts the isolation contract at worst — if
-    // the mount ever moved, the sub-router should fail loudly rather than
-    // silently keep authenticating requests from a different mount point.
-    const routesFile = path.join(MODULES_DIR, 'superadmin/superadmin.routes.ts');
-    const src = readFileSync(routesFile, 'utf8');
-    // Import lines: a real gate must be imported to be applied. Explanatory
-    // comments referencing `requireAuth`/`requireRole` are fine.
-    const importLines = src
-      .split('\n')
-      .filter((l) => /^\s*import\s/.test(l))
-      .join('\n');
-    expect(importLines).not.toMatch(/require-auth/);
-    expect(importLines).not.toMatch(/require-role/);
   });
 });
 

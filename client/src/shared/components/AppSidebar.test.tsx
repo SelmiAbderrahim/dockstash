@@ -81,24 +81,16 @@ describe('AppSidebar', () => {
     expect(screen.getByRole('link', { name: /Dashboard/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Projects/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Snapshots/ })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Billing/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Settings/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Profile/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Logout/ })).toBeInTheDocument();
-    // No admin/superadmin item for a Member.
-    expect(screen.queryByRole('link', { name: /Superadmin/ })).toBeNull();
+    // No admin item for a Member.
     expect(screen.queryByRole('link', { name: /^Admin$/ })).toBeNull();
   });
 
   it('shows the Admin group for role=Admin only', () => {
     renderSidebar(true, 'Admin');
     expect(screen.getByRole('link', { name: /^Admin$/ })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Superadmin/ })).toBeNull();
-  });
-
-  it('shows the Superadmin group for role=Superadmin', () => {
-    renderSidebar(true, 'Superadmin');
-    expect(screen.getByRole('link', { name: /Superadmin/ })).toBeInTheDocument();
   });
 
   it('marks the active route with the primary token', () => {

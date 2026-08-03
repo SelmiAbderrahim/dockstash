@@ -7,12 +7,10 @@
     "projects": "项目",
     "snapshots": "快照",
     "fleet": "集群",
-    "billing": "计费",
     "settings": "设置",
     "profile": "个人资料",
     "logout": "退出登录",
     "admin": "管理",
-    "superadmin": "超级管理员",
     "login": "登录",
     "register": "注册"
   },
@@ -20,7 +18,6 @@
     "projects": "管理你的项目和部署。",
     "snapshots": "浏览并恢复项目快照。",
     "settings": "配置工作区和集成。",
-    "billing": "查看用量、套餐和账单。",
     "profile": "查看并更新账户信息。",
     "admin": "访问管理控制台。"
   },
@@ -63,11 +60,6 @@
     "lede": "所有已连接的 VPS 代理及其备份占用情况。",
     "loading": "正在加载集群…",
     "register": "注册代理",
-    "locked": {
-      "title": "您已达到服务器上限",
-      "body": "您的套餐已使用 {{cap}} 台服务器中的 {{used}} 台。升级以连接更多。",
-      "cta": "查看套餐"
-    },
     "empty": {
       "title": "还没有代理",
       "hint": "在另一台 VPS 上注册代理后即可在此看到。"

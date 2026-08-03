@@ -2,7 +2,6 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { HttpError } from '../../shared/utils/http-error.js';
-import { assertPitrAllowed } from '../billing/entitlements.service.js';
 import { pitrQuerySchema, projectIdParamsSchema } from './backups.schema.js';
 import { loadOwnedProject } from './backups.service.js';
 import { serializeSnapshot } from './backups.serialize.js';
@@ -80,7 +79,6 @@ export const resolvePitr: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
   // Ownership check first — 404/403 before any storage access.
   await loadOwnedProject(projectId, userId, { t: req.t });
-  await assertPitrAllowed(userId, { t: req.t });
   if (!deps) {
     throw new HttpError(503, req.t('backups.error.runnerUnavailable'));
   }

@@ -2,7 +2,6 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import * as client from '@shared/api/client';
 import {
   loginRequest,
-  verifyLoginOtpRequest,
   registerRequest,
   forgotPasswordRequest,
   resetPasswordRequest,
@@ -26,14 +25,6 @@ describe('auth api wrappers', () => {
     expect(apiClient).toHaveBeenCalledWith('/auth/login', {
       method: 'POST',
       body: { email: 'a@b.co', password: 'pw' },
-    });
-  });
-
-  it('verifyLoginOtpRequest posts the challenge and code', async () => {
-    await verifyLoginOtpRequest({ challengeId: 'ch1', code: '123456' });
-    expect(apiClient).toHaveBeenCalledWith('/auth/otp/verify', {
-      method: 'POST',
-      body: { challengeId: 'ch1', code: '123456' },
     });
   });
 

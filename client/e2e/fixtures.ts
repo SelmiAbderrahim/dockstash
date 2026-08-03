@@ -52,14 +52,8 @@ export function mintJwt(payload: Record<string, unknown>, ttlSeconds = 3600): st
   return `${header}.${body}.${sig}`;
 }
 
-async function applyTheme(page: Page, theme: 'light' | 'dark'): Promise<void> {
-  // ThemeProvider + index.html no-flash script both read localStorage 'theme'
-  // and toggle .dark on the root element. emulateMedia is NOT sufficient.
-  await page.addInitScript((t) => localStorage.setItem('theme', t), theme);
-}
-
 async function attachOriginProxy(page: Page, baseURL: string): Promise<void> {
-  // The web server proxies SEO paths but NOT /api/*. The API service listens
+  // The web server serves the SPA but NOT /api/*. The API service listens
   // separately (root .env API_PORT). Rewrite /api/* to the API origin, and
   // everything else to the web origin.
   const env = readEnv();
@@ -114,43 +108,10 @@ async function attachAuthCookie(
 }
 
 type Fixtures = {
-  themedPage: (theme: 'light' | 'dark') => Promise<Page>;
-  localePage: (locale: string) => Promise<Page>;
   authedPage: (payload?: Record<string, unknown>) => Promise<Page>;
-  originProxy: (page: Page) => Promise<void>;
 };
 
 export const test = base.extend<Fixtures>({
-  themedPage: async ({ page, baseURL }, use) => {
-    const build = async (theme: 'light' | 'dark') => {
-      if (!baseURL) throw new Error('baseURL missing');
-      await applyTheme(page, theme);
-      await attachOriginProxy(page, baseURL);
-      return page;
-    };
-    await use(build);
-  },
-  localePage: async ({ page, baseURL }, use) => {
-    const build = async (_locale: string) => {
-      // Marketing SSR routes carry the locale in the URL prefix (e.g. /ar/).
-      // The app shell reads it from the `lang` cookie. Set both so either surface
-      // resolves the requested locale.
-      if (!baseURL) throw new Error('baseURL missing');
-      const url = new URL(baseURL);
-      await page.context().addCookies([
-        {
-          name: 'lang',
-          value: _locale,
-          domain: url.hostname,
-          path: '/',
-          sameSite: 'Lax',
-        },
-      ]);
-      await attachOriginProxy(page, baseURL);
-      return page;
-    };
-    await use(build);
-  },
   authedPage: async ({ page, baseURL }, use) => {
     const build = async (payload: Record<string, unknown> = {}) => {
       if (!baseURL) throw new Error('baseURL missing');
@@ -170,13 +131,6 @@ export const test = base.extend<Fixtures>({
       return page;
     };
     await use(build);
-  },
-  originProxy: async ({ baseURL }, use) => {
-    const attach = async (page: Page) => {
-      if (!baseURL) throw new Error('baseURL missing');
-      await attachOriginProxy(page, baseURL);
-    };
-    await use(attach);
   },
 });
 

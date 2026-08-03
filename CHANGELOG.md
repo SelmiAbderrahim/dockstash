@@ -2,6 +2,101 @@
 
 ## Unreleased
 
+### ⚠️ BREAKING — Dockstash is now open-source and self-hosted only
+
+Dockstash converts from a commercial SaaS into an Apache-2.0, self-hosted
+product. Everything that existed to run it as a service is gone. Anyone
+upgrading an existing install must read this entry before pulling.
+
+**Removed: the public marketing surface.** The landing page, pricing page,
+alternatives/comparison pages, guides hub, FAQ, privacy and terms pages, and
+every locale-prefixed route under them are deleted. `/` — and any unmatched
+URL — now redirects to `/login` when signed out and `/dashboard` when signed in.
+
+**Removed: SSR, SEO, and analytics.** `client/server.js` is now a plain static
+server (hashed assets + `index.html` history fallback). The Vite SSR entry, the
+client SEO layer, and the server `seo` module are deleted, which removes
+`/robots.txt`, `/llms.txt` and all five sitemap endpoints. The inline Google
+Analytics snippet and every `googletagmanager.com` / `google-analytics.com` CSP
+allowance are gone. **Dockstash now ships no third-party telemetry of any kind.**
+
+**Removed: payments and entitlements, end to end.** The entire `billing` module
+is deleted — the Polar provider, the inactive Stripe adapter, the webhook
+pipeline (`POST /api/billing/webhook` no longer exists), the plan catalog, the
+subscription/customer/order/usage models, the pricing-tier seeder, and the
+invitation surface. **Every cap is lifted by construction**: unlimited projects
+and agents, any cron cadence (including 1-minute), unbounded retention, and
+alerts, mirror, PITR and restore drills always on. The `paused` project state
+and the `pausedByBilling` schedule flag are removed with the code that set them.
+
+**Removed: the Superadmin console and the role itself.** The `/api/superadmin`
+surface, its 12 routes, the client console and its 6 tabs, and the
+`seed-superadmin` CLI are deleted. `ROLE_SUPERADMIN` is dropped from the role
+enum — the ladder now tops out at `Admin` (`Member` < `Client` < `Owner` <
+`Admin`). `/api/recovery/self-backup` is regated on `ROLE_ADMIN`. The
+Superadmin-only device-OTP second factor is removed along with
+`POST /api/auth/otp/verify`, the login-challenge and trusted-device models, and
+the OTP mailer — there is no Admin-tier replacement.
+
+**Removed environment variables.** Delete these from your `.env`; they are no
+longer read, and `.env.example` no longer lists them:
+
+```
+PAYMENT_PROVIDER            POLAR_ACCESS_TOKEN            POLAR_WEBHOOK_SECRET
+POLAR_SERVER                POLAR_PRO_PRODUCT_ID          POLAR_BUSINESS_PRODUCT_ID
+POLAR_PRO_YEARLY_PRODUCT_ID POLAR_BUSINESS_YEARLY_PRODUCT_ID
+SUPERADMIN_EMAIL            SUPERADMIN_PASSWORD
+VITE_SITE_URL               VITE_GA_ID                    API_INTERNAL_URL
+RATE_LIMIT_WEBHOOK_WINDOW_MS  RATE_LIMIT_WEBHOOK_MAX
+STRIPE_SECRET_KEY           SENDGRID_API_KEY              MAILCHIMP_API_KEY
+```
+
+`.env.example` is reorganized into a **REQUIRED** block
+(`MASTER_ENCRYPTION_KEY`, `JWT_SECRET`, `SESSION_SECRET`, `MONGODB_URI`,
+`REDIS_URL`, `CLIENT_URL`, `SERVER_URL`, `VITE_API_BASE_URL`,
+`VITE_SOCKET_URL`) and an **OPTIONAL** block where every value has a working
+default. The stale `./secrets/` instructions — which never matched the compose
+file — are removed.
+
+**Migration notes for an existing install**
+
+- Remove the variables listed above from `.env`, then
+  `docker compose up -d --build`. The api ignores unknown vars, so leaving them
+  is harmless but misleading.
+- **Any account with `role: "Superadmin"` loses its role.** Promote it to
+  `Admin` before or after upgrading:
+  `db.users.updateOne({email:"…"},{$set:{role:"Admin"}})`.
+- Paused projects and billing-paused schedules are no longer paused. If a
+  project was paused by a downgrade, it resumes on the next scheduled run.
+- Existing `subscriptions`, `customers`, `orders`, `usagecounters`,
+  `pricingtiers`, `webhookevents`, `invitations`, `loginchallenges` and
+  `trusteddevices` collections are orphaned. Nothing reads them; drop them at
+  your convenience.
+- Bookmarks to `/billing`, `/pricing`, `/superadmin` and `/invite/:token` now
+  fall through to the root redirect.
+
+**Added: open-source packaging.** `README.md` is rewritten as the project front
+page. New `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1),
+`SECURITY.md`, `NOTICE`, GitHub issue/PR templates, and `dependabot.yml`. All
+three packages declare `license: Apache-2.0` with repository/homepage/bugs
+metadata and are renamed `dockstash-client` / `dockstash-server` /
+`dockstash-agent`; the inherited MERN-starter author and ISC license are gone.
+
+**Added: `docs/self-hosting.md`**, replacing `docs/running-with-docker.md` —
+requirements, quick start, the `make` targets, reverse proxy + TLS snippets,
+creating the first account (there is no seeder any more), the
+`MASTER_ENCRYPTION_KEY` backup warning, upgrading, and troubleshooting. New
+`docs/README.md` indexes all 87 doc files. `docs/plans-and-limits.*` and
+`docs/polar-billing-and-webhooks.*` (14 files) are deleted.
+
+**Unchanged.** The `agent/` package needed no changes — the daemon never
+imported billing or superadmin. Backups, schedules, snapshots, restores,
+restore drills, health, alerting, audit, the fleet surface, data rights, the
+seven locales and the design system all behave exactly as before, minus the
+gates.
+
+## Unreleased
+
 ### Fleet agents on every plan (metered) (prompt 12)
 
 The fleet stops being a Business-only boolean and becomes a per-plan metered

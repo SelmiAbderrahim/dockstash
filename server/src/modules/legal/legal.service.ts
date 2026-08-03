@@ -31,7 +31,6 @@ export interface UserExport {
     repoPasswordEnc: unknown;
     lastStatus: string;
     lastRunAt: string | null;
-    paused: boolean;
     legalHold: boolean;
     createdAt: string | null;
     updatedAt: string | null;
@@ -73,7 +72,6 @@ export async function exportUserData(
       /* c8 ignore next -- schema defaults lastStatus to 'idle' so the fallback never fires */
       lastStatus: p.lastStatus ?? 'idle',
       lastRunAt: toIso(p.lastRunAt ?? null),
-      paused: Boolean(p.paused),
       legalHold: Boolean(p.legalHold),
       createdAt: toIso((p as unknown as { createdAt?: Date }).createdAt),
       updatedAt: toIso((p as unknown as { updatedAt?: Date }).updatedAt),

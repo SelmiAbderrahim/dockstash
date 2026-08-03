@@ -4,17 +4,6 @@ import jwt from 'jsonwebtoken';
 import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
 
-// Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
-// entitlements (fleet agent caps, schedules, email alerts, restore drills) are
-// unrestricted here — billing tiering itself is covered by the billing suites
-// (agent-cap enforcement lives in agents-cap.test.ts).
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
-beforeAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-});
-afterAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
-});
 import {
   clearCollections,
   startMemoryMongo,

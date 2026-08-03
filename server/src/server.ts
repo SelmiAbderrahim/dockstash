@@ -3,16 +3,7 @@ import { createApp } from './app.js';
 import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
-import {
-  billingEntitlements,
-  startScheduler,
-  type SchedulerRuntime,
-} from './modules/scheduler/index.js';
-import {
-  registerBillingCrons,
-  seedPricingTiers,
-  unregisterBillingCrons,
-} from './modules/billing/index.js';
+import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
 import {
   configureSnapshotsController,
   makeDispatchDepsFor,
@@ -41,20 +32,9 @@ function main(): void {
     cors: { origin: env.CLIENT_URL, credentials: true },
   });
 
-  connectDb()
-    .then(() => {
-      registerBillingCrons();
-      // Reconcile pricing-tier rows against the current env on every boot so
-      // Polar product IDs (and caps/flags) backfill after they are configured.
-      // The seeder is an idempotent `$set` upsert; `$setOnInsert` preserves
-      // merchant edits to price/active. Without this, tiers seeded before the
-      // POLAR_*_PRODUCT_ID vars were set stay null forever and every upgrade
-      // button is disabled.
-      return seedPricingTiers();
-    })
-    .catch((err) => {
-      logger.error({ err }, 'mongo connection unavailable');
-    });
+  connectDb().catch((err) => {
+    logger.error({ err }, 'mongo connection unavailable');
+  });
 
   // `RESTIC_RUNNER=process` (set by compose) spawns the real restic binary;
   // the default keeps the loud placeholder so nothing silently "succeeds".
@@ -67,10 +47,6 @@ function main(): void {
   let scheduler: SchedulerRuntime | null = null;
   startScheduler({
     io,
-    // Plan-gated job kinds (drill today, mirror later) are enforced at
-    // enqueue by the billing-backed checker; the free-for-all placeholder
-    // stays test-only.
-    entitlements: billingEntitlements,
     resticRunnerFor: useRealRunner
       ? makeResticRunnerFor
       : () => placeholderResticRunner(),
@@ -85,7 +61,6 @@ function main(): void {
 
   const shutdown = (signal: NodeJS.Signals): void => {
     logger.info({ signal }, 'shutting down');
-    unregisterBillingCrons();
     const closeScheduler = scheduler ? scheduler.shutdown() : Promise.resolve();
     void closeScheduler.finally(() => {
       io.close();

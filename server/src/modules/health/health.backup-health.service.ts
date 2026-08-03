@@ -29,7 +29,6 @@ export interface ServiceCtx {
 export interface ProjectHealthEntry {
   projectId: string;
   name: string;
-  paused: boolean;
   status: HealthStatus;
   reasons: string[];
   lastStatus: string;
@@ -59,7 +58,6 @@ function entryFor(project: ProjectHydrated, ctx: VerdictCtx): ProjectHealthEntry
     : null;
   const hasEnabledSchedule = ctx.enabledScheduleProjectIds.has(projectId);
   const verdict = computeProjectHealth({
-    paused: project.paused,
     lastStatus: project.lastStatus,
     lastSuccessAt: project.lastSuccessAt ?? null,
     lastCheckStatus: project.lastCheckStatus ?? null,
@@ -73,7 +71,6 @@ function entryFor(project: ProjectHydrated, ctx: VerdictCtx): ProjectHealthEntry
   return {
     projectId,
     name: project.name,
-    paused: project.paused,
     status: verdict.status,
     reasons: verdict.reasons,
     lastStatus: project.lastStatus,

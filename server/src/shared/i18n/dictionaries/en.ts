@@ -62,36 +62,6 @@ export const en = {
       providerNotEnabled: 'That sign-in provider is not enabled.',
     },
   },
-  billing: {
-    checkout: {
-      title: 'Checkout',
-      submit: 'Pay now',
-      success: 'Payment received. Thank you!',
-    },
-    portal: {
-      title: 'Billing',
-    },
-    error: {
-      notConfigured: 'Payment provider is not configured.',
-      userNotFound: 'User not found.',
-      noCustomer: 'No billing customer found for this user.',
-      noSubscription: 'No active subscription found for this user.',
-      providerFailure: 'Payment provider error: {{message}}',
-    },
-    entitlements: {
-      projectLimitReached: 'Your plan does not allow more projects. Upgrade to add another.',
-      schedulesLocked: 'Scheduled backups are not available on your current plan.',
-      frequencyNotAllowed: 'Your plan does not allow that schedule frequency.',
-      restoreDrillsLocked: 'Automated restore drills are available on Pro and Business plans.',
-      pitrLocked: 'Point-in-time restore is available on Pro and Business plans.',
-      mirrorLocked: 'Mirror mode is available on the Business plan.',
-      alertsLocked: 'Alert channels (email and webhooks) are available on Pro and Business plans.',
-      agentLimitReached: 'Agent limit reached for your plan. Upgrade to connect more servers.',
-      projectPaused: 'This project is paused. Reactivate it or upgrade to run backups.',
-      selectionInvalid: 'You must pick between one and {{cap}} projects to keep active.',
-      notOwner: 'You do not own one or more of those projects.',
-    },
-  },
   email: {
     contact: {
       confirmation: 'Your email has been sent. We will be in touch with you soon.',
@@ -121,42 +91,6 @@ export const en = {
       body:
         'Welcome to Dockstash, {{name}}.\n\n' +
         'You can sign in and manage your backups at {{clientUrl}}.\n',
-    },
-    inviteClaimed: {
-      subject: 'Invitation claimed: {{plan}}',
-      body:
-        'An invitation link was activated.\n\n' +
-        'Claimant: {{claimantName}} <{{claimantEmail}}>\n' +
-        'Plan: {{plan}} ({{grantDuration}})\n' +
-        'Grant window: {{claimedAt}} → {{currentPeriodEnd}}\n' +
-        'Label: {{label}}\n\n' +
-        'Manage invitations: {{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: 'Your Dockstash receipt',
-      body:
-        'Thanks for your payment of {{amount}} for the {{plan}} plan.\n\n' +
-        'Manage billing at {{clientUrl}}/billing.\n',
-    },
-    dunning: {
-      subject: 'Payment issue on your Dockstash subscription',
-      body:
-        'We could not charge your payment method for the {{plan}} plan.\n\n' +
-        'Update it before {{graceEndsAt}} to keep the plan active: {{clientUrl}}/billing.\n',
-    },
-    downgradeNotice: {
-      subject: 'Your Dockstash plan has changed to Free',
-      body:
-        'Your {{plan}} plan has lapsed and your account is now on the Free plan.\n\n' +
-        'Your existing backups are safe — nothing has been deleted. Projects over the ' +
-        'Free limit are paused (read-only) until you re-subscribe: {{clientUrl}}/billing.\n',
-    },
-    reactivation: {
-      subject: 'Your Dockstash subscription is active again',
-      body:
-        'Good news — your {{plan}} subscription is active again and any paused ' +
-        'projects are back online.\n\n' +
-        'Manage your account at {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'Restore drill FAILED — project {{project}}',
@@ -196,12 +130,6 @@ export const en = {
         'No successful backup has run for project "{{project}}" in the past {{hours}} hour(s).\n\n' +
         'Last successful backup: {{lastGoodAt}}\n\n' +
         'Open the dashboard: {{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: 'Your Dockstash sign-in code',
-      body:
-        'Your sign-in verification code is: {{code}}\n\n' +
-        'It expires in {{minutes}} minutes. If you did not try to sign in, change your password immediately.\n',
     },
     neverRun: 'never',
   },
@@ -262,14 +190,12 @@ export const en = {
       scheduleNotFound: 'Schedule not found.',
       notOwner: 'You do not own this schedule.',
       repoBusy: 'Repository {{projectId}} is busy — another job is running.',
-      entitlementDenied: 'Your plan does not allow this schedule.',
       pruneFailed: 'Prune failed: {{message}}',
     },
     success: {
       scheduled: 'Schedule saved.',
       enqueued: 'Job enqueued.',
       prunePassed: 'Prune completed successfully.',
-      pruneSkippedPaused: 'Retention prune skipped: project is paused; stored snapshots are retained.',
     },
     job: {
       failedRetriesExhausted: 'Job failed after {{attempts}} attempts: {{message}}',
@@ -325,28 +251,6 @@ export const en = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: 'That invitation link is not valid.',
-      expired: 'That invitation link has expired.',
-      revoked: 'That invitation link was revoked.',
-      alreadyClaimed: 'That invitation link has already been used.',
-      alreadySubscribed: 'You already have an active paid plan.',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: 'Superadmin accounts cannot be modified or deleted.',
-    },
-    success: {
-      roleChanged: 'User role updated.',
-      userVerified: 'User email marked as verified.',
-      legalHoldUpdated: 'Legal hold updated.',
-      deletionScheduled: 'Account deletion scheduled.',
-      invitationCreated: 'Invitation link created.',
-      invitationRevoked: 'Invitation link revoked.',
     },
   },
   security: {

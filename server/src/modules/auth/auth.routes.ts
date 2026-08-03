@@ -8,7 +8,6 @@ import {
   resetPassword,
   signup,
   verifyEmail,
-  verifyOtp,
 } from './auth.controller.js';
 import { oauthCallback, oauthProviders, oauthStart } from './oauth/oauth.controller.js';
 
@@ -21,7 +20,6 @@ oauthPublicRouter.get('/providers', oauthProviders);
 
 authRouter.post('/signup', signup);
 authRouter.post('/login', login);
-authRouter.post('/otp/verify', verifyOtp);
 authRouter.post('/refresh', requireAuth, refresh);
 authRouter.post('/forgot-password', forgotPassword);
 authRouter.post('/reset-password/:token', resetPassword);

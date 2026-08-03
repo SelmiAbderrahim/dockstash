@@ -18,16 +18,6 @@ const PASSPORT_STRATEGIES_TS = path.resolve(HERE, '../../modules/auth/passport.s
 const PASSPORT_STRATEGIES_SRC = readFileSync(PASSPORT_STRATEGIES_TS, 'utf8');
 
 describe('security-meta: mount-order invariants for surface #1', () => {
-  it('the Polar webhook raw-body route is declared BEFORE express.json() in app.ts', () => {
-    const webhookIdx = APP_SRC.indexOf("'/api/billing/webhook'");
-    const jsonIdx = APP_SRC.indexOf('express.json(');
-    expect(webhookIdx).toBeGreaterThan(-1);
-    expect(jsonIdx).toBeGreaterThan(-1);
-    // Verify-before-parse: the handler must be attached to the app before the
-    // global JSON parser consumes the buffer. See docs/security-model.en.md.
-    expect(webhookIdx).toBeLessThan(jsonIdx);
-  });
-
   it('every authenticated /api/auth mutating route sits behind createAuthRateLimiter', () => {
     // The single `app.use('/api/auth', createAuthRateLimiter(), authRouter)`
     // mount governs all authenticated /api/auth routes. The public capability

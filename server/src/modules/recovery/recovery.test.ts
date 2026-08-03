@@ -9,7 +9,7 @@ import {
   startMemoryMongo,
   stopMemoryMongo,
 } from '../../shared/testing/mongo.js';
-import { User, ROLE_SUPERADMIN } from '../users/index.js';
+import { User, ROLE_ADMIN } from '../users/index.js';
 import { createProject } from '../backups/backups.service.js';
 import { Project, type ProjectHydrated } from '../backups/backups.model.js';
 import { verifyKeyParity } from '../../shared/i18n/index.js';
@@ -508,7 +508,7 @@ describe('recovery: HTTP routes', () => {
     expect(resFr.body.error.message).toBeTruthy();
   });
 
-  it('rejects self-backup for a non-superadmin user (403)', async () => {
+  it('rejects self-backup for a non-admin user (403)', async () => {
     const owner = await seedUser('h-nonadmin@t.com');
     const postRes = await request(app)
       .post('/api/recovery/self-backup')
@@ -521,7 +521,7 @@ describe('recovery: HTTP routes', () => {
   });
 
   it('POST /self-backup triggers a run via the configured queue', async () => {
-    const owner = await seedUser('h3@t.com', ROLE_SUPERADMIN);
+    const owner = await seedUser('h3@t.com', ROLE_ADMIN);
     const queue = new MemoryQueue();
     let seen = 0;
     queue.setProcessor(async (job) => {
@@ -537,7 +537,7 @@ describe('recovery: HTTP routes', () => {
   });
 
   it('GET /self-backup lists recent runs', async () => {
-    const owner = await seedUser('h4@t.com', ROLE_SUPERADMIN);
+    const owner = await seedUser('h4@t.com', ROLE_ADMIN);
     await SelfBackupRun.create({
       repo: env.SELF_BACKUP_REPO,
       status: 'success',

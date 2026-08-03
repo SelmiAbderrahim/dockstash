@@ -5,23 +5,15 @@ export const ROLE_MEMBER = 'Member';
 export const ROLE_CLIENT = 'Client';
 export const ROLE_OWNER = 'Owner';
 export const ROLE_ADMIN = 'Admin';
-export const ROLE_SUPERADMIN = 'Superadmin';
 
-export const ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN, ROLE_SUPERADMIN] as const;
+export const ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN] as const;
 export type Role = (typeof ROLES)[number];
-
-// Roles the superadmin management API may assign. Superadmin itself is
-// excluded on purpose: the only path to a Superadmin account is the
-// env-driven seeder, never a role change through the API.
-export const ASSIGNABLE_ROLES = [ROLE_MEMBER, ROLE_CLIENT, ROLE_OWNER, ROLE_ADMIN] as const;
-export type AssignableRole = (typeof ASSIGNABLE_ROLES)[number];
 
 const ROLE_RANK: Record<Role, number> = {
   [ROLE_MEMBER]: 1,
   [ROLE_CLIENT]: 2,
   [ROLE_OWNER]: 3,
   [ROLE_ADMIN]: 4,
-  [ROLE_SUPERADMIN]: 5,
 };
 
 export function getRoleRank(role: string | undefined): number {
@@ -63,27 +55,6 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       default: ROLE_MEMBER,
     },
-    // Provider-neutral billing refs (Polar/Stripe). Populated by the billing
-    // webhook pipeline; read by the entitlement gate (prompt 07).
-    customer: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Customer',
-      default: null,
-    },
-    subscription: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Subscription',
-      default: null,
-    },
-    // Legacy Stripe blob — kept for migrate-by-tolerance reads of pre-refactor
-    // documents. New writes go to `customer`/`subscription` above.
-    stripe: {
-      customerId: { type: String, default: '' },
-      subscriptionId: { type: String, default: '' },
-      lastFour: { type: String, default: '' },
-      plan: { type: String, default: '' },
-      activeUntil: { type: Date },
-    },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     // Email verification lifecycle. New accounts start unverified; the token +
@@ -110,7 +81,7 @@ const userSchema = new mongoose.Schema(
     deletionScheduledAt: { type: Date, default: null },
     deletionWarningSentAt: { type: Date, default: null },
     // Legal hold overrides the deletion purge — held accounts are retained
-    // until legal explicitly releases the hold, per IDEA.md §8.
+    // until the hold is explicitly released.
     legalHold: { type: Boolean, required: true, default: false },
     // Opt-in recovery-code escrow. When enabled, `wrappedKey` holds the master
     // key wrapped under a Shamir escrow key; the recovery codes (the shares)

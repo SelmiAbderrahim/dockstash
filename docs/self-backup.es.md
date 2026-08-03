@@ -9,7 +9,7 @@ usuario.
 
 - Documentos `Project` (rutas, plan, contraseñas de repositorio cifradas).
 - Documentos `Schedule` (cron, retención, tipo).
-- Secretos cifrados (token de Polar, clave SSH de almacenamiento,
+- Secretos cifrados (clave SSH de almacenamiento,
   contraseñas de repositorios restic) — como texto cifrado, nunca en claro.
 - Filas de historial de respaldo / verificación / simulacro.
 

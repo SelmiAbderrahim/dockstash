@@ -2,7 +2,6 @@ import { HttpError } from '../../shared/utils/http-error.js';
 import { logger } from '../../config/logger.js';
 import { encryptSecret, decryptSecret } from '../../shared/crypto/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
-import { assertProjectCap } from '../billing/entitlements.service.js';
 import { sendFailureAlert } from '../alerting/index.js';
 // Cycle-safe: agents.service imports backups.model, never this file.
 import { allowedRootsForAgent, loadOwnedAgent } from '../agents/agents.service.js';
@@ -262,16 +261,6 @@ export async function runBackup(
 ): Promise<RunBackupResult> {
   const t = deps.t ?? identityT;
   const project = await loadOwnedProject(projectId, userId, { t });
-  if (project.paused) {
-    throw HttpError.forbidden(t('billing.entitlements.projectPaused'), {
-      reason: 'projectPaused',
-    });
-  }
-  await assertProjectCap(userId, {
-    t,
-    countActiveProjects: async () =>
-      Project.countDocuments({ owner: userId, paused: { $ne: true } }),
-  });
   assertAllowedPath(project.path, t);
   for (const p of project.plan.paths) assertAllowedPath(p, t);
   // `configs` share the restic argv with `paths`; re-assert the allowlist here

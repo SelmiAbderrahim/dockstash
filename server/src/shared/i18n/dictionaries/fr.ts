@@ -65,36 +65,6 @@ export const fr: DictionaryShape = {
       providerNotEnabled: "Ce fournisseur de connexion n'est pas activé.",
     },
   },
-  billing: {
-    checkout: {
-      title: 'Paiement',
-      submit: 'Payer maintenant',
-      success: 'Paiement reçu. Merci !',
-    },
-    portal: {
-      title: 'Facturation',
-    },
-    error: {
-      notConfigured: 'Le fournisseur de paiement n’est pas configuré.',
-      userNotFound: 'Utilisateur introuvable.',
-      noCustomer: 'Aucun client de facturation trouvé pour cet utilisateur.',
-      noSubscription: 'Aucun abonnement actif trouvé pour cet utilisateur.',
-      providerFailure: 'Erreur du fournisseur de paiement : {{message}}',
-    },
-    entitlements: {
-      projectLimitReached: 'Votre offre ne permet pas plus de projets. Passez à une offre supérieure pour en ajouter.',
-      schedulesLocked: 'Les sauvegardes planifiées ne sont pas disponibles sur votre offre actuelle.',
-      frequencyNotAllowed: 'Votre offre ne permet pas cette fréquence de planification.',
-      restoreDrillsLocked: 'Les tests de restauration automatiques sont disponibles avec les offres Pro et Business.',
-      pitrLocked: 'La restauration à un instant donné est disponible avec les offres Pro et Business.',
-      mirrorLocked: 'Le mode miroir est disponible avec l\'offre Business.',
-      alertsLocked: 'Les canaux d\'alerte (e-mail et webhooks) sont disponibles avec les offres Pro et Business.',
-      agentLimitReached: 'Limite d\'agents atteinte pour votre offre. Passez à une offre supérieure pour connecter plus de serveurs.',
-      projectPaused: 'Ce projet est en pause. Réactivez-le ou passez à une offre supérieure pour lancer des sauvegardes.',
-      selectionInvalid: 'Vous devez choisir entre un et {{cap}} projets à garder actifs.',
-      notOwner: 'Vous n’êtes pas propriétaire d’un ou plusieurs de ces projets.',
-    },
-  },
   email: {
     contact: {
       confirmation: 'Votre e-mail a été envoyé. Nous vous répondrons rapidement.',
@@ -124,42 +94,6 @@ export const fr: DictionaryShape = {
       body:
         'Bienvenue sur Dockstash, {{name}}.\n\n' +
         'Connectez-vous et gérez vos sauvegardes sur {{clientUrl}}.\n',
-    },
-    inviteClaimed: {
-      subject: 'Invitation activée : {{plan}}',
-      body:
-        'Un lien d\'invitation a été activé.\n\n' +
-        'Bénéficiaire : {{claimantName}} <{{claimantEmail}}>\n' +
-        'Offre : {{plan}} ({{grantDuration}})\n' +
-        'Période offerte : {{claimedAt}} → {{currentPeriodEnd}}\n' +
-        'Libellé : {{label}}\n\n' +
-        'Gérer les invitations : {{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: 'Votre reçu Dockstash',
-      body:
-        'Merci pour votre paiement de {{amount}} pour l’offre {{plan}}.\n\n' +
-        'Gérez la facturation sur {{clientUrl}}/billing.\n',
-    },
-    dunning: {
-      subject: 'Problème de paiement sur votre abonnement Dockstash',
-      body:
-        'Nous n’avons pas pu débiter votre moyen de paiement pour l’offre {{plan}}.\n\n' +
-        'Mettez-le à jour avant le {{graceEndsAt}} pour conserver l’offre : {{clientUrl}}/billing.\n',
-    },
-    downgradeNotice: {
-      subject: 'Votre offre Dockstash est passée à Free',
-      body:
-        'Votre offre {{plan}} a expiré et votre compte est désormais sur l’offre Free.\n\n' +
-        'Vos sauvegardes existantes sont en sécurité — rien n’a été supprimé. Les projets ' +
-        'au-delà de la limite Free sont en pause (lecture seule) jusqu’à votre réabonnement : {{clientUrl}}/billing.\n',
-    },
-    reactivation: {
-      subject: 'Votre abonnement Dockstash est de nouveau actif',
-      body:
-        'Bonne nouvelle — votre abonnement {{plan}} est de nouveau actif et les projets ' +
-        'en pause sont de nouveau en ligne.\n\n' +
-        'Gérez votre compte sur {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'ÉCHEC du test de restauration — projet {{project}}',
@@ -199,12 +133,6 @@ export const fr: DictionaryShape = {
         'Aucune sauvegarde réussie pour le projet « {{project}} » depuis {{hours}} heure(s).\n\n' +
         'Dernière sauvegarde réussie : {{lastGoodAt}}\n\n' +
         'Ouvrez le tableau de bord : {{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: 'Votre code de connexion Dockstash',
-      body:
-        'Votre code de vérification de connexion est : {{code}}\n\n' +
-        'Il expire dans {{minutes}} minutes. Si vous n\'avez pas tenté de vous connecter, changez immédiatement votre mot de passe.\n',
     },
     neverRun: 'jamais',
   },
@@ -265,14 +193,12 @@ export const fr: DictionaryShape = {
       scheduleNotFound: 'Planification introuvable.',
       notOwner: 'Vous ne possédez pas cette planification.',
       repoBusy: 'Le dépôt {{projectId}} est occupé — une autre tâche est en cours.',
-      entitlementDenied: 'Votre offre ne permet pas cette planification.',
       pruneFailed: 'Échec du nettoyage : {{message}}',
     },
     success: {
       scheduled: 'Planification enregistrée.',
       enqueued: 'Tâche mise en file d’attente.',
       prunePassed: 'Nettoyage terminé avec succès.',
-      pruneSkippedPaused: 'Purge de rétention ignorée : le projet est en pause ; les instantanés stockés sont conservés.',
     },
     job: {
       failedRetriesExhausted: 'Échec de la tâche après {{attempts}} tentatives : {{message}}',
@@ -326,28 +252,6 @@ export const fr: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: 'Ce lien d\'invitation n\'est pas valide.',
-      expired: 'Ce lien d\'invitation a expiré.',
-      revoked: 'Ce lien d\'invitation a été révoqué.',
-      alreadyClaimed: 'Ce lien d\'invitation a déjà été utilisé.',
-      alreadySubscribed: 'Vous avez déjà une offre payante active.',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: 'Les comptes superadministrateur ne peuvent pas être modifiés ni supprimés.',
-    },
-    success: {
-      roleChanged: 'Rôle de l\'utilisateur mis à jour.',
-      userVerified: 'E-mail de l\'utilisateur marqué comme vérifié.',
-      legalHoldUpdated: 'Conservation légale mise à jour.',
-      deletionScheduled: 'Suppression du compte planifiée.',
-      invitationCreated: 'Lien d\'invitation créé.',
-      invitationRevoked: 'Lien d\'invitation révoqué.',
     },
   },
   security: {

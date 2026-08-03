@@ -3,7 +3,6 @@ import { logger } from '../../config/logger.js';
 import { DEFAULT_LOCALE, type SupportedLocale } from '../../shared/i18n/index.js';
 import { Project, type ProjectHydrated } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
-import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
 import { deliverAlertEmail } from '../communication/index.js';
 import { recordAlert } from '../health/index.js';
 
@@ -19,7 +18,7 @@ export interface HeartbeatSweepDeps {
   now?: Date;
   /** Override the heartbeat threshold. Defaults to `env.ALERT_HEARTBEAT_HOURS`. */
   thresholdHours?: number;
-  /** Plan gate for the email channel — defaults to the billing entitlement. */
+  /** Delivery gate for the email channel — always on by default. */
   emailAllowedFor?: (ownerId: string) => Promise<boolean>;
 }
 
@@ -35,7 +34,7 @@ export async function runHeartbeatSweep(
   const now = deps.now ?? new Date();
   const hours = deps.thresholdHours ?? env.ALERT_HEARTBEAT_HOURS;
   const thresholdMs = hours * HOUR_MS;
-  const emailAllowedFor = deps.emailAllowedFor ?? isEmailAlertsAllowed;
+  const emailAllowedFor = deps.emailAllowedFor ?? (async () => true);
 
   const projects = await Project.find({});
   let alertsSent = 0;

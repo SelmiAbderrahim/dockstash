@@ -20,12 +20,12 @@ import { ThemeToggle } from './ThemeToggle';
 /**
  * SPEC-03 topbar — sidebar collapse trigger, page context slot, right cluster
  * (ThemeToggle, LanguageSwitcher, avatar/account menu). Ships inside the app
- * sidebar shell only; marketing has its own top-nav (MarketingHeader).
+ * sidebar shell only; anonymous auth screens use the lightweight `Header`.
  */
 export const AppTopbar = ({ context }: { context?: React.ReactNode }) => {
   const { t } = useTranslation('common');
   const role = useAppSelector(selectUserRole);
-  const canAdmin = role === 'Admin' || role === 'Superadmin';
+  const canAdmin = role === 'Admin';
 
   return (
     <header className="bg-background/95 sticky top-0 z-30 flex h-14 items-center gap-2 border-b px-4">
@@ -56,11 +56,9 @@ export const AppTopbar = ({ context }: { context?: React.ReactNode }) => {
             </DropdownMenuItem>
             {canAdmin ? (
               <DropdownMenuItem asChild>
-                <Link to={role === 'Superadmin' ? '/superadmin' : '/admin'}>
+                <Link to="/admin">
                   <ShieldIcon aria-hidden="true" className="size-4" />
-                  <span>
-                    {role === 'Superadmin' ? t('nav.superadmin') : t('nav.admin')}
-                  </span>
+                  <span>{t('nav.admin')}</span>
                 </Link>
               </DropdownMenuItem>
             ) : null}

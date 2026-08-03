@@ -51,8 +51,6 @@ const renderDialog = (
         items: [],
         status: 'idle',
         error: null,
-        lockedReason: null,
-        capInfo: null,
         registerStatus: 'idle',
         registerError: null,
         rotateStatus: 'idle',

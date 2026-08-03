@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { NextFunction, Request, Response } from 'express';
 import { HttpError } from '../utils/http-error.js';
-import {
-  ROLE_ADMIN,
-  ROLE_MEMBER,
-  ROLE_SUPERADMIN,
-} from '../../modules/users/index.js';
+import { ROLE_ADMIN, ROLE_MEMBER, ROLE_OWNER } from '../../modules/users/index.js';
 import { requireRole } from './require-role.js';
 
 function invoke(minRole: Parameters<typeof requireRole>[0], user?: Express.User): unknown {
@@ -22,14 +18,14 @@ function invoke(minRole: Parameters<typeof requireRole>[0], user?: Express.User)
 
 describe('requireRole', () => {
   it('rejects an unauthenticated request with 401', () => {
-    const err = invoke(ROLE_SUPERADMIN, undefined);
+    const err = invoke(ROLE_ADMIN, undefined);
     expect(err).toBeInstanceOf(HttpError);
     expect((err as HttpError).status).toBe(401);
   });
 
   it('rejects a lower-ranked role with 403', () => {
-    for (const role of [ROLE_MEMBER, ROLE_ADMIN]) {
-      const err = invoke(ROLE_SUPERADMIN, { id: 'u1', role });
+    for (const role of [ROLE_MEMBER, ROLE_OWNER]) {
+      const err = invoke(ROLE_ADMIN, { id: 'u1', role });
       expect(err).toBeInstanceOf(HttpError);
       expect((err as HttpError).status).toBe(403);
     }
@@ -41,7 +37,7 @@ describe('requireRole', () => {
   });
 
   it('passes an equal-ranked role through to next()', () => {
-    expect(invoke(ROLE_SUPERADMIN, { id: 'u1', role: ROLE_SUPERADMIN })).toBeUndefined();
+    expect(invoke(ROLE_ADMIN, { id: 'u1', role: ROLE_ADMIN })).toBeUndefined();
   });
 
   it('passes a higher-ranked role through to next()', () => {

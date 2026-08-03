@@ -77,12 +77,10 @@ describe('env schema — MASTER_ENCRYPTION_KEY gate', () => {
     expect(result.success).toBe(false);
   });
 
-  it('accepts a valid MASTER_ENCRYPTION_KEY with Polar/Resend absent', () => {
+  it('accepts a valid MASTER_ENCRYPTION_KEY with Resend absent', () => {
     const result = envSchema.safeParse(baseEnv);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.PAYMENT_PROVIDER).toBe('none');
-      expect(result.data.POLAR_ACCESS_TOKEN).toBeUndefined();
       expect(result.data.RESEND_API_KEY).toBeUndefined();
       expect(result.data.ALERT_HEARTBEAT_HOURS).toBe(24);
     }
@@ -93,22 +91,16 @@ describe('env schema — MASTER_ENCRYPTION_KEY gate', () => {
     expect(result.success).toBe(false);
   });
 
-  it('accepts optional Polar/Resend/alerting vars when present', () => {
+  it('accepts optional Resend/alerting vars when present', () => {
     const result = envSchema.safeParse({
       ...baseEnv,
-      PAYMENT_PROVIDER: 'polar',
-      POLAR_ACCESS_TOKEN: 'tok',
-      POLAR_WEBHOOK_SECRET: 'wh',
-      POLAR_SERVER: 'sandbox',
-      POLAR_PRO_PRODUCT_ID: 'prod_pro',
-      POLAR_BUSINESS_PRODUCT_ID: 'prod_biz',
       RESEND_API_KEY: 'rk',
       RESEND_FROM: 'no-reply@example.com',
       ALERT_HEARTBEAT_HOURS: '6',
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.PAYMENT_PROVIDER).toBe('polar');
+      expect(result.data.RESEND_API_KEY).toBe('rk');
       expect(result.data.ALERT_HEARTBEAT_HOURS).toBe(6);
     }
   });
@@ -480,32 +472,25 @@ describe('decodeMasterKey extra branches', () => {
 });
 
 describe('env schema — empty-string preprocess branches', () => {
-  it("maps '' to undefined for superadmin and contact vars", () => {
+  it("maps '' to undefined for the contact var", () => {
     const result = envSchema.safeParse({
       ...baseEnv,
-      SUPERADMIN_EMAIL: '',
-      SUPERADMIN_PASSWORD: '',
       CONTACT_RECIPIENT: '',
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.SUPERADMIN_EMAIL).toBeUndefined();
-      expect(result.data.SUPERADMIN_PASSWORD).toBeUndefined();
       expect(result.data.CONTACT_RECIPIENT).toBeUndefined();
     }
   });
 
-  it('accepts real values for superadmin and contact vars', () => {
+  it('accepts real values for the contact and restic vars', () => {
     const result = envSchema.safeParse({
       ...baseEnv,
-      SUPERADMIN_EMAIL: 'Admin@Example.com',
-      SUPERADMIN_PASSWORD: 'a-very-long-password',
       CONTACT_RECIPIENT: 'ops@dockstash.com',
       RESTIC_RUNNER: 'process',
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.SUPERADMIN_EMAIL).toBe('admin@example.com');
       expect(result.data.CONTACT_RECIPIENT).toBe('ops@dockstash.com');
       expect(result.data.RESTIC_RUNNER).toBe('process');
       expect(result.data.RESTIC_BINARY).toBe('restic');

@@ -27,10 +27,5 @@ export default defineConfig({
     headless: true,
     ignoreHTTPSErrors: true,
   },
-  projects: [
-    { name: 'smoke', testMatch: /smoke\/.*\.spec\.ts/ },
-    { name: 'a11y', testMatch: /a11y\/.*\.spec\.ts/ },
-    { name: 'locale-ar', testMatch: /locale-ar\/.*\.spec\.ts/ },
-    { name: 'cwv', testMatch: /cwv\.spec\.ts/ },
-  ],
+  projects: [{ name: 'smoke', testMatch: /smoke\/.*\.spec\.ts/ }],
 });

@@ -5,15 +5,6 @@ import mongoose from 'mongoose';
 import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
 
-// Runs in OSS self-host mode (PAYMENT_PROVIDER=none) so schedule creation is
-// unrestricted — billing tiering itself is covered by the billing suites.
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
-beforeAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-});
-afterAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
-});
 import {
   clearCollections,
   startMemoryMongo,
@@ -24,7 +15,6 @@ import { createProject } from '../backups/backups.service.js';
 import { Schedule } from './scheduler.model.js';
 import { MemoryQueue } from './scheduler.queue.memory.js';
 import { reconcileCron } from './scheduler.cron.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
 import {
   createSchedule,
   ensureDefaultBackupSchedule,
@@ -159,7 +149,7 @@ describe('scheduler: default backup schedule provisioning', () => {
     // A schedule created AFTER boot (the incident shape: created via the API,
     // api never restarted) must arm on the next periodic reconcile pass.
     const schedule = await ensureDefaultBackupSchedule(a.id, projectId);
-    await reconcileCron({ cron, queue, entitlements: allowAllEntitlements });
+    await reconcileCron({ cron, queue });
 
     expect(cron.list()).toContain(schedule?._id.toString());
     expect(unregistered).toEqual([staleId]);

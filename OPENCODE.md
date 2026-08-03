@@ -1,6 +1,6 @@
 # OPENCODE.md
 
-OpenCode-specific guidance for this MERN starter. For project conventions, stack details, and feature-module rules, see [`CLAUDE.md`](CLAUDE.md).
+OpenCode-specific guidance for Dockstash. For project conventions, stack details, and feature-module rules, see [`CLAUDE.md`](CLAUDE.md).
 
 ---
 
@@ -109,10 +109,10 @@ opencode
 opencode run coder "Add input validation to the signup form"
 
 # Override the model for a session
-opencode run --model anthropic/claude-opus-4-7 planner "Break down the billing refactor"
+opencode run --model anthropic/claude-opus-4-7 planner "Break down the retention refactor"
 
 # Use a slash command
-opencode run --command speckit.specify "Add Stripe webhook retry logic"
+opencode run --command speckit.specify "Add restore-drill retry on transient restic failure"
 ```
 
 Inside an active session, agents are invoked via the `task` tool:

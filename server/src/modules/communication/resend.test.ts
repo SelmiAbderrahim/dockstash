@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { translate, DEFAULT_LOCALE } from '../../shared/i18n/index.js';
 import {
   sendEmail,
   setResendTransport,
@@ -11,12 +10,7 @@ import {
   deliverPasswordResetEmail,
   deliverVerificationEmail,
   deliverPasswordChangedEmail,
-  deliverLoginOtpEmail,
   deliverWelcomeEmail,
-  deliverPaymentReceiptEmail,
-  deliverDunningEmail,
-  deliverDowngradeNoticeEmail,
-  deliverReactivationEmail,
   deliverAlertEmail,
 } from './communication.service.js';
 
@@ -238,23 +232,6 @@ describe('communication.service localized senders', () => {
     });
   });
 
-  it('deliverLoginOtpEmail interpolates the code and TTL in the caller locale', async () => {
-    await withResendConfigured(async () => {
-      await deliverLoginOtpEmail('u@x', '123456', 'fr');
-      expect(seen[0]?.subject).toBe('Votre code de connexion Dockstash');
-      expect(seen[0]?.text).toContain('123456');
-      expect(seen[0]?.text).toContain('10 minutes');
-    });
-  });
-
-  it('deliverLoginOtpEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
-    await withResendConfigured(async () => {
-      await deliverLoginOtpEmail('u@x', '654321');
-      expect(seen[0]?.subject).toBe('Your Dockstash sign-in code');
-      expect(seen[0]?.text).toContain('654321');
-    });
-  });
-
   it('deliverWelcomeEmail interpolates {{name}} and {{clientUrl}}', async () => {
     await withResendConfigured(async () => {
       await deliverWelcomeEmail({ email: 'u@x', name: 'Alex', locale: 'en' });
@@ -263,88 +240,11 @@ describe('communication.service localized senders', () => {
     });
   });
 
-  it('deliverPaymentReceiptEmail renders in the caller locale', async () => {
-    await withResendConfigured(async () => {
-      await deliverPaymentReceiptEmail({
-        email: 'u@x',
-        amount: '$10',
-        plan: 'pro',
-        locale: 'de',
-      });
-      expect(seen[0]?.subject).toBe('Ihre Dockstash-Quittung');
-      expect(seen[0]?.text).toContain('$10');
-      expect(seen[0]?.text).toContain('pro');
-    });
-  });
-
-  it('deliverDunningEmail includes graceEndsAt', async () => {
-    await withResendConfigured(async () => {
-      await deliverDunningEmail({
-        email: 'u@x',
-        plan: 'pro',
-        graceEndsAt: '2027-01-01',
-        locale: 'es',
-      });
-      expect(seen[0]?.subject).toMatch(/Problema/);
-      expect(seen[0]?.text).toContain('2027-01-01');
-    });
-  });
-
   it('deliverWelcomeEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
     await withResendConfigured(async () => {
       seen.length = 0;
       await deliverWelcomeEmail({ email: 'u@x', name: 'Alex' });
       expect(seen[0]?.subject).toBe('Welcome to Dockstash');
-    });
-  });
-
-  it('deliverPaymentReceiptEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverPaymentReceiptEmail({ email: 'u@x', amount: '$5', plan: 'pro' });
-      expect(seen[0]?.text).toContain('$5');
-    });
-  });
-
-  it('deliverDunningEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverDunningEmail({ email: 'u@x', plan: 'pro', graceEndsAt: '2027-02-02' });
-      expect(seen[0]?.text).toContain('2027-02-02');
-    });
-  });
-
-  it('deliverDowngradeNoticeEmail renders in the caller locale and interpolates the plan', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverDowngradeNoticeEmail({ email: 'u@x', plan: 'Pro', locale: 'de' });
-      expect(seen[0]?.subject).toBe(translate('de', 'email.downgradeNotice.subject'));
-      expect(seen[0]?.text).toContain('Pro');
-    });
-  });
-
-  it('deliverDowngradeNoticeEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverDowngradeNoticeEmail({ email: 'u@x', plan: 'Pro' });
-      expect(seen[0]?.subject).toBe(translate(DEFAULT_LOCALE, 'email.downgradeNotice.subject'));
-    });
-  });
-
-  it('deliverReactivationEmail renders in the caller locale and interpolates the plan', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverReactivationEmail({ email: 'u@x', plan: 'Business', locale: 'fr' });
-      expect(seen[0]?.subject).toBe(translate('fr', 'email.reactivation.subject'));
-      expect(seen[0]?.text).toContain('Business');
-    });
-  });
-
-  it('deliverReactivationEmail defaults to DEFAULT_LOCALE when locale omitted', async () => {
-    await withResendConfigured(async () => {
-      seen.length = 0;
-      await deliverReactivationEmail({ email: 'u@x', plan: 'Business' });
-      expect(seen[0]?.subject).toBe(translate(DEFAULT_LOCALE, 'email.reactivation.subject'));
     });
   });
 

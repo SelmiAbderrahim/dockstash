@@ -8,7 +8,7 @@ import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Alert, AlertDescription } from '@shared/ui/alert';
-import { PageMeta } from '@shared/seo';
+import { useDocumentTitle } from '@shared/hooks/useDocumentTitle';
 import {
   Card,
   CardContent,
@@ -32,6 +32,7 @@ const resetPasswordSchema = z
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export const ResetPassword = () => {
+  useDocumentTitle('Choose a new password');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { resetToken } = useParams<{ resetToken: string }>();
@@ -71,10 +72,6 @@ export const ResetPassword = () => {
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
-      <PageMeta
-        title="Choose a new password"
-        description="Choose a new password for your Dockstash account to get back to your Docker backups."
-      />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Choose a new password</CardTitle>

@@ -45,8 +45,6 @@ Account behavior:
   verification email round-trip.
 - OAuth-only accounts have a random unusable password; "Forgot password?"
   later gives them a real one (hybrid login).
-- Superadmin accounts keep their email-OTP second factor: an OAuth login
-  from an unknown device still lands on the OTP form.
 
 ## 2. Google Cloud Console
 
@@ -150,8 +148,6 @@ Browser end-to-end:
 3. Sign in with a provider whose email matches an existing password
    account: the account is linked (the user document gains
    `googleId`/`githubId`) and both login methods keep working.
-4. Superadmin check: from a fresh browser, an OAuth login as the superadmin
-   lands on the OTP code form, exactly like a password login.
 
 ## 6. Troubleshooting
 

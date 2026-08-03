@@ -64,7 +64,7 @@ describe('AppTopbar', () => {
     const menu = await screen.findByRole('menu');
     expect(menu.textContent).toContain('Profile');
     expect(menu.textContent).toContain('Logout');
-    // Neither admin nor superadmin surfaces on the Member menu:
+    // Admin never surfaces on the Member menu:
     expect(screen.queryByRole('menuitem', { name: /admin/i })).toBeNull();
   });
 
@@ -74,14 +74,6 @@ describe('AppTopbar', () => {
     await user.click(screen.getByRole('button', { name: /account menu/i }));
     await screen.findByRole('menu');
     expect(screen.getByRole('menuitem', { name: /admin/i })).toBeInTheDocument();
-  });
-
-  it('exposes the Superadmin link for role=Superadmin', async () => {
-    const user = userEvent.setup();
-    renderTopbar('Superadmin');
-    await user.click(screen.getByRole('button', { name: /account menu/i }));
-    const menu = await screen.findByRole('menu');
-    expect(menu.textContent).toContain('Superadmin');
   });
 
   it('renders the caller-supplied context in the middle slot', () => {

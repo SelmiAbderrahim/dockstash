@@ -92,18 +92,5 @@ export default tseslint.config(
       ],
     },
   },
-  {
-    // Secrets & data-at-rest — surface #7 in
-    // prompts/dockstash-security/07-secrets-data-at-rest-opus-4.7.md
-    // The superadmin seeder handles the plaintext bootstrap password and
-    // MUST NOT use `console.*` — every log line goes through the redacted
-    // pino logger (`config/logger.ts`) so `SUPERADMIN_PASSWORD` collapses to
-    // `[REDACTED]` before it can reach stdout / log ingest.
-    files: ['src/modules/superadmin/**/*.ts'],
-    ignores: ['**/*.test.ts'],
-    rules: {
-      'no-console': 'error',
-    },
-  },
   prettier,
 );

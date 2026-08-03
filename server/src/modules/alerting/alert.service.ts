@@ -4,7 +4,6 @@ import { DEFAULT_LOCALE, type SupportedLocale } from '../../shared/i18n/index.js
 import { safeFetch } from '../../shared/net/safe-fetch.js';
 import { Project } from '../backups/backups.model.js';
 import { User } from '../users/users.model.js';
-import { isEmailAlertsAllowed } from '../billing/entitlements.service.js';
 import { deliverAlertEmail, type AlertKind } from '../communication/index.js';
 import { recordAlert } from '../health/index.js';
 
@@ -19,7 +18,7 @@ export interface FailureAlertInput {
 
 export interface FailureAlertDeps {
   webhookPoster?: (payload: AlertWebhookPayload, url: string) => Promise<void>;
-  /** Plan gate for email + per-project webhook — defaults to billing. */
+  /** Delivery gate for email + per-project webhook — always on by default. */
   emailAllowedFor?: (ownerId: string) => Promise<boolean>;
 }
 
@@ -82,12 +81,12 @@ export async function sendFailureAlert(
       return;
     }
     const { email, locale } = await loadOwnerLocale(String(project.owner));
-    // Outbound channels (email + per-project webhook) are paid-plan features;
-    // the operator-level env webhook and the in-app alert row are not gated.
-    const paidAlertsAllowed = await (deps.emailAllowedFor ?? isEmailAlertsAllowed)(
+    // Outbound channels stay behind an injectable gate so tests can suppress
+    // delivery; a self-hosted install allows every channel by default.
+    const outboundAllowed = await (deps.emailAllowedFor ?? (async () => true))(
       String(project.owner),
     );
-    const emailAllowed = email !== null && paidAlertsAllowed;
+    const emailAllowed = email !== null && outboundAllowed;
     const lastGoodAt = project.lastSuccessAt ?? null;
 
     // In-app alert row — always written, never fails the job path.
@@ -138,7 +137,7 @@ export async function sendFailureAlert(
     // Webhook fan-out: the per-project URL (Pro+) plus the operator-level env
     // target. Deduped so the same URL is never posted twice.
     const webhookTargets = new Set<string>();
-    if (project.alertWebhookUrl && paidAlertsAllowed) {
+    if (project.alertWebhookUrl && outboundAllowed) {
       webhookTargets.add(project.alertWebhookUrl);
     }
     if (env.ALERT_WEBHOOK_URL) webhookTargets.add(env.ALERT_WEBHOOK_URL);

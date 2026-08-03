@@ -108,19 +108,17 @@ describe('logger redaction — runtime proof', () => {
     logger.info(
       {
         MASTER_ENCRYPTION_KEY: 'MASTER-64-HEX',
-        SUPERADMIN_PASSWORD: 'ADMIN-PLAINTEXT',
         JWT_SECRET: 'JWT-SIG-SECRET',
-        POLAR_WEBHOOK_SECRET: 'WHSEC-XXX',
-        POLAR_ACCESS_TOKEN: 'POLAR-TOKEN',
+        SESSION_SECRET: 'SESSION-SECRET',
+        RESEND_API_KEY: 'RESEND-KEY',
       },
       'env dump',
     );
     const line = lines.join('');
     expect(line).not.toContain('MASTER-64-HEX');
-    expect(line).not.toContain('ADMIN-PLAINTEXT');
     expect(line).not.toContain('JWT-SIG-SECRET');
-    expect(line).not.toContain('WHSEC-XXX');
-    expect(line).not.toContain('POLAR-TOKEN');
+    expect(line).not.toContain('SESSION-SECRET');
+    expect(line).not.toContain('RESEND-KEY');
   });
 
   it('redacts direct request-body fields on the pino-http body serializer path', () => {

@@ -215,17 +215,6 @@ describe('lister non-Error failures', () => {
 });
 
 describe('GET /api/backups/:projectId/pitr', () => {
-  // OSS self-host mode → business ceiling, so the Pro+ gate passes by default;
-  // the free-tier denial test flips the provider on locally.
-  let prevProvider: string;
-  beforeEach(() => {
-    prevProvider = env.PAYMENT_PROVIDER;
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-  });
-  afterEach(() => {
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = prevProvider;
-  });
-
   const EARLY = { id: 'early-full', short_id: 'early', time: '2026-07-01T00:00:00Z' };
   const LATE = { id: 'late-full', short_id: 'late', time: '2026-07-02T00:00:00Z' };
 
@@ -273,30 +262,6 @@ describe('GET /api/backups/:projectId/pitr', () => {
     expect(res.status).toBe(404);
   });
 
-  it('403s the free tier with the pitrLocked reason', async () => {
-    const { __setPaymentProviderForTests } = await import('../billing/active-provider.js');
-    const { PolarProvider } = await import('../billing/providers/polar.js');
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(
-      new PolarProvider({
-        nowSeconds: () => 1_700_000_000,
-        getWebhookSecret: () => 'test-webhook-secret',
-      }),
-    );
-    try {
-      const a = await seedUser('pitr-free@t.com');
-      const project = await seedProject(a.id);
-      configureSnapshotsController({ listSnapshots: async () => [EARLY] });
-      const res = await request(app)
-        .get(`/api/backups/${project._id}/pitr?ts=2026-07-01T00:00:00Z`)
-        .set('Authorization', `JWT ${a.token}`);
-      expect(res.status).toBe(403);
-      expect(res.body.error.details.reason).toBe('pitrLocked');
-    } finally {
-      __setPaymentProviderForTests(null);
-    }
-  });
-
   it('503s when no lister is configured', async () => {
     const a = await seedUser('pitr-unconf@t.com');
     const project = await seedProject(a.id);
@@ -333,7 +298,6 @@ describe('GET /api/backups/:projectId/pitr', () => {
     const project = await seedProject(a.id);
     configureSnapshotsController({
       listSnapshots: async () => {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw 'pitr-string-boom';
       },
     });

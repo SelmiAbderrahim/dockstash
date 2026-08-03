@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, MoreHorizontal, Plus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
-import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert';
+import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
 import { Skeleton } from '@shared/ui/skeleton';
@@ -38,9 +37,7 @@ import {
   selectDeleteError,
   selectDeleteStatus,
   selectFleet,
-  selectFleetCapInfo,
   selectFleetError,
-  selectFleetLockedReason,
   selectFleetStatus,
 } from '../store/selectors';
 import { RegisterAgentDialog } from './RegisterAgentDialog';
@@ -96,8 +93,6 @@ export const FleetScreen = () => {
   const items = useAppSelector(selectFleet);
   const status = useAppSelector(selectFleetStatus);
   const error = useAppSelector(selectFleetError);
-  const lockedReason = useAppSelector(selectFleetLockedReason);
-  const capInfo = useAppSelector(selectFleetCapInfo);
   const deleting = useAppSelector(selectDeleteStatus) === 'loading';
   const deleteError = useAppSelector(selectDeleteError);
 
@@ -140,10 +135,6 @@ export const FleetScreen = () => {
     }
   }, [activeStepTarget]);
 
-  // At-cap: a register attempt was rejected with `agentLimitReached`. The fleet
-  // is metered per plan now (never a tier lock) — surface an upgrade upsell.
-  const atCap = lockedReason === 'agentLimitReached';
-
   return (
     <section
       className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6"
@@ -176,23 +167,6 @@ export const FleetScreen = () => {
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
         </div>
-      )}
-
-      {atCap && (
-        <Alert data-testid="fleet-at-cap">
-          <AlertTitle>{t('fleet.locked.title')}</AlertTitle>
-          <AlertDescription className="flex flex-col items-start gap-3">
-            <span>
-              {t('fleet.locked.body', {
-                used: capInfo?.used ?? 0,
-                cap: capInfo?.cap ?? 0,
-              })}
-            </span>
-            <Button asChild size="sm">
-              <Link to="/billing">{t('fleet.locked.cta')}</Link>
-            </Button>
-          </AlertDescription>
-        </Alert>
       )}
 
       {status === 'failed' && (

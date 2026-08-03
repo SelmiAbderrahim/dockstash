@@ -9,8 +9,6 @@ export const HEALTH_STATUSES = ['healthy', 'degraded', 'critical'] as const;
 export type HealthStatus = (typeof HEALTH_STATUSES)[number];
 
 export interface ProjectHealthSignals {
-  /** Project lifecycle. Paused projects never go critical for staleness. */
-  paused: boolean;
   /** `lastStatus` on the project ('idle' | 'running' | 'success' | 'failed'). */
   lastStatus: string;
   lastSuccessAt: Date | null;
@@ -49,14 +47,13 @@ export function computeProjectHealth(
     signals.lastSuccessAt === null ||
     signals.now.getTime() - signals.lastSuccessAt.getTime() >
       signals.staleAfterHours * HOUR_MS;
-  if (stale && !signals.paused) {
+  if (stale) {
     if (signals.lastSuccessAt === null) degraded.push('neverBackedUp');
     else critical.push('backupStale');
   }
 
   if (signals.lastCheckStatus === 'failed') degraded.push('checkFailed');
-  if (!signals.hasEnabledSchedule && !signals.paused) degraded.push('noSchedule');
-  if (signals.paused) degraded.push('paused');
+  if (!signals.hasEnabledSchedule) degraded.push('noSchedule');
 
   if (critical.length > 0) {
     return { status: 'critical', reasons: [...critical, ...degraded] };

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppSelector } from '@shared/hooks/redux';
-import { selectAuthenticated, selectUserRole } from '@features/auth';
+import { selectAuthenticated } from '@features/auth';
 import { BrandLogo } from '@shared/brand';
 import { Button } from '@shared/ui/button';
 import {
@@ -31,8 +31,6 @@ const AUTHED_LINKS: NavLink[] = [
   { to: '/logout', labelKey: 'nav.logout' },
 ];
 
-const SUPERADMIN_LINK: NavLink = { to: '/superadmin', labelKey: 'nav.superadmin' };
-
 const ANON_LINKS: NavLink[] = [
   { to: '/', labelKey: 'nav.home' },
   { to: '/login', labelKey: 'nav.login' },
@@ -41,12 +39,9 @@ const ANON_LINKS: NavLink[] = [
 
 export const Header = () => {
   const authenticated = useAppSelector(selectAuthenticated);
-  const role = useAppSelector(selectUserRole);
   const { t, i18n } = useTranslation('common');
   const [open, setOpen] = useState(false);
-  const authedLinks =
-    role === 'Superadmin' ? [SUPERADMIN_LINK, ...AUTHED_LINKS] : AUTHED_LINKS;
-  const links = authenticated ? authedLinks : ANON_LINKS;
+  const links = authenticated ? AUTHED_LINKS : ANON_LINKS;
 
   return (
     <header className="bg-background sticky top-0 z-40 border-b">

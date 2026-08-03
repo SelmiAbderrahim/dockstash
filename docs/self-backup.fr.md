@@ -8,7 +8,7 @@ restic dédié, distinct de chaque dépôt de projet utilisateur.
 
 - Documents `Project` (chemins, plan, mots de passe de dépôt chiffrés).
 - Documents `Schedule` (cron, rétention, type).
-- Secrets chiffrés (token Polar, clé SSH de stockage, mots de passe des
+- Secrets chiffrés (clé SSH de stockage, mots de passe des
   dépôts restic) — sous forme de texte chiffré, jamais en clair.
 - Lignes d'historique de sauvegarde / vérification / test.
 

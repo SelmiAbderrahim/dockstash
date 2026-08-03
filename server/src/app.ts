@@ -14,17 +14,10 @@ import {
   createAgentRateLimiter,
   createAuthRateLimiter,
   createContactRateLimiter,
-  createWebhookRateLimiter,
 } from './shared/middleware/rate-limit.js';
 import { issueCsrfToken } from './shared/middleware/csrf.js';
 import { authRouter, oauthPublicRouter, requireVerified } from './modules/auth/index.js';
 import { requireAuth } from './shared/middleware/require-auth.js';
-import {
-  billingRouter,
-  billingPublicRouter,
-  invitationRouter,
-  webhookHandler,
-} from './modules/billing/index.js';
 import { communicationRouter } from './modules/communication/index.js';
 import { usersRouter } from './modules/users/index.js';
 import { backupsRouter } from './modules/backups/index.js';
@@ -35,14 +28,10 @@ import {
   healthRouter,
   projectHealthRouter,
 } from './modules/health/index.js';
-import { seoRouter } from './modules/seo/index.js';
 import { recoveryRouter } from './modules/recovery/index.js';
 import { agentsRouter, agentApiRouter } from './modules/agents/index.js';
 import { legalRouter } from './modules/legal/index.js';
 import { settingsRouter } from './modules/settings/index.js';
-import { superadminRouter } from './modules/superadmin/index.js';
-import { requireRole } from './shared/middleware/require-role.js';
-import { ROLE_SUPERADMIN } from './modules/users/index.js';
 
 export function createApp(): Express {
   const app = express();
@@ -51,8 +40,8 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
 
   app.use(requestId);
-  // Security headers (prompt 11). Applied early so every response — even
-  // errors from the raw-body webhook route below — carries them.
+  // Security headers (prompt 11). Applied early so every response — including
+  // errors — carries them.
   app.use(securityHeaders);
   app.use(
     pinoHttp({
@@ -60,29 +49,19 @@ export function createApp(): Express {
       customProps: (req: express.Request) => ({ reqId: req.id }),
     }),
   );
-  // Billing webhook MUST receive the raw request body for HMAC verification.
-  // The rate limiter runs BEFORE `express.raw` so a flood cannot burn signature
-  // math, and NEVER consumes the request body. Registered BEFORE the global
-  // JSON parser so the ingest pipeline sees the unparsed Buffer. See
-  // modules/billing/webhook/verify.
-  app.post(
-    '/api/billing/webhook',
-    createWebhookRateLimiter(),
-    express.raw({ type: '*/*', limit: '1mb' }),
-    webhookHandler,
-  );
+  // Body parsers. Every surface is JSON; there is no raw-body route left to
+  // register ahead of these, so the ordering here is unconditional.
   app.use(express.json({ limit: '1mb' }));
   app.use(express.urlencoded({ extended: false }));
   // CORS locked to CLIENT_URL only. No wildcard, no reflected origin —
-  // enforced by rules/site-url-env-pattern.md and IDEA.md §1.
+  // enforced by rules/site-url-env-pattern.md in `rules/site-url-env-pattern.md`.
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(language);
   app.use(passport.initialize());
 
   // Every /api response is private, per-user JSON — never let a browser or proxy
   // cache it. Mounted before all /api routers so the CSRF token, health, and
-  // every product surface inherit `Cache-Control: no-store`. The SEO router is
-  // mounted at `/` (not `/api`) below and keeps its own cacheable headers.
+  // every product surface inherit `Cache-Control: no-store`.
   app.use('/api', apiNoStore);
 
   // CSRF token endpoint (double-submit). Cookie-authenticated surfaces call
@@ -91,10 +70,6 @@ export function createApp(): Express {
   const securityRouter = Router();
   securityRouter.get('/csrf-token', issueCsrfToken);
   app.use('/api/security', securityRouter);
-
-  // SEO endpoints (robots.txt, sitemaps) — top-level, public, no auth. Mounted
-  // before the /api routers and before notFound so they resolve first.
-  app.use('/', seoRouter);
 
   app.use('/api', healthRouter);
   // Product surfaces are hard-gated behind [requireAuth, requireVerified] —
@@ -116,7 +91,7 @@ export function createApp(): Express {
   // hot-reload restarts.
   app.use('/api/auth', createAuthRateLimiter(), authRouter);
   // GDPR export/deletion stays reachable even for unverified accounts (data
-  // rights must not be gated); health/seo/security are public above.
+  // rights must not be gated); health/security are public above.
   app.use('/api/legal', legalRouter);
   // Contact form is unauthenticated and sends a real email per request — throttle
   // it to prevent mail-bombing / provider-quota abuse.
@@ -132,23 +107,11 @@ export function createApp(): Express {
   // array is declared above the health mount so the same gate applies uniformly.
   app.use('/api/audit', verified, auditRouter);
   app.use('/api/users', verified, usersRouter);
-  // Public pricing catalog is mounted BEFORE the `verified` gate; Express matches
-  // routers in order so `GET /api/billing/pricing-tiers` resolves here and never
-  // reaches `requireAuth`. All other billing surfaces stay gated below.
-  app.use('/api/billing', billingPublicRouter);
-  app.use('/api/billing', verified, billingRouter);
-  // Invitation links. `GET /:token` is public (sanitized offer summary only);
-  // the claim carries its own [requireAuth, requireVerified] at the route.
-  app.use('/api/invitations', invitationRouter);
   app.use('/api/backups', verified, backupsRouter);
   app.use('/api/scheduler', verified, schedulerRouter);
   app.use('/api/recovery', verified, recoveryRouter);
   app.use('/api/agents', verified, agentsRouter);
   app.use('/api/settings', verified, settingsRouter);
-  // Superadmin console — the seeder creates the account verified, so the
-  // uniform requireVerified product gate applies here too.
-  app.use('/api/superadmin', verified, requireRole(ROLE_SUPERADMIN), superadminRouter);
-
   app.use(notFound);
   app.use(errorHandler);
 

@@ -29,12 +29,12 @@ const makeStore = (auth: Partial<AuthState>) =>
 const renderGuard = (auth: Partial<AuthState>) =>
   render(
     <Provider store={makeStore(auth)}>
-      <MemoryRouter initialEntries={['/superadmin']}>
+      <MemoryRouter initialEntries={['/admin']}>
         <Routes>
           <Route
-            path="/superadmin"
+            path="/admin"
             element={
-              <RequireRole role="Superadmin">
+              <RequireRole role="Admin">
                 <div>CONSOLE</div>
               </RequireRole>
             }
@@ -58,7 +58,7 @@ describe('RequireRole', () => {
   });
 
   it('renders children for the matching role', () => {
-    renderGuard({ authenticated: true, role: 'Superadmin' });
+    renderGuard({ authenticated: true, role: 'Admin' });
     expect(screen.getByText('CONSOLE')).toBeInTheDocument();
   });
 });

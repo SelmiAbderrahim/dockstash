@@ -127,9 +127,14 @@ describe('AppLayout', () => {
 });
 
 describe('route tree', () => {
-  it('composes marketing + app-shell routes', () => {
-    expect(Array.isArray(routes)).toBe(true);
-    expect(routes.length).toBeGreaterThan(0);
+  it('is exactly the app shell — there is no public surface', () => {
+    expect(routes).toBe(appShellRoutes);
     expect(appShellRoutes[0]?.children?.length).toBeGreaterThan(0);
+  });
+
+  it('registers an index route and a catch-all', () => {
+    const children = appShellRoutes[0]?.children ?? [];
+    expect(children.some((route) => route.index)).toBe(true);
+    expect(children.at(-1)?.path).toBe('*');
   });
 });

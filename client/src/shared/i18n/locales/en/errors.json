@@ -13,7 +13,6 @@
   "passwordTooShort": "Password must be at least 8 characters.",
   "emailRequired": "Please enter an email",
   "passwordRequired": "Please enter a password",
-  "otpCodeInvalid": "Enter the 6-digit code.",
   "firstNameRequired": "Please enter a first name",
   "lastNameRequired": "Please enter a last name"
 }

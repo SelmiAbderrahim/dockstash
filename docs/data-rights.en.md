@@ -1,6 +1,6 @@
 # Data rights & account deletion (GDPR)
 
-Dockstash implements the GDPR data-rights surfaces described in IDEA.md §8:
+Dockstash implements the GDPR data-rights surfaces described in the data-rights design:
 export, right-to-deletion with a grace period, and legal-hold override.
 
 ## Export
@@ -51,11 +51,10 @@ next scheduled tick.
 
 ## Data residency
 
-The storage VPS location is set at deployment and documented per install. The
-`business` tier offers a region-of-choice option; the default install ships
-data to the same region as the orchestrator.
+You choose the storage target, so data residency is entirely under your
+control: backups live wherever the restic repository you configured lives.
 
-## Deletion policy in Terms
+## Where this fits
 
-The Terms of Service link the user to this document. See
+You are the data controller for your own install. See
 `docs/security-model.en.md` for the encryption + blast-radius model.

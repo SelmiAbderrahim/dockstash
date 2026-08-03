@@ -122,11 +122,6 @@ const projectSchema = new mongoose.Schema(
       ),
       default: () => ({}),
     },
-    // Lifecycle (prompt 07). A `paused` project is read-only: no new backups
-    // run, but existing snapshots are retained. Set on downgrade-over-cap and
-    // during lapse; cleared when the user reactivates or picks the project as
-    // the survivor of a downgrade selection.
-    paused: { type: Boolean, required: true, default: false },
     // Legal hold (prompt 11). When true, the retention `forget --prune` job
     // MUST skip this project — auto-prune never deletes held data. The
     // account-deletion purge also respects the hold.

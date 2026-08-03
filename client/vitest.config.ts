@@ -27,7 +27,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       // Measure application source only — never vendored bundles, tooling
-      // config, the SSR entry server, or build scripts.
+      // config, or build scripts.
       include: ['src/**/*.{ts,tsx}'],
       all: true,
       exclude: [
@@ -36,7 +36,6 @@ export default defineConfig({
         'src/**/*.spec.{ts,tsx}',
         'src/main.tsx',
         'src/entry-client.tsx',
-        'src/entry-server.tsx',
         // App-shell composition roots (mirror the entry-point exclusions above):
         // they only wire providers/router together — no unit-testable logic.
         'src/App.tsx',
@@ -47,11 +46,9 @@ export default defineConfig({
         'src/shared/ui/**',
         // shadcn CLI-generated hook (ships with the sidebar primitive).
         'src/shared/hooks/use-mobile.ts',
-        // SSR i18n bootstrap — the server-side counterpart of entry-server.
-        'src/shared/i18n/server.ts',
         'src/test/**',
-        // Non-application source: tooling config, the SSR entry server, and
-        // build scripts are not unit-tested app code.
+        // Non-application source: tooling config and build scripts are not
+        // unit-tested app code.
         'vite.config.ts',
         'vitest.config.ts',
         'eslint.config.js',

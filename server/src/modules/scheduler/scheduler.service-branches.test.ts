@@ -1,21 +1,15 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import mongoose from 'mongoose';
-import { env } from '../../config/env.js';
 import { startMemoryMongo, stopMemoryMongo, clearCollections } from '../../shared/testing/mongo.js';
 import { User } from '../users/index.js';
 import { Schedule } from './scheduler.model.js';
 import { updateSchedule } from './scheduler.service.js';
 
-// OSS self-host mode: business ceiling → schedules feature enabled + any-cron,
-// so assertScheduleAllowed passes and the `enabling` re-assert branch runs.
-const __prev = env.PAYMENT_PROVIDER;
 beforeAll(async () => {
   await startMemoryMongo();
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
 });
 afterAll(async () => {
   await stopMemoryMongo();
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prev;
 });
 beforeEach(() => clearCollections());
 

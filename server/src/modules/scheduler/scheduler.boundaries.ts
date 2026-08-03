@@ -53,14 +53,6 @@ export interface ResticRunnerExt extends ResticRunner {
   forget(args: string[]): Promise<void>;
 }
 
-/**
- * Placeholder entitlement check. Prompt 07 (`plans.ts`) swaps in the real check
- * (schedule frequency + project cap). Always allow for now.
- */
-export interface EntitlementChecker {
-  canEnqueue(owner: string, kind: JobKind): Promise<boolean>;
-}
-
 export interface LogEmitter {
   log(jobId: string, line: string): void;
   done(jobId: string, ok: boolean, detail?: string): void;

@@ -1,12 +1,16 @@
-# Dockstash CI — prompt 11.
+# Dockstash CI.
 #
-# All jobs run inside Docker containers for prod parity (IDEA.md §2/§9). The
-# pipeline gates every merge on:
-#   1. typecheck (tsc --noEmit) — client + server
-#   2. lint (eslint) — client + server
-#   3. unit + integration tests (vitest, mongodb-memory-server) — client + server
+# All jobs run inside Docker containers for prod parity. The pipeline gates
+# every merge on:
+#   1. typecheck (tsc --noEmit) — client + server + agent
+#   2. lint (eslint) — client + server + agent
+#   3. unit + integration tests (vitest, mongodb-memory-server)
 #   4. coverage gate — v8 100% on lines/branches/functions/statements
 #   5. npm audit --audit-level=high — ZERO high/critical advisories
+#
+# Fork note: `publish-agent` needs registry credentials that forks do not have.
+# Its `if:` guard restricts it to pushes on master in this repository, so it
+# never runs on a fork or a pull request. Every other job runs normally.
 #
 # The build fails on any gate. See docs/ci-gates.en.md for the runbook.
 

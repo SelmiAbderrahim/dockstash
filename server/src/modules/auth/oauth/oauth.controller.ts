@@ -4,14 +4,7 @@ import { env } from '../../../config/env.js';
 import { logger } from '../../../config/logger.js';
 import { asyncHandler } from '../../../shared/utils/async-handler.js';
 import { HttpError } from '../../../shared/utils/http-error.js';
-import { extractIp } from '../../audit/index.js';
-import { ROLE_SUPERADMIN } from '../../users/index.js';
 import { issueLoginResponse } from '../auth.service.js';
-import {
-  computeFingerprint,
-  createLoginChallenge,
-  isTrustedDevice,
-} from '../login-otp.service.js';
 import {
   enabledProviders,
   isOAuthProviderName,
@@ -94,24 +87,6 @@ export const oauthCallback: RequestHandler = asyncHandler(async (req, res) => {
     const accessToken = await exchangeCode(provider, code);
     const profile = await fetchProfile(provider, accessToken);
     const user = await findOrCreateOAuthUser(provider, profile, req.language);
-
-    // Same second factor as password login: superadmin from an unknown
-    // device gets an email-OTP challenge instead of a token.
-    if (user.role === ROLE_SUPERADMIN) {
-      const ip = extractIp(req);
-      const userAgent = req.headers['user-agent'];
-      const fingerprint = computeFingerprint(ip, userAgent);
-      const trusted = await isTrustedDevice(user._id.toString(), fingerprint);
-      if (!trusted) {
-        const { challengeId } = await createLoginChallenge(user, {
-          ip,
-          userAgent,
-          locale: req.language,
-        });
-        res.redirect(302, `${clientCallbackUrl()}#otp=1&challengeId=${challengeId}`);
-        return;
-      }
-    }
 
     const { token } = issueLoginResponse(user);
     res.redirect(302, `${clientCallbackUrl()}#token=${encodeURIComponent(token)}`);

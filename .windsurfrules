@@ -1,4 +1,4 @@
-# Windsurf Rules — MERN Starter
+# Windsurf Rules — Dockstash
 
 See `CLAUDE.md` and `AGENTS.md` for the full project conventions. Windsurf honors `.windsurfrules`; this file mirrors the load-bearing subset for quick reference. The authoritative rule files live in `.claude/rules/`.
 
@@ -8,11 +8,11 @@ MongoDB + Express + React + Node. Client uses Webpack/React 15 today; modernizat
 
 ## Load-bearing rules
 
-- **Feature-module isolation** — Client features live in `client/src/features/<name>/`; server modules in `server/src/modules/<name>/`. Cross-feature imports go through `shared/` or each module's `index.js` public API. Never reach into another feature's internals. → `.claude/rules/mern-feature-modules.md`
+- **Feature-module isolation** — Client features live in `client/src/features/<name>/`; server modules in `server/src/modules/<name>/`. Cross-feature imports go through `shared/` or each module's `index.ts` public API. Never reach into another feature's internals. → `.claude/rules/mern-feature-modules.md`
 
 - **Named exports only** — No `export default` on components, actions, reducers, models, or utilities. → `.claude/rules/mern-no-default-exports.md`
 
-- **Typed Mongoose schemas** — Every schema gets a JSDoc `@typedef` (today) or `InferSchemaType` (post-TS). Type is exported alongside the model. → `.claude/rules/mern-mongoose-typed-schemas.md`
+- **Typed Mongoose schemas** — Every schema uses `InferSchemaType`; the type is exported alongside the model. → `.claude/rules/mern-mongoose-typed-schemas.md`
 
 - **Root `.env` only** — Never create `.env` files in subdirectories. All config flows through `process.env` or build-time injection. → `.claude/rules/environment-variables.md`
 
@@ -30,4 +30,4 @@ MongoDB + Express + React + Node. Client uses Webpack/React 15 today; modernizat
 
 ## What this repo does NOT do
 
-No monorepo tooling, no GraphQL, no tRPC, no Postgres. Docker-first (compose stack at repo root; all commands run in containers), marketing surface is SSR (Vite native), Tailwind v4 + shadcn/ui monochrome design system, Redis reserved for BullMQ. See CLAUDE.md §9 for the full, current list.
+No monorepo tooling, no GraphQL, no tRPC, no Postgres. No SSR and no public marketing surface — the client is a CSR SPA behind auth and `/` redirects to `/login`. No payment integration, no plan/usage caps, no platform-operator tier, no telemetry. Docker-first (compose stack at repo root; all commands run in containers), Tailwind v4 + shadcn/ui monochrome design system, Redis for the shared rate-limit store. See CLAUDE.md §9 for the full, current list.

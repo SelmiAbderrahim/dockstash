@@ -29,7 +29,6 @@ const BASE_DESTINATIONS: Destination[] = [
   { to: '/projects', labelKey: 'nav.projects', descriptionKey: 'dashboard.projects' },
   { to: '/snapshots', labelKey: 'nav.snapshots', descriptionKey: 'dashboard.snapshots' },
   { to: '/settings', labelKey: 'nav.settings', descriptionKey: 'dashboard.settings' },
-  { to: '/billing', labelKey: 'nav.billing', descriptionKey: 'dashboard.billing' },
   { to: '/profile', labelKey: 'nav.profile', descriptionKey: 'dashboard.profile' },
 ];
 

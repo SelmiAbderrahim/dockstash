@@ -214,7 +214,7 @@
 
 @layer utilities {
   /*
-   * Subtle dotted-grid backdrop for hero / CTA bands (marketing surface).
+   * Subtle dotted-grid backdrop for hero / CTA bands.
    * Token-driven so it adapts to light/dark automatically. Named without a
    * `bg-` prefix on purpose: tailwind-merge would otherwise treat it as a
    * background-color utility and drop `bg-*` classes merged alongside it.

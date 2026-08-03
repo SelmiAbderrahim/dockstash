@@ -27,7 +27,6 @@ import {
 const app = createApp();
 
 const BASE_SIGNALS = {
-  paused: false,
   lastStatus: 'success',
   lastSuccessAt: new Date('2026-07-05T00:00:00Z'),
   lastCheckStatus: null,
@@ -77,21 +76,20 @@ describe('health rules: computeProjectHealth', () => {
     expect(verdict.reasons).toContain('neverBackedUp');
   });
 
-  it('degraded on failed check or missing schedule; paused never goes stale-critical', () => {
+  it('degraded on failed check or missing schedule', () => {
     expect(
       computeProjectHealth({ ...BASE_SIGNALS, lastCheckStatus: 'failed' }).status,
     ).toBe('degraded');
     expect(
       computeProjectHealth({ ...BASE_SIGNALS, hasEnabledSchedule: false }).reasons,
     ).toContain('noSchedule');
-    const paused = computeProjectHealth({
+    const never = computeProjectHealth({
       ...BASE_SIGNALS,
-      paused: true,
       lastSuccessAt: null,
       hasEnabledSchedule: false,
     });
-    expect(paused.status).toBe('degraded');
-    expect(paused.reasons).toEqual(['paused']);
+    expect(never.status).toBe('degraded');
+    expect(never.reasons).toEqual(['neverBackedUp', 'noSchedule']);
   });
 
   it('critical carries its degraded reasons along', () => {
@@ -139,8 +137,7 @@ async function seedProject(
     repoPasswordEnc: { ciphertext: 'x', iv: 'x', authTag: 'x', keyVersion: 1 },
     lastStatus: 'success',
     lastSuccessAt: new Date(),
-    paused: false,
-    ...overrides,
+      ...overrides,
   });
   return p._id.toString();
 }

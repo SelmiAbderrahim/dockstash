@@ -16,7 +16,6 @@ import {
   ensureConfigured,
   resetSchedulerController,
 } from './scheduler.controller.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
 import type { SchedulerQueue } from './scheduler.boundaries.js';
 
 const app = createApp();
@@ -77,7 +76,7 @@ describe('scheduler.controller wiring', () => {
       async waitIdle() {},
       async close() {},
     };
-    configureSchedulerController({ queue, entitlements: allowAllEntitlements });
+    configureSchedulerController({ queue });
     // Should early-return without replacing the configured deps.
     expect(() => ensureConfigured()).not.toThrow();
     expect(() => ensureConfigured({ queue })).not.toThrow();
@@ -110,7 +109,7 @@ describe('scheduler.controller wiring', () => {
       async waitIdle() {},
       async close() {},
     };
-    ensureConfigured({ queue, entitlements: allowAllEntitlements });
+    ensureConfigured({ queue });
     const res = await request(app)
       .post('/api/scheduler/enqueue')
       .set('Authorization', `JWT ${a.token}`)
@@ -122,7 +121,7 @@ describe('scheduler.controller wiring', () => {
   it('enqueue of a drill maps to the restore audit action', async () => {
     const queue = new MemoryQueue();
     queue.setProcessor(async () => {});
-    configureSchedulerController({ queue, entitlements: allowAllEntitlements });
+    configureSchedulerController({ queue });
     const a = await seedUser('a@t.com');
     const projectId = await seedProject(a.id);
     const res = await request(app)

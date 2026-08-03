@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { I18nextProvider } from 'react-i18next';
-import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { OAuthCallback } from './OAuthCallback';
@@ -52,17 +51,14 @@ const renderCallback = (hash: string, auth: Partial<AuthState> = {}) => {
   render(
     <Provider store={store}>
       <I18nextProvider i18n={i18n}>
-        <HelmetProvider>
-          <MemoryRouter initialEntries={['/oauth/callback']}>
-            <Routes>
-              <Route path="/oauth/callback" element={<OAuthCallback />} />
-              <Route path="/dashboard" element={<div>DASHBOARD</div>} />
-              <Route path="/verify-email" element={<div>VERIFY</div>} />
-              <Route path="/login" element={<div>LOGIN</div>} />
-              <Route path="/superadmin" element={<div>SUPERADMIN</div>} />
-            </Routes>
-          </MemoryRouter>
-        </HelmetProvider>
+        <MemoryRouter initialEntries={['/oauth/callback']}>
+          <Routes>
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
+            <Route path="/dashboard" element={<div>DASHBOARD</div>} />
+            <Route path="/verify-email" element={<div>VERIFY</div>} />
+            <Route path="/login" element={<div>LOGIN</div>} />
+          </Routes>
+        </MemoryRouter>
       </I18nextProvider>
     </Provider>,
   );
@@ -95,21 +91,6 @@ describe('OAuthCallback', () => {
     });
     renderCallback('#token=JWT%20fragment');
     expect(await screen.findByText('VERIFY')).toBeInTheDocument();
-  });
-
-  it('routes a superadmin to the superadmin console', async () => {
-    mocked.refreshRequest.mockResolvedValue({
-      token: 'JWT refreshed',
-      user: { id: '1', email: 's@b.co', emailVerified: true, role: 'Superadmin' },
-    });
-    renderCallback('#token=JWT%20fragment');
-    expect(await screen.findByText('SUPERADMIN')).toBeInTheDocument();
-  });
-
-  it('hands an OTP challenge over to the login page', async () => {
-    const store = renderCallback('#otp=1&challengeId=ch-7');
-    expect(await screen.findByText('LOGIN')).toBeInTheDocument();
-    expect(store.getState().auth.otpChallengeId).toBe('ch-7');
   });
 
   it.each([

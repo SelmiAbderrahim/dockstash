@@ -5,14 +5,8 @@ import { DEFAULT_LOCALE, translate } from '../../shared/i18n/index.js';
 import type { TranslationVars } from '../../shared/i18n/index.js';
 import { allowedRootsForProject, loadOwnedProject } from '../backups/backups.service.js';
 import { isAllowedProjectPath, isPathUnderRoots } from '../backups/backups.paths.js';
-import {
-  assertScheduleAllowed,
-  classifyCron,
-  clampRetentionPolicy,
-} from '../billing/entitlements.service.js';
 import { Schedule, type ScheduleHydrated, type JobKind } from './scheduler.model.js';
 import type {
-  EntitlementChecker,
   Job,
   RestoreJobPayload,
   RetentionPolicy,
@@ -42,16 +36,9 @@ export async function createSchedule(
   // `preset: 'continuous'` expands server-side; explicit cron/retention win
   // over the preset's values so a client can tweak the cadence it seeds.
   const cron = input.cron ?? CONTINUOUS_PRESET.cron;
-  const retentionSource =
+  const retention =
     input.retention ??
     (input.preset === 'continuous' ? { ...CONTINUOUS_PRESET.retention } : { keepDaily: 7, keepWeekly: 4, keepMonthly: 6 });
-  await assertScheduleAllowed(userId, {
-    t,
-    frequency: classifyCron(cron),
-  });
-  // Clamp retention at write time so a downgraded user cannot retain beyond
-  // their tier by keeping an old, wider policy on the schedule.
-  const retention = await clampRetentionPolicy(userId, retentionSource);
   const schedule = await Schedule.create({
     project: input.projectId,
     owner: userId,
@@ -126,32 +113,21 @@ export async function updateSchedule(
   input: UpdateScheduleInput,
   ctx: ServiceCtx = {},
 ): Promise<ScheduleHydrated> {
-  const t = ctx.t ?? identityT;
   const schedule = await loadOwnedSchedule(scheduleId, userId, ctx);
-  // S3-02: re-assert the tier gate on cron/enable transitions. A legacy Pro
-  // schedule must not keep firing at minute cadence after a Free downgrade.
-  const enabling = input.enabled === true && schedule.enabled === false;
-  if (input.cron !== undefined && input.cron !== schedule.cron) {
-    const nextCron = input.cron;
-    await assertScheduleAllowed(userId, { t, frequency: classifyCron(nextCron) });
-    schedule.cron = nextCron;
+  if (input.cron !== undefined) {
+    schedule.cron = input.cron;
   }
   if (input.enabled !== undefined) {
     schedule.enabled = input.enabled;
   }
-  if (enabling) {
-    await assertScheduleAllowed(userId, { t, frequency: classifyCron(schedule.cron) });
-  }
   if (input.retention !== undefined) {
-    const merged = {
+    schedule.retention = {
       keepDaily: input.retention.keepDaily ?? schedule.retention.keepDaily,
       keepWeekly: input.retention.keepWeekly ?? schedule.retention.keepWeekly,
       keepMonthly: input.retention.keepMonthly ?? schedule.retention.keepMonthly,
       keepHourly: input.retention.keepHourly ?? schedule.retention.keepHourly,
       keepLast: input.retention.keepLast ?? schedule.retention.keepLast,
-    };
-    const clamped = await clampRetentionPolicy(userId, merged);
-    schedule.retention = clamped as ScheduleHydrated['retention'];
+    } as ScheduleHydrated['retention'];
   }
   await schedule.save();
   return schedule;
@@ -168,13 +144,12 @@ export async function deleteSchedule(
 
 export interface EnqueueDeps extends ServiceCtx {
   queue: SchedulerQueue;
-  entitlements: EntitlementChecker;
 }
 
 /**
  * `POST /enqueue` — enqueue a job now. Accepts either `{ scheduleId }` (use
  * the schedule's kind + retention) or `{ projectId, kind, retention? }`
- * (ad-hoc). Runs the entitlement hook before enqueue; returns 403 on deny.
+ * (ad-hoc).
  */
 export async function enqueueNow(
   userId: string,
@@ -229,9 +204,6 @@ export async function enqueueNow(
       };
     }
   }
-
-  const allowed = await deps.entitlements.canEnqueue(userId, kind);
-  if (!allowed) throw HttpError.forbidden(t('scheduler.error.entitlementDenied'));
 
   // Reject a manual double-submit (double-click, double-tab) outright rather
   // than silently queueing a duplicate run behind the active one — cron

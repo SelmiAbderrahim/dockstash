@@ -8,7 +8,7 @@ dedizierten restic-Repo, getrennt von jedem Repo eines Benutzerprojekts.
 
 - `Project`-Dokumente (Pfade, Plan, verschlüsselte Repo-Passwörter).
 - `Schedule`-Dokumente (Cron, Aufbewahrung, Art).
-- Verschlüsselte Geheimnisse (Polar-Token, Speicher-SSH-Key,
+- Verschlüsselte Geheimnisse (Speicher-SSH-Key,
   restic-Repo-Passwörter) — als Chiffretext, niemals im Klartext.
 - Backup- / Verify- / Drill-Historienzeilen.
 

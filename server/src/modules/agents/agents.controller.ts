@@ -1,7 +1,6 @@
 import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
-import { releaseAgentSlot, reserveAgentSlot } from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
 import {
   registerAgentSchema,
@@ -41,18 +40,7 @@ function serializeAgent(agent: AgentHydrated) {
 export const registerAgentHandler: RequestHandler = asyncHandler(async (req, res) => {
   const userId = requireUserId(req.user);
   const input = registerAgentSchema.parse(req.body);
-  // Reserve a slot BEFORE creating the record — the atomic counter closes the
-  // TOCTOU window at the per-plan agent cap (parse → assert/reserve → create).
-  await reserveAgentSlot(userId, { t: req.t });
-  let result;
-  try {
-    result = await registerAgent(userId, input, { t: req.t });
-  } catch (err) {
-    // Rollback the reservation if registration failed (e.g. duplicate host).
-    await releaseAgentSlot(userId);
-    throw err;
-  }
-  const { agent, token } = result;
+  const { agent, token } = await registerAgent(userId, input, { t: req.t });
   await recordAudit({
     actorUserId: userId,
     action: 'agent.register',
@@ -90,8 +78,6 @@ export const deleteAgentHandler: RequestHandler = asyncHandler(async (req, res) 
   const userId = requireUserId(req.user);
   const { agentId } = agentIdParamsSchema.parse(req.params);
   await deleteAgent(agentId, userId, { t: req.t });
-  // Free the reserved slot AFTER the owner-scoped delete commits.
-  await releaseAgentSlot(userId);
   await recordAudit({
     actorUserId: userId,
     action: 'agent.delete',

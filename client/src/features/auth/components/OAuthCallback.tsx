@@ -6,15 +6,14 @@ import { Alert, AlertDescription } from '@shared/ui/alert';
 import { Button } from '@shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { Spinner } from '@shared/ui/spinner';
-import { PageMeta } from '@shared/seo';
+import { useDocumentTitle } from '@shared/hooks/useDocumentTitle';
 import { parseOAuthCallbackHash } from '../oauth';
 import {
   selectAuthError,
   selectAuthenticated,
   selectEmailVerified,
-  selectUserRole,
 } from '../store/selectors';
-import { beginOtpChallenge, clearError } from '../store/slice';
+import { clearError } from '../store/slice';
 import { completeOAuthLogin } from '../store/thunks';
 
 const ERROR_CODES = ['accessDenied', 'invalidState', 'emailUnavailable', 'providerError'] as const;
@@ -28,17 +27,17 @@ function toErrorCode(raw: string | undefined): OAuthErrorCode {
 
 /**
  * Landing page for the server's OAuth redirect. The payload arrives in the
- * URL fragment (token, OTP challenge, or error code); the fragment is
- * scrubbed from history immediately, then this page either completes the
- * session, hands a superadmin over to the Login OTP form, or shows the error.
+ * URL fragment (token or error code); the fragment is scrubbed from history
+ * immediately, then this page either completes the session or shows the
+ * error.
  */
 export const OAuthCallback = () => {
+  useDocumentTitle('Signing in');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { t } = useTranslation('auth');
   const authenticated = useAppSelector(selectAuthenticated);
   const emailVerified = useAppSelector(selectEmailVerified);
-  const role = useAppSelector(selectUserRole);
   const storeError = useAppSelector(selectAuthError);
   const [errorCode, setErrorCode] = useState<OAuthErrorCode | null>(null);
 
@@ -51,33 +50,20 @@ export const OAuthCallback = () => {
       void dispatch(completeOAuthLogin({ token: payload.token }));
       return;
     }
-    if (payload.challengeId) {
-      // Superadmin second factor: adopt the challenge, let Login's OTP form run.
-      dispatch(beginOtpChallenge(payload.challengeId));
-      navigate('/login', { replace: true });
-      return;
-    }
     setErrorCode(toErrorCode(payload.error));
-  }, [dispatch, navigate]);
+  }, [dispatch]);
 
   useEffect(() => {
     if (authenticated) {
-      // Same branching as Login: superadmin console, dashboard, or verify-email.
-      navigate(
-        role === 'Superadmin' ? '/superadmin' : emailVerified ? '/dashboard' : '/verify-email',
-        { replace: true },
-      );
+      // Same branching as Login: dashboard, or verify-email first.
+      navigate(emailVerified ? '/dashboard' : '/verify-email', { replace: true });
     }
-  }, [authenticated, emailVerified, role, navigate]);
+  }, [authenticated, emailVerified, navigate]);
 
   const displayError = errorCode ? t(`oauth.errors.${errorCode}`) : storeError || null;
 
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-8">
-      <PageMeta
-        title="Signing in"
-        description="Completing your Dockstash sign-in."
-      />
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">{t('oauth.title')}</CardTitle>

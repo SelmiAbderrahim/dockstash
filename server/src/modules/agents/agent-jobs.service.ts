@@ -7,7 +7,6 @@ import type { TranslationVars } from '../../shared/i18n/index.js';
 import { Project } from '../backups/backups.model.js';
 import { Agent } from './agents.model.js';
 import { loadTransportForUser } from '../settings/settings.service.js';
-import { assertProjectCap } from '../billing/entitlements.service.js';
 import { sendFailureAlert } from '../alerting/index.js';
 import { Schedule, type ScheduleStatus } from '../scheduler/scheduler.model.js';
 import type { JobData, LogEmitter } from '../scheduler/scheduler.boundaries.js';
@@ -125,7 +124,7 @@ export interface ClaimedJobPayload {
 /**
  * Atomically claim the oldest pending job for this agent and assemble its
  * execution payload (the same material `resolveProjectRunner` builds for the
- * local worker). Jobs whose project vanished or paused are failed inline and
+ * local worker). Jobs whose project vanished are failed inline and
  * the next one is tried. Returns null when nothing is claimable.
  */
 export async function claimNextJob(
@@ -160,22 +159,6 @@ export async function claimNextJob(
     if (!project || project.owner.toString() !== principal.owner) {
       await failJobInline(job, 'project not found', now);
       continue;
-    }
-    if (project.paused) {
-      await failJobInline(job, 'project paused', now);
-      continue;
-    }
-    if (job.kind === 'backup') {
-      try {
-        await assertProjectCap(principal.owner, {
-          t,
-          countActiveProjects: async () =>
-            Project.countDocuments({ owner: principal.owner, paused: { $ne: true } }),
-        });
-      } catch (err) {
-        await failJobInline(job, errorMessage(err), now);
-        continue;
-      }
     }
 
     let repoUrl: string;

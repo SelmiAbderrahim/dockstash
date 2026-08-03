@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { deleteAgent, fetchFleet, registerAgent, rotateAgentKey } from './thunks';
-import type { AgentCapInfo, FleetEntry, FleetLockedReason } from '../types';
+import type { FleetEntry } from '../types';
 
 export type LoadState = 'idle' | 'loading' | 'succeeded' | 'failed';
 
@@ -8,9 +8,6 @@ export interface FleetState {
   items: FleetEntry[];
   status: LoadState;
   error: string | null;
-  lockedReason: FleetLockedReason | null;
-  /** Cap details behind an `agentLimitReached` lock (drives the at-cap banner). */
-  capInfo: AgentCapInfo | null;
   registerStatus: LoadState;
   registerError: string | null;
   rotateStatus: LoadState;
@@ -23,8 +20,6 @@ const initialState: FleetState = {
   items: [],
   status: 'idle',
   error: null,
-  lockedReason: null,
-  capInfo: null,
   registerStatus: 'idle',
   registerError: null,
   rotateStatus: 'idle',
@@ -70,20 +65,14 @@ const slice = createSlice({
         state.registerStatus = 'loading';
         state.registerError = null;
         // Clear a prior at-cap lock so a retry after freeing a slot is clean.
-        state.lockedReason = null;
-        state.capInfo = null;
       })
       .addCase(registerAgent.fulfilled, (state) => {
         state.registerStatus = 'succeeded';
-        state.lockedReason = null;
-        state.capInfo = null;
       })
       .addCase(registerAgent.rejected, (state, action) => {
         state.registerStatus = 'failed';
         state.registerError = action.payload?.message ?? 'Could not register the agent.';
         // At-cap registration surfaces the upsell banner on the fleet screen.
-        state.lockedReason = action.payload?.lockedReason ?? null;
-        state.capInfo = action.payload?.capInfo ?? null;
       })
       .addCase(rotateAgentKey.pending, (state) => {
         state.rotateStatus = 'loading';

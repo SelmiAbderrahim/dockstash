@@ -7,12 +7,10 @@
     "projects": "Projects",
     "snapshots": "Snapshots",
     "fleet": "Fleet",
-    "billing": "Billing",
     "settings": "Settings",
     "profile": "Profile",
     "logout": "Logout",
     "admin": "Admin",
-    "superadmin": "Superadmin",
     "login": "Login",
     "register": "Register"
   },
@@ -20,7 +18,6 @@
     "projects": "Manage your projects and deployments.",
     "snapshots": "Browse and restore project snapshots.",
     "settings": "Configure your workspace and integrations.",
-    "billing": "Review usage, plans, and invoices.",
     "profile": "View and update your account details.",
     "admin": "Access administrative controls."
   },
@@ -63,11 +60,6 @@
     "lede": "All connected VPS agents and their backup footprint.",
     "loading": "Loading fleet…",
     "register": "Register agent",
-    "locked": {
-      "title": "You've reached your server limit",
-      "body": "Using {{used}} of {{cap}} servers on your plan. Upgrade to connect more.",
-      "cta": "View plans"
-    },
     "empty": {
       "title": "No agents yet",
       "hint": "Register an agent on another VPS to see it here."

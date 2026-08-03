@@ -9,13 +9,16 @@ land; this doc is not a design brief.
 |--------|-------|---------|
 | `auth` | `/api/auth`, `/api` (`protectedRouter`) | Passport JWT + local strategies, register/login/reset flows |
 | `users` | `/api/users` | Authenticated profile lookup, role helpers |
-| `billing` | `/api/billing` | Provider-neutral checkout/portal/change-plan + Standard Webhooks HMAC-SHA256 ingestion (Polar active, Stripe adapter inactive) |
 | `communication` | `/api/communication` | Transactional email / mailers (Resend transport since prompt 08) |
 | `backups` | `/api/backups` | Project scanning, plan management, backup orchestration |
 | `alerting` | (no HTTP surface) | Failure alerts + dead-man's-switch heartbeat sweep |
 | `audit` | `/api/audit` | Append-only audit log (owner-scoped read) |
 | `health` | `/api/health`, `/api/metrics`, `/api/health/projects` | Liveness + aggregate metrics + per-project last-success surface |
-| `recovery` | `/api/recovery` | Config export / import + self-backup of the orchestrator Mongo (prompt 09) |
+| `recovery` | `/api/recovery` | Config export / import + install-wide self-backup of the orchestrator Mongo (Admin-gated) |
+| `scheduler` | `/api/scheduler` | Cron schedules, ad-hoc enqueue, retention prune, live job logs |
+| `agents` | `/api/agents`, `/api/agent` | Fleet-agent registry + the machine surface daemons poll |
+| `legal` | `/api/legal` | GDPR data export + account deletion with grace window and legal hold |
+| `settings` | `/api/settings` | Storage target, retention defaults, encryption password |
 
 ## Shared services
 
@@ -335,91 +338,7 @@ full "production VPS is gone" runbook.
   `dockstash-self`. Must never collide with a user project id.
 - `SELF_BACKUP_CRON` — self-backup cadence, default nightly `0 3 * * *`.
 
-## Billing module
-
-Files under `server/src/modules/billing/`:
-
-- `payment-provider.ts` — `IPaymentProvider` interface with provider-neutral
-  DTOs: `CreateCheckoutInput`/`Result`, `OpenPortalInput`/`Result`,
-  `ChangePlanInput`, `NormalizedSubscription`, `NormalizedCustomer`,
-  `NormalizedOrder`, `ParsedEvent`. `WebhookVerifyError` carries an HTTP status.
-- `providers/polar-rest.ts` — fetch-based Polar REST client (no SDK). Base URL
-  toggles on `POLAR_SERVER` (sandbox default), bearer from decrypted
-  `POLAR_ACCESS_TOKEN`, optional `Idempotency-Key`, `Retry-After` parsing.
-  `setPolarRestClientFactory` is the DI seam for tests.
-- `providers/polar.ts` — `PolarProvider` implementing `IPaymentProvider`.
-  Handles Standard Webhooks (HMAC-SHA256, ±5min replay window, strict base64,
-  `timingSafeEqual`) and maps Polar shapes to the normalized DTOs.
-- `providers/stripe.ts` — `StripeProvider` conforming to the same interface,
-  inactive by default. Every method throws until a Stripe backend is wired.
-- `active-provider.ts` — `getPaymentProvider()` picks Polar or Stripe from
-  `PAYMENT_PROVIDER`; defaults to Polar even when the token is absent so the
-  module boots deterministically.
-- `polar-secrets.ts` — wraps `POLAR_ACCESS_TOKEN` in an `EncryptedSecret`
-  envelope on first read; decrypts only in-process at call time.
-- `polar-config.ts` — `getPlanForProductId(productId)` maps Polar product ids to
-  the `free`/`pro`/`business` plan slug (product id is source of truth, not
-  checkout metadata). Full plans matrix owned by prompt 07.
-- `webhook/handler.ts` — Express `RequestHandler` mounted at
-  `POST /api/billing/webhook` with `express.raw({ type: '*/*' })` **before** the
-  global JSON parser in `app.ts`.
-- `webhook/ingest.ts` — pipeline: verify → dedupe → dispatch → persist. INSERT
-  against the `(provider, eventId)` unique guard; on duplicate short-circuit
-  with 200 and the stored status (no re-dispatch). On dispatch failure the row
-  flips to `failed` and `retryCount` increments.
-- `webhook/registry.ts` — event-type dispatch. `subscription.*` upserts
-  `Customer` + `Subscription` and links the ref on `User`;
-  `subscription.canceled`/`.revoked` mark the row; `order.*` upserts `Order`;
-  unhandled types return `{ status: 'skipped' }` (no error row).
-- `reconcile.ts` — `reconcileSubscriptions()` polls Polar's active
-  subscriptions and heals drift on local `Subscription` rows (never creates
-  phantom rows). Registered on `*/15 * * * *` by
-  `registerReconciliationCron()` (`NodeCronScheduler`, `unregister` on shutdown).
-- `billing.routes.ts` — `POST /checkout`, `GET /portal`, `POST /change-plan`,
-  `GET /pricing-tiers` (public), `GET /overview`, `GET /usage`,
-  `POST /select-projects` (all authenticated except `/pricing-tiers`). Webhook is
-  registered outside this router (raw body).
-- `plans.ts` — the entitlements matrix (`ENTITLEMENTS` keyed by
-  `free`/`pro`/`business`: `projects`, `agents` (connected-server cap: 1 / 5 /
-  ∞), `retentionDays`, `frequency`, + `schedules`/`emailAlerts` flags).
-  `PRICE_MONTHLY_CENTS` and `PRICE_YEARLY_CENTS` (yearly = monthly × 10).
-- `pricing-tier.model.ts` + `pricing-tier.seed.ts` — data-backed `PricingTier`
-  rows; seed is idempotent and preserves operator edits to price + `active`.
-- `entitlements.service.ts` — `resolveEntitlements(userId)` (subscription state
-  → effective slug; OSS default = `business` when no provider is configured),
-  `assertProjectCap` / `assertScheduleAllowed` / `clampRetentionDays`,
-  `classifyCron`.
-- `lifecycle.service.ts` — `beginDunning` (14-day grace), `expireGraceIfNeeded`,
-  `handleDowngrade` (pause over-cap projects, mark `selectionRequired`),
-  `selectProjectsToKeep` (user picks survivors), `handleRefund` (revoke → Free),
-  `assertTrialAvailable` / `recordTrialClaim` (one trial per email).
-
-### Collections
-
-| Model | Uniqueness | Notes |
-|-------|------------|-------|
-| `Customer` | `(provider, providerCustomerId)` | Linked to `User` (userId ref). |
-| `Subscription` | `(provider, providerSubscriptionId)` | `planSlug`, `status`, `cancelAtPeriodEnd`, `currentPeriodEnd`. |
-| `Order` | `(provider, providerOrderId)` | Amount cents + currency + status. |
-| `WebhookEvent` | `(provider, eventId)` | Idempotency guard; `status`, `retryCount`, `payloadHash`, `error`. |
-
-### Raw-body mount order in `app.ts`
-
-`requestId → pinoHttp → POST /api/billing/webhook (raw) → express.json →
-express.urlencoded → cors → language → passport.initialize → routes → notFound
-→ errorHandler`. The raw webhook route is registered ahead of the JSON parser so
-the ingest pipeline receives the unparsed Buffer for HMAC verification.
-
-### Webhook contract
-
-- `200 { status: 'processed' | 'skipped' | 'failed' | 'pending' }` — event
-  accepted (may already have been seen; the status reflects the stored row).
-- `401` — signature mismatch, missing headers, or timestamp outside ±5 min.
-- Response bodies are machine-facing (never localized). Operator-facing HTTP
-  errors from the authenticated billing surface use i18n keys under
-  `billing.error.*` (7 locales, identical placeholders).
-
-## Client dashboard (prompt 10)
+## Client dashboard
 
 The authenticated shell renders four screens plus a one-time setup wizard.
 
@@ -439,7 +358,7 @@ auth feature.
 
 - `client/src/shared/hooks/useTabParam.ts` — reads/writes the `?tab=` query
   parameter with a default and validated-value fallback, `replace: true` on
-  every switch (per `.claude/rules/url-tab-state.md`).
+  every switch.
 - `client/src/shared/socket/logStream.ts` — Socket.IO client wrapper for the
   `/scheduler` namespace (JWT auth, `join`/`log`/`done`/`failed` events).
 - `client/src/shared/components/ResticLogPanel.tsx` — a live-log surface driven

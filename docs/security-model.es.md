@@ -2,7 +2,7 @@
 
 # Security model & threat model
 
-This document describes the hardening pass added in prompt 11 (IDEA.md §1) and
+This document describes the hardening pass added in the security-hardening pass and
 the blast radius of the Dockstash orchestrator.
 
 ## App-layer hardening
@@ -81,5 +81,5 @@ tracked container via the socket-proxy. Mitigations:
 
 ## What is out of scope
 
-No WAF, no SIEM, no pen-test engagement, no tax engine — Polar is the
-Merchant of Record for VAT/GST (see `polar-billing-and-webhooks.en.md`).
+No WAF, no SIEM, no pen-test engagement. Dockstash is self-hosted software:
+there is no payment surface, no platform-operator tier, and no telemetry.

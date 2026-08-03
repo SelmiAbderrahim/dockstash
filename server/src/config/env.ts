@@ -25,37 +25,14 @@ export const envSchema = z.object({
   // Encryption — required. See shared/crypto/README.md for the rotation runbook.
   MASTER_ENCRYPTION_KEY: masterEncryptionKey,
 
-  // Payments (Polar) — optional. Free / self-host tier boots without these.
-  PAYMENT_PROVIDER: z.enum(['none', 'polar', 'stripe']).default('none'),
-  POLAR_ACCESS_TOKEN: z.string().optional(),
-  POLAR_WEBHOOK_SECRET: z.string().optional(),
-  POLAR_SERVER: z.enum(['sandbox', 'production']).optional(),
-  POLAR_PRO_PRODUCT_ID: z.string().optional(),
-  POLAR_BUSINESS_PRODUCT_ID: z.string().optional(),
-  POLAR_PRO_YEARLY_PRODUCT_ID: z.string().optional(),
-  POLAR_BUSINESS_YEARLY_PRODUCT_ID: z.string().optional(),
-
-  // Email (Resend) — optional. Free / self-host tier boots without these.
+  // Email (Resend) — optional. The stack boots without these.
   RESEND_API_KEY: z.string().optional(),
   RESEND_FROM: z.string().optional(),
-
-  // Superadmin bootstrap — optional. Free / self-host boots without these;
-  // the entrypoint seeder skips with a warning when either is unset. The
-  // compose file passes `${VAR:-}` which yields an empty string, so map ''
-  // back to undefined before validating.
-  SUPERADMIN_EMAIL: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().email().toLowerCase().optional(),
-  ),
-  SUPERADMIN_PASSWORD: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(12).optional(),
-  ),
 
   // OAuth sign-in (Google / GitHub) — optional. A provider is enabled only
   // when BOTH its client id and secret are set; the client hides the buttons
   // otherwise. Compose passes `${VAR:-}` (empty string), so map '' back to
-  // undefined before validating, mirroring SUPERADMIN_* above.
+  // undefined before validating.
   GOOGLE_CLIENT_ID: z.preprocess(
     (value) => (value === '' ? undefined : value),
     z.string().optional(),
@@ -73,7 +50,7 @@ export const envSchema = z.object({
     z.string().optional(),
   ),
 
-  // Alerting — optional with a sane default (see IDEA.md).
+  // Alerting — optional with a sane default.
   ALERT_HEARTBEAT_HOURS: z.coerce.number().int().positive().default(24),
 
   // Disaster recovery — self-backup of the orchestrator Mongo. Reserved repo
@@ -83,7 +60,7 @@ export const envSchema = z.object({
   SELF_BACKUP_CRON: z.string().min(1).default('0 3 * * *'),
 
   // Optional failure-alert webhook. When set, `sendFailureAlert` POSTs the
-  // alert payload here in addition to the Resend email (per IDEA.md §7).
+  // alert payload here in addition to the Resend email .
   ALERT_WEBHOOK_URL: z.string().url().optional(),
 
   // ------------------------------------------------------------------
@@ -109,8 +86,6 @@ export const envSchema = z.object({
   // ------------------------------------------------------------------
   RATE_LIMIT_AUTH_WINDOW_MS: z.coerce.number().int().positive().default(15 * 60 * 1000),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().int().positive().default(10),
-  RATE_LIMIT_WEBHOOK_WINDOW_MS: z.coerce.number().int().positive().default(60 * 1000),
-  RATE_LIMIT_WEBHOOK_MAX: z.coerce.number().int().positive().default(120),
   // ------------------------------------------------------------------
   // Fleet agents: machine-surface rate limit + liveness/lease windows.
   // Sized for one agent per IP: heartbeat ~30s + poll ~10s + log batches.
@@ -133,11 +108,6 @@ export const envSchema = z.object({
   // SSH host-key pinning: when set, the transport pings this fingerprint at
   // connection setup and rejects any mismatch. Format: `sha256:BASE64`.
   STORAGE_SSH_HOST_KEY_FINGERPRINT: z.string().optional(),
-
-  // Legacy MERN integrations — optional, kept for backwards compatibility.
-  STRIPE_SECRET_KEY: z.string().optional(),
-  SENDGRID_API_KEY: z.string().optional(),
-  MAILCHIMP_API_KEY: z.string().optional(),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });

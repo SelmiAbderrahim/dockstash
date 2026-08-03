@@ -4,7 +4,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   ActivityIcon,
   ArchiveIcon,
-  CreditCardIcon,
   FolderIcon,
   LayoutDashboardIcon,
   LogOutIcon,
@@ -40,7 +39,7 @@ interface NavItem {
 interface NavGroup {
   labelKey: string;
   items: NavItem[];
-  role?: 'Superadmin' | 'Admin';
+  role?: 'Admin';
 }
 
 /** SPEC-02 grouped nav — labels resolved via `t('sidebar.groups.*'|'nav.*')`. */
@@ -66,7 +65,6 @@ const GROUPS: NavGroup[] = [
   {
     labelKey: 'sidebar.groups.account',
     items: [
-      { to: '/billing', labelKey: 'nav.billing', icon: CreditCardIcon },
       { to: '/settings', labelKey: 'nav.settings', icon: SettingsIcon },
       { to: '/profile', labelKey: 'nav.profile', icon: UserIcon },
     ],
@@ -75,11 +73,6 @@ const GROUPS: NavGroup[] = [
     labelKey: 'sidebar.groups.admin',
     role: 'Admin',
     items: [{ to: '/admin', labelKey: 'nav.admin', icon: ShieldIcon }],
-  },
-  {
-    labelKey: 'sidebar.groups.admin',
-    role: 'Superadmin',
-    items: [{ to: '/superadmin', labelKey: 'nav.superadmin', icon: ShieldIcon }],
   },
 ];
 
@@ -95,11 +88,7 @@ export const AppSidebar = () => {
 
   if (!authenticated) return null;
 
-  const visibleGroups = GROUPS.filter((group) => {
-    if (!group.role) return true;
-    if (group.role === 'Superadmin') return role === 'Superadmin';
-    return role === 'Admin' || role === 'Superadmin';
-  });
+  const visibleGroups = GROUPS.filter((group) => !group.role || role === group.role);
 
   return (
     <Sidebar collapsible="icon" side={isRtl(i18n.language) ? 'right' : 'left'}>

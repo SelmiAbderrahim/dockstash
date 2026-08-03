@@ -1,6 +1,6 @@
 # CI gates
 
-Dockstash CI runs in Docker (prod parity, IDEA.md §2/§9). Every push and
+Dockstash CI runs in Docker (prod parity). Every push and
 pull-request runs the pipeline below on both `client/` and `server/`. Any
 gate failure blocks the merge.
 

@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import { ApiError } from '@shared/api/client';
 import { fleetReducer } from './slice';
-import { deleteAgent, fetchFleet, lockedReasonFromError, registerAgent, rotateAgentKey } from './thunks';
+import { deleteAgent, fetchFleet, registerAgent, rotateAgentKey } from './thunks';
 import * as api from '../api';
 import type { FleetEntry } from '../types';
 
@@ -39,57 +39,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('lockedReasonFromError', () => {
-  it('returns the reason + cap details for a 403 carrying agentLimitReached', () => {
-    expect(lockedReasonFromError(lockedError())).toEqual({
-      reason: 'agentLimitReached',
-      capInfo: { used: 1, cap: 1 },
-    });
-  });
-
-  it('returns null capInfo when used/cap are absent', () => {
-    const err = new ApiError('x', 403, {
-      error: { details: { reason: 'agentLimitReached' } },
-    });
-    expect(lockedReasonFromError(err)).toEqual({ reason: 'agentLimitReached', capInfo: null });
-  });
-
-  it('returns null for non-ApiError values', () => {
-    expect(lockedReasonFromError(new Error('boom'))).toBeNull();
-  });
-
-  it('returns null for ApiErrors with a non-403 status', () => {
-    const err = new ApiError('x', 500, {
-      error: { details: { reason: 'agentLimitReached' } },
-    });
-    expect(lockedReasonFromError(err)).toBeNull();
-  });
-
-  it('returns null when the body is missing or not an object', () => {
-    expect(lockedReasonFromError(new ApiError('x', 403, null))).toBeNull();
-    expect(lockedReasonFromError(new ApiError('x', 403, 'forbidden'))).toBeNull();
-  });
-
-  it('returns null when the error field is missing or not an object', () => {
-    expect(lockedReasonFromError(new ApiError('x', 403, {}))).toBeNull();
-    expect(lockedReasonFromError(new ApiError('x', 403, { error: 'forbidden' }))).toBeNull();
-  });
-
-  it('returns null when the details are missing or not an object', () => {
-    expect(lockedReasonFromError(new ApiError('x', 403, { error: {} }))).toBeNull();
-    expect(
-      lockedReasonFromError(new ApiError('x', 403, { error: { details: 'nope' } })),
-    ).toBeNull();
-  });
-
-  it('returns null when the reason is absent or not agentLimitReached', () => {
-    expect(lockedReasonFromError(new ApiError('x', 403, { error: { details: {} } }))).toBeNull();
-    expect(
-      lockedReasonFromError(new ApiError('x', 403, { error: { details: { reason: 'other' } } })),
-    ).toBeNull();
-  });
-});
-
 describe('fetchFleet', () => {
   it('resolves with the fleet entries', async () => {
     mocked.fetchFleetRequest.mockResolvedValue([entry]);
@@ -99,17 +48,12 @@ describe('fetchFleet', () => {
     expect(result.payload).toEqual([entry]);
   });
 
-  it('rejects with the locked reason on an entitlement 403', async () => {
+  it('rejects with the server message on a 403', async () => {
     mocked.fetchFleetRequest.mockRejectedValue(lockedError());
     const store = makeStore();
     const result = await store.dispatch(fetchFleet());
     expect(fetchFleet.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({
-      message: 'Locked',
-      lockedReason: 'agentLimitReached',
-      capInfo: { used: 1, cap: 1 },
-      conflict: false,
-    });
+    expect(result.payload).toEqual({ message: 'Locked', conflict: false });
   });
 
   it('rejects with a plain message on generic failures', async () => {
@@ -117,7 +61,7 @@ describe('fetchFleet', () => {
     const store = makeStore();
     const result = await store.dispatch(fetchFleet());
     expect(fetchFleet.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'boom', lockedReason: null, capInfo: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'boom', conflict: false });
   });
 
   it('passes the silent flag through to the pending/fulfilled meta', async () => {
@@ -165,7 +109,7 @@ describe('registerAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(registerAgent({ name: 'w', host: 'h' }));
     expect(registerAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'nope', lockedReason: null, capInfo: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'nope', conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 
@@ -180,8 +124,6 @@ describe('registerAgent', () => {
     expect(registerAgent.rejected.match(result)).toBe(true);
     expect(result.payload).toEqual({
       message: 'An agent for this host already exists.',
-      lockedReason: null,
-      capInfo: null,
       conflict: true,
     });
   });
@@ -207,7 +149,7 @@ describe('rotateAgentKey', () => {
     const store = makeStore();
     const result = await store.dispatch(rotateAgentKey('a1'));
     expect(rotateAgentKey.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'agent offline', lockedReason: null, capInfo: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'agent offline', conflict: false });
   });
 });
 
@@ -228,7 +170,7 @@ describe('deleteAgent', () => {
     const store = makeStore();
     const result = await store.dispatch(deleteAgent('a1'));
     expect(deleteAgent.rejected.match(result)).toBe(true);
-    expect(result.payload).toEqual({ message: 'cannot remove', lockedReason: null, capInfo: null, conflict: false });
+    expect(result.payload).toEqual({ message: 'cannot remove', conflict: false });
     expect(mocked.fetchFleetRequest).not.toHaveBeenCalled();
   });
 });

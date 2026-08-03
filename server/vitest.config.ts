@@ -25,10 +25,6 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
         'src/server.ts',
-        // Thin CLI seam over the tested seedSuperadmin() — like src/server.ts.
-        'src/seed-superadmin.ts',
-        // Thin CLI seam over the tested seedPricingTiers() — like above.
-        'src/seed-pricing-tiers.ts',
         'src/config/logger.ts',
         // Thin ioredis + rate-limit-redis seam wired at boot from server.ts —
         // real socket, mocked in unit tests via `setRedisStoreFactory` in

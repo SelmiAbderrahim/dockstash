@@ -17,7 +17,6 @@ import {
   resetSchedulerController,
 } from '../scheduler/scheduler.controller.js';
 import { MemoryQueue } from '../scheduler/scheduler.queue.memory.js';
-import { allowAllEntitlements } from '../scheduler/scheduler.entitlements.js';
 import { PassThrough } from 'node:stream';
 import type { ResticRunnerExt } from '../scheduler/scheduler.boundaries.js';
 import type { DockerClient, DockerInspectResult } from './backups.boundaries.js';
@@ -356,7 +355,7 @@ describe('POST /api/scheduler/enqueue: restore end-to-end', () => {
     queue.setProcessor(async (job) => {
       await dispatchJob(job, { resticRunner: runner });
     });
-    configureSchedulerController({ queue, entitlements: allowAllEntitlements });
+    configureSchedulerController({ queue });
 
     const res = await request(app)
       .post('/api/scheduler/enqueue')
@@ -401,8 +400,7 @@ describe('POST /api/scheduler/enqueue: restore end-to-end', () => {
     });
     configureSchedulerController({
       queue: new MemoryQueue(),
-      entitlements: allowAllEntitlements,
-    });
+      });
     const res = await request(app)
       .post('/api/scheduler/enqueue')
       .set('Authorization', `JWT ${token}`)

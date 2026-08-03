@@ -5,9 +5,8 @@ import { Card, CardContent } from './card';
 import { IconTile } from './icon-tile';
 
 /**
- * SPEC-05B/C shared stat card. Absorbs the ad-hoc
- * `features/superadmin/components/StatTile.tsx` so user + admin surfaces
- * share one implementation.
+ * SPEC-05B/C shared stat card — one implementation behind every user and
+ * admin stat surface.
  *
  * - Variant B — bordered card with an optional footer progress bar
  *   (usage-vs-cap meters, health rollups).

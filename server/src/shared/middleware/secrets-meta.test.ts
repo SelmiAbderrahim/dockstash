@@ -11,11 +11,10 @@ import { REDACT_PATHS } from '../../config/logger.js';
  *   (a) reintroduces a plaintext secret field on a Mongoose schema without an
  *       explicit `// plaintext-safe: <reason>` annotation, OR
  *   (b) drops a redaction path from `config/logger.ts`, OR
- *   (c) puts a raw `console.log` inside the superadmin module, OR
- *   (d) drops a `.env` file into a subdirectory (`client/` or `server/`), OR
- *   (e) reintroduces `env.NODE_ENV === 'development' ... err.stack` in the
+ *   (c) drops a `.env` file into a subdirectory (`client/` or `server/`), OR
+ *   (d) reintroduces `env.NODE_ENV === 'development' ... err.stack` in the
  *       error handler response, OR
- *   (f) reuses `env.MASTER_ENCRYPTION_KEY` verbatim as the self-backup restic
+ *   (e) reuses `env.MASTER_ENCRYPTION_KEY` verbatim as the self-backup restic
  *       password (S7-03)
  * fails loudly before the suite exercises the runtime.
  *
@@ -132,10 +131,9 @@ describe('secrets-meta: pino redaction covers the required secret-key allowlist'
     '*.apiKeyHash',
     '*.repoPassword',
     'MASTER_ENCRYPTION_KEY',
-    'SUPERADMIN_PASSWORD',
     'JWT_SECRET',
-    'POLAR_ACCESS_TOKEN',
-    'POLAR_WEBHOOK_SECRET',
+    'SESSION_SECRET',
+    'RESEND_API_KEY',
   ];
   for (const key of required) {
     it(`redacts ${key}`, () => {
@@ -145,29 +143,7 @@ describe('secrets-meta: pino redaction covers the required secret-key allowlist'
 });
 
 // ---------------------------------------------------------------------------
-// (c) no `console.log` inside the superadmin module — the seeder must use
-//     the redacted pino logger. ESLint also enforces this at edit time; the
-//     static test is belt-and-braces so a suppressed lint doesn't slip past
-//     coverage.
-// ---------------------------------------------------------------------------
-
-describe('secrets-meta: no console.* in modules/superadmin/**', () => {
-  it('every superadmin source file routes through the redacted logger', () => {
-    const files = walk(
-      path.resolve(MODULES_DIR, 'superadmin'),
-      (p) => p.endsWith('.ts') && !p.endsWith('.test.ts'),
-    );
-    for (const file of files) {
-      const src = readFileSync(file, 'utf8');
-      expect(src, `${path.relative(SERVER_SRC, file)} must NOT use console.*`).not.toMatch(
-        /\bconsole\.(log|error|warn|info|debug)\b/,
-      );
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// (d) no subdirectory `.env` files. Root `.env` is the single source of truth.
+// (c) no subdirectory `.env` files. Root `.env` is the single source of truth.
 // ---------------------------------------------------------------------------
 
 describe('secrets-meta: no `.env` under client/ or server/', () => {
@@ -196,7 +172,7 @@ describe('secrets-meta: no `.env` under client/ or server/', () => {
 });
 
 // ---------------------------------------------------------------------------
-// (e) errorHandler MUST NOT leak `err.stack` on the response (S7-04).
+// (d) errorHandler MUST NOT leak `err.stack` on the response (S7-04).
 // ---------------------------------------------------------------------------
 
 describe('secrets-meta: errorHandler never exposes err.stack in the response', () => {
@@ -213,7 +189,7 @@ describe('secrets-meta: errorHandler never exposes err.stack in the response', (
 });
 
 // ---------------------------------------------------------------------------
-// (f) self-backup restic password is derived, not the master key verbatim
+// (e) self-backup restic password is derived, not the master key verbatim
 //     (S7-03).
 // ---------------------------------------------------------------------------
 

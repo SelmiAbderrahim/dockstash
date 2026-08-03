@@ -12,20 +12,13 @@ import { User } from '../users/users.model.js';
 import { Project } from './backups.model.js';
 import { createProject } from './backups.service.js';
 import { serializeProject } from './backups.serialize.js';
-import { __setPaymentProviderForTests } from '../billing/active-provider.js';
-import { PolarProvider } from '../billing/providers/polar.js';
-import { assertAlertsAllowed } from '../billing/entitlements.service.js';
 
 const app = createApp();
 
-// OSS self-host mode → business ceiling; tier-denial tests flip locally.
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
   await startMemoryMongo();
 });
 afterAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
   await stopMemoryMongo();
 });
 beforeEach(async () => {
@@ -83,41 +76,6 @@ describe('PATCH /api/backups/:projectId/alerts', () => {
         .send({ webhookUrl });
       expect(res.status).toBe(400);
     }
-  });
-
-  it('403s the free tier with the alertsLocked reason', async () => {
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(
-      new PolarProvider({
-        nowSeconds: () => 1_700_000_000,
-        getWebhookSecret: () => 'test-webhook-secret',
-      }),
-    );
-    try {
-      const a = await seedUser('wh-free@t.com');
-      const project = await createProject(a.id, {
-        name: 'p',
-        path: '/var/www/p',
-        repoPassword: 'password1',
-      });
-      const res = await request(app)
-        .patch(`/api/backups/${project._id}/alerts`)
-        .set('Authorization', `JWT ${a.token}`)
-        .send({ webhookUrl: 'https://hooks.example/x' });
-      expect(res.status).toBe(403);
-      expect(res.body.error.details.reason).toBe('alertsLocked');
-      // assertAlertsAllowed also resolves happily for the business ceiling.
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-      __setPaymentProviderForTests(null);
-    }
-  });
-
-  it('assertAlertsAllowed resolves under the OSS business ceiling', async () => {
-    const a = await seedUser('wh-oss@t.com');
-    await expect(assertAlertsAllowed(a.id)).resolves.toMatchObject({
-      slug: 'business',
-    });
   });
 
   it('404s unknown AND foreign projects (surface #2 existence-cloak)', async () => {

@@ -16,23 +16,20 @@ export const redirectToOAuth = (provider: OAuthProviderName): void => {
 
 export interface OAuthCallbackPayload {
   token?: string;
-  challengeId?: string;
   error?: string;
 }
 
 /**
  * The server hands the result back in the URL fragment (never query — keeps
- * tokens out of server logs and Referer headers): `#token=...`,
- * `#otp=1&challengeId=...` or `#error=<code>`.
+ * tokens out of server logs and Referer headers): `#token=...` or
+ * `#error=<code>`.
  */
 export const parseOAuthCallbackHash = (hash: string): OAuthCallbackPayload => {
   const params = new URLSearchParams(hash.replace(/^#/, ''));
   const payload: OAuthCallbackPayload = {};
   const token = params.get('token');
-  const challengeId = params.get('challengeId');
   const error = params.get('error');
   if (token) payload.token = token;
-  if (challengeId) payload.challengeId = challengeId;
   if (error) payload.error = error;
   return payload;
 };

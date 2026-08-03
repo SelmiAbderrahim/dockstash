@@ -80,17 +80,12 @@ describe('Header mobile menu', () => {
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows the Superadmin link only for a superadmin', () => {
-    const { unmount } = renderHeader(true, 'Superadmin');
-    expect(screen.getAllByRole('link', { name: 'Superadmin' }).length).toBeGreaterThan(0);
+  it('shows the authenticated nav for a signed-in visitor only', () => {
+    const { unmount } = renderHeader(true, 'Member');
+    expect(screen.getAllByRole('link', { name: 'Dashboard' }).length).toBeGreaterThan(0);
     unmount();
 
-    renderHeader(true, 'Member');
-    expect(screen.queryByRole('link', { name: 'Superadmin' })).not.toBeInTheDocument();
-  });
-
-  it('shows no Superadmin link for anonymous visitors', () => {
     renderHeader(false);
-    expect(screen.queryByRole('link', { name: 'Superadmin' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).not.toBeInTheDocument();
   });
 });

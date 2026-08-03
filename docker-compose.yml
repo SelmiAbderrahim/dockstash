@@ -1,6 +1,7 @@
-# Dockstash control plane — see docs/running-with-docker.md.
-# Secrets (MASTER_ENCRYPTION_KEY, POLAR_*, RESEND_API_KEY) are injected from the
-# root .env via `environment:` below — never baked into images.
+# Dockstash control plane — see docs/self-hosting.md.
+# Secrets (MASTER_ENCRYPTION_KEY, JWT_SECRET, SESSION_SECRET, RESEND_API_KEY)
+# are injected from the root .env via `environment:` below — never baked into
+# images.
 
 name: dockstash
 
@@ -99,7 +100,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       # Fixed internal listen port. The host-side mapping is API_PORT below;
-      # keep this at 8080 so the port mapping and web's API_INTERNAL_URL agree.
+      # keep this at 8080 so the host port mapping below stays predictable.
       PORT: 8080
       LOG_LEVEL: ${LOG_LEVEL:-info}
       MONGODB_URI: ${MONGODB_URI}
@@ -112,18 +113,6 @@ services:
       # directly), so it must be a plain env var from the root .env.
       MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
-      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-none}
-      # Polar credentials + product catalog. env.ts reads process.env directly,
-      # so these must be plain env vars or checkout stays unconfigured and every
-      # plan renders "unavailable". Empty values are treated as unset by
-      # env.ts / polar-config.
-      POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
-      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
-      POLAR_SERVER: ${POLAR_SERVER:-production}
-      POLAR_PRO_PRODUCT_ID: ${POLAR_PRO_PRODUCT_ID:-}
-      POLAR_BUSINESS_PRODUCT_ID: ${POLAR_BUSINESS_PRODUCT_ID:-}
-      POLAR_PRO_YEARLY_PRODUCT_ID: ${POLAR_PRO_YEARLY_PRODUCT_ID:-}
-      POLAR_BUSINESS_YEARLY_PRODUCT_ID: ${POLAR_BUSINESS_YEARLY_PRODUCT_ID:-}
       # env.ts reads process.env directly, so these must be plain env vars.
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM: ${RESEND_FROM}
@@ -134,11 +123,6 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
-      # Superadmin bootstrap — consumed by the entrypoint seeder. The `:-`
-      # default yields '' when unset; env.ts preprocesses '' → undefined so
-      # the free / self-host tier still boots.
-      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-}
-      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-}
       DOCKER_HOST: tcp://docker-socket-proxy:2375
       # Real restic execution inside the container (the image bakes the pinned
       # restic binary + openssh-client). Set to `placeholder` to disable.
@@ -170,9 +154,8 @@ services:
       retries: 3
       start_period: 20s
 
-  # Public web entrypoint — Node SSR server (server.js). Renders marketing
-  # pages server-side for crawlers/AI, serves the CSR shell for the app, and
-  # reverse-proxies /robots.txt + /sitemap*.xml to the api SEO module.
+  # Public web entrypoint — Node static server (server.js). Serves the built
+  # SPA: hashed assets plus an index.html history fallback.
   web:
     build:
       context: ./client
@@ -180,8 +163,6 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL}
-        VITE_SITE_URL: ${VITE_SITE_URL}
-        VITE_GA_ID: ${VITE_GA_ID}
     restart: unless-stopped
     networks: [dockstash]
     depends_on:
@@ -190,16 +171,11 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       WEB_PORT: 3000
-      # Internal origin of the api service for the SEO reverse-proxy.
-      API_INTERNAL_URL: http://api:8080
-      # Runtime copy of the public origin — drives the www→apex canonical
-      # redirect in server.js (the build ARG only reaches the Vite bundle).
-      VITE_SITE_URL: ${VITE_SITE_URL}
     ports:
       # Loopback-only — nginx is the sole public entrypoint. Host port off the
       # 3000 default to avoid colliding with other stacks on this box.
       - "127.0.0.1:${WEB_PORT:-43000}:3000"
-    # Least-privilege hardening (mirrors api). The SSR server runs as a non-root
+    # Least-privilege hardening (mirrors api). The web server runs as a non-root
     # user (client/Dockerfile) and never needs privilege escalation or extra
     # capabilities.
     security_opt:

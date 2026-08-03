@@ -65,36 +65,6 @@ export const ru: DictionaryShape = {
       providerNotEnabled: 'Этот способ входа не включён.',
     },
   },
-  billing: {
-    checkout: {
-      title: 'Оплата',
-      submit: 'Оплатить',
-      success: 'Оплата получена. Спасибо!',
-    },
-    portal: {
-      title: 'Биллинг',
-    },
-    error: {
-      notConfigured: 'Платёжный провайдер не настроен.',
-      userNotFound: 'Пользователь не найден.',
-      noCustomer: 'Для этого пользователя не найден биллинг-клиент.',
-      noSubscription: 'Для этого пользователя не найдена активная подписка.',
-      providerFailure: 'Ошибка платёжного провайдера: {{message}}',
-    },
-    entitlements: {
-      projectLimitReached: 'Ваш тариф не позволяет добавить больше проектов. Обновите тариф, чтобы добавить ещё.',
-      schedulesLocked: 'Плановые резервные копии недоступны на вашем текущем тарифе.',
-      frequencyNotAllowed: 'Ваш тариф не поддерживает такую частоту расписания.',
-      restoreDrillsLocked: 'Автоматические проверки восстановления доступны в тарифах Pro и Business.',
-      pitrLocked: 'Восстановление на момент времени доступно в тарифах Pro и Business.',
-      mirrorLocked: 'Режим зеркалирования доступен в тарифе Business.',
-      alertsLocked: 'Каналы оповещений (почта и вебхуки) доступны в тарифах Pro и Business.',
-      agentLimitReached: 'Достигнут лимит агентов для вашего тарифа. Оформите повышение, чтобы подключить больше серверов.',
-      projectPaused: 'Проект приостановлен. Возобновите или обновите тариф, чтобы запускать резервное копирование.',
-      selectionInvalid: 'Выберите от одного до {{cap}} проектов, которые останутся активными.',
-      notOwner: 'Вы не являетесь владельцем одного или нескольких из этих проектов.',
-    },
-  },
   email: {
     contact: {
       confirmation: 'Ваше сообщение отправлено. Мы скоро свяжемся с вами.',
@@ -124,42 +94,6 @@ export const ru: DictionaryShape = {
       body:
         'Добро пожаловать в Dockstash, {{name}}.\n\n' +
         'Войдите и управляйте резервными копиями на {{clientUrl}}.\n',
-    },
-    inviteClaimed: {
-      subject: 'Приглашение активировано: {{plan}}',
-      body:
-        'Ссылка-приглашение активирована.\n\n' +
-        'Получатель: {{claimantName}} <{{claimantEmail}}>\n' +
-        'Тариф: {{plan}} ({{grantDuration}})\n' +
-        'Период предоставления: {{claimedAt}} → {{currentPeriodEnd}}\n' +
-        'Метка: {{label}}\n\n' +
-        'Управление приглашениями: {{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: 'Ваш чек Dockstash',
-      body:
-        'Спасибо за оплату {{amount}} за тариф {{plan}}.\n\n' +
-        'Управляйте оплатой на {{clientUrl}}/billing.\n',
-    },
-    dunning: {
-      subject: 'Проблема с оплатой подписки Dockstash',
-      body:
-        'Не удалось списать средства за тариф {{plan}}.\n\n' +
-        'Обновите способ оплаты до {{graceEndsAt}}, чтобы сохранить тариф: {{clientUrl}}/billing.\n',
-    },
-    downgradeNotice: {
-      subject: 'Ваш тариф Dockstash изменён на Free',
-      body:
-        'Срок действия тарифа {{plan}} истёк, и ваш аккаунт переведён на тариф Free.\n\n' +
-        'Существующие резервные копии в безопасности — ничего не удалено. Проекты сверх ' +
-        'лимита Free приостановлены (только чтение), пока вы не оформите подписку заново: {{clientUrl}}/billing.\n',
-    },
-    reactivation: {
-      subject: 'Ваша подписка Dockstash снова активна',
-      body:
-        'Хорошие новости — ваша подписка {{plan}} снова активна, и все приостановленные ' +
-        'проекты снова в сети.\n\n' +
-        'Управляйте аккаунтом на {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'ПРОВАЛ теста восстановления — проект {{project}}',
@@ -199,12 +133,6 @@ export const ru: DictionaryShape = {
         'Для проекта «{{project}}» не выполнено ни одной успешной резервной копии за последние {{hours}} час(ов).\n\n' +
         'Последняя успешная резервная копия: {{lastGoodAt}}\n\n' +
         'Откройте панель: {{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: 'Ваш код входа в Dockstash',
-      body:
-        'Ваш код подтверждения входа: {{code}}\n\n' +
-        'Он истекает через {{minutes}} минут. Если вы не пытались войти, немедленно смените пароль.\n',
     },
     neverRun: 'никогда',
   },
@@ -265,14 +193,12 @@ export const ru: DictionaryShape = {
       scheduleNotFound: 'Расписание не найдено.',
       notOwner: 'Вы не являетесь владельцем этого расписания.',
       repoBusy: 'Репозиторий {{projectId}} занят — выполняется другая задача.',
-      entitlementDenied: 'Ваш тариф не позволяет создать это расписание.',
       pruneFailed: 'Prune завершился с ошибкой: {{message}}',
     },
     success: {
       scheduled: 'Расписание сохранено.',
       enqueued: 'Задача поставлена в очередь.',
       prunePassed: 'Prune успешно завершён.',
-      pruneSkippedPaused: 'Удаление по политике пропущено: проект приостановлен; сохранённые снимки не удаляются.',
     },
     job: {
       failedRetriesExhausted: 'Задача не выполнена после {{attempts}} попыток: {{message}}',
@@ -326,28 +252,6 @@ export const ru: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: 'Эта ссылка-приглашение недействительна.',
-      expired: 'Срок действия этой ссылки-приглашения истёк.',
-      revoked: 'Эта ссылка-приглашение отозвана.',
-      alreadyClaimed: 'Эта ссылка-приглашение уже использована.',
-      alreadySubscribed: 'У вас уже есть активный платный тариф.',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: 'Учётные записи суперадминистратора нельзя изменить или удалить.',
-    },
-    success: {
-      roleChanged: 'Роль пользователя обновлена.',
-      userVerified: 'Адрес электронной почты пользователя отмечен как подтверждённый.',
-      legalHoldUpdated: 'Юридическое удержание обновлено.',
-      deletionScheduled: 'Удаление учётной записи запланировано.',
-      invitationCreated: 'Ссылка-приглашение создана.',
-      invitationRevoked: 'Ссылка-приглашение отозвана.',
     },
   },
   security: {

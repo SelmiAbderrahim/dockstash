@@ -13,7 +13,6 @@
   "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères.",
   "emailRequired": "Veuillez saisir un e-mail",
   "passwordRequired": "Veuillez saisir un mot de passe",
-  "otpCodeInvalid": "Saisissez le code à 6 chiffres.",
   "firstNameRequired": "Veuillez saisir un prénom",
   "lastNameRequired": "Veuillez saisir un nom"
 }

@@ -10,7 +10,6 @@ import {
   createAuthRateLimiter,
   createContactRateLimiter,
   createExportRateLimiter,
-  createWebhookRateLimiter,
   getRedisStoreFactory,
   rateLimitHandler,
   setRedisStoreFactory,
@@ -292,7 +291,6 @@ describe('rate-limit Redis store selection (S1-02)', () => {
     // Each factory is constructed at call time — none should call the injected
     // factory because the test-env guard fires first.
     createAuthRateLimiter();
-    createWebhookRateLimiter();
     createAgentRateLimiter();
     createContactRateLimiter();
     createExportRateLimiter();
@@ -340,11 +338,10 @@ describe('rate-limit Redis store selection (S1-02)', () => {
     (env as { REDIS_URL?: string }).REDIS_URL = 'redis://localhost:6379';
     (env as { NODE_ENV: string }).NODE_ENV = 'production';
     createAuthRateLimiter();
-    createWebhookRateLimiter();
     createAgentRateLimiter();
     createContactRateLimiter();
     createExportRateLimiter();
-    expect(factory).toHaveBeenCalledTimes(5);
+    expect(factory).toHaveBeenCalledTimes(4);
   });
 });
 

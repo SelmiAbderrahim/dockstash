@@ -63,36 +63,6 @@ export const zh: DictionaryShape = {
       providerNotEnabled: '该登录方式未启用。',
     },
   },
-  billing: {
-    checkout: {
-      title: '结算',
-      submit: '立即支付',
-      success: '已收到付款。感谢！',
-    },
-    portal: {
-      title: '账单',
-    },
-    error: {
-      notConfigured: '支付提供方未配置。',
-      userNotFound: '未找到用户。',
-      noCustomer: '未找到此用户的账单客户。',
-      noSubscription: '未找到此用户的有效订阅。',
-      providerFailure: '支付提供方错误：{{message}}',
-    },
-    entitlements: {
-      projectLimitReached: '您的套餐不允许添加更多项目。请升级以添加更多。',
-      schedulesLocked: '当前套餐不支持定时备份。',
-      frequencyNotAllowed: '您的套餐不支持该定时频率。',
-      restoreDrillsLocked: '自动恢复演练在 Pro 和 Business 套餐中可用。',
-      pitrLocked: '时间点恢复在 Pro 和 Business 套餐中可用。',
-      mirrorLocked: '镜像模式在 Business 套餐中可用。',
-      alertsLocked: '警报通道（邮件和 Webhook）在 Pro 和 Business 套餐中可用。',
-      agentLimitReached: '已达到当前套餐的代理数量上限。升级以连接更多服务器。',
-      projectPaused: '该项目已暂停。请重新激活或升级以运行备份。',
-      selectionInvalid: '请选择 1 到 {{cap}} 个项目保持活动。',
-      notOwner: '您不是其中一个或多个项目的所有者。',
-    },
-  },
   email: {
     contact: {
       confirmation: '您的邮件已发送。我们会尽快与您联系。',
@@ -122,42 +92,6 @@ export const zh: DictionaryShape = {
       body:
         '欢迎使用 Dockstash，{{name}}。\n\n' +
         '请在 {{clientUrl}} 登录并管理您的备份。\n',
-    },
-    inviteClaimed: {
-      subject: '邀请已激活：{{plan}}',
-      body:
-        '有一个邀请链接已被激活。\n\n' +
-        '领取人：{{claimantName}} <{{claimantEmail}}>\n' +
-        '套餐：{{plan}}（{{grantDuration}}）\n' +
-        '赠送周期：{{claimedAt}} → {{currentPeriodEnd}}\n' +
-        '标签：{{label}}\n\n' +
-        '管理邀请：{{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: '您的 Dockstash 收据',
-      body:
-        '感谢您为 {{plan}} 计划支付 {{amount}}。\n\n' +
-        '在 {{clientUrl}}/billing 管理账单。\n',
-    },
-    dunning: {
-      subject: 'Dockstash 订阅付款问题',
-      body:
-        '我们无法为 {{plan}} 计划扣款。\n\n' +
-        '请在 {{graceEndsAt}} 之前更新支付方式以保留此计划：{{clientUrl}}/billing。\n',
-    },
-    downgradeNotice: {
-      subject: '您的 Dockstash 计划已变更为 Free',
-      body:
-        '您的 {{plan}} 计划已到期，您的账户现已转为 Free 计划。\n\n' +
-        '您现有的备份是安全的 — 没有任何内容被删除。超出 Free ' +
-        '限额的项目将被暂停（只读），直到您重新订阅：{{clientUrl}}/billing。\n',
-    },
-    reactivation: {
-      subject: '您的 Dockstash 订阅已重新激活',
-      body:
-        '好消息 — 您的 {{plan}} 订阅已重新激活，所有已暂停的 ' +
-        '项目已恢复在线。\n\n' +
-        '在 {{clientUrl}}/billing 管理您的账户。\n',
     },
     drillFailure: {
       subject: '恢复演练失败 — 项目 {{project}}',
@@ -197,12 +131,6 @@ export const zh: DictionaryShape = {
         '项目「{{project}}」在过去 {{hours}} 小时内没有成功的备份。\n\n' +
         '最近一次成功备份：{{lastGoodAt}}\n\n' +
         '打开仪表板：{{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: '您的 Dockstash 登录验证码',
-      body:
-        '您的登录验证码是：{{code}}\n\n' +
-        '它将在 {{minutes}} 分钟后过期。如果您没有尝试登录，请立即修改密码。\n',
     },
     neverRun: '从未',
   },
@@ -262,14 +190,12 @@ export const zh: DictionaryShape = {
       scheduleNotFound: '未找到计划。',
       notOwner: '您不是此计划的所有者。',
       repoBusy: '仓库 {{projectId}} 正忙 — 另一个任务正在运行。',
-      entitlementDenied: '您的套餐不允许此计划。',
       pruneFailed: 'Prune 失败：{{message}}',
     },
     success: {
       scheduled: '计划已保存。',
       enqueued: '任务已加入队列。',
       prunePassed: 'Prune 成功完成。',
-      pruneSkippedPaused: '保留策略清理已跳过：项目已暂停；已存储的快照将保留。',
     },
     job: {
       failedRetriesExhausted: '任务在 {{attempts}} 次尝试后失败：{{message}}',
@@ -323,28 +249,6 @@ export const zh: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: '该邀请链接无效。',
-      expired: '该邀请链接已过期。',
-      revoked: '该邀请链接已被撤销。',
-      alreadyClaimed: '该邀请链接已被使用。',
-      alreadySubscribed: '您已拥有有效的付费套餐。',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: '超级管理员账户不能被修改或删除。',
-    },
-    success: {
-      roleChanged: '用户角色已更新。',
-      userVerified: '用户邮箱已标记为已验证。',
-      legalHoldUpdated: '法律保留状态已更新。',
-      deletionScheduled: '账户删除已排期。',
-      invitationCreated: '邀请链接已创建。',
-      invitationRevoked: '邀请链接已撤销。',
     },
   },
   security: {

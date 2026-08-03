@@ -1,6 +1,6 @@
 # Security model & threat model
 
-This document describes the hardening pass added in prompt 11 (IDEA.md §1) and
+This document describes the hardening pass added in the security-hardening pass and
 the blast radius of the Dockstash orchestrator.
 
 ## App-layer hardening
@@ -9,10 +9,7 @@ the blast radius of the Dockstash orchestrator.
 |---------|---------|-------|
 | Common HTTP headers | `helmet()` (defaults, `crossOriginResourcePolicy: same-site`, `referrerPolicy: no-referrer`) | `shared/middleware/security-headers.ts` |
 | Credential-stuffing on `/api/auth/*` | `express-rate-limit`, default 10 req / 15 min per IP (`RATE_LIMIT_AUTH_*`); Redis-backed store when `REDIS_URL` set so multi-instance deployments share one bucket (S1-02) — falls back to in-memory otherwise | `shared/middleware/rate-limit.ts` + `shared/middleware/rate-limit-redis-store.ts` |
-| Webhook flood before signature check | `express-rate-limit`, default 120 req / min per IP; runs BEFORE `express.raw` — never consumes the body used for HMAC verify | `shared/middleware/rate-limit.ts` + `app.ts` |
 | Passport JWT algorithm | Strategy pins `algorithms: ['HS256']` — rejects `alg:none` and RS256-confusion. Only one verify path (passport-jwt); no hand-parsed tokens; enforced by the static meta-test at `shared/middleware/security-meta.test.ts` and the `passport-jwt-algorithms-pin` rule | `modules/auth/passport.strategies.ts` |
-| Verify-before-parse for Polar webhook | Raw-body route mounted BEFORE `express.json(...)` so HMAC verify sees the un-parsed buffer; static guard in `security-meta.test.ts` fails if mount order regresses | `app.ts` |
-| Superadmin OTP step-up | Untrusted-device login returns `otpRequired: true` and NO JWT until `POST /api/auth/otp/verify` succeeds | `modules/auth/auth.controller.ts` + `modules/auth/login-otp.service.ts` |
 | Non-enumerating auth surfaces | Same generic response for known / unknown email on `/api/auth/{forgot-password,resend-verification}`; both hit and miss branches pad to `authTimingPadMs` (default 400ms) so response-latency samples cannot cluster into "known" vs "unknown" populations (S1-03) | `modules/auth/auth.service.ts` (`padAuthTiming`) |
 | Unverified accounts blocked from product surfaces | Every authenticated router — including `/api/health/{projects,overview,alerts}` (S1-01) — mounted behind `[requireAuth, requireVerified]`; unauthenticated liveness `/api/health` + `/api/metrics` stay public | `app.ts` (the shared `verified` array) |
 | CORS | Locked to exactly `env.CLIENT_URL` with `credentials: true` — no wildcard, no reflected origin | `app.ts` |
@@ -169,16 +166,9 @@ Full rule: `.claude/rules/secrets-and-rotation.md`.
   fields on auth/settings/backups create, deep wildcards `*.password`,
   `*.token`, `*.secret`, `*.privateKey`, `*.apiKeyHash`, `*.ciphertext`,
   `*.iv`, `*.authTag`, and the env-derived globals `MASTER_ENCRYPTION_KEY`,
-  `SUPERADMIN_PASSWORD`, `JWT_SECRET`, `POLAR_ACCESS_TOKEN`,
-  `POLAR_WEBHOOK_SECRET`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`. Runtime
+  `JWT_SECRET`, `SESSION_SECRET`, `RESEND_API_KEY`. Runtime
   proof: `config/logger-redaction.test.ts` writes each shape to a captured
   `Writable` and asserts every well-known secret collapses to `[REDACTED]`.
-- **Superadmin seeder idempotency** — `modules/superadmin/superadmin.seed.ts`
-  does `findOne({ email })` and skips when the account exists; a re-run
-  with different credentials is a no-op. No log line contains the plaintext
-  password. `console.*` is banned inside `modules/superadmin/**` at both
-  the ESLint layer (`server/eslint.config.js`) and the meta-test layer
-  (`shared/middleware/secrets-meta.test.ts`).
 - **No stack on the wire** — `shared/middleware/error-handler.ts` returns
   `{ error: { message } }` for every 500; the stack is written to the
   redacted pino logger, never the response. The historical
@@ -218,18 +208,13 @@ static guard at
   `.findOneAndDelete(...)`. Zod's default `.strip()` drops
   `$`-prefixed keys before they reach the DB; list surfaces use
   `.strict()` to reject them outright with a 400.
-- **Every URL id is cast.** Superadmin schema (`superadmin.schema.ts`)
-  and every product schema use an anchored `[0-9a-fA-F]{24}$` regex or
+- **Every URL id is cast.** Every product schema uses an anchored
+  `[0-9a-fA-F]{24}$` regex or
   `mongoose.isValidObjectId(...)` BEFORE Mongoose sees the id. Invalid
   input returns 400/404, never a CastError 500.
 - **No user-controlled `$where` / `$regex` / `$expr`.** Grep-verified
   clean across `server/src/modules/**`; any regex search is anchored on
   caller-escaped input with a length cap.
-- **Superadmin isolation at the mount.** `/api/superadmin` is mounted
-  in `app.ts` behind
-  `[requireAuth, requireVerified, requireRole(ROLE_SUPERADMIN)]`; the
-  sub-router (`modules/superadmin/superadmin.routes.ts`) imports no
-  auth middleware. Every sub-route inherits the gate from the mount.
 - **Data-rights owner-scope + grace + `legalHold`.** `legal.controller.ts`
   passes `req.user.id` to `exportUserData` / `scheduleAccountDeletion`
   — never a body `userId`. Deletion enqueues a purge
@@ -238,15 +223,6 @@ static guard at
   and skips `project.legalHold` — and, when it skips ANY project for a
   hold, it now leaves the `User` row intact rather than orphaning that
   project (prompt 13 / F8). See `docs/data-rights.en.md`.
-- **Every free-landing transition pauses + notifies consistently.** Grace
-  expiry, refund/chargeback, downgrade, and a direct `subscription.canceled`
-  / `.revoked` webhook all funnel through `applyProjectCap(userId, 'free', …)`
-  — pause (never delete) over-cap projects, disable their schedules, re-assert
-  the fleet-agent cap, grandfather retention. The three entitlement-visible
-  transitions (dunning-start, grace-expiry downgrade, reactivation) also fire a
-  non-fatal user notification via the lifecycle notifier; a bounced email never
-  rolls back the state change. A durable meta-test asserts no free-landing
-  branch skips the pause. (prompt 13 / F2–F6)
 - **Error output = i18n keys only.** `shared/middleware/error-handler.ts`
   returns `{ error: { message, details? } }` where `message` is an
   `Accept-Language`-resolved i18n key. `HttpError` messages that look
@@ -257,5 +233,5 @@ static guard at
 
 ## What is out of scope
 
-No WAF, no SIEM, no pen-test engagement, no tax engine — Polar is the
-Merchant of Record for VAT/GST (see `polar-billing-and-webhooks.en.md`).
+No WAF, no SIEM, no pen-test engagement. Dockstash is self-hosted software:
+there is no payment surface, no platform-operator tier, and no telemetry.

@@ -80,20 +80,6 @@ export function createAuthRateLimiter(overrides: RateLimitOverrides = {}): Reque
 }
 
 /**
- * Webhook limiter. Runs BEFORE `express.raw` so a flood cannot burn signature
- * math. Never consumes the request body. Redis-backed when configured — see
- * {@link createAuthRateLimiter} for the store selection rationale.
- */
-export function createWebhookRateLimiter(overrides: RateLimitOverrides = {}): RequestHandler {
-  return rateLimit({
-    ...commonOptions,
-    store: buildStore(),
-    windowMs: overrides.windowMs ?? env.RATE_LIMIT_WEBHOOK_WINDOW_MS,
-    max: overrides.max ?? env.RATE_LIMIT_WEBHOOK_MAX,
-  });
-}
-
-/**
  * Fleet-agent machine-surface limiter (`/api/agent`). Sized for one agent per
  * IP heartbeating every 30s + polling every 10s + batched log posts.
  * Redis-backed when configured — see {@link createAuthRateLimiter}.
@@ -137,7 +123,6 @@ export function createExportRateLimiter(overrides: RateLimitOverrides = {}): Req
   });
 }
 
-// Back-compat singletons (unused after prompt 11 wiring; kept exported so
+// Back-compat singleton (unused after prompt 11 wiring; kept exported so
 // downstream imports don't break).
 export const authRateLimiter: RequestHandler = createAuthRateLimiter();
-export const webhookRateLimiter: RequestHandler = createWebhookRateLimiter();

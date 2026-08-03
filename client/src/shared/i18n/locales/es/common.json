@@ -7,12 +7,10 @@
     "projects": "Proyectos",
     "snapshots": "Instantáneas",
     "fleet": "Flota",
-    "billing": "Facturación",
     "settings": "Ajustes",
     "profile": "Perfil",
     "logout": "Cerrar sesión",
     "admin": "Admin",
-    "superadmin": "Superadministrador",
     "login": "Iniciar sesión",
     "register": "Registrarse"
   },
@@ -20,7 +18,6 @@
     "projects": "Gestiona tus proyectos y despliegues.",
     "snapshots": "Explora y restaura instantáneas de proyectos.",
     "settings": "Configura tu espacio de trabajo e integraciones.",
-    "billing": "Revisa el uso, los planes y las facturas.",
     "profile": "Consulta y actualiza los datos de tu cuenta.",
     "admin": "Accede a los controles de administración."
   },
@@ -63,11 +60,6 @@
     "lede": "Todos los agentes VPS conectados y su huella de copias de seguridad.",
     "loading": "Cargando la flota…",
     "register": "Registrar agente",
-    "locked": {
-      "title": "Has alcanzado el límite de servidores",
-      "body": "Usando {{used}} de {{cap}} servidores de tu plan. Mejora tu plan para conectar más.",
-      "cta": "Ver planes"
-    },
     "empty": {
       "title": "Aún no hay agentes",
       "hint": "Registra un agente en otro VPS para verlo aquí."

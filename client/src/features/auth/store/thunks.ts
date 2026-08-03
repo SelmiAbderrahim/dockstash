@@ -10,15 +10,8 @@ import {
   resendVerificationRequest,
   resetPasswordRequest,
   verifyEmailRequest,
-  verifyLoginOtpRequest,
 } from '../api';
-import type {
-  AuthUser,
-  LoginRequest,
-  OAuthProviders,
-  OtpVerifyRequest,
-  RegisterRequest,
-} from '../types';
+import type { AuthUser, LoginRequest, OAuthProviders, RegisterRequest } from '../types';
 
 /**
  * Cookie attributes for the auth token/user cookies. `sameSite: 'strict'`
@@ -34,23 +27,16 @@ function authCookieOptions(): { path: string; sameSite: 'strict'; secure?: boole
     : { path: '/', sameSite: 'strict' };
 }
 
-export type LoginResult =
-  | { otpRequired: true; challengeId: string }
-  | { otpRequired: false; emailVerified: boolean; role: string };
+export type LoginResult = { emailVerified: boolean; role: string };
 
 export const loginUser = createAsyncThunk<LoginResult, LoginRequest, { rejectValue: string }>(
   'auth/login',
   async (body, { rejectWithValue }) => {
     try {
       const data = await loginRequest(body);
-      if ('otpRequired' in data) {
-        // No cookies yet — the session starts only after the OTP verifies.
-        return { otpRequired: true, challengeId: data.challengeId };
-      }
       saveCookie('token', data.token, authCookieOptions());
       saveCookie('user', data.user, authCookieOptions());
       return {
-        otpRequired: false,
         emailVerified: data.user.emailVerified ?? false,
         role: data.user.role ?? '',
       };
@@ -59,24 +45,6 @@ export const loginUser = createAsyncThunk<LoginResult, LoginRequest, { rejectVal
     }
   },
 );
-
-export const verifyLoginOtp = createAsyncThunk<
-  { emailVerified: boolean; role: string },
-  OtpVerifyRequest,
-  { rejectValue: string }
->('auth/verifyLoginOtp', async (body, { rejectWithValue }) => {
-  try {
-    const data = await verifyLoginOtpRequest(body);
-    saveCookie('token', data.token, authCookieOptions());
-    saveCookie('user', data.user, authCookieOptions());
-    return {
-      emailVerified: data.user.emailVerified ?? false,
-      role: data.user.role ?? '',
-    };
-  } catch (err) {
-    return rejectWithValue(messageFromError(err, 'Verification failed.'));
-  }
-});
 
 export const registerUser = createAsyncThunk<
   { email: string; emailVerified: boolean; role: string },

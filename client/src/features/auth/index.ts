@@ -7,7 +7,6 @@ export {
   selectAuthenticated,
   selectEmailVerified,
   selectUserRole,
-  selectOtpChallengeId,
   selectPendingVerificationEmail,
   selectAuthError,
   selectAuthMessage,

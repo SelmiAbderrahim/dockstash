@@ -58,8 +58,8 @@ describe('audit.service.recordAudit', () => {
   it('defaults ip and metadata when omitted', async () => {
     await recordAudit({
       actorUserId: new mongoose.Types.ObjectId().toString(),
-      action: 'plan.change',
-      targetType: 'subscription',
+      action: 'backup.restore',
+      targetType: 'project',
       targetId: 's1',
     });
     const e = await AuditLog.findOne({});
@@ -133,8 +133,8 @@ describe('audit routes', () => {
     await new Promise((r) => setTimeout(r, 5));
     await recordAudit({
       actorUserId: alice.id,
-      action: 'plan.change',
-      targetType: 'subscription',
+      action: 'backup.restore',
+      targetType: 'project',
       targetId: 's1',
     });
     await recordAudit({
@@ -149,7 +149,7 @@ describe('audit routes', () => {
       .set('Authorization', alice.token);
     expect(res.status).toBe(200);
     expect(res.body.entries).toHaveLength(2);
-    expect(res.body.entries[0].action).toBe('plan.change');
+    expect(res.body.entries[0].action).toBe('backup.restore');
     expect(res.body.entries[1].action).toBe('backup.run');
   });
 

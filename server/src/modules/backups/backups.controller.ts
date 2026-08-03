@@ -26,12 +26,6 @@ import {
   makeDiscoveryDockerClient,
 } from './backups.discover.js';
 import { serializeProject } from './backups.serialize.js';
-import {
-  assertAlertsAllowed,
-  assertMirrorAllowed,
-  reserveProjectSlot,
-  releaseProjectSlot,
-} from '../billing/entitlements.service.js';
 import { extractIp, recordAudit } from '../audit/index.js';
 import { ensureDefaultBackupSchedule } from '../scheduler/index.js';
 
@@ -58,23 +52,11 @@ export const create: RequestHandler = asyncHandler(async (req, res) => {
   const input = createProjectSchema.parse(req.body);
   const userId = requireUserId(req.user);
   // Pointing a project at a fleet agent is owner-scoped only — createProject →
-  // loadOwnedAgent 404s a foreign/unknown agentId. The agent cap was paid at
-  // registration time, so no per-project plan gate here.
-  // Reserve a slot BEFORE creating the record — the atomic counter closes the
-  // TOCTOU window between countDocuments and Project.create (S3-01/S3-03).
-  await reserveProjectSlot(userId, { t: req.t });
-  try {
-    const project = await createProject(userId, input, { t: req.t });
-    // Safe-by-default: a created project must never sit silently unprotected.
-    // Provisions the daily backup schedule when the tier allows it; never
-    // throws (schedule-locked tiers simply skip).
-    await ensureDefaultBackupSchedule(userId, String(project._id), { t: req.t });
-    res.status(201).json({ project: serializeProject(project) });
-  } catch (err) {
-    // Rollback the reservation if createProject failed.
-    await releaseProjectSlot(userId);
-    throw err;
-  }
+  // loadOwnedAgent 404s a foreign/unknown agentId.
+  const project = await createProject(userId, input, { t: req.t });
+  // Safe-by-default: a created project must never sit silently unprotected.
+  await ensureDefaultBackupSchedule(userId, String(project._id), { t: req.t });
+  res.status(201).json({ project: serializeProject(project) });
 });
 
 export const list: RequestHandler = asyncHandler(async (req, res) => {
@@ -100,24 +82,22 @@ export const patchPlan: RequestHandler = asyncHandler(async (req, res) => {
   res.status(200).json({ project: serializeProject(project) });
 });
 
-/** Per-project outbound alert webhook (Pro+ — same tier as email alerts). */
+/** Per-project outbound alert webhook. */
 export const patchAlerts: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
   const { webhookUrl } = alertsConfigSchema.parse(req.body);
   const userId = requireUserId(req.user);
-  await assertAlertsAllowed(userId, { t: req.t });
   const project = await updateProjectAlerts(projectId, userId, webhookUrl, {
     t: req.t,
   });
   res.status(200).json({ project: serializeProject(project) });
 });
 
-/** One-way mirror config (Business tier). */
+/** One-way mirror config. */
 export const patchMirror: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
   const input = mirrorConfigSchema.parse(req.body);
   const userId = requireUserId(req.user);
-  await assertMirrorAllowed(userId, { t: req.t });
   const project = await updateProjectMirror(projectId, userId, input, { t: req.t });
   res.status(200).json({ project: serializeProject(project) });
 });

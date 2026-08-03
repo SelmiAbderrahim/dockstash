@@ -135,18 +135,6 @@ describe('backups.service: defensive guards', () => {
     mockDumpThrow = null;
   });
 
-  it('refuses to back up a paused project', async () => {
-    const id = await seedUser();
-    const projectId = await seedProject(id);
-    await Project.updateOne({ _id: projectId }, { paused: true });
-    await expect(
-      runBackup(projectId, id, {
-        resticRunner: makeRestic(),
-        dockerClient: makeDocker(),
-      }),
-    ).rejects.toMatchObject({ status: 403 });
-  });
-
   it('fails and logs when the disk probe reports insufficient free space', async () => {
     const id = await seedUser();
     const projectId = await seedProject(id);

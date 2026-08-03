@@ -5,17 +5,6 @@ import { EventEmitter } from 'node:events';
 import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
 
-// Feature suite runs in OSS self-host mode (PAYMENT_PROVIDER=none) so paid-tier
-// entitlements (schedules) are unrestricted for schedule creation. Per-test
-// entitlement DENIAL is exercised via injected hooks, not this env — billing
-// tiering itself is covered by the billing suites.
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
-beforeAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-});
-afterAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
-});
 import {
   clearCollections,
   startMemoryMongo,
@@ -32,7 +21,6 @@ import { recoverStaleLockIfOrphaned } from './scheduler.lock.js';
 import { runPrune, pruneArgs } from './scheduler.prune.service.js';
 import { dispatchJob, processJob } from './scheduler.dispatcher.js';
 import { reconcileCron } from './scheduler.cron.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
 import {
   createSchedule,
   loadOwnedSchedule,
@@ -345,32 +333,6 @@ describe('scheduler: dispatcher (per-kind + prune separation)', () => {
       '3',
       '--keep-monthly',
       '2',
-    ]);
-  });
-
-  it('prune clamps the policy through an injected tier clamp', async () => {
-    const a = await seedUser('a@t.com');
-    const projectId = await seedProject(a.id);
-    const restic = makeRestic();
-    await runPrune(
-      projectId,
-      a.id,
-      { keepDaily: 30, keepWeekly: 10, keepMonthly: 12 },
-      {
-        resticRunner: restic,
-        clampPolicy: async () => ({ keepDaily: 7, keepWeekly: 1, keepMonthly: 1 }),
-      },
-    );
-    const forgetCall = restic.calls.find((c) => c.name === 'forget');
-    expect(forgetCall?.args).toEqual([
-      'forget',
-      '--prune',
-      '--keep-daily',
-      '7',
-      '--keep-weekly',
-      '1',
-      '--keep-monthly',
-      '1',
     ]);
   });
 
@@ -773,11 +735,11 @@ describe('scheduler: cron reconciliation + entitlements', () => {
     };
     const queue = new MemoryQueue();
     queue.setProcessor(async () => {});
-    await reconcileCron({ cron, queue, entitlements: allowAllEntitlements });
+    await reconcileCron({ cron, queue });
     expect(registrations).toEqual([s1._id.toString()]);
   });
 
-  it('cron trigger enqueues a job; entitlement denial is respected', async () => {
+  it('cron trigger enqueues a job', async () => {
     const a = await seedUser('a@t.com');
     const projectId = await seedProject(a.id);
     const s = await createSchedule(a.id, {
@@ -806,20 +768,7 @@ describe('scheduler: cron reconciliation + entitlements', () => {
       async waitIdle() {},
       async close() {},
     };
-    const denyAll = {
-      async canEnqueue() {
-        return false;
-      },
-    };
-
-    await reconcileCron({ cron, queue, entitlements: denyAll });
-    const runDeny = triggers.get(s._id.toString());
-    expect(runDeny).toBeTruthy();
-    await runDeny?.();
-    expect(enqueued).toHaveLength(0);
-
-    triggers.clear();
-    await reconcileCron({ cron, queue, entitlements: allowAllEntitlements });
+    await reconcileCron({ cron, queue });
     await triggers.get(s._id.toString())?.();
     expect(enqueued).toEqual([projectId]);
     const reloaded = await Schedule.findById(s._id);
@@ -853,14 +802,9 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
     waitIdle: () => localQueue.waitIdle(),
     close: () => localQueue.close(),
   };
-  let entitlementDeny = false;
-  const entitlements = {
-    canEnqueue: async () => !entitlementDeny,
-  };
-
   beforeAll(async () => {
     await startMemoryMongo();
-    configureSchedulerController({ queue: trackingQueue, entitlements });
+    configureSchedulerController({ queue: trackingQueue });
   });
   afterAll(async () => {
     resetSchedulerController();
@@ -869,7 +813,6 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
   beforeEach(async () => {
     await clearCollections();
     enqueueCalls.length = 0;
-    entitlementDeny = false;
   });
 
   it('requires auth on every route', async () => {
@@ -937,18 +880,6 @@ describe('scheduler: HTTP routes (auth + ownership + enqueue)', () => {
       .get(`/api/scheduler/schedules/${created._id.toString()}`)
       .set('Authorization', `JWT ${b.token}`);
     expect(res.status).toBe(404);
-  });
-
-  it('POST /enqueue consults the entitlement hook; denial → 403', async () => {
-    const a = await seedUser('a@t.com');
-    const projectId = await seedProject(a.id);
-    entitlementDeny = true;
-    const res = await request(app)
-      .post('/api/scheduler/enqueue')
-      .set('Authorization', `JWT ${a.token}`)
-      .send({ projectId, kind: 'backup' });
-    expect(res.status).toBe(403);
-    expect(enqueueCalls).toHaveLength(0);
   });
 
   it('POST /enqueue rejects a duplicate manual enqueue while a job is active for the project (409)', async () => {

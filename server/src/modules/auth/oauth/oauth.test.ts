@@ -8,10 +8,8 @@ import {
   stopMemoryMongo,
 } from '../../../shared/testing/mongo.js';
 import { env, envSchema } from '../../../config/env.js';
-import { ROLE_SUPERADMIN, User } from '../../users/index.js';
+import { User } from '../../users/index.js';
 import { hashPassword } from '../auth.service.js';
-import { LoginChallenge } from '../login-challenge.model.js';
-import { computeFingerprint, hashUserAgent, trustDevice } from '../login-otp.service.js';
 import { setOAuthHttp } from './oauth-http.js';
 import {
   PROVIDER_DEFINITIONS,
@@ -651,53 +649,6 @@ describe('oauth module', () => {
         .get('/api/auth/google/callback?code=a&code=b')
         .set('Cookie', cookie);
       await expectErrorFragment(res, 'providerError');
-    });
-  });
-
-  describe('superadmin second factor', () => {
-    async function seedSuperadmin(): Promise<{ id: string }> {
-      const user = await User.create({
-        email: 'oauth.user@example.com',
-        password: await hashPassword('superadmin-password'),
-        role: ROLE_SUPERADMIN,
-        emailVerified: true,
-        googleId: 'google-sub-1',
-      });
-      return { id: user._id.toString() };
-    }
-
-    it('redirects to an OTP challenge from an untrusted device', async () => {
-      const { id } = await seedSuperadmin();
-      stubHttp(googleHappyRoutes());
-      const { state, cookie } = stateFor('google');
-      const res = await callback('google', { code: 'c', state }, cookie);
-      expect(res.status).toBe(302);
-      const params = new URLSearchParams(fragmentOf(res.headers.location as string));
-      expect(params.get('otp')).toBe('1');
-      const challengeId = params.get('challengeId') as string;
-      const challenge = await LoginChallenge.findById(challengeId);
-      expect(challenge?.userId.toString()).toBe(id);
-    });
-
-    it('issues a token directly from a trusted device', async () => {
-      const { id } = await seedSuperadmin();
-      stubHttp(googleHappyRoutes());
-
-      // First pass records the request IP in the challenge; trust that device.
-      const first = stateFor('google');
-      await callback('google', { code: 'c', state: first.state }, first.cookie);
-      const challenge = await LoginChallenge.findOne({});
-      await trustDevice(
-        id,
-        computeFingerprint(challenge?.ip ?? '', 'vitest-ua'),
-        challenge?.ip ?? '',
-        hashUserAgent('vitest-ua'),
-      );
-
-      const second = stateFor('google');
-      const res = await callback('google', { code: 'c', state: second.state }, second.cookie);
-      const params = new URLSearchParams(fragmentOf(res.headers.location as string));
-      expect(params.get('token')).toMatch(/^JWT /);
     });
   });
 

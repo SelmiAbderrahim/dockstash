@@ -11,23 +11,19 @@ RUN apt-get update \
 # Vite build-time env — sourced from compose build args, never literal.
 ARG VITE_API_BASE_URL
 ARG VITE_SOCKET_URL
-ARG VITE_SITE_URL
-ARG VITE_GA_ID
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
-    VITE_SOCKET_URL=${VITE_SOCKET_URL} \
-    VITE_SITE_URL=${VITE_SITE_URL} \
-    VITE_GA_ID=${VITE_GA_ID}
+    VITE_SOCKET_URL=${VITE_SOCKET_URL}
 
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY tsconfig.json tsconfig.node.json vite.config.ts index.html server.js app-paths.mjs app-paths.d.mts ./
+COPY tsconfig.json tsconfig.node.json vite.config.ts index.html server.js ./
 COPY public ./public
 COPY scripts ./scripts
 RUN npm run assets:brand
 COPY src ./src
 
-# Produces dist/client (browser bundle + index.html) and dist/server (SSR bundle).
+# Produces dist/ — the hashed browser bundle plus index.html.
 RUN npm run build
 
 
@@ -40,14 +36,14 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
 
-# Production dependencies only (express, compression, sirv + SSR runtime deps).
+# Production dependencies only (express, helmet, compression, sirv).
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js app-paths.mjs ./
+COPY server.js ./
 COPY --from=build /app/dist ./dist
 
-# Non-root runtime user (mirrors agent/Dockerfile). The SSR server binds an
+# Non-root runtime user (mirrors agent/Dockerfile). The web server binds an
 # unprivileged port (3000) and only reads from /app, so no root is needed.
 RUN groupadd --system --gid 10001 app \
  && useradd  --system --uid 10001 --gid app --home /app --shell /usr/sbin/nologin app \

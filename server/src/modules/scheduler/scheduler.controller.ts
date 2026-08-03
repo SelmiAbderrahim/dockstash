@@ -2,8 +2,7 @@ import type { RequestHandler } from 'express';
 import { asyncHandler } from '../../shared/utils/async-handler.js';
 import { requireUserId } from '../../shared/utils/require-user-id.js';
 import { HttpError } from '../../shared/utils/http-error.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
-import type { EntitlementChecker, SchedulerQueue } from './scheduler.boundaries.js';
+import type { SchedulerQueue } from './scheduler.boundaries.js';
 import {
   createSchedule,
   deleteSchedule,
@@ -24,12 +23,11 @@ import type { AuditAction } from '../audit/index.js';
 
 export interface ControllerDeps {
   queue: SchedulerQueue;
-  entitlements: EntitlementChecker;
 }
 
 let deps: ControllerDeps | null = null;
 
-/** Wire the controller to a live queue + entitlement checker (called at boot). */
+/** Wire the controller to a live queue (called at boot). */
 export function configureSchedulerController(next: ControllerDeps): void {
   deps = next;
 }
@@ -51,7 +49,6 @@ function requireDeps(): ControllerDeps {
 /** Default wiring used when app.ts mounts routes without an explicit configure. */
 export function ensureConfigured(fallback: Partial<ControllerDeps> = {}): void {
   if (deps) return;
-  const entitlements = fallback.entitlements ?? allowAllEntitlements;
   const queue =
     fallback.queue ??
     ({
@@ -68,7 +65,7 @@ export function ensureConfigured(fallback: Partial<ControllerDeps> = {}): void {
       async close() {},
       /* c8 ignore stop */
     } satisfies SchedulerQueue);
-  deps = { queue, entitlements };
+  deps = { queue };
 }
 
 export const create: RequestHandler = asyncHandler(async (req, res) => {
@@ -120,13 +117,9 @@ function actionForKind(kind: string): AuditAction {
 
 export const enqueue: RequestHandler = asyncHandler(async (req, res) => {
   const input = enqueueNowSchema.parse(req.body);
-  const { queue, entitlements } = requireDeps();
+  const { queue } = requireDeps();
   const userId = requireUserId(req.user);
-  const job = await enqueueNow(userId, input, {
-    t: req.t,
-    queue,
-    entitlements,
-  });
+  const job = await enqueueNow(userId, input, { t: req.t, queue });
   await recordAudit({
     actorUserId: userId,
     action: actionForKind(job.data.kind),

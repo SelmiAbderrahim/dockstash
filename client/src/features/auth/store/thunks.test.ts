@@ -9,7 +9,6 @@ import {
   performPasswordReset,
   resendVerification,
   verifyEmail,
-  verifyLoginOtp,
 } from './thunks';
 import { loadCookie } from '@shared/utils/cookies';
 import * as cookies from '@shared/utils/cookies';
@@ -18,7 +17,6 @@ import * as api from '../api';
 
 vi.mock('../api', () => ({
   loginRequest: vi.fn(),
-  verifyLoginOtpRequest: vi.fn(),
   registerRequest: vi.fn(),
   forgotPasswordRequest: vi.fn(),
   resetPasswordRequest: vi.fn(),
@@ -50,7 +48,7 @@ describe('auth thunks', () => {
     const store = makeStore();
     const result = await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
     expect(loginUser.fulfilled.match(result)).toBe(true);
-    expect(result.payload).toEqual({ otpRequired: false, emailVerified: true, role: 'Member' });
+    expect(result.payload).toEqual({ emailVerified: true, role: 'Member' });
     expect(loadCookie<string>('token')).toBe('JWT abc');
     expect(loadCookie<AuthUser>('user')?.email).toBe('a@b.co');
   });
@@ -101,52 +99,7 @@ describe('auth thunks', () => {
     });
     const store = makeStore();
     const result = await store.dispatch(loginUser({ email: 'a@b.co', password: 'pw' }));
-    expect(result.payload).toEqual({ otpRequired: false, emailVerified: false, role: '' });
-  });
-
-  it('loginUser returns the OTP challenge and writes no cookies', async () => {
-    mocked.loginRequest.mockResolvedValue({ otpRequired: true, challengeId: 'ch1' });
-    const store = makeStore();
-    const result = await store.dispatch(loginUser({ email: 'root@b.co', password: 'pw' }));
-    expect(result.payload).toEqual({ otpRequired: true, challengeId: 'ch1' });
-    expect(loadCookie<string>('token')).toBeNull();
-    expect(loadCookie<AuthUser>('user')).toBeNull();
-  });
-
-  it('verifyLoginOtp stores cookies and returns emailVerified + role', async () => {
-    mocked.verifyLoginOtpRequest.mockResolvedValue({
-      token: 'JWT xyz',
-      user: { id: '9', email: 'root@b.co', emailVerified: true, role: 'Superadmin' },
-    });
-    const store = makeStore();
-    const result = await store.dispatch(
-      verifyLoginOtp({ challengeId: 'ch1', code: '123456' }),
-    );
-    expect(verifyLoginOtp.fulfilled.match(result)).toBe(true);
-    expect(result.payload).toEqual({ emailVerified: true, role: 'Superadmin' });
-    expect(loadCookie<string>('token')).toBe('JWT xyz');
-  });
-
-  it('verifyLoginOtp defaults emailVerified and role when absent', async () => {
-    mocked.verifyLoginOtpRequest.mockResolvedValue({
-      token: 'JWT xyz',
-      user: { id: '9', email: 'root@b.co' },
-    });
-    const store = makeStore();
-    const result = await store.dispatch(
-      verifyLoginOtp({ challengeId: 'ch1', code: '123456' }),
-    );
     expect(result.payload).toEqual({ emailVerified: false, role: '' });
-  });
-
-  it('verifyLoginOtp rejects with a message on failure', async () => {
-    mocked.verifyLoginOtpRequest.mockRejectedValue(new Error('bad code'));
-    const store = makeStore();
-    const result = await store.dispatch(
-      verifyLoginOtp({ challengeId: 'ch1', code: '000000' }),
-    );
-    expect(verifyLoginOtp.rejected.match(result)).toBe(true);
-    expect(typeof result.payload).toBe('string');
   });
 
   it('loginUser rejects with a message on failure', async () => {

@@ -22,7 +22,7 @@ describe('fleet slice', () => {
   it('fetchFleet.pending clears the error while loading', () => {
     let s = fleetReducer(initial(), {
       type: fetchFleet.rejected.type,
-      payload: { message: 'x', lockedReason: null, capInfo: null },
+      payload: { message: 'x' },
     });
     s = fleetReducer(s, { type: fetchFleet.pending.type });
     expect(s.status).toBe('loading');
@@ -41,7 +41,7 @@ describe('fleet slice', () => {
   it('fetchFleet.rejected records the message (list route no longer locks)', () => {
     const s = fleetReducer(initial(), {
       type: fetchFleet.rejected.type,
-      payload: { message: 'nope', lockedReason: null, capInfo: null },
+      payload: { message: 'nope' },
     });
     expect(s.status).toBe('failed');
     expect(s.error).toBe('nope');
@@ -50,29 +50,6 @@ describe('fleet slice', () => {
   it('fetchFleet.rejected falls back when the payload is missing', () => {
     const s = fleetReducer(initial(), { type: fetchFleet.rejected.type, payload: undefined });
     expect(s.error).toBe('Could not load the fleet.');
-  });
-
-  it('registerAgent.rejected with agentLimitReached surfaces the at-cap lock + capInfo', () => {
-    let s = fleetReducer(initial(), {
-      type: registerAgent.rejected.type,
-      payload: { message: 'at cap', lockedReason: 'agentLimitReached', capInfo: { used: 1, cap: 1 } },
-    });
-    expect(s.lockedReason).toBe('agentLimitReached');
-    expect(s.capInfo).toEqual({ used: 1, cap: 1 });
-    // A retry (pending) clears the prior lock so a freed slot re-registers clean.
-    s = fleetReducer(s, { type: registerAgent.pending.type });
-    expect(s.lockedReason).toBeNull();
-    expect(s.capInfo).toBeNull();
-  });
-
-  it('registerAgent.fulfilled clears a prior at-cap lock', () => {
-    let s = fleetReducer(initial(), {
-      type: registerAgent.rejected.type,
-      payload: { message: 'at cap', lockedReason: 'agentLimitReached', capInfo: { used: 1, cap: 1 } },
-    });
-    s = fleetReducer(s, { type: registerAgent.fulfilled.type });
-    expect(s.lockedReason).toBeNull();
-    expect(s.capInfo).toBeNull();
   });
 
   it('registerAgent lifecycle updates registerStatus', () => {
@@ -86,7 +63,7 @@ describe('fleet slice', () => {
   it('registerAgent.rejected records the message and falls back without one', () => {
     let s = fleetReducer(initial(), {
       type: registerAgent.rejected.type,
-      payload: { message: 'taken', lockedReason: null },
+      payload: { message: 'taken' },
     });
     expect(s.registerStatus).toBe('failed');
     expect(s.registerError).toBe('taken');
@@ -97,7 +74,7 @@ describe('fleet slice', () => {
   it('resetRegisterState clears the register status and error', () => {
     let s = fleetReducer(initial(), {
       type: registerAgent.rejected.type,
-      payload: { message: 'taken', lockedReason: null },
+      payload: { message: 'taken' },
     });
     s = fleetReducer(s, resetRegisterState());
     expect(s.registerStatus).toBe('idle');
@@ -124,7 +101,7 @@ describe('fleet slice', () => {
     s = fleetReducer(s, {
       type: fetchFleet.rejected.type,
       meta: { arg: { silent: true } },
-      payload: { message: 'boom', lockedReason: null },
+      payload: { message: 'boom' },
     });
     expect(s.status).toBe('succeeded');
     expect(s.items).toEqual([entry]);
@@ -135,7 +112,7 @@ describe('fleet slice', () => {
     const s = fleetReducer(initial(), {
       type: fetchFleet.rejected.type,
       meta: { arg: { silent: true } },
-      payload: { message: 'boom', lockedReason: null },
+      payload: { message: 'boom' },
     });
     expect(s.status).toBe('failed');
     expect(s.error).toBe('boom');
@@ -152,7 +129,7 @@ describe('fleet slice', () => {
   it('rotateAgentKey.rejected records the message and falls back without one', () => {
     let s = fleetReducer(initial(), {
       type: rotateAgentKey.rejected.type,
-      payload: { message: 'agent offline', lockedReason: null },
+      payload: { message: 'agent offline' },
     });
     expect(s.rotateStatus).toBe('failed');
     expect(s.rotateError).toBe('agent offline');
@@ -163,7 +140,7 @@ describe('fleet slice', () => {
   it('resetRotateState clears the rotate status and error', () => {
     let s = fleetReducer(initial(), {
       type: rotateAgentKey.rejected.type,
-      payload: { message: 'x', lockedReason: null },
+      payload: { message: 'x' },
     });
     s = fleetReducer(s, resetRotateState());
     expect(s.rotateStatus).toBe('idle');
@@ -183,7 +160,7 @@ describe('fleet slice', () => {
   it('deleteAgent.rejected records the message and falls back without one', () => {
     let s = fleetReducer(initial(), {
       type: deleteAgent.rejected.type,
-      payload: { message: 'cannot remove', lockedReason: null },
+      payload: { message: 'cannot remove' },
     });
     expect(s.deleteStatus).toBe('failed');
     expect(s.deleteError).toBe('cannot remove');

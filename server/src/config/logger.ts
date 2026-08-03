@@ -9,7 +9,7 @@ const isDev = env.NODE_ENV === 'development';
  * Every well-known secret path this codebase can emit — request bodies (login,
  * register, backups create, settings storage), incoming/outgoing headers,
  * cookies, JWT/OTP/reset tokens, envelope ciphertext + IV + authTag,
- * `MASTER_ENCRYPTION_KEY`, `SUPERADMIN_PASSWORD`, Polar credentials, agent
+ * `MASTER_ENCRYPTION_KEY`, agent
  * `apiKeyHash`, restic repo password / SSH private key — collapses to
  * `[REDACTED]` before pino ever writes it.
  *
@@ -75,13 +75,9 @@ export const REDACT_PATHS: string[] = [
   '*.*.apiKeyHash',
   // Env-derived globals that occasionally end up in an error/config log.
   'MASTER_ENCRYPTION_KEY',
-  'SUPERADMIN_PASSWORD',
   'JWT_SECRET',
   'SESSION_SECRET',
-  'POLAR_ACCESS_TOKEN',
-  'POLAR_WEBHOOK_SECRET',
   'RESEND_API_KEY',
-  'STRIPE_SECRET_KEY',
 ];
 
 export const logger = pino({

@@ -5,7 +5,6 @@ import { createApp } from '../../app.js';
 import { startMemoryMongo, stopMemoryMongo, clearCollections } from '../testing/mongo.js';
 import { createAuthRateLimiter } from './rate-limit.js';
 import {
-  CSP_INLINE_SSR_MARKER_HASH,
   CSP_INLINE_THEME_HASH,
   securityHeaders,
 } from './security-headers.js';
@@ -34,7 +33,7 @@ describe('security middleware wiring', () => {
     // middleware emits them.
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain(
-      `script-src 'self' '${CSP_INLINE_THEME_HASH}' '${CSP_INLINE_SSR_MARKER_HASH}'`,
+      `script-src 'self' '${CSP_INLINE_THEME_HASH}'`,
     );
     expect(csp).toContain("style-src 'self' 'unsafe-inline'");
     expect(csp).toContain("img-src 'self' data:");

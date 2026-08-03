@@ -1,4 +1,4 @@
-import { Construction, LayoutDashboard, Users, CreditCard, Settings } from 'lucide-react';
+import { Construction, LayoutDashboard, Users, Settings } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@shared/ui/alert';
 import {
   Card,
@@ -39,13 +39,6 @@ const sections: AdminSection[] = [
     description: 'Manage user accounts and roles',
     status: 'active',
     icon: Users,
-  },
-  {
-    id: 'billing',
-    label: 'Billing',
-    description: 'Subscriptions and invoices',
-    status: 'active',
-    icon: CreditCard,
   },
   {
     id: 'settings',

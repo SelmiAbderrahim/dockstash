@@ -1,7 +1,6 @@
 import type { Server as IoServer } from 'socket.io';
 import { logger } from '../../config/logger.js';
 import { env } from '../../config/env.js';
-import { allowAllEntitlements } from './scheduler.entitlements.js';
 import { MemoryQueue } from './scheduler.queue.memory.js';
 import { NodeCronScheduler } from './scheduler.cron.node.js';
 import { attachLogStream } from './scheduler.logstream.js';
@@ -10,7 +9,6 @@ import { processJob } from './scheduler.dispatcher.js';
 import { runHeartbeatSweep } from '../alerting/index.js';
 import type {
   AlertHook,
-  EntitlementChecker,
   ResticRunnerExt,
   SchedulerCron,
   SchedulerQueue,
@@ -36,7 +34,6 @@ export interface StartSchedulerOptions {
   io: IoServer;
   resticRunnerFor(projectId: string, owner: string): ResticRunnerExt;
   dispatchDepsFor?(projectId: string, owner: string): Omit<DispatchDeps, 'resticRunner'>;
-  entitlements?: EntitlementChecker;
   alert?: AlertHook;
   maxAttempts?: number;
   baseBackoffMs?: number;
@@ -51,7 +48,6 @@ export interface StartSchedulerOptions {
 export async function startScheduler(
   opts: StartSchedulerOptions,
 ): Promise<SchedulerRuntime> {
-  const entitlements = opts.entitlements ?? allowAllEntitlements;
   const localQueue = new MemoryQueue();
   // Jobs for projects assigned to a remote agent are persisted for the agent
   // to claim; everything else runs on the local in-process worker.
@@ -87,7 +83,7 @@ export async function startScheduler(
   });
 
   const cron = new NodeCronScheduler();
-  await reconcileCron({ cron, queue, entitlements });
+  await reconcileCron({ cron, queue });
 
   // Dead-man's-switch heartbeat — hourly sweep. Idempotent: registering the
   // same id twice replaces the prior task in place.
@@ -116,10 +112,10 @@ export async function startScheduler(
   // for a backup product that is lost protection, not a cosmetic lag. Runs
   // at second :30 so task replacement never races a minute-boundary fire.
   cron.register('__reconcile__', '30 * * * * *', () =>
-    reconcileCron({ cron, queue, entitlements }),
+    reconcileCron({ cron, queue }),
   );
 
-  configureSchedulerController({ queue, entitlements });
+  configureSchedulerController({ queue });
 
   logger.info(
     {

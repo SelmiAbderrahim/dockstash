@@ -2,14 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { configureStore } from '@reduxjs/toolkit';
 import { loadCookie } from '@shared/utils/cookies';
 import type { RootState } from '@app/store';
-import { authReducer, beginOtpChallenge } from './slice';
+import { authReducer } from './slice';
 import { completeOAuthLogin, fetchOAuthProviders } from './thunks';
 import { selectOAuthProviders, selectOAuthProvidersLoaded } from './selectors';
 import * as api from '../api';
 
 vi.mock('../api', () => ({
   loginRequest: vi.fn(),
-  verifyLoginOtpRequest: vi.fn(),
   registerRequest: vi.fn(),
   forgotPasswordRequest: vi.fn(),
   resetPasswordRequest: vi.fn(),
@@ -104,17 +103,6 @@ describe('fetchOAuthProviders', () => {
     const state = store.getState().auth;
     expect(state.providers).toEqual({ google: false, github: false });
     expect(state.providersLoaded).toBe(true);
-  });
-});
-
-describe('beginOtpChallenge', () => {
-  it('adopts the challenge and clears stale error/message', () => {
-    const store = makeStore();
-    store.dispatch(beginOtpChallenge('ch-9'));
-    const state = store.getState().auth;
-    expect(state.otpChallengeId).toBe('ch-9');
-    expect(state.error).toBe('');
-    expect(state.message).toBe('');
   });
 });
 

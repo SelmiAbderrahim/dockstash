@@ -39,10 +39,6 @@ describe('parseOAuthCallbackHash', () => {
     expect(parseOAuthCallbackHash('#token=JWT%20abc')).toEqual({ token: 'JWT abc' });
   });
 
-  it('parses an OTP challenge fragment', () => {
-    expect(parseOAuthCallbackHash('#otp=1&challengeId=ch-1')).toEqual({ challengeId: 'ch-1' });
-  });
-
   it('parses an error fragment', () => {
     expect(parseOAuthCallbackHash('#error=accessDenied')).toEqual({ error: 'accessDenied' });
   });

@@ -63,36 +63,6 @@ export const ar: DictionaryShape = {
       providerNotEnabled: 'مزوّد تسجيل الدخول هذا غير مفعّل.',
     },
   },
-  billing: {
-    checkout: {
-      title: 'الدفع',
-      submit: 'ادفع الآن',
-      success: 'تم استلام الدفع. شكراً لك!',
-    },
-    portal: {
-      title: 'الفوترة',
-    },
-    error: {
-      notConfigured: 'مزود الدفع غير مُهيأ.',
-      userNotFound: 'المستخدم غير موجود.',
-      noCustomer: 'لا يوجد عميل فوترة لهذا المستخدم.',
-      noSubscription: 'لا يوجد اشتراك نشط لهذا المستخدم.',
-      providerFailure: 'خطأ من مزود الدفع: {{message}}',
-    },
-    entitlements: {
-      projectLimitReached: 'خطتك لا تسمح بمزيد من المشاريع. قم بالترقية لإضافة المزيد.',
-      schedulesLocked: 'النسخ الاحتياطية المجدولة غير متاحة في خطتك الحالية.',
-      frequencyNotAllowed: 'خطتك لا تسمح بهذا التكرار للجدولة.',
-      restoreDrillsLocked: 'اختبارات الاستعادة التلقائية متاحة في خطط Pro وBusiness.',
-      pitrLocked: 'الاستعادة إلى نقطة زمنية متاحة في خطط Pro وBusiness.',
-      mirrorLocked: 'وضع النسخ المتطابق متاح في خطة Business.',
-      alertsLocked: 'قنوات التنبيه (البريد الإلكتروني وWebhooks) متاحة في خطط Pro وBusiness.',
-      agentLimitReached: 'وصلت إلى حد الوكلاء في خطتك. قم بالترقية لربط المزيد من الخوادم.',
-      projectPaused: 'هذا المشروع متوقف. أعد تفعيله أو قم بالترقية لتشغيل النسخ الاحتياطي.',
-      selectionInvalid: 'يجب اختيار ما بين مشروع واحد و{{cap}} مشاريع للإبقاء عليها نشطة.',
-      notOwner: 'أنت لا تملك واحداً أو أكثر من تلك المشاريع.',
-    },
-  },
   email: {
     contact: {
       confirmation: 'تم إرسال بريدك الإلكتروني. سنتواصل معك قريباً.',
@@ -122,42 +92,6 @@ export const ar: DictionaryShape = {
       body:
         'مرحباً بك في Dockstash يا {{name}}.\n\n' +
         'يمكنك تسجيل الدخول وإدارة نسخك الاحتياطية على {{clientUrl}}.\n',
-    },
-    inviteClaimed: {
-      subject: 'تم تفعيل دعوة: {{plan}}',
-      body:
-        'تم تفعيل رابط دعوة.\n\n' +
-        'المستفيد: {{claimantName}} <{{claimantEmail}}>\n' +
-        'الخطة: {{plan}} ({{grantDuration}})\n' +
-        'نافذة المنح: {{claimedAt}} → {{currentPeriodEnd}}\n' +
-        'التسمية: {{label}}\n\n' +
-        'إدارة الدعوات: {{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: 'إيصال Dockstash الخاص بك',
-      body:
-        'شكراً لدفعك مبلغ {{amount}} لخطة {{plan}}.\n\n' +
-        'أدر الفوترة على {{clientUrl}}/billing.\n',
-    },
-    dunning: {
-      subject: 'مشكلة في الدفع على اشتراك Dockstash',
-      body:
-        'تعذر علينا خصم قيمة خطة {{plan}} من وسيلة الدفع.\n\n' +
-        'يرجى التحديث قبل {{graceEndsAt}} للحفاظ على الخطة نشطة: {{clientUrl}}/billing.\n',
-    },
-    downgradeNotice: {
-      subject: 'تم تغيير خطتك في Dockstash إلى Free',
-      body:
-        'انتهت صلاحية خطة {{plan}} وحسابك الآن على خطة Free.\n\n' +
-        'نسخك الاحتياطية الحالية آمنة — لم يُحذف أي شيء. المشاريع التي تتجاوز ' +
-        'حد Free متوقفة (للقراءة فقط) حتى تُعيد الاشتراك: {{clientUrl}}/billing.\n',
-    },
-    reactivation: {
-      subject: 'اشتراكك في Dockstash نشط مرة أخرى',
-      body:
-        'خبر سار — اشتراك {{plan}} نشط مرة أخرى وعادت المشاريع ' +
-        'المتوقفة إلى العمل.\n\n' +
-        'أدر حسابك على {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'فشل اختبار الاستعادة — المشروع {{project}}',
@@ -197,12 +131,6 @@ export const ar: DictionaryShape = {
         'لم يتم تشغيل نسخة احتياطية ناجحة للمشروع "{{project}}" خلال آخر {{hours}} ساعة.\n\n' +
         'آخر نسخة احتياطية ناجحة: {{lastGoodAt}}\n\n' +
         'افتح لوحة التحكم: {{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: 'رمز تسجيل الدخول إلى Dockstash',
-      body:
-        'رمز التحقق لتسجيل الدخول هو: {{code}}\n\n' +
-        'تنتهي صلاحيته خلال {{minutes}} دقائق. إذا لم تحاول تسجيل الدخول، فغيّر كلمة المرور فورًا.\n',
     },
     neverRun: 'أبداً',
   },
@@ -263,14 +191,12 @@ export const ar: DictionaryShape = {
       scheduleNotFound: 'الجدول غير موجود.',
       notOwner: 'أنت لا تملك هذا الجدول.',
       repoBusy: 'المستودع {{projectId}} مشغول — يوجد مهمة أخرى قيد التنفيذ.',
-      entitlementDenied: 'خطتك لا تسمح بهذا الجدول.',
       pruneFailed: 'فشل التقليم: {{message}}',
     },
     success: {
       scheduled: 'تم حفظ الجدول.',
       enqueued: 'تم إضافة المهمة إلى قائمة الانتظار.',
       prunePassed: 'اكتمل التقليم بنجاح.',
-      pruneSkippedPaused: 'تم تخطي حذف الاحتفاظ: المشروع متوقف؛ يتم الاحتفاظ باللقطات المخزَّنة.',
     },
     job: {
       failedRetriesExhausted: 'فشلت المهمة بعد {{attempts}} محاولات: {{message}}',
@@ -324,28 +250,6 @@ export const ar: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: 'رابط الدعوة هذا غير صالح.',
-      expired: 'انتهت صلاحية رابط الدعوة هذا.',
-      revoked: 'تم إبطال رابط الدعوة هذا.',
-      alreadyClaimed: 'تم استخدام رابط الدعوة هذا بالفعل.',
-      alreadySubscribed: 'لديك بالفعل خطة مدفوعة نشطة.',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: 'لا يمكن تعديل حسابات المشرف الأعلى أو حذفها.',
-    },
-    success: {
-      roleChanged: 'تم تحديث دور المستخدم.',
-      userVerified: 'تم وضع علامة على بريد المستخدم كمُتحقق منه.',
-      legalHoldUpdated: 'تم تحديث الحجز القانوني.',
-      deletionScheduled: 'تمت جدولة حذف الحساب.',
-      invitationCreated: 'تم إنشاء رابط الدعوة.',
-      invitationRevoked: 'تم إبطال رابط الدعوة.',
     },
   },
   security: {

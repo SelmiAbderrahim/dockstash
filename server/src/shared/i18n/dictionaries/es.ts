@@ -65,36 +65,6 @@ export const es: DictionaryShape = {
       providerNotEnabled: 'Ese proveedor de inicio de sesión no está habilitado.',
     },
   },
-  billing: {
-    checkout: {
-      title: 'Pago',
-      submit: 'Pagar ahora',
-      success: 'Pago recibido. ¡Gracias!',
-    },
-    portal: {
-      title: 'Facturación',
-    },
-    error: {
-      notConfigured: 'El proveedor de pagos no está configurado.',
-      userNotFound: 'Usuario no encontrado.',
-      noCustomer: 'No se encontró un cliente de facturación para este usuario.',
-      noSubscription: 'No se encontró una suscripción activa para este usuario.',
-      providerFailure: 'Error del proveedor de pagos: {{message}}',
-    },
-    entitlements: {
-      projectLimitReached: 'Tu plan no permite más proyectos. Actualiza para añadir otro.',
-      schedulesLocked: 'Las copias de seguridad programadas no están disponibles en tu plan actual.',
-      frequencyNotAllowed: 'Tu plan no permite esa frecuencia de programación.',
-      restoreDrillsLocked: 'Las pruebas de restauración automáticas están disponibles en los planes Pro y Business.',
-      pitrLocked: 'La restauración a un punto en el tiempo está disponible en los planes Pro y Business.',
-      mirrorLocked: 'El modo espejo está disponible en el plan Business.',
-      alertsLocked: 'Los canales de alerta (correo y webhooks) están disponibles en los planes Pro y Business.',
-      agentLimitReached: 'Has alcanzado el límite de agentes de tu plan. Mejora tu plan para conectar más servidores.',
-      projectPaused: 'Este proyecto está en pausa. Reactívalo o actualiza tu plan para ejecutar copias.',
-      selectionInvalid: 'Debes elegir entre uno y {{cap}} proyectos para mantener activos.',
-      notOwner: 'No eres propietario de uno o más de esos proyectos.',
-    },
-  },
   email: {
     contact: {
       confirmation: 'Tu mensaje ha sido enviado. Te contactaremos pronto.',
@@ -124,42 +94,6 @@ export const es: DictionaryShape = {
       body:
         'Te damos la bienvenida a Dockstash, {{name}}.\n\n' +
         'Inicia sesión y gestiona tus copias de seguridad en {{clientUrl}}.\n',
-    },
-    inviteClaimed: {
-      subject: 'Invitación canjeada: {{plan}}',
-      body:
-        'Se ha activado un enlace de invitación.\n\n' +
-        'Beneficiario: {{claimantName}} <{{claimantEmail}}>\n' +
-        'Plan: {{plan}} ({{grantDuration}})\n' +
-        'Periodo concedido: {{claimedAt}} → {{currentPeriodEnd}}\n' +
-        'Etiqueta: {{label}}\n\n' +
-        'Gestionar invitaciones: {{invitationsUrl}}\n',
-    },
-    paymentReceipt: {
-      subject: 'Tu recibo de Dockstash',
-      body:
-        'Gracias por tu pago de {{amount}} por el plan {{plan}}.\n\n' +
-        'Gestiona la facturación en {{clientUrl}}/billing.\n',
-    },
-    dunning: {
-      subject: 'Problema de pago en tu suscripción de Dockstash',
-      body:
-        'No pudimos cobrar tu método de pago para el plan {{plan}}.\n\n' +
-        'Actualízalo antes del {{graceEndsAt}} para mantener el plan: {{clientUrl}}/billing.\n',
-    },
-    downgradeNotice: {
-      subject: 'Tu plan de Dockstash ha cambiado a Free',
-      body:
-        'Tu plan {{plan}} ha caducado y tu cuenta ahora está en el plan Free.\n\n' +
-        'Tus copias de seguridad existentes están a salvo — no se ha eliminado nada. Los proyectos ' +
-        'que superan el límite Free están en pausa (solo lectura) hasta que vuelvas a suscribirte: {{clientUrl}}/billing.\n',
-    },
-    reactivation: {
-      subject: 'Tu suscripción de Dockstash vuelve a estar activa',
-      body:
-        'Buenas noticias: tu suscripción {{plan}} vuelve a estar activa y los proyectos ' +
-        'en pausa están de nuevo en línea.\n\n' +
-        'Gestiona tu cuenta en {{clientUrl}}/billing.\n',
     },
     drillFailure: {
       subject: 'Ensayo de restauración FALLIDO — proyecto {{project}}',
@@ -199,12 +133,6 @@ export const es: DictionaryShape = {
         'No se ha ejecutado ninguna copia de seguridad correcta para el proyecto «{{project}}» en las últimas {{hours}} hora(s).\n\n' +
         'Última copia de seguridad correcta: {{lastGoodAt}}\n\n' +
         'Abre el panel: {{clientUrl}}/projects/{{projectId}}\n',
-    },
-    loginOtp: {
-      subject: 'Tu código de inicio de sesión de Dockstash',
-      body:
-        'Tu código de verificación de inicio de sesión es: {{code}}\n\n' +
-        'Caduca en {{minutes}} minutos. Si no intentaste iniciar sesión, cambia tu contraseña de inmediato.\n',
     },
     neverRun: 'nunca',
   },
@@ -265,14 +193,12 @@ export const es: DictionaryShape = {
       scheduleNotFound: 'Programación no encontrada.',
       notOwner: 'No eres propietario de esta programación.',
       repoBusy: 'El repositorio {{projectId}} está ocupado — otro trabajo está en ejecución.',
-      entitlementDenied: 'Tu plan no permite esta programación.',
       pruneFailed: 'Prune fallido: {{message}}',
     },
     success: {
       scheduled: 'Programación guardada.',
       enqueued: 'Trabajo puesto en cola.',
       prunePassed: 'Prune completado con éxito.',
-      pruneSkippedPaused: 'Purga de retención omitida: el proyecto está en pausa; las instantáneas almacenadas se conservan.',
     },
     job: {
       failedRetriesExhausted: 'Trabajo fallido tras {{attempts}} intentos: {{message}}',
@@ -326,28 +252,6 @@ export const es: DictionaryShape = {
       es: 'Español',
       ru: 'Русский',
       zh: '中文',
-    },
-  },
-  invitations: {
-    error: {
-      notFound: 'Ese enlace de invitación no es válido.',
-      expired: 'Ese enlace de invitación ha caducado.',
-      revoked: 'Ese enlace de invitación fue revocado.',
-      alreadyClaimed: 'Ese enlace de invitación ya se ha utilizado.',
-      alreadySubscribed: 'Ya tienes un plan de pago activo.',
-    },
-  },
-  superadmin: {
-    error: {
-      cannotModifySuperadmin: 'Las cuentas de superadministrador no se pueden modificar ni eliminar.',
-    },
-    success: {
-      roleChanged: 'Rol de usuario actualizado.',
-      userVerified: 'Correo del usuario marcado como verificado.',
-      legalHoldUpdated: 'Retención legal actualizada.',
-      deletionScheduled: 'Eliminación de la cuenta programada.',
-      invitationCreated: 'Enlace de invitación creado.',
-      invitationRevoked: 'Enlace de invitación revocado.',
     },
   },
   security: {

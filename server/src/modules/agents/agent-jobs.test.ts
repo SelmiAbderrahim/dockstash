@@ -4,13 +4,9 @@ import jwt from 'jsonwebtoken';
 import { createApp } from '../../app.js';
 import { env } from '../../config/env.js';
 
-// OSS self-host mode: unrestricted entitlements (tiering covered by billing suites).
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
 });
 afterAll(() => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
 });
 import {
   clearCollections,
@@ -389,7 +385,7 @@ describe('claimNextJob', () => {
     });
   });
 
-  it('fails jobs inline for a vanished / foreign / paused project and claims the next', async () => {
+  it('fails jobs inline for a vanished / foreign project and claims the next', async () => {
     const logs = makeLogSpy();
     configureAgentJobEvents({ logs });
     const a = await seedUser('a@t.com');
@@ -412,13 +408,6 @@ describe('claimNextJob', () => {
       { projectId: String(foreignProject._id), owner: a.id, kind: 'backup' },
       String(agent._id),
     );
-    const pausedProject = await seedProject(a.id, String(agent._id));
-    pausedProject.paused = true;
-    await pausedProject.save();
-    const paused = await createAgentJob(
-      { projectId: String(pausedProject._id), owner: a.id, kind: 'backup' },
-      String(agent._id),
-    );
     const okProject = await seedProject(a.id, String(agent._id));
     const ok = await createAgentJob(
       { projectId: String(okProject._id), owner: a.id, kind: 'check' },
@@ -430,32 +419,7 @@ describe('claimNextJob', () => {
     expect((await AgentJob.findById(gone._id))?.status).toBe('failed');
     expect((await AgentJob.findById(gone._id))?.error).toBe('project not found');
     expect((await AgentJob.findById(foreign._id))?.status).toBe('failed');
-    expect((await AgentJob.findById(paused._id))?.error).toBe('project paused');
-    expect(logs.dones.filter(([, okFlag]) => !okFlag)).toHaveLength(3);
-  });
-
-  it('fails a backup job when the project cap is exceeded (paid tier gate)', async () => {
-    const a = await seedUser('a@t.com');
-    await seedStorage(a.id);
-    const { agent, principal } = await seedAgent(a.id);
-    const project = await seedProject(a.id, String(agent._id));
-    // Two more active projects — over the free-tier cap once billing is live.
-    await createProject(a.id, { name: 'p2', path: '/var/www/p2', repoPassword: 'x'.repeat(10) });
-    await createProject(a.id, { name: 'p3', path: '/var/www/p3', repoPassword: 'x'.repeat(10) });
-    const job = await createAgentJob(
-      { projectId: String(project._id), owner: a.id, kind: 'backup' },
-      String(agent._id),
-    );
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    try {
-      const payload = await claimNextJob(principal);
-      expect(payload).toBeNull();
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-    }
-    const failed = await AgentJob.findById(job._id);
-    expect(failed?.status).toBe('failed');
-    expect(failed?.error).toBeTruthy();
+    expect(logs.dones.filter(([, okFlag]) => !okFlag)).toHaveLength(2);
   });
 
   it('fails the job when storage is unconfigured', async () => {

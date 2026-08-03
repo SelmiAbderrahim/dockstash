@@ -14,22 +14,16 @@ import { createProject } from './backups.service.js';
 import { runMirror, MIRROR_TAG, type MirrorRunner } from './backups.mirror.service.js';
 import { Alert } from '../health/index.js';
 import { dispatchJob } from '../scheduler/scheduler.dispatcher.js';
-import { billingEntitlements } from '../scheduler/scheduler.entitlements.js';
 import { makeAgentAwareQueue } from '../agents/index.js';
 import { Agent } from '../agents/index.js';
 import type { ResticRunnerExt, SchedulerQueue } from '../scheduler/scheduler.boundaries.js';
-import { __setPaymentProviderForTests } from '../billing/active-provider.js';
-import { PolarProvider } from '../billing/providers/polar.js';
 
 const app = createApp();
 
-const __prevPaymentProvider = env.PAYMENT_PROVIDER;
 beforeAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
   await startMemoryMongo();
 });
 afterAll(async () => {
-  (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = __prevPaymentProvider;
   await stopMemoryMongo();
 });
 beforeEach(async () => {
@@ -199,9 +193,8 @@ describe('runMirror on agent-assigned projects (agent-root allowlist)', () => {
     expect(bad.status).toBe(400);
   });
 
-  it('updateProjectMirror + assertMirrorAllowed work without an injected translator', async () => {
+  it('updateProjectMirror works without an injected translator', async () => {
     const { updateProjectMirror } = await import('./backups.service.js');
-    const { assertMirrorAllowed } = await import('../billing/entitlements.service.js');
     const a = await seedUser('m-not@t.com');
     const project = await seedProject(a.id);
     const updated = await updateProjectMirror(String(project._id), a.id, {
@@ -210,9 +203,6 @@ describe('runMirror on agent-assigned projects (agent-root allowlist)', () => {
       targetPath: '',
     });
     expect(updated.mirror?.enabled).toBe(false);
-    await expect(assertMirrorAllowed(a.id)).resolves.toMatchObject({
-      slug: 'business',
-    });
   });
 
   it('stringifies non-Error restic failures', async () => {
@@ -221,7 +211,6 @@ describe('runMirror on agent-assigned projects (agent-root allowlist)', () => {
     await enableMirror(String(project._id));
     const runner = makeRunner({
       async backup() {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw 'raw-string-failure';
       },
     });
@@ -267,26 +256,6 @@ describe('dispatchJob mirror case', () => {
 });
 
 describe('mirror gating + agent rejection', () => {
-  it('billingEntitlements denies mirror below Business, allows Business ceiling', async () => {
-    const a = await seedUser('mg@t.com');
-    // OSS mode = business ceiling → allowed.
-    expect(await billingEntitlements.canEnqueue(a.id, 'mirror')).toBe(true);
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(
-      new PolarProvider({
-        nowSeconds: () => 1_700_000_000,
-        getWebhookSecret: () => 'test-webhook-secret',
-      }),
-    );
-    try {
-      // Free tier (no subscription) → denied.
-      expect(await billingEntitlements.canEnqueue(a.id, 'mirror')).toBe(false);
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-      __setPaymentProviderForTests(null);
-    }
-  });
-
   it('agent-aware queue rejects mirror jobs for agent-assigned projects', async () => {
     const a = await seedUser('ma@t.com');
     const agent = await Agent.create({
@@ -360,25 +329,5 @@ describe('mirror gating + agent rejection', () => {
       .send({ enabled: false, sourcePath: '', targetPath: '' });
     expect(off.status).toBe(200);
     expect(off.body.project.mirror.enabled).toBe(false);
-
-    // Business gate
-    (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'polar';
-    __setPaymentProviderForTests(
-      new PolarProvider({
-        nowSeconds: () => 1_700_000_000,
-        getWebhookSecret: () => 'test-webhook-secret',
-      }),
-    );
-    try {
-      const gated = await request(app)
-        .patch(`/api/backups/${project._id}/mirror`)
-        .set('Authorization', `JWT ${a.token}`)
-        .send({ enabled: false, sourcePath: '', targetPath: '' });
-      expect(gated.status).toBe(403);
-      expect(gated.body.error.details.reason).toBe('mirrorLocked');
-    } finally {
-      (env as { PAYMENT_PROVIDER?: string }).PAYMENT_PROVIDER = 'none';
-      __setPaymentProviderForTests(null);
-    }
   });
 });
