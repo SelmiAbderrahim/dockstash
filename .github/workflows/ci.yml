@@ -30,7 +30,7 @@ jobs:
       image: node:24-bookworm
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install (npm ci)
         working-directory: server
@@ -68,7 +68,7 @@ jobs:
       image: node:24-bookworm
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install (npm ci)
         working-directory: client
@@ -97,7 +97,7 @@ jobs:
       image: node:24-bookworm
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install (npm ci)
         working-directory: agent
@@ -127,7 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Build compose images
         run: docker compose -f docker-compose.yml build api web
 
@@ -157,7 +157,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
       - name: Log in to Docker Hub
