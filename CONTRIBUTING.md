@@ -8,14 +8,14 @@ green test suite, plus the handful of conventions that are load-bearing here.
 ## 1. Read this first: every command runs inside Docker
 
 **Do not run `npm`, `node`, `npx`, `tsc` or `vitest` directly on your host.**
-The toolchain is pinned to `node:20-bookworm` so local runs match CI exactly.
+The toolchain is pinned to `node:24-bookworm` so local runs match CI exactly.
 This surprises everyone once; it is the single rule most likely to waste your
 afternoon.
 
 The canonical form:
 
 ```bash
-docker run --rm -e CI=1 -v "$PWD/<package>":/app -w /app node:20-bookworm <command>
+docker run --rm -e CI=1 -v "$PWD/<package>":/app -w /app node:24-bookworm <command>
 ```
 
 where `<package>` is `client`, `server`, or `agent`.
@@ -29,7 +29,7 @@ Two things that will bite you:
   mounted, not just one package:
 
   ```bash
-  docker run --rm -e CI=1 -v "$PWD":/repo -w /repo/server node:20-bookworm npx vitest run
+  docker run --rm -e CI=1 -v "$PWD":/repo -w /repo/server node:24-bookworm npx vitest run
   ```
 
 Host-side, only `git`, `docker`, `gh`, and read-only file inspection are
@@ -46,7 +46,7 @@ cp .env.example .env
 
 # install dependencies (once per package)
 for p in client server agent; do
-  docker run --rm -v "$PWD/$p":/app -w /app node:20-bookworm npm ci
+  docker run --rm -v "$PWD/$p":/app -w /app node:24-bookworm npm ci
 done
 
 # bring the stack up
@@ -66,16 +66,16 @@ per package and fails on the first one that breaks.
 ```bash
 P=server   # or client, or agent
 
-docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:20-bookworm npm run typecheck
-docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:20-bookworm npm run lint
-docker run --rm -e CI=1 -v "$PWD":/repo   -w /repo/$P node:20-bookworm npx vitest run --coverage
-docker run --rm    -v "$PWD/$P":/app -w /app node:20-bookworm npm audit --audit-level=high
+docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:24-bookworm npm run typecheck
+docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:24-bookworm npm run lint
+docker run --rm -e CI=1 -v "$PWD":/repo   -w /repo/$P node:24-bookworm npx vitest run --coverage
+docker run --rm    -v "$PWD/$P":/app -w /app node:24-bookworm npm audit --audit-level=high
 ```
 
 A single file:
 
 ```bash
-docker run --rm -e CI=1 -v "$PWD/server":/app -w /app node:20-bookworm \
+docker run --rm -e CI=1 -v "$PWD/server":/app -w /app node:24-bookworm \
   npx vitest run src/modules/auth/auth.test.ts
 ```
 

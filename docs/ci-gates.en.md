@@ -31,6 +31,6 @@ advisory requires code change or dep swap.
 
 ## Where
 
-`.github/workflows/ci.yml`. Runs in `node:20-bookworm` containers on
+`.github/workflows/ci.yml`. Runs in `node:24-bookworm` containers on
 GitHub-hosted runners. The `docker-build` job additionally builds the
 compose stack to catch Dockerfile drift.

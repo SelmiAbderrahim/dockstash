@@ -80,7 +80,7 @@ dockstash/
 
 **ALL commands run inside Docker — never on the host.** See
 `.claude/rules/docker-only-commands.md` (strict rule). Dev tooling uses
-`node:20-bookworm` for CI parity; the stack runs via `docker compose`.
+`node:24-bookworm` for CI parity; the stack runs via `docker compose`.
 
 ```bash
 # Full stack (api, web, mongo, redis, docker-socket-proxy)
@@ -88,30 +88,30 @@ docker compose up -d --build
 docker compose ps                    # all services should report `healthy`
 
 # Install dependencies
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm install
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm install
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm npm install
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm npm install
 
 # Type-check both sides
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run typecheck
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run typecheck
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm npm run typecheck
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm npm run typecheck
 
 # Lint
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run lint
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run lint
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm npm run lint
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm npm run lint
 
 # Run all tests
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm test
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm test
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm npm test
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm npm test
 
 # Run a single test file
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm \
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm \
   npx vitest run src/modules/auth/auth.test.ts
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm \
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm \
   npx vitest run src/features/auth/store/slice.test.ts
 
 # Production build
-docker run --rm -v "$PWD/server":/app -w /app node:20-bookworm npm run build   # tsup → dist/server.cjs
-docker run --rm -v "$PWD/client":/app -w /app node:20-bookworm npm run build   # tsc --noEmit && vite build
+docker run --rm -v "$PWD/server":/app -w /app node:24-bookworm npm run build   # tsup → dist/server.cjs
+docker run --rm -v "$PWD/client":/app -w /app node:24-bookworm npm run build   # tsc --noEmit && vite build
 ```
 
 **Environment variables** — copy `.env.example` to `.env` at the repo root (never in subdirectories):
@@ -151,7 +151,7 @@ VITE_SOCKET_URL=http://localhost:8080         # falls back to / if omitted
 
 These are the load-bearing rules. Each links to the full rule file in `.claude/rules/`.
 
-- **Docker-only commands.** Every build/test/runtime command runs inside Docker — never bare `npm`/`node`/`npx`/`tsc`/`vitest` on the host. Dev tooling via `docker run --rm -v "$PWD/<side>":/app -w /app node:20-bookworm <cmd>` (CI parity); stack ops via `docker compose`. Host allows only `git`, `docker`, `gh`, and read-only file inspection.
+- **Docker-only commands.** Every build/test/runtime command runs inside Docker — never bare `npm`/`node`/`npx`/`tsc`/`vitest` on the host. Dev tooling via `docker run --rm -v "$PWD/<side>":/app -w /app node:24-bookworm <cmd>` (CI parity); stack ops via `docker compose`. Host allows only `git`, `docker`, `gh`, and read-only file inspection.
   → `.claude/rules/docker-only-commands.md`
 
 - **Feature-module isolation.** Client features live under `client/src/features/<name>/`; server modules under `server/src/modules/<name>/`. Cross-feature imports must go through `shared/` or each module's `index.ts` public API. Never reach into another feature's internals directly.
@@ -359,6 +359,6 @@ This list prevents agent assumptions from drifting into unrelated territory:
 - **No tRPC.** Standard Express route handlers returning JSON.
 - **No PostgreSQL.** MongoDB via Mongoose is the primary database. Redis (compose `redis` service, `REDIS_URL`) backs the distributed rate-limit store and is reserved for queue work.
 - **~~No CSS-in-JS / No Tailwind.~~** Superseded. The client uses **Tailwind CSS v4** (CSS-first, via `@tailwindcss/vite`; tokens in `client/src/styles/tailwind.css`, no `tailwind.config.js`). No styled-components / emotion, and no `.scss` left in the tree.
-- **~~No CI/CD pipeline.~~** Superseded. CI runs in Docker (`node:20-bookworm` containers) via `.github/workflows/ci.yml`. Pipeline gates: typecheck → lint → vitest + coverage (v8 **100%** on lines/branches/functions/statements) → `npm audit --audit-level=high` (**zero high/critical**). No allow-list. See `docs/ci-gates.en.md`. App-layer hardening (helmet, express-rate-limit on `/api/auth/*` and `/api/agent/*`, CORS locked to `env.CLIENT_URL`, double-submit CSRF for cookie surfaces) and the GDPR data-rights module live under `server/src/modules/legal/` — see `docs/security-model.en.md` and `docs/data-rights.en.md`.
+- **~~No CI/CD pipeline.~~** Superseded. CI runs in Docker (`node:24-bookworm` containers) via `.github/workflows/ci.yml`. Pipeline gates: typecheck → lint → vitest + coverage (v8 **100%** on lines/branches/functions/statements) → `npm audit --audit-level=high` (**zero high/critical**). No allow-list. See `docs/ci-gates.en.md`. App-layer hardening (helmet, express-rate-limit on `/api/auth/*` and `/api/agent/*`, CORS locked to `env.CLIENT_URL`, double-submit CSRF for cookie surfaces) and the GDPR data-rights module live under `server/src/modules/legal/` — see `docs/security-model.en.md` and `docs/data-rights.en.md`.
 - **~~No i18n framework.~~** Superseded. i18n is first-class: seven locales (`en, ar, fr, de, es, ru, zh`) with auto-detection (client uses `navigator.language`; server parses `Accept-Language` + honours `x-lang` header / `lang` cookie), RTL for Arabic, localized backend response messages, and full parity across every namespace. Client uses `i18next` + `react-i18next`; server uses a hand-written typed dictionary under `server/src/shared/i18n/`. See both `shared/i18n/README.md` files.
 - **~~No design system.~~** Superseded. The client uses **shadcn/ui** (Radix-based, `new-york` style) as its component library, styled by the **Dockstash monochrome design system** (`.claude/rules/dockstash-design-system.md`): achromatic neutral tokens in oklch, Inter + JetBrains Mono + Instrument Serif (italic display accent only), flat bordered surfaces, token-inverted dark bands. Generated primitives live in `client/src/shared/ui/` (imported via `@shared/ui/*`); the `cn()` helper is in `client/src/shared/lib/utils.ts`; theme tokens + light/dark (`.dark` class, manual toggle via `@shared/theme/ThemeProvider` + no-flash head script) live in `client/src/styles/tailwind.css`. `client/src/shared/ui/**` is excluded from coverage as vendored source. Note: the client is **React 18**, so native form primitives (`Input`, `Textarea`) are patched to use `forwardRef`.

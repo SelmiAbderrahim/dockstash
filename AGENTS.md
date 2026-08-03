@@ -45,7 +45,7 @@ Three independent npm packages. No monorepo tooling.
 `node`, `npx`, `tsc`, or `vitest` on the host:
 
 ```bash
-docker run --rm -e CI=1 -v "$PWD/<package>":/app -w /app node:20-bookworm <command>
+docker run --rm -e CI=1 -v "$PWD/<package>":/app -w /app node:24-bookworm <command>
 ```
 
 `npm test` is watch mode and hangs in a container — always `npx vitest run`.
@@ -109,10 +109,10 @@ make down              # stop; volumes preserved
 
 # Gates (per package: client | server | agent)
 P=server
-docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:20-bookworm npm run typecheck
-docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:20-bookworm npm run lint
-docker run --rm -e CI=1 -v "$PWD":/repo   -w /repo/$P node:20-bookworm npx vitest run --coverage
-docker run --rm    -v "$PWD/$P":/app -w /app node:20-bookworm npm audit --audit-level=high
+docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:24-bookworm npm run typecheck
+docker run --rm -e CI=1 -v "$PWD/$P":/app -w /app node:24-bookworm npm run lint
+docker run --rm -e CI=1 -v "$PWD":/repo   -w /repo/$P node:24-bookworm npx vitest run --coverage
+docker run --rm    -v "$PWD/$P":/app -w /app node:24-bookworm npm audit --audit-level=high
 ```
 
 Ports are loopback-only: `web` on `127.0.0.1:${WEB_PORT:-3000}`, `api` on
