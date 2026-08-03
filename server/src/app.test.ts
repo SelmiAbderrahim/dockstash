@@ -34,8 +34,8 @@ describe('app wiring after demo strip', () => {
     expect(res.status).toBe(404);
   });
 
-  it('still mounts /api/users, /api/communication, /api/billing', async () => {
-    for (const p of ['/api/users', '/api/communication', '/api/billing']) {
+  it('still mounts /api/users and /api/communication', async () => {
+    for (const p of ['/api/users', '/api/communication']) {
       const res = await request(app).get(p + '/__not_a_route__');
       // 401 (auth-guarded router hit its :param route) or 404 (no route matched) —
       // both mean the router itself is mounted.

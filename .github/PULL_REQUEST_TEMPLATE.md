@@ -38,6 +38,8 @@ will not match CI).
       zh`) on both client and server
 - [ ] Conventions in CONTRIBUTING.md §4 followed (feature-module isolation,
       named exports, owner-scoped queries, argv-only spawn, i18n-key errors)
+- [ ] **CLA signed** — I have read [`.github/CLA.md`](CLA.md) and added my line
+      to `CONTRIBUTORS.md` (first-time contributors only; one line, one time)
 
 ## Anything reviewers should look at closely
 

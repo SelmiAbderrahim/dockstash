@@ -21,9 +21,12 @@ Describe the situation, not the solution — it usually leads somewhere better.
 
 ## Scope check
 
-Dockstash is self-hosted backup orchestration. It deliberately does **not** have
-a hosted tier, payment integration, per-account limits, or telemetry — requests
-in those directions will be closed. See "What this is not" in the README.
+Dockstash is backup orchestration for Docker. **This repository** deliberately
+carries no billing code, per-account limits, or telemetry, and requests to add
+any of those here will be closed — including in support of the hosted Dockstash
+Cloud, which is metered outside this codebase. Questions about hosted plans
+belong at dockstash.com, not in this tracker. See "What's not in this
+repository" in the README.
 
 - [ ] This fits inside that scope
 - [ ] I'm willing to work on it

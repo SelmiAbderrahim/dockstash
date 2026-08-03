@@ -34,7 +34,6 @@ const makeStore = (auth: Partial<AuthState> = {}) =>
         authenticated: false,
         emailVerified: false,
         role: '',
-        otpChallengeId: '',
         pendingVerificationEmail: '',
         providers: { google: false, github: false },
         providersLoaded: false,

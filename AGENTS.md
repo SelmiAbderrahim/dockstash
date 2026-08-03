@@ -12,12 +12,16 @@ duplicated here.
 Dockstash is **open-source, self-hosted backup orchestration for Docker**:
 encrypted restic snapshots on storage the operator owns, a pull-based agent
 fleet, schedules, restore drills, health monitoring and alerting.
-Apache-2.0 licensed.
+**AGPL-3.0-only**, with a commercial license offered separately.
 
-It is **not** a SaaS. There is no hosted tier, no payment integration, no plan
-or usage cap, no platform-operator role above the account owner, and no
-telemetry. If a task seems to call for any of those, it is out of scope — see
-`CLAUDE.md` §9.
+**This repository contains no billing code**, no plan or usage cap, no
+platform-operator role above the account owner, and no telemetry. A managed
+service (Dockstash Cloud) runs the same codebase, but its metering and
+subscription layer lives outside this repo — never add one here. If a task
+seems to call for any of that, it is out of scope; see `CLAUDE.md` §9.
+
+Contributions require the one-line CLA in [`.github/CLA.md`](.github/CLA.md),
+which is what keeps the dual-licensing possible.
 
 ---
 

@@ -11,8 +11,11 @@ RUN apt-get update \
 # Vite build-time env — sourced from compose build args, never literal.
 ARG VITE_API_BASE_URL
 ARG VITE_SOCKET_URL
+# AGPL-3.0 §13 source offer — point at your fork if you deploy modifications.
+ARG VITE_SOURCE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
-    VITE_SOCKET_URL=${VITE_SOCKET_URL}
+    VITE_SOCKET_URL=${VITE_SOCKET_URL} \
+    VITE_SOURCE_URL=${VITE_SOURCE_URL}
 
 COPY package.json package-lock.json ./
 RUN npm ci

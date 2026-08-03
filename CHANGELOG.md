@@ -2,11 +2,22 @@
 
 ## Unreleased
 
-### ⚠️ BREAKING — Dockstash is now open-source and self-hosted only
+### ⚠️ BREAKING — Dockstash is now open source (AGPL-3.0), self-hostable
 
-Dockstash converts from a commercial SaaS into an Apache-2.0, self-hosted
-product. Everything that existed to run it as a service is gone. Anyone
-upgrading an existing install must read this entry before pulling.
+Dockstash is released as **AGPL-3.0-only** open source. Every billing, tiering,
+and platform-operator surface is removed from this repository; the managed
+service at dockstash.com runs the same codebase with its metering layer kept
+outside it. Anyone upgrading an existing install must read this entry before
+pulling.
+
+**License.** The repository moves from Apache-2.0 to **AGPL-3.0-only**. §13
+applies: if you run a modified Dockstash as a network service, you must offer
+your users the source of that modified version. The app footer now carries that
+offer — set `VITE_SOURCE_URL` to your fork when you deploy modifications
+(blank points upstream). A separate commercial license is available for
+organizations that cannot use AGPL software; contributions therefore require the
+one-line CLA in `.github/CLA.md`, which is a license grant, not a copyright
+assignment. The Apache-only `NOTICE` file is removed.
 
 **Removed: the public marketing surface.** The landing page, pricing page,
 alternatives/comparison pages, guides hub, FAQ, privacy and terms pages, and
@@ -19,6 +30,14 @@ client SEO layer, and the server `seo` module are deleted, which removes
 `/robots.txt`, `/llms.txt` and all five sitemap endpoints. The inline Google
 Analytics snippet and every `googletagmanager.com` / `google-analytics.com` CSP
 allowance are gone. **Dockstash now ships no third-party telemetry of any kind.**
+
+**Removed: two dead billing flags that were still enforced.**
+`Agent.blockedByBilling` and `Schedule.pausedByBilling` lost their only writer
+when the lifecycle service was deleted, but the agent flag was still **read** in
+`claimNextJob` — an agent flagged under the old billing rules would have stopped
+leasing jobs permanently, with no code path left to clear it. Both fields and
+the guard are removed. Existing rows carrying either flag are now ignored;
+Mongoose drops the unknown key on the next write.
 
 **Removed: payments and entitlements, end to end.** The entire `billing` module
 is deleted — the Polar provider, the inactive Stripe adapter, the webhook
@@ -72,15 +91,28 @@ file — are removed.
   `pricingtiers`, `webhookevents`, `invitations`, `loginchallenges` and
   `trusteddevices` collections are orphaned. Nothing reads them; drop them at
   your convenience.
+- The `blockedByBilling` (agents), `pausedByBilling` (schedules), `paused`
+  (projects) and `stripe` (users) fields are orphaned on existing documents.
+  They are no longer read. Optional cleanup:
+  `db.agents.updateMany({},{$unset:{blockedByBilling:""}})` and the equivalent
+  for the other three.
 - Bookmarks to `/billing`, `/pricing`, `/superadmin` and `/invite/:token` now
   fall through to the root redirect.
+- Optionally set `VITE_SOURCE_URL` if you deploy a modified build (AGPL §13).
 
 **Added: open-source packaging.** `README.md` is rewritten as the project front
 page. New `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1),
-`SECURITY.md`, `NOTICE`, GitHub issue/PR templates, and `dependabot.yml`. All
-three packages declare `license: Apache-2.0` with repository/homepage/bugs
-metadata and are renamed `dockstash-client` / `dockstash-server` /
-`dockstash-agent`; the inherited MERN-starter author and ISC license are gone.
+`SECURITY.md`, `.github/CLA.md`, `CONTRIBUTORS.md`, GitHub issue/PR templates,
+and `dependabot.yml`. All three packages declare `license: AGPL-3.0-only` with
+repository/homepage/bugs metadata and are renamed `dockstash-client` /
+`dockstash-server` / `dockstash-agent`; the inherited MERN-starter author and
+ISC license are gone.
+
+**Changed: the in-app footer.** The app-frame footer linked `/guides`,
+`/security`, `/privacy` and `/terms` — all deleted marketing routes. Those dead
+links are replaced by the AGPL §13 source-code link, which is asserted by a
+test so it cannot silently disappear. `nav.home` and the `sidebar.footer.*`
+keys are dropped from all seven locales; `footer.source` is added.
 
 **Added: `docs/self-hosting.md`**, replacing `docs/running-with-docker.md` —
 requirements, quick start, the `make` targets, reverse proxy + TLS snippets,

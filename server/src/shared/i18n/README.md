@@ -11,7 +11,6 @@ Seven supported locales, single-file dictionaries per locale, one shape enforced
 - `common` — generic UI words (OK/Cancel/Save/Delete).
 - `errors` — every `HttpError` message key lives here. `errors.notFound`, `errors.projectNotFound`, `errors.invalidCredentials`.
 - `auth` — auth flows (login/register/reset).
-- `billing` — checkout + portal.
 - `email` — subjects + bodies for transactional email.
 - `language` — switcher label + language display names.
 

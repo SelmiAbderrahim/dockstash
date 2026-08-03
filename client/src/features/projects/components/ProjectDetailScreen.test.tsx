@@ -34,7 +34,7 @@ vi.mock('@shared/components/ResticLogPanel', () => ({
 }));
 
 // AgentAssignmentCard self-gates on the fleet: it renders nothing once
-// listAgentsRequest rejects (no agents / entitlement-locked), which keeps
+// listAgentsRequest rejects (no agents registered), which keeps
 // this shell's tests focused on the plan/schedule/drill tabs.
 vi.mock('@features/fleet', () => ({
   listAgentsRequest: vi.fn(async () => {
@@ -549,7 +549,7 @@ describe('MirrorEditor', () => {
     expect(await screen.findByText(/mirror saved/i)).toBeInTheDocument();
   });
 
-  it('renders the entitlement error when the save is rejected', async () => {
+  it('renders the error when the save is rejected', async () => {
     mocked.updateMirrorRequest.mockRejectedValue(new Error('Mirroring requires Business.'));
     renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=mirror' });
     await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());
@@ -591,7 +591,7 @@ describe('AlertsEditor', () => {
     );
   });
 
-  it('renders the entitlement error when the save is rejected', async () => {
+  it('renders the error when the save is rejected', async () => {
     mocked.updateAlertsRequest.mockRejectedValue(new Error('Alerts require Pro.'));
     renderDetail({ projects: { items: [baseProject()] }, entry: '/projects/p1?tab=alerts' });
     await waitFor(() => expect(mocked.listSchedulesRequest).toHaveBeenCalled());

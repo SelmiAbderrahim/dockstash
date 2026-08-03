@@ -94,7 +94,7 @@ describe('scheduler.controller wiring', () => {
     expect(res.status).toBe(500);
   });
 
-  it('ensureConfigured accepts an explicit fallback queue + entitlements', async () => {
+  it('ensureConfigured accepts an explicit fallback queue', async () => {
     const a = await seedUser('a@t.com');
     const projectId = await seedProject(a.id);
     const kinds: string[] = [];

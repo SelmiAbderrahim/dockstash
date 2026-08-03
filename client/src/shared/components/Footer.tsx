@@ -4,15 +4,14 @@ import { useAppSelector } from '@shared/hooks/redux';
 import { selectAuthenticated } from '@features/auth';
 import { BRAND_NAME } from '@shared/brand';
 import { Separator } from '@shared/ui/separator';
+import { SOURCE_URL } from '@shared/sourceUrl';
 
 const AUTHED_LINKS = [
-  { to: '/', labelKey: 'nav.home' },
   { to: '/dashboard', labelKey: 'nav.dashboard' },
   { to: '/logout', labelKey: 'nav.logout' },
 ];
 
 const ANON_LINKS = [
-  { to: '/', labelKey: 'nav.home' },
   { to: '/login', labelKey: 'nav.login' },
   { to: '/register', labelKey: 'nav.register' },
 ];
@@ -35,6 +34,16 @@ export const Footer = () => {
                 </Link>
               </li>
             ))}
+            <li>
+              <a
+                href={SOURCE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-foreground transition-colors"
+              >
+                {t('footer.source')}
+              </a>
+            </li>
           </ul>
         </nav>
         <Separator className="sm:hidden" />

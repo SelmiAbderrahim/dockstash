@@ -34,7 +34,6 @@ const makeStore = (authenticated: boolean) =>
         authenticated,
         emailVerified: authenticated,
         role: '',
-        otpChallengeId: '',
         pendingVerificationEmail: '',
         providers: { google: false, github: false },
         providersLoaded: false,

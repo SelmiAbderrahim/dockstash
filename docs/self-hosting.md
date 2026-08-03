@@ -1,8 +1,13 @@
 # Self-hosting Dockstash
 
 Dockstash ships as a container stack orchestrated by `docker-compose.yml` at the
-repo root. Everything runs on one host; there is no hosted service, no account
-to create anywhere else, and nothing phones home.
+repo root. Everything runs on one host, there is no account to create anywhere
+else, and nothing phones home.
+
+Self-hosting is free and complete — this is the whole product, not a reduced
+edition. If you would rather not operate it, [Dockstash
+Cloud](https://dockstash.com) runs the same codebase as a managed service; the
+rest of this guide is for running it yourself.
 
 ---
 

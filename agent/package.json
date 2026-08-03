@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Dockstash fleet agent — pull-based backup daemon for remote VPS hosts.",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SelmiAbderrahim/dockstash.com.git",

@@ -233,5 +233,6 @@ static guard at
 
 ## What is out of scope
 
-No WAF, no SIEM, no pen-test engagement. Dockstash is self-hosted software:
-there is no payment surface, no platform-operator tier, and no telemetry.
+No WAF, no SIEM, no pen-test engagement. This codebase carries no payment
+surface, no platform-operator tier, and no telemetry — a self-hosted install
+makes only the network calls its operator configures.

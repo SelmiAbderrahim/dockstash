@@ -1,7 +1,6 @@
 {
   "nav": {
     "menu": "打开菜单",
-    "home": "首页",
     "dashboard": "仪表盘",
     "health": "健康状态",
     "projects": "项目",
@@ -32,16 +31,11 @@
       "fleet": "集群",
       "account": "账户",
       "admin": "管理"
-    },
-    "footer": {
-      "guides": "指南",
-      "security": "安全",
-      "privacy": "隐私",
-      "terms": "条款"
     }
   },
   "footer": {
-    "copyright": "© {{year}}，{{brand}}。保留所有权利。"
+    "copyright": "© {{year}}，{{brand}}。保留所有权利。",
+    "source": "源代码（AGPL-3.0）"
   },
   "ok": "确定",
   "cancel": "取消",

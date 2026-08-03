@@ -1,7 +1,6 @@
 {
   "nav": {
     "menu": "Open menu",
-    "home": "Home",
     "dashboard": "Dashboard",
     "health": "Health",
     "projects": "Projects",
@@ -32,16 +31,11 @@
       "fleet": "Fleet",
       "account": "Account",
       "admin": "Admin"
-    },
-    "footer": {
-      "guides": "Guides",
-      "security": "Security",
-      "privacy": "Privacy",
-      "terms": "Terms"
     }
   },
   "footer": {
-    "copyright": "© {{year}}, {{brand}}. All Rights Reserved."
+    "copyright": "© {{year}}, {{brand}}. All Rights Reserved.",
+    "source": "Source code (AGPL-3.0)"
   },
   "ok": "OK",
   "cancel": "Cancel",

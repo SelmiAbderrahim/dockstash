@@ -23,7 +23,7 @@ interface Props {
 /**
  * "Runs on" selector — assign a project to a fleet agent or the local server.
  * Self-gating: renders nothing when the user has no agents or the fleet
- * endpoint is entitlement-locked (403). The Fleet screen carries the upsell.
+ * endpoint fails. The Fleet screen is where agents are registered.
  */
 export const AgentAssignmentCard = ({ project }: Props) => {
   const { t } = useTranslation('projectDetail');

@@ -1,7 +1,6 @@
 {
   "nav": {
     "menu": "Ouvrir le menu",
-    "home": "Accueil",
     "dashboard": "Tableau de bord",
     "health": "Santé",
     "projects": "Projets",
@@ -32,16 +31,11 @@
       "fleet": "Flotte",
       "account": "Compte",
       "admin": "Admin"
-    },
-    "footer": {
-      "guides": "Guides",
-      "security": "Sécurité",
-      "privacy": "Confidentialité",
-      "terms": "Conditions"
     }
   },
   "footer": {
-    "copyright": "© {{year}}, {{brand}}. Tous droits réservés."
+    "copyright": "© {{year}}, {{brand}}. Tous droits réservés.",
+    "source": "Code source (AGPL-3.0)"
   },
   "ok": "OK",
   "cancel": "Annuler",

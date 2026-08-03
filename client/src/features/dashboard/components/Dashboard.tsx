@@ -40,7 +40,7 @@ const ADMIN_DESTINATION: Destination = {
 
 /**
  * Authenticated landing. Surfaces the four product screens (Projects,
- * Snapshots, Settings, Billing) plus the admin entry for admins. No demo
+ * Snapshots, Settings) plus the admin entry for admins. No demo
  * "protected test route" — that placeholder was removed with the demo strip.
  */
 export const Dashboard = () => {

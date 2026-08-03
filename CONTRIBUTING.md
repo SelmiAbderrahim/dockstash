@@ -174,7 +174,37 @@ services own the model calls. No DB access from a controller.
 
 ---
 
-## 6. Pull requests
+## 6. Licensing and the CLA
+
+Dockstash is **AGPL-3.0-only**. Anything you contribute ships under that license
+to every user, forever.
+
+**Your first pull request must also sign the
+[Contributor License Agreement](.github/CLA.md).** It is one line added to
+[`CONTRIBUTORS.md`](CONTRIBUTORS.md) plus a checkbox in the PR template:
+
+```
+- Your Name <your@email> — signed CLA v1.0 on YYYY-MM-DD
+```
+
+The short version of why: you keep full ownership of your work — the CLA is a
+license grant, not an assignment — but it lets the maintainer distribute the
+codebase under terms besides the AGPL. That matters because some organizations
+cannot use AGPL software at all, so Dockstash is also offered under a commercial
+license and as a managed service at dockstash.com. Copyright law does not allow
+relicensing code you do not own, so without the CLA a single external
+contribution permanently closes that door — and chasing consent retroactively is
+worse for everyone.
+
+It does **not** let anyone take the AGPL version away. Every AGPL release stays
+AGPL and remains forkable under that license.
+
+If you are contributing on behalf of an employer, make sure you have their
+permission before signing — Section 5 of the CLA covers this.
+
+---
+
+## 7. Pull requests
 
 - Branch off `master`. One logical change per PR.
 - Conventional-ish commit subjects (`feat:`, `fix:`, `docs:`, `refactor:`,
@@ -196,7 +226,7 @@ your pull request. Every other job runs normally.
 
 ---
 
-## 7. Reporting security issues
+## 8. Reporting security issues
 
 Please do **not** open a public issue. See [SECURITY.md](SECURITY.md) for the
 private disclosure channel.

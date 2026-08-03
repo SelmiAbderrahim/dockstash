@@ -32,7 +32,6 @@ const AUTHED_LINKS: NavLink[] = [
 ];
 
 const ANON_LINKS: NavLink[] = [
-  { to: '/', labelKey: 'nav.home' },
   { to: '/login', labelKey: 'nav.login' },
   { to: '/register', labelKey: 'nav.register' },
 ];

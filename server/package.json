@@ -2,7 +2,7 @@
   "name": "dockstash-server",
   "version": "2.0.0",
   "description": "Dockstash API server — Express 4 + Mongoose 8 + Socket.IO.",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SelmiAbderrahim/dockstash.com.git",

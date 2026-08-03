@@ -52,5 +52,10 @@ Pages with no suffix (`self-hosting.md`, this index) are English-only.
 | [data-rights.en.md](data-rights.en.md) | Data export, account deletion, grace window, legal hold |
 | [ci-gates.en.md](ci-gates.en.md) | The typecheck → lint → 100%-coverage → audit pipeline |
 
-Contributing? Read [CONTRIBUTING.md](../CONTRIBUTING.md) first — the Docker-only
-command rule surprises everyone once.
+## Contributing
+
+Read [CONTRIBUTING.md](../CONTRIBUTING.md) first — the Docker-only command rule
+surprises everyone once. Dockstash is **AGPL-3.0-only**; a first pull request
+also signs the one-line [CLA](../.github/CLA.md), which keeps the project's
+commercial licensing option open without taking anything away from the AGPL
+release.

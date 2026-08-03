@@ -20,7 +20,6 @@ const makeStore = (role = '') =>
         authenticated: true,
         emailVerified: true,
         role,
-        otpChallengeId: '',
         pendingVerificationEmail: '',
         providers: { google: false, github: false },
         providersLoaded: false,

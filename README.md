@@ -1,14 +1,14 @@
 <h1 align="center">Dockstash</h1>
 
 <p align="center">
-  <strong>Self-hosted backup orchestration for Docker.</strong><br>
+  <strong>Backup orchestration for Docker — run it yourself, or let us run it.</strong><br>
   Encrypted restic snapshots on storage you own, a pull-based agent fleet,
   schedules, restore drills, health monitoring and alerting.
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-  <img alt="Self-hosted" src="https://img.shields.io/badge/deploy-self--hosted-111113">
+  <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg"></a>
+  <img alt="Self-hostable" src="https://img.shields.io/badge/deploy-self--hosted%20or%20cloud-111113">
   <img alt="No telemetry" src="https://img.shields.io/badge/telemetry-none-111113">
 </p>
 
@@ -17,8 +17,9 @@
 Dockstash is the piece most Docker setups are missing: something that actually
 backs the stack up, on a schedule, and then **proves the backup restores**.
 
-It runs on your hardware, writes to storage you control, and never talks to
-anyone else's server.
+Self-host it and it runs on your hardware, writes to storage you control, and
+never talks to anyone else's server. Or skip the ops and use
+**[Dockstash Cloud](https://dockstash.com)** — same product, managed.
 
 ## What it backs up
 
@@ -75,6 +76,20 @@ bootstrap password — the first account is just an account.
 > every secret Dockstash stores, including the passwords to the restic
 > repositories holding your backups. Lose it and none of it is recoverable.
 
+## Cloud
+
+Self-hosting is free and complete — this repository is the whole product, not a
+crippled edition with the good parts held back. Every feature listed above works
+in the version you just cloned.
+
+**[Dockstash Cloud](https://dockstash.com)** runs the same codebase for you if
+you would rather not operate it: managed upgrades, monitored control plane,
+backups of the backup orchestrator, and support. It is the same software with
+the ops handed over.
+
+If your organization cannot use AGPL-licensed software for policy reasons, a
+commercial license is available — **support@dockstash.com**.
+
 ## Architecture
 
 Three independent npm packages — no monorepo tooling, no workspace magic.
@@ -100,17 +115,27 @@ AES-256-GCM envelope. Seven UI locales (`en, ar, fr, de, es, ru, zh`) with RTL.
 - [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) ·
   [Code of conduct](CODE_OF_CONDUCT.md) · [Changelog](CHANGELOG.md)
 
-## What this is not
+## What's not in this repository
 
-- **Not a SaaS.** There is no hosted version, no account tier, no plan.
-- **No payment integration.** Nothing to buy, nothing to unlock, no billing code
-  in the tree.
-- **No telemetry, no phone-home, no analytics.** The app makes exactly the
-  network calls you configure and no others.
+- **No billing code.** No payment provider, no subscription models, no
+  entitlement checks. Metering for Dockstash Cloud lives outside this codebase.
+- **No usage caps.** Projects, agents, cron cadence and retention are unlimited
+  by construction — there is no gate to unlock.
+- **No telemetry, no phone-home, no analytics.** A self-hosted install makes
+  exactly the network calls you configure and no others.
 - **No platform-operator role.** Nobody — including whoever installed it — has a
-  console above your account.
+  console above your account. The role ladder tops out at `Admin`.
 - **Not a hosted storage provider.** You bring the restic target.
 
 ## License
 
-[Apache-2.0](LICENSE).
+**[AGPL-3.0-only](LICENSE).** Self-host it, modify it, fork it. If you run a
+modified version as a network service, §13 requires you to offer your users the
+modified source.
+
+A separate commercial license is available for organizations that cannot use
+AGPL software — **support@dockstash.com**.
+
+Contributions are welcome and require a one-line
+[CLA](.github/CLA.md) so the dual-licensing above stays possible. It is a
+license grant, not a copyright assignment: you keep your work.

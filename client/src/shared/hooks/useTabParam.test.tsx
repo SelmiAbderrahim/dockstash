@@ -4,11 +4,11 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { useTabParam } from './useTabParam';
 
 const Harness = () => {
-  const [tab, setTab] = useTabParam('general', ['general', 'billing', 'security'] as const);
+  const [tab, setTab] = useTabParam('general', ['general', 'storage', 'security'] as const);
   return (
     <div>
       <span data-testid="tab">{tab}</span>
-      <button onClick={() => setTab('billing')}>go-billing</button>
+      <button onClick={() => setTab('storage')}>go-storage</button>
       <button onClick={() => setTab('security')}>go-security</button>
     </div>
   );
@@ -43,8 +43,8 @@ describe('useTabParam', () => {
   });
 
   it('reads the active tab from ?tab=', () => {
-    renderAt('?tab=billing');
-    expect(screen.getByTestId('tab').textContent).toBe('billing');
+    renderAt('?tab=storage');
+    expect(screen.getByTestId('tab').textContent).toBe('storage');
   });
 
   it('invalid value falls back to default', () => {
@@ -55,9 +55,9 @@ describe('useTabParam', () => {
   it('setTab writes ?tab= into the URL', () => {
     renderAt('');
     act(() => {
-      screen.getByText('go-billing').click();
+      screen.getByText('go-storage').click();
     });
-    expect(screen.getByTestId('search').textContent).toBe('?tab=billing');
-    expect(screen.getByTestId('tab').textContent).toBe('billing');
+    expect(screen.getByTestId('search').textContent).toBe('?tab=storage');
+    expect(screen.getByTestId('tab').textContent).toBe('storage');
   });
 });

@@ -273,7 +273,7 @@ describe('sendFailureAlert', () => {
         { projectId: String(project._id), kind: 'backup', error: 'e' },
         {
           emailAllowedFor: async () => {
-            throw new Error('entitlement lookup exploded');
+            throw new Error('delivery gate exploded');
           },
         },
       ),
@@ -419,7 +419,7 @@ describe('runHeartbeatSweep', () => {
       now,
       thresholdHours: 24,
       emailAllowedFor: async () => {
-        throw new Error('entitlement lookup exploded');
+        throw new Error('delivery gate exploded');
       },
     });
     expect(res.alertsSent).toBe(0);

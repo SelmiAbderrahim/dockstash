@@ -20,7 +20,6 @@ prompt-executor
 .claude
 .opencode
 # Agent-instruction and contributor files never belong inside an image.
-IDEA.md
 README.md
 AGENTS.md
 OPENCODE.md
@@ -30,12 +29,12 @@ CONTRIBUTING.md
 CODE_OF_CONDUCT.md
 SECURITY.md
 CHANGELOG.md
+CONTRIBUTORS.md
 .cursorrules
 .windsurfrules
 opencode.jsonc
 skills-lock.json
 LICENSE
-NOTICE
 docs
 Makefile
 *.log

@@ -120,7 +120,7 @@ function serializeAgentJob(job: AgentJobHydrated) {
 
 /**
  * Owner-scoped job history for one project. Deliberately NOT gated by the
- * multi-VPS entitlement — seeing what ran against your own project is basic
+ * fleet surface — seeing what ran against your own project is basic
  * observability, not a fleet feature. Local (agent-less) projects have no
  * persisted jobs, so this returns [] for them.
  */

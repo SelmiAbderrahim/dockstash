@@ -1,7 +1,7 @@
 # Secrets at Rest & Master-Key Rotation
 
 The `shared/crypto` module encrypts sensitive values at rest so they never sit
-plaintext in Mongo — Polar API tokens, the storage-VPS SSH private key, the
+plaintext in Mongo — the storage-VPS SSH private key, restic repo passwords, the
 restic repo password, and anything else routed through `encryptSecret`.
 
 ## Algorithm
@@ -28,7 +28,7 @@ interface EncryptedSecret {
 }
 ```
 
-The shape is frozen. Downstream modules (billing, backup) embed it verbatim as
+The shape is frozen. Downstream modules (backups, settings, agents) embed it verbatim as
 a Mongoose sub-schema and pull the TypeScript type via `InferSchemaType`.
 
 ## Startup Gate
@@ -49,7 +49,7 @@ there is no way to boot without a valid key.
 ## Master-Key Rotation Runbook
 
 Rotation exists so a compromised master key can be replaced without downtime
-and without re-issuing every Polar credential / SSH key that was encrypted
+and without re-issuing every SSH key / repo password that was encrypted
 under the old key.
 
 ### Step 1 — Add the new key at the next version
@@ -67,7 +67,7 @@ version because the registry keeps both.
 
 ### Step 3 — Re-encrypt existing records (decrypt-old → re-encrypt-new)
 
-Iterate the collections that embed `EncryptedSecret` (billing, backup) and,
+Iterate the collections that embed `EncryptedSecret` (projects, settings, agents) and,
 for each document, call `reEncryptSecret(record, newVersion)` and **atomically
 swap** the sub-document. Atomic swap means a single `updateOne` that replaces
 the entire encrypted record — never leave a document with a mismatched

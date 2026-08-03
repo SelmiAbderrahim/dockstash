@@ -11,7 +11,7 @@ import {
  *
  * All byte fields are base64-encoded so the record is safely embeddable inside
  * a Mongoose sub-schema without extra encoding gymnastics. The record shape is
- * frozen — downstream consumers (billing / backup) will `InferSchemaType` off
+ * frozen — downstream consumers (backups, settings, agents) `InferSchemaType` off
  * a Mongoose sub-schema whose fields mirror these exact names & types.
  */
 export interface EncryptedSecret {

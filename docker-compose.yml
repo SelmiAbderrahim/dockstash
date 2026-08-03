@@ -163,6 +163,9 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+        # AGPL-3.0 §13 source offer (blank = upstream; set to your fork if you
+        # deploy a modified build).
+        VITE_SOURCE_URL: ${VITE_SOURCE_URL:-}
     restart: unless-stopped
     networks: [dockstash]
     depends_on:

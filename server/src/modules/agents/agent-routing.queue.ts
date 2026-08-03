@@ -13,7 +13,7 @@ import { createAgentJob } from './agent-jobs.service.js';
  * SchedulerQueue decorator: jobs for projects assigned to a remote agent are
  * persisted as AgentJob docs (the agent claims them by polling); everything
  * else flows to the local in-process queue unchanged. Cron, `enqueueNow`,
- * entitlements, and the controller never know the difference.
+ * and the controller never know the difference.
  */
 export function makeAgentAwareQueue(inner: SchedulerQueue): SchedulerQueue {
   return {

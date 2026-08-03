@@ -694,7 +694,7 @@ describe('scheduler: processJob retry + backoff + alert hook', () => {
   });
 });
 
-describe('scheduler: cron reconciliation + entitlements', () => {
+describe('scheduler: cron reconciliation', () => {
   beforeAll(async () => {
     await startMemoryMongo();
   });

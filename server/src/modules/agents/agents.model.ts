@@ -73,11 +73,6 @@ const agentSchema = new mongoose.Schema(
     // is returned exactly once at registration / rotation.
     apiKeyHash: { type: hashedSecretSchema, required: true },
     status: { type: String, enum: AGENT_STATUSES, default: 'offline' },
-    // Set when a downgrade shrinks the fleet cap below the registered agent
-    // count (prompt 13 / F6). A blocked agent leases NO new jobs — it is never
-    // deleted, and re-upgrade clears the flag. Newest-over-cap agents are
-    // blocked first, mirroring the project-pause ordering.
-    blockedByBilling: { type: Boolean, required: true, default: false },
     lastSeenAt: { type: Date, default: null },
     // Self-reported by the daemon on heartbeat.
     agentVersion: { type: String, default: '' },
