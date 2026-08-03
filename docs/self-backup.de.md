@@ -1,8 +1,8 @@
 # Selbst-Backup
 
-Der Orchestrator sichert **seine eigene** Mongo — Projekte, Zeitpläne,
-verschlüsselte Geheimnisse, Backup-Historie — auf den Speicher-VPS in einem
-dedizierten restic-Repo, getrennt von jedem Repo eines Benutzerprojekts.
+Der Orchestrator sichert **seine eigene** Mongo in ein dediziertes
+restic-Repo. Compose verwendet standardmäßig das dauerhafte Volume
+`self-backup-data`.
 
 ## Was erfasst wird
 
@@ -12,17 +12,15 @@ dedizierten restic-Repo, getrennt von jedem Repo eines Benutzerprojekts.
   restic-Repo-Passwörter) — als Chiffretext, niemals im Klartext.
 - Backup- / Verify- / Drill-Historienzeilen.
 
-Der Orchestrator streamt `mongodump --archive --oplog` direkt in
-`restic backup --stdin` — keine temporäre Datei wird jemals geschrieben.
-`--oplog` garantiert Zeitpunkt-Konsistenz über alle Collections.
+Der Orchestrator streamt `mongodump --archive` direkt in
+`restic backup --stdin` — keine temporäre Datei wird geschrieben.
 
 ## Das reservierte Repo
 
-Selbst-Backup schreibt nach `SELF_BACKUP_REPO` (Standard `dockstash-self`) —
-eine reservierte Kennung, die niemals mit einem Benutzerprojekt kollidiert.
-Die Pro-Projekt-BullMQ-Warteschlange (Prompt 05) serialisiert gleichzeitige
-Cron-Ticks gegen dieses Repo, sodass restic nie zwei gleichzeitige
-Operationen auf demselben Repository sieht.
+Selbst-Backup schreibt nach `SELF_BACKUP_REPO` (Compose-Standard:
+`/self-backup`). Das Volume überlebt Container-Neuerstellungen, liegt aber
+auf demselben Host; für externen Schutz ist eine entfernte restic-URL samt
+Zugangsdaten zu konfigurieren.
 
 ## Zeitplan
 

@@ -28,9 +28,9 @@ export interface PublicProject {
   lastRestoreAt: string | null;
   lastRestoreStatus: 'pass' | 'fail' | null;
   lastRestoreDetail: string;
-  /** Per-project outbound alert webhook (Pro+); '' = unset. */
+  /** Per-project outbound alert webhook; '' = unset. */
   alertWebhookUrl: string;
-  /** One-way mirror config (Business). */
+  /** One-way mirror config. */
   mirror: { enabled: boolean; sourcePath: string; targetPath: string };
   createdAt: string;
   updatedAt: string;

@@ -5,7 +5,7 @@ import { env } from '../config/env.js';
 import { decryptSecret } from '../shared/crypto/index.js';
 import { decodeMasterKey } from '../shared/crypto/keys.js';
 import { configureRecoveryController } from '../modules/recovery/index.js';
-import type { MongoDumpRunner } from '../modules/recovery/index.js';
+import { runSelfBackup, type MongoDumpRunner } from '../modules/recovery/index.js';
 import { getSettingsForUser, loadTransportForUser } from '../modules/settings/index.js';
 import { ProcessResticRunner } from '../modules/backups/index.js';
 import type { ProjectHydrated } from '../modules/backups/index.js';
@@ -67,6 +67,10 @@ export interface WireRecoveryOptions {
   spawnFn?: SpawnFn;
 }
 
+export interface RecoveryRuntime {
+  runNow: () => ReturnType<typeof runSelfBackup>;
+}
+
 /**
  * Wire the recovery controller at boot. `loadStorage` reads the settings
  * module; self-backup runs synchronously against the reserved
@@ -96,7 +100,7 @@ export function deriveSelfBackupPassword(masterKeyRaw: string): string {
   return createHmac('sha256', decoded).update(SELF_BACKUP_LABEL, 'utf8').digest('hex');
 }
 
-export function wireRecoveryController(opts: WireRecoveryOptions = {}): void {
+export function wireRecoveryController(opts: WireRecoveryOptions = {}): RecoveryRuntime {
   const spawnFn = opts.spawnFn ?? nodeSpawn;
   const selfBackupRunner = new ProcessResticRunner({
     repoUrl: env.SELF_BACKUP_REPO,
@@ -105,6 +109,19 @@ export function wireRecoveryController(opts: WireRecoveryOptions = {}): void {
     // cannot yield MASTER_ENCRYPTION_KEY. See S7-03 in findings.md.
     password: deriveSelfBackupPassword(env.MASTER_ENCRYPTION_KEY),
   });
+  const mongoDump = makeMongoDumpRunner(spawnFn);
+  let active: ReturnType<typeof runSelfBackup> | null = null;
+  const runNow = (): ReturnType<typeof runSelfBackup> => {
+    active ??= runSelfBackup({
+      resticRunner: selfBackupRunner,
+      mongoDump,
+      ensureRepoInitialized: (runner) => runner.init(),
+    }).finally(() => {
+      active = null;
+    });
+    return active;
+  };
+
   configureRecoveryController({
     loadStorage: async (userId: string) => {
       const settings = await getSettingsForUser(userId);
@@ -121,7 +138,7 @@ export function wireRecoveryController(opts: WireRecoveryOptions = {}): void {
       };
     },
     storageProbe: probeProjectRepo,
-    resticRunner: selfBackupRunner,
-    mongoDump: makeMongoDumpRunner(spawnFn),
+    runNow,
   });
+  return { runNow };
 }

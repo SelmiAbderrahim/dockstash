@@ -195,7 +195,7 @@ export async function updateProjectAlerts(
 }
 
 /**
- * Update the one-way mirror config (Business). When enabling, both paths must
+ * Update the one-way mirror config. When enabling, both paths must
  * live inside the project-root allowlist — the same guard the mirror runner
  * re-checks at execution time (belt and braces, like restore).
  */

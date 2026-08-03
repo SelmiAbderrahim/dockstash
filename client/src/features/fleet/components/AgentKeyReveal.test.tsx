@@ -4,7 +4,7 @@ import { I18nextProvider } from 'react-i18next';
 import { AgentKeyReveal } from './AgentKeyReveal';
 import { i18n, initI18n } from '@shared/i18n';
 
-const TOKEN = 'dsa_0123456789abcdef01234567.abc';
+const TOKEN = 'dsa_test.test';
 
 beforeEach(() => {
   initI18n({ initialLocale: 'en' });
@@ -36,7 +36,7 @@ describe('AgentKeyReveal', () => {
     // command script — both must be present.
     const tokenMatches = screen.getAllByText((_, node) => node?.textContent === TOKEN);
     expect(tokenMatches.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/DOCKSTASH_AGENT_TOKEN: dsa_0123456789abcdef01234567\.abc/)).toBeInTheDocument();
+    expect(screen.getByText(/DOCKSTASH_AGENT_TOKEN: dsa_test\.test/)).toBeInTheDocument();
     expect(screen.getByText('Install the agent')).toBeInTheDocument();
   });
 

@@ -86,7 +86,7 @@ describe('registerAgent', () => {
         agentVersion: '',
         outdated: false,
       },
-      token: 'dsa_0123456789abcdef01234567.sk',
+      token: 'dsa_test.test',
     };
     mocked.registerAgentRequest.mockResolvedValue(payload);
     mocked.fetchFleetRequest.mockResolvedValue([entry]);
@@ -132,7 +132,7 @@ describe('registerAgent', () => {
 describe('rotateAgentKey', () => {
   const rotated = {
     agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null, agentVersion: '', outdated: false },
-    token: 'dsa_0123456789abcdef01234567.new',
+    token: 'dsa_test.test',
   };
 
   it('resolves with the new one-time key payload', async () => {

@@ -20,16 +20,37 @@ vi.mock('../api', () => ({
   updateScheduleRequest: vi.fn(async () => ({})),
   resolvePitrRequest: vi.fn(async () => ({})),
   pitrRestoreRequest: vi.fn(async () => 'j-9'),
+  runDrillNowRequest: vi.fn(async () => 'j-drill'),
+  runCheckNowRequest: vi.fn(async () => 'j-check'),
+  runMirrorNowRequest: vi.fn(async () => 'j-mirror'),
   updateAlertsRequest: vi.fn(async () => ({})),
   updateMirrorRequest: vi.fn(async () => ({})),
 }));
 
 // Stub the log panel so no socket is opened; expose an onDone trigger.
 vi.mock('@shared/components/ResticLogPanel', () => ({
-  ResticLogPanel: ({ jobId, onDone }: { jobId: string; onDone?: (ok: boolean) => void }) => (
-    <button type="button" data-testid="log-done" onClick={() => onDone?.(true)}>
-      panel:{jobId}
-    </button>
+  ResticLogPanel: ({
+    jobId,
+    onDone,
+  }: {
+    jobId: string;
+    onDone?: (ok: boolean, detail?: string) => void;
+  }) => (
+    <div>
+      <button type="button" data-testid="log-done" onClick={() => onDone?.(true)}>
+        panel:{jobId}
+      </button>
+      <button
+        type="button"
+        data-testid="log-fail"
+        onClick={() => onDone?.(false, 'Mirror failed safely.')}
+      >
+        fail
+      </button>
+      <button type="button" data-testid="log-fail-default" onClick={() => onDone?.(false)}>
+        fail without detail
+      </button>
+    </div>
   ),
 }));
 
@@ -396,6 +417,38 @@ describe('DrillStatus', () => {
     });
     expect(screen.getByText('Failed')).toBeInTheDocument();
   });
+
+  it('explains and disables drills for remote-agent projects', () => {
+    renderDetail({
+      projects: { items: [baseProject({ agentId: 'a1' })] },
+      entry: '/projects/p1?tab=drill',
+    });
+    expect(screen.getByRole('button', { name: /run restore drill/i })).toBeDisabled();
+    expect(screen.getByText(/move this project to this server/i)).toBeInTheDocument();
+  });
+
+  it('starts a restore drill, streams it, and refreshes when done', async () => {
+    const { store } = renderDetail({
+      projects: { items: [baseProject()] },
+      entry: '/projects/p1?tab=drill',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /run restore drill/i }));
+    await waitFor(() => expect(mocked.runDrillNowRequest).toHaveBeenCalledWith('p1'));
+    expect(await screen.findByText('panel:j-drill')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('log-done'));
+    await waitFor(() => expect(store.getState().projects.activeJobByProject.p1).toBeNull());
+    expect(mocked.listProjectsRequest).toHaveBeenCalled();
+  });
+
+  it('starts a repository check from the verification tab', async () => {
+    renderDetail({
+      projects: { items: [baseProject()] },
+      entry: '/projects/p1?tab=drill',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /check repository/i }));
+    await waitFor(() => expect(mocked.runCheckNowRequest).toHaveBeenCalledWith('p1'));
+    expect(await screen.findByText('panel:j-check')).toBeInTheDocument();
+  });
 });
 
 const pitrResolution = {
@@ -564,6 +617,75 @@ describe('MirrorEditor', () => {
       entry: '/projects/p1?tab=mirror',
     });
     expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled();
+  });
+
+  it('runs an enabled local mirror and refreshes when done', async () => {
+    const { store } = renderDetail({
+      projects: {
+        items: [
+          baseProject({
+            mirror: { enabled: true, sourcePath: '/var/www/app', targetPath: '/var/www/copy' },
+          }),
+        ],
+      },
+      entry: '/projects/p1?tab=mirror',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /run mirror/i }));
+    await waitFor(() => expect(mocked.runMirrorNowRequest).toHaveBeenCalledWith('p1'));
+    expect(await screen.findByText('panel:j-mirror')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('log-done'));
+    await waitFor(() => expect(store.getState().projects.activeJobByProject.p1).toBeNull());
+    expect(screen.getByText(/mirror completed/i)).toBeInTheDocument();
+  });
+
+  it('keeps a failed mirror result visible after the log stream closes', async () => {
+    renderDetail({
+      projects: {
+        items: [
+          baseProject({
+            mirror: { enabled: true, sourcePath: '/var/www/app', targetPath: '/var/www/copy' },
+          }),
+        ],
+      },
+      entry: '/projects/p1?tab=mirror',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /run mirror/i }));
+    expect(await screen.findByText('panel:j-mirror')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('log-fail'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Mirror failed safely.');
+  });
+
+  it('falls back to localized copy when a failed mirror has no detail', async () => {
+    renderDetail({
+      projects: {
+        items: [
+          baseProject({
+            mirror: { enabled: true, sourcePath: '/var/www/app', targetPath: '/var/www/copy' },
+          }),
+        ],
+      },
+      entry: '/projects/p1?tab=mirror',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /run mirror/i }));
+    await screen.findByText('panel:j-mirror');
+    fireEvent.click(screen.getByTestId('log-fail-default'));
+    expect(screen.getByRole('alert')).toHaveTextContent('Mirror failed.');
+  });
+
+  it('disables mirror execution on remote agents', () => {
+    renderDetail({
+      projects: {
+        items: [
+          baseProject({
+            agentId: 'a1',
+            mirror: { enabled: true, sourcePath: '/var/www/app', targetPath: '/var/www/copy' },
+          }),
+        ],
+      },
+      entry: '/projects/p1?tab=mirror',
+    });
+    expect(screen.getByRole('button', { name: /run mirror/i })).toBeDisabled();
+    expect(screen.getByText(/mirror jobs run locally/i)).toBeInTheDocument();
   });
 });
 

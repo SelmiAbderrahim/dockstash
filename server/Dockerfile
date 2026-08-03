@@ -29,13 +29,15 @@ ENV NODE_ENV=production \
 # mysqldump      → mysql/mariadb dumps
 # mongodump      → mongodb dumps
 ARG RESTIC_VERSION=0.17.3
-ARG TARGETARCH=amd64
+ARG MONGODB_DATABASE_TOOLS_VERSION=100.16.1
+ARG TARGETARCH
+# ponytail: MongoDB publishes Debian 12 tools only for amd64; the official
+# Ubuntu 22.04 ARM64 archive is glibc-compatible. Add new arches here.
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
-        gnupg \
         bzip2 \
         openssh-client \
         postgresql-client \
@@ -50,14 +52,20 @@ RUN set -eux; \
     chmod 0755 /usr/local/bin/restic; \
     rm -f /tmp/restic.bz2 /tmp/SHA256SUMS; \
     /usr/local/bin/restic version; \
-    install -d /usr/share/keyrings; \
-    curl -fsSL https://pgp.mongodb.com/server-7.0.asc \
-      | gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/debian bookworm/mongodb-org/7.0 main" \
-      > /etc/apt/sources.list.d/mongodb-org-7.0.list; \
-    apt-get update; \
-    apt-get install -y --no-install-recommends mongodb-database-tools; \
-    apt-get purge -y --auto-remove gnupg curl bzip2; \
+    case "${TARGETARCH}" in \
+      amd64) tools_platform=debian12-x86_64; tools_sha256=cb8e6a890a3697d1db4b63385093736396ab1732116c7b4c90bb5b9c03b61bbc ;; \
+      arm64) tools_platform=ubuntu2204-arm64; tools_sha256=e1d5cc57741eefc1333725838e034e822674451a2e2928a3393d35afa8e8aef6 ;; \
+      *) echo "Unsupported architecture: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    tools_archive="mongodb-database-tools-${tools_platform}-${MONGODB_DATABASE_TOOLS_VERSION}"; \
+    curl -fsSLo /tmp/mongodb-database-tools.tgz \
+      "https://fastdl.mongodb.org/tools/db/${tools_archive}.tgz"; \
+    echo "${tools_sha256}  /tmp/mongodb-database-tools.tgz" | sha256sum -c -; \
+    tar -xzf /tmp/mongodb-database-tools.tgz -C /tmp; \
+    install -m 0755 "/tmp/${tools_archive}"/bin/* /usr/local/bin/; \
+    rm -rf "/tmp/${tools_archive}" /tmp/mongodb-database-tools.tgz; \
+    mongodump --version; \
+    apt-get purge -y --auto-remove curl bzip2; \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app/node_modules ./node_modules
@@ -68,7 +76,8 @@ COPY --chmod=0755 docker-entrypoint.sh ./docker-entrypoint.sh
 # Non-root user for the runtime process.
 RUN groupadd --system --gid 10001 app \
  && useradd  --system --uid 10001 --gid app --home /app --shell /usr/sbin/nologin app \
- && chown -R app:app /app
+ && mkdir -p /self-backup \
+ && chown -R app:app /app /self-backup
 USER app
 
 EXPOSE 8080

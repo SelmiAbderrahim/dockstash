@@ -48,10 +48,10 @@ describe('resolveAgentServerUrl', () => {
 describe('buildAgentInstallCommand', () => {
   it('bakes the real token into the command when provided', () => {
     const command = buildAgentInstallCommand({
-      token: 'dsa_0123456789abcdef01234567.abc',
+      token: 'dsa_test.test',
       serverUrl: 'http://dashboard.example.com',
     });
-    expect(command).toContain('DOCKSTASH_AGENT_TOKEN: dsa_0123456789abcdef01234567.abc');
+    expect(command).toContain('DOCKSTASH_AGENT_TOKEN: dsa_test.test');
     expect(command).toContain('DOCKSTASH_URL: http://dashboard.example.com');
     expect(command).not.toContain(TOKEN_PLACEHOLDER);
   });

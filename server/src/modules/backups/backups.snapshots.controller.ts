@@ -69,7 +69,7 @@ export const listProjectSnapshots: RequestHandler = asyncHandler(async (req, res
 });
 
 /**
- * Point-in-time resolver (Pro+): newest snapshot at or before `?ts=`. The
+ * Point-in-time resolver: newest snapshot at or before `?ts=`. The
  * client confirms the resolution, then enqueues a normal restore with the
  * returned snapshot id — this endpoint never mutates anything.
  */

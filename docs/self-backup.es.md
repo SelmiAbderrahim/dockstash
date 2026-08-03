@@ -1,9 +1,7 @@
 # Copia interna
 
-El orquestador respalda **su propio** Mongo — proyectos, horarios, secretos
-cifrados, historial de respaldos — hacia el VPS de almacenamiento como un
-repositorio restic dedicado distinto del repositorio de cada proyecto de
-usuario.
+El orquestador respalda **su propio** Mongo en un repositorio restic dedicado.
+Compose usa por defecto el volumen persistente `self-backup-data`.
 
 ## Qué se captura
 
@@ -13,18 +11,15 @@ usuario.
   contraseñas de repositorios restic) — como texto cifrado, nunca en claro.
 - Filas de historial de respaldo / verificación / simulacro.
 
-El orquestador transmite `mongodump --archive --oplog` directamente a
-`restic backup --stdin` — nunca se escribe un archivo temporal. `--oplog`
-garantiza consistencia en un punto en el tiempo a través de todas las
-colecciones.
+El orquestador transmite `mongodump --archive` directamente a
+`restic backup --stdin` — nunca se escribe un archivo temporal.
 
 ## El repositorio reservado
 
-La copia interna escribe en `SELF_BACKUP_REPO` (por defecto
-`dockstash-self`) — un identificador reservado que nunca colisiona con un
-proyecto de usuario. La cola BullMQ por proyecto (prompt 05) serializa los
-ticks cron concurrentes contra este repositorio, de modo que restic nunca
-ve dos operaciones simultáneas contra el mismo repositorio.
+La copia interna escribe en `SELF_BACKUP_REPO` (valor Compose:
+`/self-backup`). El volumen sobrevive a la recreación de contenedores, pero
+sigue en el mismo host; para protección externa configura una URL restic
+remota y sus credenciales.
 
 ## Horario
 

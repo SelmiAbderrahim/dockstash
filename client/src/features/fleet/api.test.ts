@@ -63,7 +63,7 @@ describe('fleet api wrappers', () => {
   it('rotateAgentKeyRequest posts to the rotate-key endpoint and returns the one-time key payload', async () => {
     const payload = {
       agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online', lastSeenAt: null },
-      token: 'dsa_0123456789abcdef01234567.new',
+      token: 'dsa_test.test',
     };
     apiClient.mockResolvedValue(payload as never);
     const result = await rotateAgentKeyRequest('a1');

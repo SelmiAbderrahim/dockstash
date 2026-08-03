@@ -84,16 +84,13 @@ describe('SetupWizard', () => {
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
-  it('renders nothing once storage is already configured', () => {
-    // The loaded wizard is now a shadcn Card (no `.ds-wizard` wrapper), so a
-    // `.ds-wizard` query would pass vacuously. Assert the real intent instead:
-    // when storage is configured the component renders neither the loading
-    // status nor the wizard heading — it returns nothing.
+  it('redirects to projects once storage is already configured', async () => {
     renderWizard({
       storage: { host: 'h', user: 'root', port: 22, configured: true, passwordSet: false },
     });
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Set up your storage' })).toBeNull();
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('/projects', { replace: true }));
   });
 
   it('renders the wizard when setup is needed and surfaces store errors', () => {

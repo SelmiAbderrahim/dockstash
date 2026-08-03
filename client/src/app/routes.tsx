@@ -2,7 +2,6 @@ import type { RouteObject } from 'react-router-dom';
 import { AppLayout } from '@shared/components/AppLayout';
 import { authRoutes } from '@features/auth';
 import { dashboardRoutes } from '@features/dashboard';
-import { adminRoutes } from '@features/admin';
 import { fleetRoutes } from '@features/fleet';
 import { healthRoutes } from '@features/health';
 import { profileRoutes } from '@features/profile';
@@ -23,7 +22,6 @@ export const appShellRoutes: RouteObject[] = [
       { index: true, element: <RootRedirect /> },
       ...authRoutes,
       ...dashboardRoutes,
-      ...adminRoutes,
       ...fleetRoutes,
       ...healthRoutes,
       ...profileRoutes,

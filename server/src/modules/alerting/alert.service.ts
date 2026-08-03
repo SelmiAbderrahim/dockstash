@@ -134,7 +134,7 @@ export async function sendFailureAlert(
       }
     }
 
-    // Webhook fan-out: the per-project URL (Pro+) plus the operator-level env
+    // Webhook fan-out: the per-project URL plus the operator-level env
     // target. Deduped so the same URL is never posted twice.
     const webhookTargets = new Set<string>();
     if (project.alertWebhookUrl && outboundAllowed) {

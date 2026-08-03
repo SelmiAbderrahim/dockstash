@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { GuideWidget } from '@features/guide';
-import { useAppSelector } from '@shared/hooks/redux';
 import { selectAuthenticated } from '@features/auth';
+import { BRAND_NAME } from '@shared/brand';
+import { useAppSelector } from '@shared/hooks/redux';
 import { SidebarInset, SidebarProvider } from '@shared/ui/sidebar';
 import { AppFrameFooter } from './AppFrameFooter';
 import { AppSidebar } from './AppSidebar';
@@ -20,6 +22,10 @@ import { Header } from './Header';
  */
 export const AppLayout = () => {
   const authenticated = useAppSelector(selectAuthenticated);
+
+  useEffect(() => {
+    if (authenticated) document.title = BRAND_NAME;
+  }, [authenticated]);
 
   if (authenticated) {
     return (

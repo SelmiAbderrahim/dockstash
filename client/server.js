@@ -14,13 +14,35 @@ import helmet from 'helmet';
 // kept in sync with server/src/shared/middleware/security-headers.ts
 // CSP_INLINE_THEME_HASH.
 const CSP_INLINE_THEME_HASH = 'sha256-Ai8enj3xMBb6rfnOEbqcZWXXLQ+hKVptkKTEKAJ0z/o=';
+
+export function resolveConnectSources(apiBaseUrl, socketUrl) {
+  const sources = new Set(["'self'"]);
+  for (const value of [apiBaseUrl, socketUrl]) {
+    if (!value || value.startsWith('/')) continue;
+    const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      throw new TypeError('Browser connection URLs must use HTTP(S)');
+    }
+    sources.add(url.origin);
+  }
+  if (socketUrl && !socketUrl.startsWith('/')) {
+    const websocketUrl = new URL(socketUrl);
+    websocketUrl.protocol = websocketUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    sources.add(websocketUrl.origin);
+  }
+  return [...sources];
+}
+
 const CSP_DIRECTIVES = {
   defaultSrc: ["'self'"],
   scriptSrc: ["'self'", `'${CSP_INLINE_THEME_HASH}'`],
   styleSrc: ["'self'", "'unsafe-inline'"],
   imgSrc: ["'self'", 'data:'],
   fontSrc: ["'self'", 'data:'],
-  connectSrc: ["'self'"],
+  connectSrc: resolveConnectSources(
+    process.env.VITE_API_BASE_URL,
+    process.env.VITE_SOCKET_URL,
+  ),
   objectSrc: ["'none'"],
   frameAncestors: ["'none'"],
   baseUri: ["'self'"],
@@ -81,4 +103,4 @@ async function createServer() {
   });
 }
 
-createServer();
+if (process.env.NODE_ENV !== 'test') createServer();

@@ -19,8 +19,11 @@ import { serializeProject } from './backups.serialize.js';
  * monkey-patching.
  */
 export interface VerifyControllerDeps {
-  makeCheckDeps: () => Omit<RunCheckDeps, 't' | 'readDataSubset'>;
-  makeDrillDeps: () => Omit<RunDrillDeps, 't'>;
+  makeCheckDeps: (
+    projectId: string,
+    userId: string,
+  ) => Omit<RunCheckDeps, 't' | 'readDataSubset'>;
+  makeDrillDeps: (projectId: string, userId: string) => Omit<RunDrillDeps, 't'>;
 }
 
 let controllerDeps: VerifyControllerDeps | null = null;
@@ -42,16 +45,17 @@ function assertConfigured(): VerifyControllerDeps {
 
 export const check: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
+  const userId = requireUserId(req.user);
   /* c8 ignore next -- strict body-parser always yields an object body, so the ?? {} fallback never fires */
   const { readDataSubset } = runCheckSchema.parse(req.body ?? {});
   const cfg = assertConfigured();
-  const base = cfg.makeCheckDeps();
-  const result = await runResticCheck(projectId, requireUserId(req.user), {
+  const base = cfg.makeCheckDeps(projectId, userId);
+  const result = await runResticCheck(projectId, userId, {
     ...base,
     t: req.t,
     readDataSubset,
   });
-  const project = await loadOwnedProject(projectId, requireUserId(req.user), {
+  const project = await loadOwnedProject(projectId, userId, {
     t: req.t,
   });
   res.status(200).json({ result, project: serializeProject(project) });
@@ -59,13 +63,14 @@ export const check: RequestHandler = asyncHandler(async (req, res) => {
 
 export const drill: RequestHandler = asyncHandler(async (req, res) => {
   const { projectId } = projectIdParamsSchema.parse(req.params);
+  const userId = requireUserId(req.user);
   const cfg = assertConfigured();
-  const base = cfg.makeDrillDeps();
-  const result = await runRestoreDrill(projectId, requireUserId(req.user), {
+  const base = cfg.makeDrillDeps(projectId, userId);
+  const result = await runRestoreDrill(projectId, userId, {
     ...base,
     t: req.t,
   });
-  const project = await loadOwnedProject(projectId, requireUserId(req.user), {
+  const project = await loadOwnedProject(projectId, userId, {
     t: req.t,
   });
   res.status(200).json({ result, project: serializeProject(project) });

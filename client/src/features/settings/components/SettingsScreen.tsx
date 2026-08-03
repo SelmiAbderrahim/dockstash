@@ -14,6 +14,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@shared/hooks/redux';
 import { useCopyToClipboard } from '@shared/hooks/useCopyToClipboard';
 import { useTabParam } from '@shared/hooks/useTabParam';
+import { loadCookie } from '@shared/utils/cookies';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
@@ -434,10 +435,11 @@ const RecoveryTab = () => {
   const triggerStatus = useAppSelector(selectSelfBackupTriggerStatus);
   const error = useAppSelector(selectSettingsError);
   const { copied, copy } = useCopyToClipboard();
+  const isAdmin = loadCookie<{ role?: string }>('user')?.role === 'Admin';
 
   useEffect(() => {
-    void dispatch(fetchSelfBackupRuns());
-  }, [dispatch]);
+    if (isAdmin) void dispatch(fetchSelfBackupRuns());
+  }, [dispatch, isAdmin]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -510,36 +512,38 @@ const RecoveryTab = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('recovery.selfBackup.title')}</CardTitle>
-          <CardDescription>{t('recovery.selfBackup.description')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              type="button"
-              onClick={() => {
-                void dispatch(triggerSelfBackup()).then(() => dispatch(fetchSelfBackupRuns()));
-              }}
-              disabled={triggerStatus === 'loading'}
-            >
-              <DatabaseBackup className="size-4" aria-hidden="true" />
-              {triggerStatus === 'loading'
-                ? t('recovery.selfBackup.working')
-                : t('recovery.selfBackup.action')}
-            </Button>
-            {triggerStatus === 'succeeded' && (
-              <SavedNotice>{t('recovery.selfBackup.triggered')}</SavedNotice>
-            )}
-            {triggerStatus === 'failed' && <SaveError>{error ?? t('errors.save')}</SaveError>}
-          </div>
-          <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">{t('recovery.selfBackup.runs')}</h3>
-            <SelfBackupRunsList />
-          </div>
-        </CardContent>
-      </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('recovery.selfBackup.title')}</CardTitle>
+            <CardDescription>{t('recovery.selfBackup.description')}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  void dispatch(triggerSelfBackup()).then(() => dispatch(fetchSelfBackupRuns()));
+                }}
+                disabled={triggerStatus === 'loading'}
+              >
+                <DatabaseBackup className="size-4" aria-hidden="true" />
+                {triggerStatus === 'loading'
+                  ? t('recovery.selfBackup.working')
+                  : t('recovery.selfBackup.action')}
+              </Button>
+              {triggerStatus === 'succeeded' && (
+                <SavedNotice>{t('recovery.selfBackup.triggered')}</SavedNotice>
+              )}
+              {triggerStatus === 'failed' && <SaveError>{error ?? t('errors.save')}</SaveError>}
+            </div>
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm font-medium">{t('recovery.selfBackup.runs')}</h3>
+              <SelfBackupRunsList />
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

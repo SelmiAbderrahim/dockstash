@@ -13,6 +13,9 @@ import {
   fetchSchedules,
   assignProjectAgent,
   runBackupNow,
+  runDrillNow,
+  runCheckNow,
+  runMirrorNow,
   savePlan,
   saveSchedule,
   discoverFolders,
@@ -101,6 +104,47 @@ describe('projects slice', () => {
       payload: { projectId: 'p1', jobId: 'j-1' },
     });
     expect(s.activeJobByProject['p1']).toBe('j-1');
+  });
+
+  it('runDrillNow tracks pending, fulfilled, and rejected jobs', () => {
+    let s = projectsReducer(initial(), {
+      type: runDrillNow.pending.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s.activeJobByProject.p1).toBe(PENDING_JOB_ID);
+    s = projectsReducer(s, {
+      type: runDrillNow.fulfilled.type,
+      payload: { projectId: 'p1', jobId: 'j-drill' },
+    });
+    expect(s.activeJobByProject.p1).toBe('j-drill');
+    s = projectsReducer(s, {
+      type: runDrillNow.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s.activeJobByProject.p1).toBeNull();
+    expect(s.error).toBe('Could not start restore drill.');
+  });
+
+  it.each([
+    [runCheckNow, 'Could not start repository check.'],
+    [runMirrorNow, 'Could not start mirror.'],
+  ] as const)('tracks maintenance job lifecycle', (thunk, fallback) => {
+    let s = projectsReducer(initial(), {
+      type: thunk.pending.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s.activeJobByProject.p1).toBe(PENDING_JOB_ID);
+    s = projectsReducer(s, {
+      type: thunk.fulfilled.type,
+      payload: { projectId: 'p1', jobId: 'j-maintenance' },
+    });
+    expect(s.activeJobByProject.p1).toBe('j-maintenance');
+    s = projectsReducer(s, {
+      type: thunk.rejected.type,
+      meta: { arg: { projectId: 'p1' } },
+    });
+    expect(s.activeJobByProject.p1).toBeNull();
+    expect(s.error).toBe(fallback);
   });
 
   it('clearActiveJob nulls the job for a project', () => {

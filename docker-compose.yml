@@ -12,6 +12,7 @@ networks:
 volumes:
   mongo-data:
   redis-data:
+  self-backup-data:
 
 services:
   mongo:
@@ -128,11 +129,14 @@ services:
       # restic binary + openssh-client). Set to `placeholder` to disable.
       RESTIC_RUNNER: ${RESTIC_RUNNER:-process}
       RESTIC_CACHE_DIR: /tmp/restic-cache
+      SELF_BACKUP_REPO: ${SELF_BACKUP_REPO:-/self-backup}
       # Contact-form recipient (falls back to a placeholder when unset).
       CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
     volumes:
-      # Read-mostly view of the deploy target's site tree for backup scans.
-      - /var/www:/var/www:ro
+      # Restores and mirrors write only inside validated project roots.
+      - ${PROJECTS_ROOT:-/var/www}:/var/www:rw
+      # The orchestrator's own restic repository must survive image rebuilds.
+      - self-backup-data:/self-backup
     ports:
       # Loopback-only — nginx is the sole public entrypoint. Host port off the
       # 8080 default to avoid colliding with other stacks on this box.
@@ -174,6 +178,8 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       WEB_PORT: 3000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_SOCKET_URL: ${VITE_SOCKET_URL}
     ports:
       # Loopback-only — nginx is the sole public entrypoint. Host port off the
       # 3000 default to avoid colliding with other stacks on this box.

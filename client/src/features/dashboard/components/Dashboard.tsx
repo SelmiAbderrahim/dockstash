@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { loadCookie } from '@shared/utils/cookies';
 import {
   Card,
   CardContent,
@@ -10,20 +9,11 @@ import {
 } from '@shared/ui/card';
 import { Button } from '@shared/ui/button';
 
-interface CookieUser {
-  role?: string;
-}
-
 interface Destination {
   to: string;
   labelKey: string;
   descriptionKey: string;
 }
-
-const useUserRole = (): string | undefined => {
-  const user = loadCookie<CookieUser>('user');
-  return user?.role;
-};
 
 const BASE_DESTINATIONS: Destination[] = [
   { to: '/projects', labelKey: 'nav.projects', descriptionKey: 'dashboard.projects' },
@@ -32,28 +22,18 @@ const BASE_DESTINATIONS: Destination[] = [
   { to: '/profile', labelKey: 'nav.profile', descriptionKey: 'dashboard.profile' },
 ];
 
-const ADMIN_DESTINATION: Destination = {
-  to: '/admin',
-  labelKey: 'nav.admin',
-  descriptionKey: 'dashboard.admin',
-};
-
 /**
- * Authenticated landing. Surfaces the four product screens (Projects,
- * Snapshots, Settings) plus the admin entry for admins. No demo
- * "protected test route" — that placeholder was removed with the demo strip.
+ * Authenticated landing for the four product screens. Admin-only recovery
+ * operations live in Settings; there is no separate platform console.
  */
 export const Dashboard = () => {
-  const role = useUserRole();
   const { t } = useTranslation('common');
-  const destinations =
-    role === 'Admin' ? [...BASE_DESTINATIONS, ADMIN_DESTINATION] : BASE_DESTINATIONS;
 
   return (
     <div className="dashboard px-4 py-8">
       <h1 className="text-foreground mb-6 text-2xl font-semibold">{t('nav.dashboard')}</h1>
       <nav className="dashboard-nav grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {destinations.map((destination) => (
+        {BASE_DESTINATIONS.map((destination) => (
           <Card key={destination.to} className="flex flex-col">
             <CardHeader>
               <CardTitle>{t(destination.labelKey)}</CardTitle>

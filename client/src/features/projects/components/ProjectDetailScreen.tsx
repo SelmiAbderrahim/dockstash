@@ -22,6 +22,9 @@ import {
   fetchProjects,
   fetchSchedules,
   resolvePitr,
+  runCheckNow,
+  runDrillNow,
+  runMirrorNow,
   saveAlerts,
   saveMirror,
   savePlan,
@@ -32,6 +35,7 @@ import { AgentAssignmentCard } from './AgentAssignmentCard';
 import { HistoryPanel } from './HistoryPanel';
 import {
   selectAlertsError,
+  selectActiveJobForProject,
   selectAlertsSaveStatus,
   selectMirrorError,
   selectMirrorSaveStatus,
@@ -45,7 +49,7 @@ import {
   selectScheduleForProject,
   selectScheduleSaveStatus,
 } from '../store/selectors';
-import { clearPitr, resetSaveStatus } from '../store/slice';
+import { clearActiveJob, clearPitr, PENDING_JOB_ID, resetSaveStatus } from '../store/slice';
 import type { Project, ProjectPlan } from '../types';
 
 const TABS = ['plan', 'schedule', 'history', 'drill', 'pitr', 'mirror', 'alerts'] as const;
@@ -335,6 +339,9 @@ interface DrillProps {
 
 const DrillStatus = ({ project }: DrillProps) => {
   const { t, i18n } = useTranslation('projectDetail');
+  const dispatch = useAppDispatch();
+  const jobId = useAppSelector(selectActiveJobForProject(project.id));
+  const running = Boolean(jobId);
   const at = project.lastDrillAt
     ? new Date(project.lastDrillAt).toLocaleString(i18n.language)
     : null;
@@ -346,6 +353,29 @@ const DrillStatus = ({ project }: DrillProps) => {
         </h2>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() => void dispatch(runDrillNow({ projectId: project.id }))}
+              disabled={running || Boolean(project.agentId)}
+            >
+              {running && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+              {running ? t('drill.running') : t('drill.run')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void dispatch(runCheckNow({ projectId: project.id }))}
+              disabled={running}
+            >
+              {t('drill.check')}
+            </Button>
+          </div>
+        </div>
+        {project.agentId && (
+          <p className="text-muted-foreground text-sm">{t('drill.remoteUnsupported')}</p>
+        )}
         {!at && <p className="text-muted-foreground text-sm">{t('drill.none')}</p>}
         {at && (
           <p className="flex items-center gap-2 text-sm">
@@ -360,6 +390,16 @@ const DrillStatus = ({ project }: DrillProps) => {
         )}
         {project.lastDrillDetail && (
           <p className="text-muted-foreground text-sm">{project.lastDrillDetail}</p>
+        )}
+        {jobId && jobId !== PENDING_JOB_ID && (
+          <ResticLogPanel
+            jobId={jobId}
+            title={t('drill.output')}
+            onDone={() => {
+              dispatch(clearActiveJob({ projectId: project.id }));
+              void dispatch(fetchProjects());
+            }}
+          />
         )}
       </CardContent>
     </Card>
@@ -510,9 +550,12 @@ const MirrorEditor = ({ project }: MirrorEditorProps) => {
   const dispatch = useAppDispatch();
   const saveStatus = useAppSelector(selectMirrorSaveStatus);
   const error = useAppSelector(selectMirrorError);
+  const jobId = useAppSelector(selectActiveJobForProject(project.id));
+  const running = Boolean(jobId);
   const [enabled, setEnabled] = useState(project.mirror.enabled);
   const [sourcePath, setSourcePath] = useState(project.mirror.sourcePath);
   const [targetPath, setTargetPath] = useState(project.mirror.targetPath);
+  const [runResult, setRunResult] = useState<{ ok: boolean; detail?: string } | null>(null);
 
   useEffect(() => {
     setEnabled(project.mirror.enabled);
@@ -579,7 +622,7 @@ const MirrorEditor = ({ project }: MirrorEditorProps) => {
           )}
 
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={saveStatus === 'loading'}>
+            <Button type="submit" disabled={saveStatus === 'loading' || running}>
               {saveStatus === 'loading' && (
                 <Loader2 className="size-4 animate-spin" aria-hidden="true" />
               )}
@@ -591,6 +634,43 @@ const MirrorEditor = ({ project }: MirrorEditorProps) => {
               </span>
             )}
           </div>
+          {project.agentId && (
+            <p className="text-muted-foreground text-sm">{t('mirror.remoteUnsupported')}</p>
+          )}
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setRunResult(null);
+                void dispatch(runMirrorNow({ projectId: project.id }));
+              }}
+              disabled={running || !enabled || Boolean(project.agentId)}
+            >
+              {running ? t('mirror.running') : t('mirror.run')}
+            </Button>
+          </div>
+          {jobId && jobId !== PENDING_JOB_ID && (
+            <ResticLogPanel
+              jobId={jobId}
+              title={t('mirror.output')}
+              onDone={(ok, detail) => {
+                setRunResult({ ok, detail });
+                dispatch(clearActiveJob({ projectId: project.id }));
+                void dispatch(fetchProjects());
+              }}
+            />
+          )}
+          {runResult?.ok && (
+            <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+              {runResult.detail || t('mirror.completed')}
+            </span>
+          )}
+          {runResult && !runResult.ok && (
+            <Alert variant="destructive" role="alert">
+              <AlertDescription>{runResult.detail || t('mirror.failed')}</AlertDescription>
+            </Alert>
+          )}
         </form>
       </CardContent>
     </Card>

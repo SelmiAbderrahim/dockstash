@@ -11,6 +11,9 @@ import {
   refreshAgent,
   resolvePitr,
   runBackupNow,
+  runCheckNow,
+  runDrillNow,
+  runMirrorNow,
   saveAlerts,
   saveMirror,
   savePlan,
@@ -183,6 +186,36 @@ const projectsSlice = createSlice({
       })
       .addCase(runBackupNow.rejected, (state, action) => {
         state.error = action.payload ?? 'Could not start backup.';
+        state.activeJobByProject[action.meta.arg.projectId] = null;
+      })
+      .addCase(runDrillNow.pending, (state, action) => {
+        state.activeJobByProject[action.meta.arg.projectId] = PENDING_JOB_ID;
+      })
+      .addCase(runDrillNow.fulfilled, (state, action) => {
+        state.activeJobByProject[action.payload.projectId] = action.payload.jobId;
+      })
+      .addCase(runDrillNow.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not start restore drill.';
+        state.activeJobByProject[action.meta.arg.projectId] = null;
+      })
+      .addCase(runCheckNow.pending, (state, action) => {
+        state.activeJobByProject[action.meta.arg.projectId] = PENDING_JOB_ID;
+      })
+      .addCase(runCheckNow.fulfilled, (state, action) => {
+        state.activeJobByProject[action.payload.projectId] = action.payload.jobId;
+      })
+      .addCase(runCheckNow.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not start repository check.';
+        state.activeJobByProject[action.meta.arg.projectId] = null;
+      })
+      .addCase(runMirrorNow.pending, (state, action) => {
+        state.activeJobByProject[action.meta.arg.projectId] = PENDING_JOB_ID;
+      })
+      .addCase(runMirrorNow.fulfilled, (state, action) => {
+        state.activeJobByProject[action.payload.projectId] = action.payload.jobId;
+      })
+      .addCase(runMirrorNow.rejected, (state, action) => {
+        state.error = action.payload ?? 'Could not start mirror.';
         state.activeJobByProject[action.meta.arg.projectId] = null;
       })
       .addCase(savePlan.pending, (state) => {

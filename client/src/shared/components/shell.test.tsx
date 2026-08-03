@@ -122,6 +122,7 @@ describe('AppLayout', () => {
     expect(screen.getByText(/All Rights Reserved/)).toBeInTheDocument();
     // Sidebar-toggle button (topbar) is exposed:
     expect(screen.getByRole('button', { name: /toggle sidebar/i })).toBeInTheDocument();
+    expect(document.title).toBe('Dockstash');
   });
 });
 

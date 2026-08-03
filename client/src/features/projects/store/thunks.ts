@@ -14,6 +14,9 @@ import {
   refreshAgentDiscoveryRequest,
   resolvePitrRequest,
   runBackupNowRequest,
+  runCheckNowRequest,
+  runDrillNowRequest,
+  runMirrorNowRequest,
   scanProjectRequest,
   updateAlertsRequest,
   updateMirrorRequest,
@@ -146,6 +149,45 @@ export const runBackupNow = createAsyncThunk<
     return { projectId, jobId };
   } catch (err) {
     return rejectWithValue(messageFromError(err, 'Could not start backup.'));
+  }
+});
+
+export const runDrillNow = createAsyncThunk<
+  { projectId: string; jobId: string },
+  { projectId: string },
+  { rejectValue: string }
+>('projects/runDrill', async ({ projectId }, { rejectWithValue }) => {
+  try {
+    const jobId = await runDrillNowRequest(projectId);
+    return { projectId, jobId };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not start restore drill.'));
+  }
+});
+
+export const runCheckNow = createAsyncThunk<
+  { projectId: string; jobId: string },
+  { projectId: string },
+  { rejectValue: string }
+>('projects/runCheck', async ({ projectId }, { rejectWithValue }) => {
+  try {
+    const jobId = await runCheckNowRequest(projectId);
+    return { projectId, jobId };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not start repository check.'));
+  }
+});
+
+export const runMirrorNow = createAsyncThunk<
+  { projectId: string; jobId: string },
+  { projectId: string },
+  { rejectValue: string }
+>('projects/runMirror', async ({ projectId }, { rejectWithValue }) => {
+  try {
+    const jobId = await runMirrorNowRequest(projectId);
+    return { projectId, jobId };
+  } catch (err) {
+    return rejectWithValue(messageFromError(err, 'Could not start mirror.'));
   }
 });
 

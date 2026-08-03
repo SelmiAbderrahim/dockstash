@@ -198,6 +198,25 @@ describe('wireRecoveryController defaults', () => {
   it('wires with the real spawn function when no override is given', () => {
     expect(() => wireRecoveryController()).not.toThrow();
   });
+
+  it('initializes once and coalesces overlapping self-backup runs', async () => {
+    let releaseInit!: () => void;
+    const init = vi.spyOn(ProcessResticRunner.prototype, 'init').mockImplementation(
+      () => new Promise<void>((resolve) => {
+        releaseInit = resolve;
+      }),
+    );
+    const backup = vi.spyOn(ProcessResticRunner.prototype, 'backup').mockResolvedValue();
+    const runtime = wireRecoveryController({ spawnFn: makeFakeSpawn().spawnFn as never });
+
+    const first = runtime.runNow();
+    const second = runtime.runNow();
+    expect(second).toBe(first);
+    await vi.waitFor(() => expect(init).toHaveBeenCalledTimes(1));
+    releaseInit();
+    await first;
+    expect(backup).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('deriveSelfBackupPassword (S7-03)', () => {

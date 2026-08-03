@@ -41,6 +41,11 @@
   "drill": {
     "heading": "Restore drill",
     "none": "No drill has ever run for this project.",
+    "run": "Run restore drill",
+    "running": "Running drill…",
+    "output": "Restore drill output",
+    "check": "Check repository",
+    "remoteUnsupported": "Restore drills run locally. Move this project to this server before starting a drill.",
     "pass": "Verified",
     "fail": "Failed"
   },
@@ -80,7 +85,13 @@
     "targetPath": "Target path",
     "save": "Save mirror",
     "saving": "Saving…",
-    "saved": "Mirror saved."
+    "saved": "Mirror saved.",
+    "run": "Run mirror",
+    "running": "Running mirror…",
+    "completed": "Mirror completed.",
+    "failed": "Mirror failed.",
+    "output": "Mirror output",
+    "remoteUnsupported": "Mirror jobs run locally. Move this project to this server before running the mirror."
   },
   "alerts": {
     "heading": "Failure alerts",

@@ -1,8 +1,9 @@
 # Self-backup
 
 The orchestrator backs up **its own** Mongo — projects, schedules, encrypted
-secrets, backup history — to the storage VPS as a dedicated restic repo
-distinct from every user project's repo.
+secrets, backup history — to a dedicated restic repository distinct from
+every user project's repo. Compose stores it in the durable
+`self-backup-data` volume by default.
 
 ## What is captured
 
@@ -12,17 +13,18 @@ distinct from every user project's repo.
   as ciphertext, never plaintext.
 - Backup / verify / drill history rows.
 
-The orchestrator streams `mongodump --archive --oplog` directly into
-`restic backup --stdin` — no temp file is ever written. `--oplog` guarantees
-point-in-time consistency across all collections.
+The orchestrator streams `mongodump --archive` directly into
+`restic backup --stdin` — no temp file is ever written. The bundled Mongo is
+standalone, so the dump does not claim cross-collection point-in-time
+consistency while writes are active.
 
 ## The reserved repo
 
-Self-backup writes to `SELF_BACKUP_REPO` (default `dockstash-self`) — a
-reserved identifier that never collides with a user project. The
-per-project BullMQ queue (prompt 05) serializes concurrent cron ticks
-against this repo so restic never sees two concurrent operations against the
-same repository.
+Self-backup writes to `SELF_BACKUP_REPO` (Compose default `/self-backup`).
+The named volume survives container recreation but remains on the same Docker
+host. For off-host protection, set this to a remote restic backend URL and
+provide that backend's standard restic credentials. Overlapping manual and
+scheduled runs are coalesced into one operation.
 
 ## Schedule
 

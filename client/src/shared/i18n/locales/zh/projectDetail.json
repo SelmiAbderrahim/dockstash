@@ -41,6 +41,11 @@
   "drill": {
     "heading": "恢复演练",
     "none": "尚未运行演练。",
+    "run": "运行恢复演练",
+    "running": "演练运行中…",
+    "output": "恢复演练输出",
+    "check": "检查仓库",
+    "remoteUnsupported": "恢复演练在本机运行。开始演练前，请将此项目移到此服务器。",
     "pass": "已验证",
     "fail": "失败"
   },
@@ -80,7 +85,13 @@
     "targetPath": "目标路径",
     "save": "保存镜像",
     "saving": "保存中…",
-    "saved": "镜像已保存。"
+    "saved": "镜像已保存。",
+    "run": "运行镜像",
+    "running": "镜像运行中…",
+    "completed": "镜像已完成。",
+    "failed": "镜像失败。",
+    "output": "镜像输出",
+    "remoteUnsupported": "镜像任务在本机运行。运行前，请将此项目移到此服务器。"
   },
   "alerts": {
     "heading": "失败告警",

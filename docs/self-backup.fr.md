@@ -1,8 +1,7 @@
 # Sauvegarde interne
 
-L'orchestrateur sauvegarde **sa propre** Mongo — projets, plannings, secrets
-chiffrés, historique de sauvegarde — vers le VPS de stockage dans un dépôt
-restic dédié, distinct de chaque dépôt de projet utilisateur.
+L'orchestrateur sauvegarde **sa propre** Mongo dans un dépôt restic dédié.
+Compose utilise par défaut le volume persistant `self-backup-data`.
 
 ## Ce qui est capturé
 
@@ -12,17 +11,15 @@ restic dédié, distinct de chaque dépôt de projet utilisateur.
   dépôts restic) — sous forme de texte chiffré, jamais en clair.
 - Lignes d'historique de sauvegarde / vérification / test.
 
-L'orchestrateur diffuse `mongodump --archive --oplog` directement dans
-`restic backup --stdin` — aucun fichier temporaire n'est écrit. `--oplog`
-garantit la cohérence à un instant donné sur toutes les collections.
+L'orchestrateur diffuse `mongodump --archive` directement dans
+`restic backup --stdin` — aucun fichier temporaire n'est écrit.
 
 ## Le dépôt réservé
 
-La sauvegarde interne écrit dans `SELF_BACKUP_REPO` (par défaut
-`dockstash-self`) — un identifiant réservé qui n'entre jamais en conflit
-avec un projet utilisateur. La file BullMQ par projet (prompt 05) sérialise
-les ticks cron concurrents sur ce dépôt, de sorte que restic ne voit jamais
-deux opérations simultanées sur le même dépôt.
+La sauvegarde interne écrit dans `SELF_BACKUP_REPO` (valeur Compose :
+`/self-backup`). Le volume survit aux recréations de conteneurs mais reste
+sur le même hôte ; utilisez une URL restic distante et ses identifiants pour
+une protection hors site.
 
 ## Planning
 

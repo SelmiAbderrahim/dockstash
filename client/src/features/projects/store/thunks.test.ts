@@ -12,6 +12,9 @@ import {
   savePlan,
   assignProjectAgent,
   runBackupNow,
+  runDrillNow,
+  runCheckNow,
+  runMirrorNow,
   fetchProjectJobs,
   fetchSchedules,
   saveSchedule,
@@ -34,6 +37,9 @@ vi.mock('../api', () => ({
   updatePlanRequest: vi.fn(),
   assignProjectAgentRequest: vi.fn(),
   runBackupNowRequest: vi.fn(),
+  runDrillNowRequest: vi.fn(),
+  runCheckNowRequest: vi.fn(),
+  runMirrorNowRequest: vi.fn(),
   listProjectJobsRequest: vi.fn(),
   listSchedulesRequest: vi.fn(),
   createScheduleRequest: vi.fn(),
@@ -202,6 +208,29 @@ describe('projects thunks', () => {
     const result = await makeStore().dispatch(runBackupNow({ projectId: 'p1' }));
     expect(runBackupNow.rejected.match(result)).toBe(true);
     expect(result.payload).toBe('down');
+  });
+
+  it('runDrillNow returns the job and rejects with the API message', async () => {
+    mocked.runDrillNowRequest.mockResolvedValueOnce('j-2');
+    const success = await makeStore().dispatch(runDrillNow({ projectId: 'p1' }));
+    expect(success.payload).toEqual({ projectId: 'p1', jobId: 'j-2' });
+
+    mocked.runDrillNowRequest.mockRejectedValueOnce(new Error('drill unavailable'));
+    const failure = await makeStore().dispatch(runDrillNow({ projectId: 'p1' }));
+    expect(runDrillNow.rejected.match(failure)).toBe(true);
+    expect(failure.payload).toBe('drill unavailable');
+  });
+
+  it.each([
+    ['check', runCheckNow, mocked.runCheckNowRequest],
+    ['mirror', runMirrorNow, mocked.runMirrorNowRequest],
+  ] as const)('run%sNow resolves and rejects', async (_kind, thunk, request) => {
+    request.mockResolvedValueOnce('j-maintenance');
+    const success = await makeStore().dispatch(thunk({ projectId: 'p1' }));
+    expect(success.payload).toEqual({ projectId: 'p1', jobId: 'j-maintenance' });
+    request.mockRejectedValueOnce(new Error('unavailable'));
+    const failure = await makeStore().dispatch(thunk({ projectId: 'p1' }));
+    expect(failure.payload).toBe('unavailable');
   });
 
   it('fetchProjectJobs resolves jobs keyed to the project', async () => {

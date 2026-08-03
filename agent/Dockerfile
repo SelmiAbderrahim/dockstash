@@ -23,7 +23,7 @@ ENV NODE_ENV=production
 # Same pinned backup toolchain as the api image (server/Dockerfile):
 # restic (pinned release, SHA256-verified) + openssh-client for the sftp backend.
 ARG RESTIC_VERSION=0.17.3
-ARG TARGETARCH=amd64
+ARG TARGETARCH
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \

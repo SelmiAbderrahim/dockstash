@@ -66,7 +66,7 @@ async function sendHeartbeatAlertFor(
   emailAllowedFor: (ownerId: string) => Promise<boolean>,
 ): Promise<boolean> {
   try {
-    // In-app alert row — written for every tier, before the gated email.
+    // Write the in-app alert row before attempting optional email delivery.
     try {
       await recordAlert({
         owner: String(project.owner),

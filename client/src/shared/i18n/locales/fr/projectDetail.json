@@ -41,6 +41,11 @@
   "drill": {
     "heading": "Test de restauration",
     "none": "Aucun test de restauration.",
+    "run": "Lancer le test de restauration",
+    "running": "Test en cours…",
+    "output": "Sortie du test de restauration",
+    "check": "Vérifier le dépôt",
+    "remoteUnsupported": "Les tests de restauration sont locaux. Déplacez ce projet sur ce serveur avant de lancer un test.",
     "pass": "Vérifié",
     "fail": "Échec"
   },
@@ -80,7 +85,13 @@
     "targetPath": "Chemin cible",
     "save": "Enregistrer le miroir",
     "saving": "Enregistrement…",
-    "saved": "Miroir enregistré."
+    "saved": "Miroir enregistré.",
+    "run": "Exécuter le miroir",
+    "running": "Miroir en cours…",
+    "completed": "Miroir terminé.",
+    "failed": "Le miroir a échoué.",
+    "output": "Sortie du miroir",
+    "remoteUnsupported": "Les miroirs s'exécutent localement. Déplacez ce projet sur ce serveur avant de lancer le miroir."
   },
   "alerts": {
     "heading": "Alertes d'échec",

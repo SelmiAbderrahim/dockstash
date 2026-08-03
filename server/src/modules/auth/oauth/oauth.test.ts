@@ -656,9 +656,8 @@ describe('oauth module', () => {
     const baseEnv = {
       NODE_ENV: 'test',
       MONGODB_URI: 'mongodb://127.0.0.1:27017/x',
-      JWT_SECRET: '0123456789abcdef0123456789abcdef',
-      MASTER_ENCRYPTION_KEY:
-        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      JWT_SECRET: 'test'.repeat(8),
+      MASTER_ENCRYPTION_KEY: 'aa'.repeat(32),
     };
 
     it("maps compose's empty strings to undefined (provider disabled)", () => {

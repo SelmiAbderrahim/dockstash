@@ -34,7 +34,7 @@ const agent: FleetEntry = {
 
 const rotated = {
   agent: { id: 'a1', name: 'web-1', host: 'vps1.example', port: 22, status: 'online' as const, lastSeenAt: null, agentVersion: '', outdated: false },
-  token: 'dsa_0123456789abcdef01234567.new',
+  token: 'dsa_test.test',
 };
 
 beforeEach(() => {
@@ -132,7 +132,7 @@ describe('AgentSetupDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Rotate key' }));
     expect(await screen.findByTestId('agent-api-key')).toBeInTheDocument();
     expect(mocked.rotateAgentKeyRequest).toHaveBeenCalledWith('a1');
-    expect(screen.getByText('dsa_0123456789abcdef01234567.new')).toBeInTheDocument();
+    expect(screen.getByText('dsa_test.test')).toBeInTheDocument();
     expect(store.getState().fleet.rotateStatus).toBe('succeeded');
   });
 

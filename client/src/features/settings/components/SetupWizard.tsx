@@ -76,6 +76,12 @@ export const SetupWizard = () => {
     if (storageStatus === 'idle') void dispatch(fetchStorage());
   }, [dispatch, storageStatus]);
 
+  useEffect(() => {
+    if (storageStatus === 'succeeded' && !setupNeeded) {
+      nav('/projects', { replace: true });
+    }
+  }, [nav, setupNeeded, storageStatus]);
+
   if (storageStatus !== 'succeeded') {
     return (
       <p
@@ -89,7 +95,7 @@ export const SetupWizard = () => {
   }
 
   if (!setupNeeded) {
-    // Configured — no wizard needed. Never render the password again.
+    // Configured — redirect away and never render the password again.
     return null;
   }
 

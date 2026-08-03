@@ -41,6 +41,11 @@
   "drill": {
     "heading": "Restore-Test",
     "none": "Noch kein Test durchgeführt.",
+    "run": "Restore-Test starten",
+    "running": "Test läuft…",
+    "output": "Ausgabe des Restore-Tests",
+    "check": "Repository prüfen",
+    "remoteUnsupported": "Restore-Tests laufen lokal. Verschieben Sie dieses Projekt vor dem Test auf diesen Server.",
     "pass": "Verifiziert",
     "fail": "Fehlgeschlagen"
   },
@@ -80,7 +85,13 @@
     "targetPath": "Zielpfad",
     "save": "Spiegel speichern",
     "saving": "Speichert…",
-    "saved": "Spiegel gespeichert."
+    "saved": "Spiegel gespeichert.",
+    "run": "Spiegel ausführen",
+    "running": "Spiegel läuft…",
+    "completed": "Spiegelung abgeschlossen.",
+    "failed": "Spiegelung fehlgeschlagen.",
+    "output": "Spiegelausgabe",
+    "remoteUnsupported": "Spiegeljobs laufen lokal. Verschieben Sie dieses Projekt vor dem Start auf diesen Server."
   },
   "alerts": {
     "heading": "Fehler-Alarme",

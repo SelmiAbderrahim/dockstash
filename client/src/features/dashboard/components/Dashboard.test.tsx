@@ -31,14 +31,4 @@ describe('Dashboard', () => {
     expect(screen.getByRole('link', { name: 'Profile' })).toBeInTheDocument();
   });
 
-  it('shows the admin link only for admins', () => {
-    document.cookie = `user=${encodeURIComponent(JSON.stringify({ role: 'Admin' }))}; path=/`;
-    renderComp(<Dashboard />);
-    expect(screen.getByRole('link', { name: 'Admin' })).toBeInTheDocument();
-  });
-
-  it('hides the admin link for non-admins (no user cookie)', () => {
-    renderComp(<Dashboard />);
-    expect(screen.queryByRole('link', { name: 'Admin' })).not.toBeInTheDocument();
-  });
 });

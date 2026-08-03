@@ -10,8 +10,8 @@ COMPOSE := docker compose
 HEALTH_TIMEOUT ?= 300
 
 .DEFAULT_GOAL := help
-.PHONY: help build up build-up deploy down stop restart ps logs health \
-        wait-healthy config sh-api sh-web pull test test-server test-client
+.PHONY: help build start up build-up deploy down stop restart ps logs health \
+        wait-healthy config sh-api sh-web pull test test-server test-client test-agent
 
 help: ## Show this help
 	@echo "Dockstash — make targets:"
@@ -25,6 +25,8 @@ build: ## Build all service images
 up: ## Start the stack (detached), then wait until all containers are healthy
 	$(COMPOSE) up -d
 	@$(MAKE) --no-print-directory wait-healthy
+
+start: up ## Alias for up
 
 build-up: ## Build + start (detached), then wait until all containers are healthy
 	$(COMPOSE) up -d --build
@@ -94,12 +96,14 @@ sh-api: ## Open a shell in the running api container
 sh-web: ## Open a shell in the running web container
 	$(COMPOSE) exec web sh
 
-# Run the full test suite (server + client) on the host via vitest in
-# single-run mode. Fails the whole target if either suite has a failing test.
-test: test-server test-client ## Run all tests (server + client)
+# Run every package test suite inside the same Node image as CI.
+test: test-server test-client test-agent ## Run all tests (server + client + agent)
 
 test-server: ## Run server tests (vitest, single run)
-	cd server && npx vitest run
+	docker run --rm -e CI=1 -e MONGOMS_DISTRO=ubuntu-22.04 -v "$(CURDIR)":/repo -v /repo/server/node_modules -w /repo/server node:20-bookworm sh -lc 'npm ci && npx vitest run --coverage'
 
 test-client: ## Run client tests (vitest, single run)
-	cd client && npx vitest run
+	docker run --rm -e CI=1 -v "$(CURDIR)":/repo -v /repo/client/node_modules -w /repo/client node:20-bookworm sh -lc 'npm ci && npx vitest run --coverage'
+
+test-agent: ## Run agent tests (vitest, single run)
+	docker run --rm -e CI=1 -v "$(CURDIR)":/repo -v /repo/agent/node_modules -w /repo/agent node:20-bookworm sh -lc 'npm ci && npx vitest run --coverage'

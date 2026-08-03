@@ -9,12 +9,11 @@ import {
   LogOutIcon,
   ServerIcon,
   SettingsIcon,
-  ShieldIcon,
   UserIcon,
 } from 'lucide-react';
 import { useAppSelector } from '@shared/hooks/redux';
 import { isRtl } from '@shared/i18n';
-import { selectAuthenticated, selectUserRole } from '@features/auth';
+import { selectAuthenticated } from '@features/auth';
 import { BrandLogo } from '@shared/brand';
 import {
   Sidebar,
@@ -39,7 +38,6 @@ interface NavItem {
 interface NavGroup {
   labelKey: string;
   items: NavItem[];
-  role?: 'Admin';
 }
 
 /** SPEC-02 grouped nav — labels resolved via `t('sidebar.groups.*'|'nav.*')`. */
@@ -69,26 +67,18 @@ const GROUPS: NavGroup[] = [
       { to: '/profile', labelKey: 'nav.profile', icon: UserIcon },
     ],
   },
-  {
-    labelKey: 'sidebar.groups.admin',
-    role: 'Admin',
-    items: [{ to: '/admin', labelKey: 'nav.admin', icon: ShieldIcon }],
-  },
 ];
 
 const isRouteActive = (pathname: string, target: string): boolean =>
   pathname === target || pathname.startsWith(`${target}/`);
 
-/** SPEC-02 sidebar — grouped nav + role-gated admin block, brand mark up top. */
+/** SPEC-02 sidebar — grouped product navigation, brand mark up top. */
 export const AppSidebar = () => {
   const authenticated = useAppSelector(selectAuthenticated);
-  const role = useAppSelector(selectUserRole);
   const { t, i18n } = useTranslation('common');
   const { pathname } = useLocation();
 
   if (!authenticated) return null;
-
-  const visibleGroups = GROUPS.filter((group) => !group.role || role === group.role);
 
   return (
     <Sidebar collapsible="icon" side={isRtl(i18n.language) ? 'right' : 'left'}>
@@ -102,7 +92,7 @@ export const AppSidebar = () => {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        {visibleGroups.map((group, i) => (
+        {GROUPS.map((group, i) => (
           <SidebarGroup key={`${group.labelKey}-${i}`}>
             <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
             <SidebarGroupContent>

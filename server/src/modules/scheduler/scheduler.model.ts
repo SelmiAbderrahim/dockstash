@@ -13,7 +13,7 @@ export type JobKind = (typeof JOB_KINDS)[number];
 /**
  * Kinds a cron `Schedule` may carry. `restore` is deliberately excluded —
  * restores are always explicit one-shot user actions, never recurring jobs.
- * `mirror` (Business) IS schedulable: one-way source→repo→target replication.
+ * `mirror` is schedulable: one-way source→repo→target replication.
  */
 export const SCHEDULABLE_JOB_KINDS = ['backup', 'prune', 'check', 'drill', 'mirror'] as const;
 export type SchedulableJobKind = (typeof SCHEDULABLE_JOB_KINDS)[number];

@@ -11,6 +11,9 @@ import {
   updatePlanRequest,
   assignProjectAgentRequest,
   runBackupNowRequest,
+  runDrillNowRequest,
+  runCheckNowRequest,
+  runMirrorNowRequest,
   listProjectJobsRequest,
   listSchedulesRequest,
   createScheduleRequest,
@@ -145,6 +148,30 @@ describe('projects api wrappers', () => {
       body: { projectId: 'p1', kind: 'backup' },
     });
     expect(result).toBe('j-1');
+  });
+
+  it('runDrillNowRequest enqueues a drill job and unwraps jobId', async () => {
+    apiClient.mockResolvedValue({ job: { id: 'j-2', kind: 'drill' } } as never);
+    const result = await runDrillNowRequest('p1');
+    expect(apiClient).toHaveBeenCalledWith('/scheduler/enqueue', {
+      method: 'POST',
+      auth: true,
+      body: { projectId: 'p1', kind: 'drill' },
+    });
+    expect(result).toBe('j-2');
+  });
+
+  it.each([
+    ['check', runCheckNowRequest],
+    ['mirror', runMirrorNowRequest],
+  ] as const)('enqueues a %s job', async (kind, request) => {
+    apiClient.mockResolvedValue({ job: { id: `j-${kind}`, kind } } as never);
+    await expect(request('p1')).resolves.toBe(`j-${kind}`);
+    expect(apiClient).toHaveBeenCalledWith('/scheduler/enqueue', {
+      method: 'POST',
+      auth: true,
+      body: { projectId: 'p1', kind },
+    });
   });
 
   it('listSchedulesRequest GETs schedules and unwraps them', async () => {

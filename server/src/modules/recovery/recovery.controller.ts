@@ -100,6 +100,7 @@ export const triggerSelfBackup: RequestHandler = asyncHandler(async (req, res) =
       t: req.t,
       resticRunner: deps.resticRunner,
       mongoDump: deps.mongoDump,
+      ensureRepoInitialized: (runner) => runner.init(),
     });
     res.status(202).json({ triggered: true, ...result });
     return;

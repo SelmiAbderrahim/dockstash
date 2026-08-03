@@ -39,8 +39,8 @@ export const createProjectSchema = z.object({
   path: projectPath,
   repoPassword: z.string().min(8),
   plan: planInput.optional(),
-  // Assign the new project to a fleet agent at creation (Business-tier). Omitted
-  // or null → runs on the local server.
+  // Assign the new project to a fleet agent at creation. Omitted or null runs
+  // on the local server.
   agentId: z
     .string()
     .regex(/^[a-f0-9]{24}$/i, 'invalid agent id')
@@ -73,7 +73,7 @@ export const pitrQuerySchema = z.object({
 export const runDrillSchema = z.object({}).default({});
 
 /**
- * `PATCH /:projectId/alerts` — per-project outbound alert webhook (Pro+).
+ * `PATCH /:projectId/alerts` — per-project outbound alert webhook.
  * Empty string / null clears it (fall back to the operator-level env target).
  */
 export const alertsConfigSchema = z.object({
@@ -94,7 +94,7 @@ export const alertsConfigSchema = z.object({
 export type AlertsConfigInput = z.infer<typeof alertsConfigSchema>;
 
 /**
- * `PATCH /:projectId/mirror` — one-way mirror config (Business). Structural
+ * `PATCH /:projectId/mirror` — one-way mirror config. Structural
  * path validation only; the allowlist check lives in the service layer (same
  * contract as `projectPath` above).
  */

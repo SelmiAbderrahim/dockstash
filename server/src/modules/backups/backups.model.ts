@@ -74,8 +74,7 @@ const projectSchema = new mongoose.Schema(
     lastStatus: { type: String, enum: BACKUP_STATUSES, default: 'idle' },
     lastError: { type: String, default: '' },
     lastRunAt: { type: Date },
-    // Per-project metering (Business "per-project metering"). Populated from
-    // restic `stats` once the concrete runner is wired; 0 until then.
+    // Per-project repository statistics populated from restic `stats`.
     snapshotCount: { type: Number, default: 0 },
     lastBackupBytes: { type: Number, default: 0 },
     totalRepoBytes: { type: Number, default: 0 },
@@ -106,10 +105,10 @@ const projectSchema = new mongoose.Schema(
       default: null,
     },
     lastRestoreDetail: { type: String, default: '' },
-    // Per-project outbound alert webhook (Pro+). '' = unset → alerts fall back
+    // Per-project outbound alert webhook. '' = unset → alerts fall back
     // to the operator-level ALERT_WEBHOOK_URL env target only.
     alertWebhookUrl: { type: String, default: '', trim: true },
-    // One-way mirror (Business): source dir → restic (tag `mirror`) → target
+    // One-way mirror: source dir → restic (tag `mirror`) → target
     // dir. Server-local only in v1 (agent enqueue rejects the kind).
     mirror: {
       type: new mongoose.Schema(

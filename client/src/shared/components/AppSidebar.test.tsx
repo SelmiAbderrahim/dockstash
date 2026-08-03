@@ -87,9 +87,10 @@ describe('AppSidebar', () => {
     expect(screen.queryByRole('link', { name: /^Admin$/ })).toBeNull();
   });
 
-  it('shows the Admin group for role=Admin only', () => {
+  it('keeps administrators on the same self-hosted product navigation', () => {
     renderSidebar(true, 'Admin');
-    expect(screen.getByRole('link', { name: /^Admin$/ })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^Admin$/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Settings/ })).toBeInTheDocument();
   });
 
   it('marks the active route with the primary token', () => {

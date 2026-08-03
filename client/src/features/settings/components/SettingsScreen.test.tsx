@@ -38,6 +38,7 @@ const mocked = vi.mocked(thunks);
 
 beforeEach(() => {
   initI18n({ initialLocale: 'en' });
+  document.cookie = `user=${encodeURIComponent(JSON.stringify({ role: 'Admin' }))}; path=/`;
   vi.clearAllMocks();
 });
 
@@ -365,6 +366,15 @@ describe('SettingsScreen — Recovery tab', () => {
     expect(screen.getByText('Export configuration')).toBeInTheDocument();
     expect(screen.getByText('Recovery codes')).toBeInTheDocument();
     expect(screen.getByText('Self-backup')).toBeInTheDocument();
+  });
+
+  it('hides the Admin-only self-backup surface from Members', () => {
+    document.cookie = `user=${encodeURIComponent(JSON.stringify({ role: 'Member' }))}; path=/`;
+    renderScreen({}, entry);
+    expect(mocked.fetchSelfBackupRuns).not.toHaveBeenCalled();
+    expect(screen.queryByText('Self-backup')).not.toBeInTheDocument();
+    expect(screen.getByText('Export configuration')).toBeInTheDocument();
+    expect(screen.getByText('Recovery codes')).toBeInTheDocument();
   });
 
   it('dispatches exportConfig from the download button', () => {

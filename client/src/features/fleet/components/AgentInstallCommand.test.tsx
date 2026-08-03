@@ -29,19 +29,19 @@ describe('AgentInstallCommand', () => {
   });
 
   it('bakes the token into the command when given', () => {
-    renderCommand({ token: 'dsa_0123456789abcdef01234567.abc' });
-    expect(screen.getByText(/dsa_0123456789abcdef01234567\.abc/)).toBeInTheDocument();
+    renderCommand({ token: 'dsa_test.test' });
+    expect(screen.getByText(/dsa_test\.test/)).toBeInTheDocument();
     expect(screen.queryByText(new RegExp(TOKEN_PLACEHOLDER))).not.toBeInTheDocument();
   });
 
   it('copies the command to the clipboard and flips the button label', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
-    renderCommand({ token: 'dsa_0123456789abcdef01234567.abc' });
+    renderCommand({ token: 'dsa_test.test' });
     fireEvent.click(screen.getByRole('button', { name: /copy command/i }));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
     expect(writeText).toHaveBeenCalledWith(
-      expect.stringContaining('dsa_0123456789abcdef01234567.abc'),
+      expect.stringContaining('dsa_test.test'),
     );
   });
 

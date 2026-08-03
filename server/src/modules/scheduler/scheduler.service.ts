@@ -55,8 +55,8 @@ export const DEFAULT_BACKUP_CRON = '0 3 * * *';
 
 /**
  * Safe-by-default provisioning: give a freshly created project a daily backup
- * schedule unless one already exists. Never throws — a tier with schedules
- * locked (or any other failure) returns null and the project creation
+ * schedule unless one already exists. Never throws — a scheduling failure
+ * returns null and project creation
  * proceeds; the heartbeat sweep remains the dead-man's-switch for projects
  * that end up unscheduled.
  */

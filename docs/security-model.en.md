@@ -126,12 +126,13 @@ requests. A future cookie-authenticated surface MUST call
 ## Blast radius / threat model
 
 The `api` container is root-equivalent inside the Docker network: it reads
-`/var/www` (read-only), holds a JWT signing secret, and can `exec` into any
+`/var/www` (read-write, path-scoped), holds a JWT signing secret, and can `exec` into any
 tracked container via the socket-proxy. Mitigations:
 
 - **Least privilege on Docker** — the proxy scopes the socket to the
   minimum set of endpoints the backup engine needs.
-- **Read-mostly `/var/www`** — the api mounts it `:ro` for scan operations.
+- **Scoped `/var/www` writes** — restores and mirrors require a writable
+  mount; owner-scoped projects and the project-root allowlist bound every path.
 - **Path-traversal guards** — `backups.paths.ts::isAllowedProjectPath` +
   `assertAllowedPath` reject any path outside `ALLOWED_PATH_ROOT`.
 - **Secrets encrypted at rest** — every provider token / restic password is

@@ -31,7 +31,7 @@ export interface RunMirrorResult {
 export const MIRROR_TAG = 'mirror';
 
 /**
- * One-way mirror (Business): back the source directory up into the project
+ * One-way mirror: back the source directory up into the project
  * repo under the `mirror` tag, then restore the latest mirror snapshot onto
  * the target directory. Both paths must live inside the project-root
  * allowlist — the same guard the restore path enforces. Restic recreates the

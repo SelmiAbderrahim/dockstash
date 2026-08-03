@@ -1,7 +1,7 @@
 # 自备份
 
-编排器将**自身**的 Mongo——项目、调度、加密密钥、备份历史——备份到存储 VPS
-上一个专用的 restic 仓库，独立于每个用户项目的仓库。
+编排器将**自身**的 Mongo 备份到专用的 restic 仓库。Compose 默认使用持久化的
+`self-backup-data` 卷。
 
 ## 捕获的内容
 
@@ -11,15 +11,14 @@
   从不明文。
 - 备份 / 校验 / 演练历史行。
 
-编排器将 `mongodump --archive --oplog` 直接流式送入
-`restic backup --stdin`——从不写临时文件。`--oplog` 保证跨所有集合的时点
-一致性。
+编排器将 `mongodump --archive` 直接流式送入
+`restic backup --stdin`——从不写临时文件。
 
 ## 保留仓库
 
-自备份写入 `SELF_BACKUP_REPO`（默认 `dockstash-self`）——一个保留标识符，
-永不与用户项目冲突。每项目 BullMQ 队列（提示 05）串行化针对此仓库的并发
-cron 触发，从而 restic 永远不会看到针对同一仓库的两次并发操作。
+自备份写入 `SELF_BACKUP_REPO`（Compose 默认值：`/self-backup`）。
+该卷在容器重建后仍会保留，但仍位于同一主机；如需异地保护，请配置远程
+restic URL 及其凭据。
 
 ## 调度
 

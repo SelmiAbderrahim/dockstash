@@ -85,6 +85,27 @@ export const runBackupNowRequest = (projectId: string) =>
     body: { projectId, kind: 'backup' },
   }).then((r) => r.job.id);
 
+export const runDrillNowRequest = (projectId: string) =>
+  apiClient<EnqueueResp>('/scheduler/enqueue', {
+    method: 'POST',
+    auth: true,
+    body: { projectId, kind: 'drill' },
+  }).then((r) => r.job.id);
+
+export const runCheckNowRequest = (projectId: string) =>
+  apiClient<EnqueueResp>('/scheduler/enqueue', {
+    method: 'POST',
+    auth: true,
+    body: { projectId, kind: 'check' },
+  }).then((r) => r.job.id);
+
+export const runMirrorNowRequest = (projectId: string) =>
+  apiClient<EnqueueResp>('/scheduler/enqueue', {
+    method: 'POST',
+    auth: true,
+    body: { projectId, kind: 'mirror' },
+  }).then((r) => r.job.id);
+
 export const listSchedulesRequest = () =>
   apiClient<SchedulesResp>('/scheduler/schedules', { auth: true }).then((r) => r.schedules);
 

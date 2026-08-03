@@ -41,6 +41,11 @@
   "drill": {
     "heading": "Prueba de restauración",
     "none": "Aún no se ha ejecutado ninguna prueba.",
+    "run": "Ejecutar prueba de restauración",
+    "running": "Prueba en curso…",
+    "output": "Salida de la prueba de restauración",
+    "check": "Comprobar repositorio",
+    "remoteUnsupported": "Las pruebas de restauración se ejecutan localmente. Mueve este proyecto a este servidor antes de iniciar una prueba.",
     "pass": "Verificado",
     "fail": "Falló"
   },
@@ -80,7 +85,13 @@
     "targetPath": "Ruta de destino",
     "save": "Guardar réplica",
     "saving": "Guardando…",
-    "saved": "Réplica guardada."
+    "saved": "Réplica guardada.",
+    "run": "Ejecutar réplica",
+    "running": "Réplica en curso…",
+    "completed": "Réplica completada.",
+    "failed": "La réplica ha fallado.",
+    "output": "Salida de la réplica",
+    "remoteUnsupported": "Las réplicas se ejecutan localmente. Mueve este proyecto a este servidor antes de ejecutarlas."
   },
   "alerts": {
     "heading": "Alertas de fallo",

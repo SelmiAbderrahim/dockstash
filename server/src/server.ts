@@ -4,8 +4,10 @@ import { connectDb, disconnectDb } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { startScheduler, type SchedulerRuntime } from './modules/scheduler/index.js';
+import { registerSelfBackupCron } from './modules/recovery/index.js';
 import {
   configureSnapshotsController,
+  configureVerifyController,
   makeDispatchDepsFor,
   makeProductionSnapshotLister,
   makeResticRunnerFor,
@@ -39,10 +41,24 @@ function main(): void {
   // `RESTIC_RUNNER=process` (set by compose) spawns the real restic binary;
   // the default keeps the loud placeholder so nothing silently "succeeds".
   const useRealRunner = env.RESTIC_RUNNER === 'process';
+  const recovery = useRealRunner ? wireRecoveryController() : null;
   if (useRealRunner) {
     configureSnapshotsController(makeProductionSnapshotLister());
-    wireRecoveryController();
     configureSettingsController({ probe: makeProductionSshProbe() });
+    configureVerifyController({
+      makeCheckDeps: (projectId, owner) => ({
+        resticRunner: makeResticRunnerFor(projectId, owner),
+      }),
+      makeDrillDeps: (projectId, owner) => {
+        const deps = makeDispatchDepsFor();
+        return {
+          resticRunner: makeResticRunnerFor(projectId, owner),
+          scratch: deps.scratch!,
+          fileDiff: deps.fileDiff!,
+          dbDiff: deps.dbDiff!,
+        };
+      },
+    });
   }
   let scheduler: SchedulerRuntime | null = null;
   startScheduler({
@@ -54,6 +70,9 @@ function main(): void {
   })
     .then((rt) => {
       scheduler = rt;
+      if (recovery) {
+        registerSelfBackupCron({ cron: rt.cron, enqueue: recovery.runNow });
+      }
     })
     .catch((err) => {
       logger.error({ err }, 'scheduler start failed');
