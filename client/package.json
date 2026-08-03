@@ -1,6 +1,6 @@
 {
   "name": "dockstash-client",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "Dockstash web client — React 18 + Vite + Tailwind v4 + shadcn/ui.",
   "license": "AGPL-3.0-only",
   "repository": {

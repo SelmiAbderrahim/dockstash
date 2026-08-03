@@ -805,7 +805,12 @@ describe('agents: heartbeat roots sanitization + version reporting', () => {
     const { id, token: userToken } = await seedUser('outd@t.com');
     const { agent: oldAgent } = await registerAgent(id, { name: 'old', host: 'old.example' });
     const { agent: newAgent } = await registerAgent(id, { name: 'new', host: 'new.example' });
-    await touchAgentHeartbeat(String(oldAgent._id), { version: '0.1.0' });
+    // Any version that is not the expected one counts as stale. Assert that
+    // explicitly: this test previously hardcoded a literal that later BECAME
+    // the shipped version, quietly turning the "old" agent into a current one.
+    const STALE_VERSION = '0.0.1';
+    expect(STALE_VERSION).not.toBe(EXPECTED_AGENT_VERSION);
+    await touchAgentHeartbeat(String(oldAgent._id), { version: STALE_VERSION });
     await touchAgentHeartbeat(String(newAgent._id), { version: EXPECTED_AGENT_VERSION });
 
     const res = await request(app).get('/api/agents').set('Authorization', `JWT ${userToken}`);
@@ -815,7 +820,7 @@ describe('agents: heartbeat roots sanitization + version reporting', () => {
         (a) => [a.name, a],
       ),
     );
-    expect(byName['old']).toMatchObject({ agentVersion: '0.1.0', outdated: true });
+    expect(byName['old']).toMatchObject({ agentVersion: STALE_VERSION, outdated: true });
     expect(byName['new']).toMatchObject({
       agentVersion: EXPECTED_AGENT_VERSION,
       outdated: false,

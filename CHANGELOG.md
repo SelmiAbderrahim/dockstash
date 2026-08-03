@@ -1,8 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-08-03
 
-### ⚠️ BREAKING — Dockstash is now open source (AGPL-3.0), self-hostable
+First tagged release. Dockstash becomes an open-source, self-hostable product
+under AGPL-3.0.
+
+Versioning restarts here. `client` and `server` previously carried `2.0.0` and
+`agent` carried `0.4.0`; those were inherited from the upstream MERN starter
+this repository was forked from and never described a Dockstash release. All
+three packages are now `0.1.0` and move together.
+
+### Dockstash is now open source (AGPL-3.0), self-hostable
 
 Dockstash is released as **AGPL-3.0-only** open source. Every billing, tiering,
 and platform-operator surface is removed from this repository; the managed

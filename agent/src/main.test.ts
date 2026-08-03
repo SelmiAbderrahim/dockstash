@@ -206,7 +206,21 @@ describe('productionExecute', () => {
 });
 
 describe('AGENT_VERSION', () => {
-  it('is a stable semantic version string', () => {
-    expect(AGENT_VERSION).toBe('0.4.0');
+  it('is a semantic version string', () => {
+    expect(AGENT_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  // The daemon reports this on every heartbeat and the server compares it to
+  // EXPECTED_AGENT_VERSION. Bumping package.json without main.ts (or the other
+  // way round) ships an image that reports the wrong version and shows every
+  // agent as outdated — assert the two cannot drift instead of hardcoding a
+  // literal that needs editing on each release.
+  it('matches the version in package.json', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { fileURLToPath } = await import('node:url');
+    const pkg = JSON.parse(
+      readFileSync(fileURLToPath(new URL('../package.json', import.meta.url)), 'utf8'),
+    ) as { version: string };
+    expect(AGENT_VERSION).toBe(pkg.version);
   });
 });
