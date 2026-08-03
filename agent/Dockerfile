@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
 
 # ---------- build stage ----------
-FROM node:20-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
@@ -15,7 +15,7 @@ RUN npm run build \
 
 
 # ---------- runtime stage ----------
-FROM node:20-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
