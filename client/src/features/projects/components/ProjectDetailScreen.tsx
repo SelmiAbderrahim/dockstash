@@ -72,7 +72,12 @@ const cronSchema = z.object({
   enabled: z.boolean().default(true),
 });
 
-type CronForm = z.infer<typeof cronSchema>;
+// zod 4 + @hookform/resolvers 5 model a schema's input and output as distinct
+// types. `enabled` has a `.default(true)`, so it is optional on the way in and
+// guaranteed on the way out — `useForm` must be told both or the resolver type
+// will not line up.
+type CronFormInput = z.input<typeof cronSchema>;
+type CronForm = z.output<typeof cronSchema>;
 
 const PRESETS: Record<string, string> = {
   daily: '0 3 * * *',
@@ -229,7 +234,7 @@ const ScheduleEditor = ({ project }: ScheduleEditorProps) => {
     formState: { errors },
     setValue,
     watch,
-  } = useForm<CronForm>({
+  } = useForm<CronFormInput, unknown, CronForm>({
     resolver: zodResolver(cronSchema),
     defaultValues: {
       cron: existing?.cron ?? PRESETS.daily,

@@ -30,7 +30,8 @@ const containerSummaryInput = z.object({
   image: z.string().transform(truncate(512)),
   state: z.string().transform(truncate(32)),
   // Keep the first MAX_LABELS entries, truncating each value — never reject.
-  labels: z.record(z.string()).transform((l) =>
+  // zod 4 requires the key schema explicitly; v3's single-arg form inferred it.
+  labels: z.record(z.string(), z.string()).transform((l) =>
     Object.fromEntries(
       Object.entries(l)
         .slice(0, MAX_LABELS)
