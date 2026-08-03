@@ -47,10 +47,14 @@ jobs:
       - name: Test + coverage (100% gate)
         working-directory: server
         env:
-          NODE_ENV: test
-          MONGODB_URI: mongodb://127.0.0.1:0/ci
-          JWT_SECRET: ci-jwt-secret-ci-jwt-secret-ci-jwt-secret-ci-jwt-secret
-          MASTER_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
+          # All values QUOTED. An unquoted all-digit scalar is parsed by YAML as
+          # a number — `0000...0` becomes octal 0, exported as "0", and fails
+          # the 32-byte MASTER_ENCRYPTION_KEY check with a confusing
+          # process.exit(1) inside every test file. Keep the quotes.
+          NODE_ENV: 'test'
+          MONGODB_URI: 'mongodb://127.0.0.1:0/ci'
+          JWT_SECRET: 'ci-jwt-secret-ci-jwt-secret-ci-jwt-secret-ci-jwt-secret'
+          MASTER_ENCRYPTION_KEY: '5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e'
         run: npx vitest run --coverage
 
       - name: npm audit (fail on high/critical)
