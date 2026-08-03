@@ -6,8 +6,15 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # Patch/minor dev tooling only. Majors are deliberately excluded so a
+      # compiler or test-runner rewrite arrives as its own reviewable PR
+      # instead of riding along with prettier patches — the TypeScript 5 -> 7
+      # bump landed inside this group once and broke `npm ci` outright.
       dev-tooling:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: npm
     directory: /server
@@ -15,8 +22,15 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # Patch/minor dev tooling only. Majors are deliberately excluded so a
+      # compiler or test-runner rewrite arrives as its own reviewable PR
+      # instead of riding along with prettier patches — the TypeScript 5 -> 7
+      # bump landed inside this group once and broke `npm ci` outright.
       dev-tooling:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
 
   - package-ecosystem: npm
     directory: /agent
@@ -24,9 +38,19 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # Patch/minor dev tooling only. Majors are deliberately excluded so a
+      # compiler or test-runner rewrite arrives as its own reviewable PR
+      # instead of riding along with prettier patches — the TypeScript 5 -> 7
+      # bump landed inside this group once and broke `npm ci` outright.
       dev-tooling:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
 
+  # Also covers the `container.image` pins in .github/workflows/ci.yml, so a
+  # node bump reaches CI and the Dockerfiles together. ci-gates.test.ts fails
+  # if those two majors ever drift apart.
   - package-ecosystem: github-actions
     directory: /
     schedule:
