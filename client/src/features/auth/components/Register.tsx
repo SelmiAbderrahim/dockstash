@@ -154,17 +154,6 @@ export const Register = () => {
             <Button type="submit" loading={isSubmitting} className="w-full">
               {t('register.submit')}
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              {t('register.termsPrefix')}{' '}
-              <Link to="/terms" className="underline underline-offset-4 hover:text-foreground">
-                {t('register.termsOfService')}
-              </Link>{' '}
-              {t('register.termsAnd')}{' '}
-              <Link to="/privacy" className="underline underline-offset-4 hover:text-foreground">
-                {t('register.privacyPolicy')}
-              </Link>
-              .
-            </p>
           </form>
           <Button asChild variant="link" className="mt-2 px-0">
             <Link to={invite ? `/login?invite=${invite}` : '/login'}>{t('register.login')}</Link>

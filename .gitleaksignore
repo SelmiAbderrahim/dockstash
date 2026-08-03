@@ -1,0 +1,23 @@
+# Known non-secret test fixtures and documentation examples.
+# Keep this fingerprint-scoped so future secrets in the same files are still detected.
+170ac33ce48faab3fe0e84d74dfca383101fee0e:client/src/features/fleet/components/RegisterAgentDialog.test.tsx:generic-api-key:28
+663d68be3e5e10ec6c79ae960c61911da37c32f3:server/src/modules/auth/oauth/oauth.test.ts:generic-api-key:703
+6a96c74cdec3add9c07d210c53cef8b5349eae9a:prompts/CONTEXT7.md:generic-api-key:113
+6a96c74cdec3add9c07d210c53cef8b5349eae9a:prompts/CONTEXT7.md:generic-api-key:125
+6a96c74cdec3add9c07d210c53cef8b5349eae9a:prompts/pulsy-cloud-features/13-public-api-and-api-keys-opus-4.8.md:generic-api-key:124
+6a96c74cdec3add9c07d210c53cef8b5349eae9a:server/src/shared/crypto/crypto.test.ts:generic-api-key:25
+6a96c74cdec3add9c07d210c53cef8b5349eae9a:server/src/shared/crypto/crypto.test.ts:generic-api-key:26
+7633d72e84a4c8da98be2281afeac5fe874a29c4:.claude/agents/quality/security-auditor.md:generic-api-key:150
+7633d72e84a4c8da98be2281afeac5fe874a29c4:.claude/agents/quality/security-auditor.md:generic-api-key:180
+7633d72e84a4c8da98be2281afeac5fe874a29c4:.claude/skills/docker-workflow-automation/SKILL.md:curl-auth-header:586
+7633d72e84a4c8da98be2281afeac5fe874a29c4:.opencode/agent/security-auditor.md:generic-api-key:169
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/api.test.ts:generic-api-key:66
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/components/AgentInstallCommand.test.tsx:generic-api-key:32
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/components/AgentInstallCommand.test.tsx:generic-api-key:40
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/components/AgentKeyReveal.test.tsx:generic-api-key:7
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/components/AgentSetupDialog.test.tsx:generic-api-key:35
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/components/RegisterAgentDialog.test.tsx:generic-api-key:28
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/install-command.test.ts:generic-api-key:43
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/install-command.test.ts:generic-api-key:46
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/store/thunks.test.ts:generic-api-key:129
+dbe84b43da9c66b783736fe3dd5edb68fe68820a:client/src/features/fleet/store/thunks.test.ts:generic-api-key:160

@@ -138,7 +138,7 @@ describe('SetupWizard', () => {
       host: 'ssh.example',
       user: 'root',
       port: 2222,
-      configured: false,
+      configured: true,
       passwordSet: false,
     });
     mocked.testStorageRequest.mockResolvedValue({ ok: true });
@@ -152,6 +152,7 @@ describe('SetupWizard', () => {
 
     const passwordBlock = await screen.findByTestId('wizard-password');
     expect(passwordBlock).toBeInTheDocument();
+    expect(navigate).not.toHaveBeenCalled();
     const generated = passwordBlock.querySelector('code')?.textContent ?? '';
     expect(generated.length).toBeGreaterThan(0);
 

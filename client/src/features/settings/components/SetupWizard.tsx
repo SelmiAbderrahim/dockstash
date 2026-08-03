@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Check, Copy, Loader2 } from 'lucide-react';
@@ -71,13 +71,16 @@ export const SetupWizard = () => {
   const [password, setPassword] = useState<string>('');
   const [ack, setAck] = useState(false);
   const [passwordRevealed, setPasswordRevealed] = useState(false);
+  const setupStarted = useRef(false);
+
+  if (setupNeeded) setupStarted.current = true;
 
   useEffect(() => {
     if (storageStatus === 'idle') void dispatch(fetchStorage());
   }, [dispatch, storageStatus]);
 
   useEffect(() => {
-    if (storageStatus === 'succeeded' && !setupNeeded) {
+    if (storageStatus === 'succeeded' && !setupNeeded && !setupStarted.current) {
       nav('/projects', { replace: true });
     }
   }, [nav, setupNeeded, storageStatus]);
@@ -94,7 +97,7 @@ export const SetupWizard = () => {
     );
   }
 
-  if (!setupNeeded) {
+  if (!setupNeeded && !setupStarted.current) {
     // Configured — redirect away and never render the password again.
     return null;
   }
