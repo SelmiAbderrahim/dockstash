@@ -1,0 +1,163 @@
+{
+  "launcher": {
+    "ariaLabel": "Leitfaden öffnen",
+    "tooltip": "Leitfäden (Shift+?)"
+  },
+  "nudge": {
+    "text": "Neu hier? Ich begleite Sie durch die Einrichtung.",
+    "cta": "Zeig es mir",
+    "dismiss": "Schließen"
+  },
+  "panel": {
+    "title": "Führe mich",
+    "progress": "{{done}} von {{total}} abgeschlossen",
+    "youAreHere": "Sie sind hier",
+    "completed": "Abgeschlossen",
+    "start": "Starten",
+    "resume": "Ab Schritt {{step}} fortsetzen",
+    "replay": "Wiederholen"
+  },
+  "toggle": {
+    "label": "Guide-Assistent anzeigen",
+    "description": "Schwebende Hilfe-Schaltfläche mit Schritt-für-Schritt-Touren."
+  },
+  "overlay": {
+    "counter": "Schritt {{current}} von {{total}}",
+    "close": "Tour schließen",
+    "searching": "Die richtige Stelle wird gesucht…",
+    "missing": "Dieses Element ist gerade nicht sichtbar.",
+    "takeMeThere": "Bring mich hin",
+    "skipStep": "Schritt überspringen",
+    "endTour": "Tour beenden",
+    "skipTour": "Tour überspringen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig"
+  },
+  "tours": {
+    "encryptionPassword": {
+      "title": "Verschlüsselungspasswort einrichten",
+      "description": "Schützen Sie Ihre Backups mit einem Passwort, das nur Sie kennen.",
+      "steps": {
+        "new": {
+          "title": "Passwort wählen",
+          "body": "Geben Sie hier ein starkes Verschlüsselungspasswort ein. Es schützt jedes Backup, das Sie erstellen."
+        },
+        "confirm": {
+          "title": "Bestätigen",
+          "body": "Geben Sie dasselbe Passwort erneut ein, damit ein Tippfehler Sie nicht aussperrt."
+        },
+        "escrow": {
+          "title": "Optionale Wiederherstellung",
+          "body": "Aktivieren Sie dies, damit Wiederherstellungscodes den Zugriff wiederherstellen können, falls Sie das Passwort vergessen."
+        },
+        "save": {
+          "title": "Speichern",
+          "body": "Speichern Sie, um Ihr neues Verschlüsselungspasswort anzuwenden."
+        }
+      }
+    },
+    "configureStorage": {
+      "title": "Speicher-Host verbinden",
+      "description": "Verbinden Sie Dockstash mit dem SSH-Host, auf dem Backups gespeichert werden.",
+      "steps": {
+        "host": {
+          "title": "Host-Adresse",
+          "body": "Geben Sie den Hostnamen oder die IP-Adresse Ihres Speicherservers ein."
+        },
+        "key": {
+          "title": "Privater SSH-Schlüssel",
+          "body": "Fügen Sie den privaten Schlüssel für die Verbindung ein. Er wird verschlüsselt gespeichert."
+        },
+        "save": {
+          "title": "Speichern und testen",
+          "body": "Speichern Sie die Verbindung und testen Sie sie, um den Zugriff zu prüfen."
+        }
+      }
+    },
+    "retentionPolicy": {
+      "title": "Aufbewahrungsrichtlinie anpassen",
+      "description": "Legen Sie fest, wie viele tägliche, wöchentliche und monatliche Snapshots aufbewahrt werden.",
+      "steps": {
+        "daily": {
+          "title": "Tägliche Snapshots",
+          "body": "Legen Sie fest, wie viele tägliche Snapshots vor der Rotation aufbewahrt werden."
+        },
+        "save": {
+          "title": "Speichern",
+          "body": "Wenden Sie die Aufbewahrungsrichtlinie auf künftige Backups an."
+        }
+      }
+    },
+    "exploreFleet": {
+      "title": "Ihre Flotte erkunden",
+      "description": "Sehen Sie jeden registrierten Agenten und seinen Verbindungsstatus an einem Ort.",
+      "steps": {
+        "overview": {
+          "title": "Flottenübersicht",
+          "body": "Diese Seite listet jeden von Ihnen registrierten Agenten auf — die VPS-Server, die Dockstash sichert — zusammen mit ihrem Verbindungsstatus."
+        },
+        "register": {
+          "title": "Einen Agenten registrieren",
+          "body": "Klicken Sie hier, um einen neuen Agenten hinzuzufügen. Ein Agent ist ein VPS, den Dockstash sichern soll."
+        },
+        "name": {
+          "title": "Benennen Sie ihn",
+          "body": "Geben Sie dem Agenten einen Namen, den Sie später wiedererkennen, z. B. \"web-1\" oder \"db-prod\"."
+        },
+        "host": {
+          "title": "Host-Adresse",
+          "body": "Geben Sie den Hostnamen oder die IP-Adresse dieses VPS ein."
+        },
+        "port": {
+          "title": "Port",
+          "body": "Lassen Sie dies leer, um den Standard-SSH-Port 22 zu verwenden, oder geben Sie einen eigenen Port ein."
+        },
+        "submit": {
+          "title": "Registrierung abschließen",
+          "body": "Registrieren Sie den Agenten, um dessen API-Schlüssel zu erzeugen. Der Schlüssel wird nur einmal angezeigt — kopieren Sie ihn, bevor Sie den Dialog schließen."
+        },
+        "install": {
+          "title": "Agent installieren",
+          "body": "Kopieren Sie diesen Befehl und führen Sie ihn auf dem VPS aus. Er startet den Dockstash-Agenten mit eingebettetem Token."
+        },
+        "online": {
+          "title": "Beim Online-Gehen zusehen",
+          "body": "Sobald der Agent läuft, meldet er sich alle paar Sekunden. Sein Status wechselt hier innerhalb einer Minute auf Online."
+        },
+        "addProject": {
+          "title": "Diesen Agent sichern",
+          "body": "Gehen Sie jetzt zu Projekte → Projekt hinzufügen und wählen Sie diesen Agent als Sicherungsziel — seine Ordner und Container erscheinen automatisch."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Erstes Projekt hinzufügen",
+      "description": "Fügen Sie ein Projekt aus einem lokalen Ordner, einem laufenden Container oder einem Flotten-Agent hinzu.",
+      "steps": {
+        "add": {
+          "title": "Projekt hinzufügen",
+          "body": "Beginnen Sie hier — öffnen Sie den Assistenten zum Hinzufügen."
+        },
+        "target": {
+          "title": "Sicherungsziel wählen",
+          "body": "Sichern Sie diesen Server oder wählen Sie einen Flotten-Agent, um dessen VPS zu sichern. Die Projekte eines Agents stammen aus seinem zuletzt gemeldeten Snapshot."
+        },
+        "source": {
+          "title": "Quelle wählen",
+          "body": "Durchsuchen Sie Ordner unter /var/www, wählen Sie ein laufendes Docker-Compose-Projekt oder geben Sie einen Pfad ein. Prüfen Sie den erkannten Plan, vergeben Sie Name und Repository-Passwort und erstellen Sie."
+        }
+      }
+    },
+    "exploreSnapshots": {
+      "title": "Snapshots durchsuchen",
+      "description": "Finden und stellen Sie Backup-Snapshots pro Projekt wieder her.",
+      "steps": {
+        "overview": {
+          "title": "Snapshots",
+          "body": "Wählen Sie ein Projekt, um dessen Snapshots und Wiederherstellungspunkte zu durchsuchen."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "heading": "Ajustes",
+  "loading": "Cargando…",
+  "tabs": {
+    "aria": "Secciones de ajustes",
+    "storage": "Almacenamiento",
+    "retention": "Retención",
+    "password": "Contraseña de cifrado",
+    "recovery": "Recuperación"
+  },
+  "actions": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "connect": "Conectar almacenamiento",
+    "test": "Probar conexión",
+    "testing": "Probando…"
+  },
+  "errors": {
+    "load": "No se pudieron cargar los ajustes.",
+    "save": "No se pudieron guardar los ajustes."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Usuario",
+    "port": "Puerto",
+    "privateKey": "Clave SSH privada",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Se guarda cifrada. No se muestra otra vez.",
+    "saved": "Almacenamiento guardado.",
+    "testOk": "Conexión correcta.",
+    "testFailed": "Error de conexión."
+  },
+  "retention": {
+    "daily": "Diarias a mantener",
+    "dailyHint": "Se conserva una copia por día, durante los últimos N días.",
+    "weekly": "Semanales a mantener",
+    "weeklyHint": "Se conserva una copia por semana, tras el período diario.",
+    "monthly": "Mensuales a mantener",
+    "monthlyHint": "Se conserva una copia por mes, tras el período semanal.",
+    "saved": "Retención guardada."
+  },
+  "password": {
+    "warning": "Contraseña de cifrado. Si la pierdes, los repositorios son irrecuperables.",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar",
+    "mismatch": "Las contraseñas no coinciden.",
+    "escrow": "He guardado la contraseña en lugar seguro.",
+    "saved": "Contraseña guardada.",
+    "isSet": "Hay una contraseña de cifrado configurada."
+  },
+  "recovery": {
+    "export": {
+      "title": "Exportar configuración",
+      "description": "Descarga una exportación JSON de tus proyectos, almacenamiento y ajustes.",
+      "action": "Descargar exportación",
+      "working": "Exportando…",
+      "done": "Exportación descargada."
+    },
+    "codes": {
+      "title": "Códigos de recuperación",
+      "description": "Genera códigos de recuperación de un solo uso para recuperar el acceso a tus repositorios cifrados.",
+      "action": "Generar códigos de recuperación",
+      "working": "Generando…",
+      "warning": "Guarda estos códigos ahora. No volverán a mostrarse nunca.",
+      "copy": "Copiar todo",
+      "copied": "Copiado."
+    },
+    "selfBackup": {
+      "title": "Auto-respaldo",
+      "description": "Respalda la propia configuración de Dockstash en tu almacenamiento.",
+      "action": "Ejecutar auto-respaldo",
+      "working": "Iniciando…",
+      "triggered": "Auto-respaldo iniciado.",
+      "runs": "Ejecuciones recientes",
+      "empty": "Aún no hay auto-respaldos."
+    }
+  }
+}

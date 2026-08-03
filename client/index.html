@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#111113" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#111113" />
+    <meta name="application-name" content="Dockstash" />
+    <meta name="apple-mobile-web-app-title" content="Dockstash" />
+    <title>Dockstash</title>
+    <script>
+      // Resolve theme before first paint to avoid a flash. `system` (or unset)
+      // follows the OS; an explicit choice in localStorage wins. Mirrors
+      // src/shared/theme/ThemeProvider so hydration sees the same .dark class.
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          var dark =
+            t === 'dark' ||
+            ((!t || t === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Dockstash requires JavaScript for the dashboard.</noscript>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>

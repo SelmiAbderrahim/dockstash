@@ -1,0 +1,103 @@
+{
+  "heading": "Projects",
+  "lede": "Add a project from a folder, a running container, or a fleet agent — then back it up.",
+  "loading": "Loading projects…",
+  "never": "Never",
+  "meta": {
+    "path": "Path",
+    "lastRun": "Last backup"
+  },
+  "status": {
+    "idle": "Idle",
+    "running": "Running",
+    "success": "Healthy",
+    "failed": "Failed"
+  },
+  "actions": {
+    "backupNow": "Backup Now",
+    "running": "Running…",
+    "open": "Details",
+    "retry": "Retry",
+    "addProject": "Add project",
+    "addFirst": "Add your first project"
+  },
+  "empty": {
+    "title": "No projects found.",
+    "hint": "Add your first project to start backing it up."
+  },
+  "errors": {
+    "load": "Could not load projects."
+  },
+  "add": {
+    "title": "Add a project",
+    "lede": "Pick a folder or a running Docker Compose project from a fleet agent.",
+    "scanning": "Scanning…",
+    "cancel": "Back to projects",
+    "select": "Select",
+    "services": "Services",
+    "target": {
+      "label": "Backup target",
+      "local": "Local server",
+      "snapshotAt": "Last reported {{at}}",
+      "noSnapshot": "This agent hasn't reported yet — check back shortly.",
+      "noAgentsTitle": "No fleet agents registered.",
+      "noAgentsHint": "Register a fleet agent first, then choose it here to create a project.",
+      "noAgentsCta": "Open Fleet"
+    },
+    "agent": {
+      "offlineBadge": "Offline",
+      "loading": "Loading agent snapshot…",
+      "refresh": "Refresh now",
+      "refreshing": "Refreshing…",
+      "notReportedTitle": "Agent hasn't reported yet",
+      "notReportedHint": "No snapshot received yet — check the Fleet page to confirm the agent is online.",
+      "errorsTitle": "Discovery reported problems",
+      "fleetLink": "View in Fleet",
+      "notReportedTabHint": "No snapshot from this agent yet. If the agent is online but this persists, it is likely running an outdated image — on the host, run: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, then click Refresh now."
+    },
+    "tabs": {
+      "aria": "Choose a source",
+      "folders": "Folders",
+      "docker": "Running Docker",
+      "manual": "Manual path"
+    },
+    "folders": {
+      "emptyTitle": "No folders found.",
+      "emptyHint": "No subdirectories under /var/www.",
+      "emptyHintAgent": "This agent's /var/www snapshot is empty. On the agent host, run: docker compose -f docker-compose.agent.yml exec agent ls -la /var/www. Your projects must be mounted under /var/www."
+    },
+    "docker": {
+      "unavailableTitle": "Docker is not available.",
+      "unavailableHint": "No Docker socket is configured on this server.",
+      "unavailableHintAgent": "This agent's latest snapshot reports Docker unavailable. On the agent host, rerun setup with: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate. Then click Refresh now.",
+      "emptyTitle": "No running containers.",
+      "emptyHint": "Start a Compose project, then refresh."
+    },
+    "manual": {
+      "label": "Project path",
+      "scan": "Scan"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Files only",
+      "added": "Already added",
+      "notAddable": "No folder path reported",
+      "standalone": "Standalone",
+      "outsideRoots": "Outside agent directories",
+      "outsideRootsHint": "This project's folder is not covered by the agent's project directories ({{roots}}). Re-run the agent setup with this directory added."
+    },
+    "review": {
+      "title": "Review and create",
+      "nameLabel": "Project name",
+      "passwordLabel": "Repository password",
+      "passwordHint": "At least 8 characters. Encrypts your backup repository.",
+      "files": "Files",
+      "databases": "Databases",
+      "configs": "Configs",
+      "none": "None detected.",
+      "create": "Create project",
+      "creating": "Creating…",
+      "back": "Back"
+    }
+  }
+}

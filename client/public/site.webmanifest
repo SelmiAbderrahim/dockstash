@@ -1,0 +1,28 @@
+{
+  "name": "Dockstash",
+  "short_name": "Dockstash",
+  "description": "One-click, verified backups for any Docker project.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#111113",
+  "background_color": "#111113",
+  "display": "standalone"
+}

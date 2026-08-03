@@ -1,0 +1,103 @@
+{
+  "heading": "Projets",
+  "lede": "Ajoutez un projet depuis un dossier, un conteneur en cours ou un agent de flotte — puis sauvegardez-le.",
+  "loading": "Chargement des projets…",
+  "never": "Jamais",
+  "meta": {
+    "path": "Chemin",
+    "lastRun": "Dernière sauvegarde"
+  },
+  "status": {
+    "idle": "Inactif",
+    "running": "En cours",
+    "success": "OK",
+    "failed": "Échec"
+  },
+  "actions": {
+    "backupNow": "Sauvegarder maintenant",
+    "running": "En cours…",
+    "open": "Détails",
+    "retry": "Réessayer",
+    "addProject": "Ajouter un projet",
+    "addFirst": "Ajouter votre premier projet"
+  },
+  "empty": {
+    "title": "Aucun projet trouvé.",
+    "hint": "Ajoutez votre premier projet pour commencer à le sauvegarder."
+  },
+  "errors": {
+    "load": "Impossible de charger les projets."
+  },
+  "add": {
+    "title": "Ajouter un projet",
+    "lede": "Choisissez un dossier ou un projet Docker Compose en cours depuis un agent de la flotte.",
+    "scanning": "Analyse…",
+    "cancel": "Retour aux projets",
+    "select": "Sélectionner",
+    "services": "Services",
+    "target": {
+      "label": "Cible de sauvegarde",
+      "local": "Serveur local",
+      "snapshotAt": "Dernier rapport {{at}}",
+      "noSnapshot": "Cet agent n’a pas encore transmis de données — réessayez bientôt.",
+      "noAgentsTitle": "Aucun agent de flotte enregistré.",
+      "noAgentsHint": "Enregistrez d'abord un agent de flotte, puis choisissez-le ici pour créer un projet.",
+      "noAgentsCta": "Ouvrir Flotte"
+    },
+    "agent": {
+      "offlineBadge": "Hors ligne",
+      "loading": "Chargement du snapshot de l'agent…",
+      "refresh": "Actualiser maintenant",
+      "refreshing": "Actualisation…",
+      "notReportedTitle": "L'agent n'a pas encore transmis de données",
+      "notReportedHint": "Aucune donnée reçue pour le moment — vérifiez sur la page Flotte que l'agent est bien en ligne.",
+      "errorsTitle": "La découverte a signalé des problèmes",
+      "fleetLink": "Voir dans Flotte",
+      "notReportedTabHint": "Aucun instantané reçu de cet agent pour le moment. Si l'agent est en ligne mais que cela persiste, il exécute probablement une image obsolète — sur l'hôte, exécutez : docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, puis cliquez sur Actualiser."
+    },
+    "tabs": {
+      "aria": "Choisir une source",
+      "folders": "Dossiers",
+      "docker": "Docker en cours",
+      "manual": "Chemin manuel"
+    },
+    "folders": {
+      "emptyTitle": "Aucun dossier trouvé.",
+      "emptyHint": "Aucun sous-dossier sous /var/www.",
+      "emptyHintAgent": "Cet agent n'a signalé aucun projet dans /var/www — vérifiez que votre projet s'y trouve et que l'agent peut le lire."
+    },
+    "docker": {
+      "unavailableTitle": "Docker n’est pas disponible.",
+      "unavailableHint": "Aucun socket Docker n’est configuré sur ce serveur.",
+      "unavailableHintAgent": "Cet agent ne peut pas accéder à Docker. Vérifiez que le proxy de socket est actif sur l'hôte de l'agent.",
+      "emptyTitle": "Aucun conteneur en cours.",
+      "emptyHint": "Démarrez un projet Compose, puis rafraîchissez."
+    },
+    "manual": {
+      "label": "Chemin du projet",
+      "scan": "Analyser"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Fichiers seulement",
+      "added": "Déjà ajouté",
+      "notAddable": "Aucun chemin de dossier signalé",
+      "standalone": "Autonome",
+      "outsideRoots": "Hors des répertoires de l'agent",
+      "outsideRootsHint": "Le dossier de ce projet n'est pas couvert par les répertoires de projets de l'agent ({{roots}}). Relancez la configuration de l'agent en ajoutant ce répertoire."
+    },
+    "review": {
+      "title": "Vérifier et créer",
+      "nameLabel": "Nom du projet",
+      "passwordLabel": "Mot de passe du dépôt",
+      "passwordHint": "Au moins 8 caractères. Chiffre votre dépôt de sauvegarde.",
+      "files": "Fichiers",
+      "databases": "Bases de données",
+      "configs": "Configurations",
+      "none": "Aucun détecté.",
+      "create": "Créer le projet",
+      "creating": "Création…",
+      "back": "Retour"
+    }
+  }
+}

@@ -1,0 +1,145 @@
+{
+  "loading": "Cargando…",
+  "tabs": {
+    "aria": "Secciones del proyecto",
+    "plan": "Plan",
+    "schedule": "Programación",
+    "drill": "Prueba de restauración",
+    "pitr": "Punto en el tiempo",
+    "mirror": "Réplica",
+    "alerts": "Alertas",
+    "history": "Historial"
+  },
+  "plan": {
+    "files": "Archivos",
+    "databases": "Bases de datos",
+    "configs": "Archivos de configuración",
+    "noFiles": "No hay rutas detectadas.",
+    "noDatabases": "No hay bases detectadas.",
+    "noConfigs": "No hay configuraciones detectadas.",
+    "save": "Guardar plan",
+    "saving": "Guardando…",
+    "saved": "Plan guardado."
+  },
+  "schedule": {
+    "presetLegend": "Frecuencia",
+    "preset": {
+      "daily": "Diario a las 03:00",
+      "weekly": "Semanal (domingo 03:00)",
+      "continuous": "Continuo (cada 5 minutos)",
+      "cron": "Cron personalizado"
+    },
+    "cronLabel": "Expresión cron",
+    "enabled": "Activado",
+    "save": "Guardar programación",
+    "saving": "Guardando…",
+    "saved": "Programación guardada.",
+    "errors": {
+      "cronFormat": "Cron debe tener 5 o 6 campos."
+    }
+  },
+  "drill": {
+    "heading": "Prueba de restauración",
+    "none": "Aún no se ha ejecutado ninguna prueba.",
+    "run": "Ejecutar prueba de restauración",
+    "running": "Prueba en curso…",
+    "output": "Salida de la prueba de restauración",
+    "check": "Comprobar repositorio",
+    "remoteUnsupported": "Las pruebas de restauración se ejecutan localmente. Mueve este proyecto a este servidor antes de iniciar una prueba.",
+    "pass": "Verificado",
+    "fail": "Falló"
+  },
+  "agent": {
+    "title": "Se ejecuta en",
+    "description": "Elige dónde se ejecutan las copias de este proyecto.",
+    "local": "Este servidor (local)",
+    "offline": "sin conexión",
+    "selectAria": "Agente de copia",
+    "saving": "Guardando…",
+    "saved": "Asignación guardada.",
+    "error": "No se pudo asignar el agente."
+  },
+  "lastFailure": {
+    "title": "La última copia de seguridad falló",
+    "hint": "La copia de seguridad más reciente de este proyecto no se completó. Detalles a continuación:"
+  },
+  "pitr": {
+    "heading": "Restauración a un punto en el tiempo",
+    "pick": "Restaurar al momento",
+    "resolve": "Buscar instantánea",
+    "resolving": "Buscando…",
+    "result": "Instantánea más cercana",
+    "snapshot": "Instantánea",
+    "gap": "{{minutes}} minutos antes de tu objetivo",
+    "overwrite": "Sobrescribir la ubicación original",
+    "targetPath": "Restaurar en la ruta",
+    "restore": "Restaurar",
+    "restoring": "Restaurando…",
+    "started": "Restauración iniciada.",
+    "none": "Aún no se ha resuelto ninguna instantánea."
+  },
+  "mirror": {
+    "heading": "Réplica",
+    "enabled": "Activado",
+    "sourcePath": "Ruta de origen",
+    "targetPath": "Ruta de destino",
+    "save": "Guardar réplica",
+    "saving": "Guardando…",
+    "saved": "Réplica guardada.",
+    "run": "Ejecutar réplica",
+    "running": "Réplica en curso…",
+    "completed": "Réplica completada.",
+    "failed": "La réplica ha fallado.",
+    "output": "Salida de la réplica",
+    "remoteUnsupported": "Las réplicas se ejecutan localmente. Mueve este proyecto a este servidor antes de ejecutarlas."
+  },
+  "alerts": {
+    "heading": "Alertas de fallo",
+    "webhook": "URL del webhook",
+    "hint": "Enviamos un POST a esta URL cada vez que falla una copia.",
+    "save": "Guardar alertas",
+    "saving": "Guardando…",
+    "saved": "Alertas guardadas.",
+    "clear": "Borrar"
+  },
+  "history": {
+    "heading": "Historial de tareas",
+    "lede": "Copias de seguridad, verificaciones, purgas y restauraciones ejecutadas para este proyecto.",
+    "tableLabel": "Historial de tareas",
+    "never": "Nunca",
+    "ok": "Éxito",
+    "failed": "Fallida",
+    "error": "No se pudo cargar el historial de tareas.",
+    "cards": {
+      "backup": "Última copia",
+      "restore": "Última restauración",
+      "drill": "Último simulacro"
+    },
+    "kind": {
+      "backup": "Copia",
+      "check": "Verificación",
+      "prune": "Purga",
+      "restore": "Restauración"
+    },
+    "jobStatus": {
+      "pending": "En cola",
+      "leased": "En ejecución",
+      "succeeded": "Completada",
+      "failed": "Fallida"
+    },
+    "columns": {
+      "kind": "Tipo",
+      "status": "Estado",
+      "started": "Inicio",
+      "finished": "Fin",
+      "snapshot": "Instantánea",
+      "logs": "Registros"
+    },
+    "showLogs": "Registros",
+    "hideLogs": "Ocultar",
+    "empty": {
+      "title": "Sin tareas registradas",
+      "hint": "Las ejecuciones aparecen aquí cuando el agente de flota de este proyecto ejecuta una tarea. Las tareas ejecutadas directamente en este servidor transmiten sus registros en vivo pero no se almacenan."
+    }
+  }
+}

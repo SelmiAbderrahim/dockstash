@@ -1,0 +1,202 @@
+# Dockstash control plane — see docs/self-hosting.md.
+# Secrets (MASTER_ENCRYPTION_KEY, JWT_SECRET, SESSION_SECRET, RESEND_API_KEY)
+# are injected from the root .env via `environment:` below — never baked into
+# images.
+
+name: dockstash
+
+networks:
+  dockstash:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  redis-data:
+  self-backup-data:
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    networks: [dockstash]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [dockstash]
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # Least-privilege proxy in front of /var/run/docker.sock. Only THIS service
+  # bind-mounts the raw socket; the api reaches Docker via DOCKER_HOST.
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
+    networks: [dockstash]
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      INFO: 1
+      # Container restart only (no stop/start/kill scope beyond it) — DB
+      # restores bounce the target container after placing the artifact.
+      ALLOW_RESTARTS: 1
+      # Everything else denied.
+      IMAGES: 0
+      NETWORKS: 0
+      VOLUMES: 0
+      SERVICES: 0
+      TASKS: 0
+      NODES: 0
+      SWARM: 0
+      SYSTEM: 0
+      PLUGINS: 0
+      POST: 1
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      SECRETS: 0
+      SESSION: 0
+      DISTRIBUTION: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2375/_ping || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks: [dockstash]
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      docker-socket-proxy:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      # Fixed internal listen port. The host-side mapping is API_PORT below;
+      # keep this at 8080 so the host port mapping below stays predictable.
+      PORT: 8080
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      MONGODB_URI: ${MONGODB_URI}
+      REDIS_URL: ${REDIS_URL}
+      CLIENT_URL: ${CLIENT_URL}
+      SERVER_URL: ${SERVER_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      SESSION_SECRET: ${SESSION_SECRET}
+      # Required by config/env.ts (zod-validated at boot; parses process.env
+      # directly), so it must be a plain env var from the root .env.
+      MASTER_ENCRYPTION_KEY: ${MASTER_ENCRYPTION_KEY}
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en}
+      # env.ts reads process.env directly, so these must be plain env vars.
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM: ${RESEND_FROM}
+      # OAuth sign-in (Google / GitHub). Must be plain env vars — env.ts reads
+      # process.env directly. '' is preprocessed to undefined, which disables
+      # the provider and hides its button on the client.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      DOCKER_HOST: tcp://docker-socket-proxy:2375
+      # Real restic execution inside the container (the image bakes the pinned
+      # restic binary + openssh-client). Set to `placeholder` to disable.
+      RESTIC_RUNNER: ${RESTIC_RUNNER:-process}
+      RESTIC_CACHE_DIR: /tmp/restic-cache
+      SELF_BACKUP_REPO: ${SELF_BACKUP_REPO:-/self-backup}
+      # Contact-form recipient (falls back to a placeholder when unset).
+      CONTACT_RECIPIENT: ${CONTACT_RECIPIENT:-}
+    volumes:
+      # Restores and mirrors write only inside validated project roots.
+      - ${PROJECTS_ROOT:-/var/www}:/var/www:rw
+      # The orchestrator's own restic repository must survive image rebuilds.
+      - self-backup-data:/self-backup
+    ports:
+      # Loopback-only — nginx is the sole public entrypoint. Host port off the
+      # 8080 default to avoid colliding with other stacks on this box.
+      - "127.0.0.1:${API_PORT:-48080}:8080"
+    # Least-privilege hardening (prompt 11). The api never needs privilege
+    # escalation, extra capabilities, or a writable root — restic/dockerode
+    # reach Docker only through the socket-proxy above.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: false
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:'+ (process.env.PORT || 8080) +'/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Public web entrypoint — Node static server (server.js). Serves the built
+  # SPA: hashed assets plus an index.html history fallback.
+  web:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+        # AGPL-3.0 §13 source offer (blank = upstream; set to your fork if you
+        # deploy a modified build).
+        VITE_SOURCE_URL: ${VITE_SOURCE_URL:-}
+        # Fleet-agent image named in generated install snippets (blank = the
+        # `dockstash/agent:latest` placeholder; publish your own and set it).
+        VITE_AGENT_IMAGE: ${VITE_AGENT_IMAGE:-}
+    restart: unless-stopped
+    networks: [dockstash]
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      WEB_PORT: 3000
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    ports:
+      # Loopback-only — nginx is the sole public entrypoint. Host port off the
+      # 3000 default to avoid colliding with other stacks on this box.
+      - "127.0.0.1:${WEB_PORT:-43000}:3000"
+    # Least-privilege hardening (mirrors api). The web server runs as a non-root
+    # user (client/Dockerfile) and never needs privilege escalation or extra
+    # capabilities.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

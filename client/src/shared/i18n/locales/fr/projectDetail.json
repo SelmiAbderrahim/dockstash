@@ -1,0 +1,145 @@
+{
+  "loading": "Chargement…",
+  "tabs": {
+    "aria": "Sections du projet",
+    "plan": "Plan",
+    "schedule": "Planning",
+    "drill": "Test de restauration",
+    "pitr": "Point dans le temps",
+    "mirror": "Miroir",
+    "alerts": "Alertes",
+    "history": "Historique"
+  },
+  "plan": {
+    "files": "Fichiers",
+    "databases": "Bases de données",
+    "configs": "Fichiers de config",
+    "noFiles": "Aucun chemin détecté.",
+    "noDatabases": "Aucune base détectée.",
+    "noConfigs": "Aucun fichier de config détecté.",
+    "save": "Enregistrer le plan",
+    "saving": "Enregistrement…",
+    "saved": "Plan enregistré."
+  },
+  "schedule": {
+    "presetLegend": "Fréquence",
+    "preset": {
+      "daily": "Quotidien à 03:00",
+      "weekly": "Hebdo (dimanche 03:00)",
+      "continuous": "Continu (toutes les 5 minutes)",
+      "cron": "Cron personnalisé"
+    },
+    "cronLabel": "Expression cron",
+    "enabled": "Activé",
+    "save": "Enregistrer le planning",
+    "saving": "Enregistrement…",
+    "saved": "Planning enregistré.",
+    "errors": {
+      "cronFormat": "Cron doit contenir 5 ou 6 champs séparés par des espaces."
+    }
+  },
+  "drill": {
+    "heading": "Test de restauration",
+    "none": "Aucun test de restauration.",
+    "run": "Lancer le test de restauration",
+    "running": "Test en cours…",
+    "output": "Sortie du test de restauration",
+    "check": "Vérifier le dépôt",
+    "remoteUnsupported": "Les tests de restauration sont locaux. Déplacez ce projet sur ce serveur avant de lancer un test.",
+    "pass": "Vérifié",
+    "fail": "Échec"
+  },
+  "agent": {
+    "title": "Exécuté sur",
+    "description": "Choisissez où s'exécutent les sauvegardes de ce projet.",
+    "local": "Ce serveur (local)",
+    "offline": "hors ligne",
+    "selectAria": "Agent de sauvegarde",
+    "saving": "Enregistrement…",
+    "saved": "Affectation enregistrée.",
+    "error": "Impossible d'affecter l'agent."
+  },
+  "lastFailure": {
+    "title": "Échec de la dernière sauvegarde",
+    "hint": "La dernière sauvegarde de ce projet ne s'est pas terminée. Détails ci-dessous :"
+  },
+  "pitr": {
+    "heading": "Restauration à un point dans le temps",
+    "pick": "Restaurer au moment",
+    "resolve": "Trouver l'instantané",
+    "resolving": "Recherche…",
+    "result": "Instantané le plus proche",
+    "snapshot": "Instantané",
+    "gap": "{{minutes}} minutes avant votre cible",
+    "overwrite": "Écraser l'emplacement d'origine",
+    "targetPath": "Restaurer vers le chemin",
+    "restore": "Restaurer",
+    "restoring": "Restauration…",
+    "started": "Restauration lancée.",
+    "none": "Aucun instantané résolu pour le moment."
+  },
+  "mirror": {
+    "heading": "Miroir",
+    "enabled": "Activé",
+    "sourcePath": "Chemin source",
+    "targetPath": "Chemin cible",
+    "save": "Enregistrer le miroir",
+    "saving": "Enregistrement…",
+    "saved": "Miroir enregistré.",
+    "run": "Exécuter le miroir",
+    "running": "Miroir en cours…",
+    "completed": "Miroir terminé.",
+    "failed": "Le miroir a échoué.",
+    "output": "Sortie du miroir",
+    "remoteUnsupported": "Les miroirs s'exécutent localement. Déplacez ce projet sur ce serveur avant de lancer le miroir."
+  },
+  "alerts": {
+    "heading": "Alertes d'échec",
+    "webhook": "URL du webhook",
+    "hint": "Nous envoyons un POST à cette URL à chaque échec de sauvegarde.",
+    "save": "Enregistrer les alertes",
+    "saving": "Enregistrement…",
+    "saved": "Alertes enregistrées.",
+    "clear": "Effacer"
+  },
+  "history": {
+    "heading": "Historique des tâches",
+    "lede": "Sauvegardes, vérifications, purges et restaurations exécutées pour ce projet.",
+    "tableLabel": "Historique des tâches",
+    "never": "Jamais",
+    "ok": "Succès",
+    "failed": "Échec",
+    "error": "Impossible de charger l'historique des tâches.",
+    "cards": {
+      "backup": "Dernière sauvegarde",
+      "restore": "Dernière restauration",
+      "drill": "Dernier exercice"
+    },
+    "kind": {
+      "backup": "Sauvegarde",
+      "check": "Vérification",
+      "prune": "Purge",
+      "restore": "Restauration"
+    },
+    "jobStatus": {
+      "pending": "En attente",
+      "leased": "En cours",
+      "succeeded": "Réussie",
+      "failed": "Échouée"
+    },
+    "columns": {
+      "kind": "Type",
+      "status": "Statut",
+      "started": "Début",
+      "finished": "Fin",
+      "snapshot": "Instantané",
+      "logs": "Journaux"
+    },
+    "showLogs": "Journaux",
+    "hideLogs": "Masquer",
+    "empty": {
+      "title": "Aucune tâche enregistrée",
+      "hint": "Les exécutions apparaissent ici dès que l'agent de flotte de ce projet exécute une tâche. Les tâches exécutées directement sur ce serveur diffusent leurs journaux en direct mais ne sont pas conservées."
+    }
+  }
+}

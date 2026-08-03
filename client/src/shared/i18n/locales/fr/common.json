@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "menu": "Ouvrir le menu",
+    "dashboard": "Tableau de bord",
+    "health": "Santé",
+    "projects": "Projets",
+    "snapshots": "Instantanés",
+    "fleet": "Flotte",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "logout": "Déconnexion",
+    "admin": "Admin",
+    "login": "Connexion",
+    "register": "Inscription"
+  },
+  "dashboard": {
+    "projects": "Gérez vos projets et déploiements.",
+    "snapshots": "Parcourez et restaurez les instantanés de projet.",
+    "settings": "Configurez votre espace de travail et vos intégrations.",
+    "profile": "Consultez et mettez à jour les informations de votre compte.",
+    "admin": "Accédez aux contrôles d'administration."
+  },
+  "sidebar": {
+    "brandLink": "Accueil Dockstash",
+    "toggle": "Basculer la barre latérale",
+    "accountMenu": "Menu du compte",
+    "account": "Compte",
+    "groups": {
+      "overview": "Vue d'ensemble",
+      "backups": "Sauvegardes",
+      "fleet": "Flotte",
+      "account": "Compte",
+      "admin": "Admin"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. Tous droits réservés.",
+    "source": "Code source (AGPL-3.0)"
+  },
+  "ok": "OK",
+  "cancel": "Annuler",
+  "save": "Enregistrer",
+  "delete": "Supprimer",
+  "yes": "Oui",
+  "no": "Non",
+  "logPanel": {
+    "title": "Sortie de sauvegarde",
+    "running": "En cours…",
+    "done": "Terminé",
+    "failed": "Échec"
+  },
+  "fleet": {
+    "heading": "Flotte",
+    "lede": "Tous les agents VPS connectés et leur empreinte de sauvegarde.",
+    "loading": "Chargement de la flotte…",
+    "register": "Enregistrer un agent",
+    "empty": {
+      "title": "Aucun agent pour l'instant",
+      "hint": "Enregistrez un agent sur un autre VPS pour le voir ici."
+    },
+    "errors": {
+      "load": "Impossible de charger la flotte.",
+      "register": "Impossible d'enregistrer l'agent.",
+      "rotate": "Impossible de régénérer la clé de l'agent.",
+      "remove": "Impossible de supprimer l'agent."
+    },
+    "table": {
+      "aria": "Flotte",
+      "name": "Nom",
+      "host": "Hôte",
+      "status": "Statut",
+      "lastSeen": "Dernière activité",
+      "projects": "Projets",
+      "size": "Taille",
+      "snapshots": "Instantanés",
+      "actions": "Actions"
+    },
+    "status": {
+      "online": "En ligne",
+      "offline": "Hors ligne"
+    },
+    "never": "Jamais",
+    "dialog": {
+      "title": "Enregistrer un agent",
+      "description": "Ajoutez un VPS à votre flotte. L'agent s'authentifie avec la clé API générée ci-dessous.",
+      "name": "Nom",
+      "host": "Hôte",
+      "hostHint": "Le nom d'hôte ou l'adresse IP de la machine que vous ajoutez comme agent.",
+      "port": "Port",
+      "portHint": "Facultatif — utilise le port 22 (port SSH standard) par défaut si laissé vide.",
+      "submit": "Enregistrer",
+      "submitting": "Enregistrement…",
+      "cancel": "Annuler",
+      "keyWarning": "Cette clé API n'est affichée qu'une seule fois et ne pourra jamais être récupérée. Copiez-la maintenant.",
+      "copy": "Copier",
+      "copied": "Copié",
+      "done": "Terminé",
+      "installTitle": "Installer l'agent",
+      "installIntro": "Exécutez ceci sur la machine à ajouter. Cela démarre le conteneur de l'agent Dockstash avec le jeton intégré.",
+      "roots": "Répertoires de projets",
+      "rootsHint": "Chemins absolus séparés par des virgules que l'agent peut découvrir et sauvegarder (ex. /var/www, /opt/apps). Chacun est monté dans le conteneur de l'agent.",
+      "rootsInvalid": "Répertoires invalides : {{entries}}. Utilisez des chemins absolus hors de /, /proc, /sys, /dev, /etc, /boot et /run.",
+      "rootsEmpty": "Saisissez au moins un répertoire de projets."
+    },
+    "install": {
+      "copy": "Copier la commande",
+      "copied": "Copié"
+    },
+    "setup": {
+      "title": "Configuration de l'agent",
+      "description": "Commande d'installation et gestion des clés pour cet agent.",
+      "keyPlaceholderNote": "Remplacez <AGENT_TOKEN> par le jeton fourni à l'enregistrement. Le jeton ne peut plus être affiché — si vous l'avez perdu, régénérez la clé ci-dessous.",
+      "close": "Fermer"
+    },
+    "actions": {
+      "aria": "Actions de l'agent",
+      "setup": "Instructions d'installation",
+      "rotate": "Régénérer la clé",
+      "remove": "Supprimer l'agent",
+      "update": "Mettre à jour l'agent"
+    },
+    "rotate": {
+      "title": "Régénérer la clé de l'agent",
+      "description": "Un nouveau jeton est généré et l'ancien cesse de fonctionner immédiatement. Vous devez mettre à jour l'agent avec le nouveau jeton.",
+      "confirm": "Régénérer la clé",
+      "cancel": "Annuler",
+      "rotating": "Régénération…"
+    },
+    "remove": {
+      "title": "Supprimer l'agent",
+      "description": "Supprimer « {{name}} » de votre flotte ? Ses projets basculent en sauvegardes locales et les tâches en attente sont annulées.",
+      "confirm": "Supprimer",
+      "cancel": "Annuler"
+    },
+    "outdated": {
+      "badge": "Mise à jour disponible",
+      "hint": "Cet agent exécute la version {{version}}. Relancez la commande d'installation sur l'hôte pour le mettre à jour."
+    },
+    "update": {
+      "title": "Mettre à jour l'agent",
+      "description": "Récupérez la dernière image de l'agent et recréez le conteneur sur l'hôte.",
+      "intro": "Exécutez ceci sur l'hôte de l'agent, puis cliquez sur Actualiser dans Ajouter un projet.",
+      "close": "Fermer"
+    }
+  }
+}

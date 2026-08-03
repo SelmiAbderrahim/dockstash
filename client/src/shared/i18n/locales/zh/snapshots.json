@@ -1,0 +1,40 @@
+{
+  "heading": "快照",
+  "lede": "存储 VPS 上的每个恢复点。选择并恢复。",
+  "loading": "加载中…",
+  "selectProject": "项目",
+  "tableLabel": "快照",
+  "columns": {
+    "date": "日期",
+    "type": "类型",
+    "size": "大小",
+    "actions": "操作"
+  },
+  "types": {
+    "files": "文件",
+    "mirror": "镜像"
+  },
+  "actions": {
+    "restore": "恢复"
+  },
+  "empty": {
+    "title": "尚无快照。",
+    "hint": "请先运行一次备份。"
+  },
+  "errors": {
+    "load": "无法加载快照。"
+  },
+  "restore": {
+    "title": "恢复快照",
+    "description": "即将恢复项目 \"{{projectName}}\"。此操作不可逆。",
+    "mode": "恢复模式",
+    "newLocation": "恢复到新位置（安全）",
+    "targetPath": "目标路径",
+    "overwrite": "覆盖现有文件（危险）",
+    "typeToConfirm": "输入 \"{{projectName}}\" 以确认",
+    "confirm": "恢复",
+    "cancel": "取消",
+    "stream": "恢复输出"
+  },
+  "viewHistory": "查看恢复历史"
+}

@@ -1,0 +1,145 @@
+{
+  "loading": "Wird geladen…",
+  "tabs": {
+    "aria": "Projektabschnitte",
+    "plan": "Plan",
+    "schedule": "Zeitplan",
+    "drill": "Restore-Test",
+    "pitr": "Zeitpunkt",
+    "mirror": "Spiegel",
+    "alerts": "Alarme",
+    "history": "Verlauf"
+  },
+  "plan": {
+    "files": "Dateien",
+    "databases": "Datenbanken",
+    "configs": "Konfigurationsdateien",
+    "noFiles": "Keine Pfade erkannt.",
+    "noDatabases": "Keine Datenbanken erkannt.",
+    "noConfigs": "Keine Konfigurationsdateien erkannt.",
+    "save": "Plan speichern",
+    "saving": "Speichert…",
+    "saved": "Plan gespeichert."
+  },
+  "schedule": {
+    "presetLegend": "Frequenz",
+    "preset": {
+      "daily": "Täglich 03:00",
+      "weekly": "Wöchentlich (So. 03:00)",
+      "continuous": "Kontinuierlich (alle 5 Minuten)",
+      "cron": "Cron manuell"
+    },
+    "cronLabel": "Cron-Ausdruck",
+    "enabled": "Aktiv",
+    "save": "Zeitplan speichern",
+    "saving": "Speichert…",
+    "saved": "Zeitplan gespeichert.",
+    "errors": {
+      "cronFormat": "Cron muss 5 oder 6 Felder haben."
+    }
+  },
+  "drill": {
+    "heading": "Restore-Test",
+    "none": "Noch kein Test durchgeführt.",
+    "run": "Restore-Test starten",
+    "running": "Test läuft…",
+    "output": "Ausgabe des Restore-Tests",
+    "check": "Repository prüfen",
+    "remoteUnsupported": "Restore-Tests laufen lokal. Verschieben Sie dieses Projekt vor dem Test auf diesen Server.",
+    "pass": "Verifiziert",
+    "fail": "Fehlgeschlagen"
+  },
+  "agent": {
+    "title": "Läuft auf",
+    "description": "Wählen Sie, wo die Backups dieses Projekts ausgeführt werden.",
+    "local": "Dieser Server (lokal)",
+    "offline": "offline",
+    "selectAria": "Backup-Agent",
+    "saving": "Wird gespeichert…",
+    "saved": "Zuweisung gespeichert.",
+    "error": "Agent konnte nicht zugewiesen werden."
+  },
+  "lastFailure": {
+    "title": "Letztes Backup fehlgeschlagen",
+    "hint": "Der letzte Backup-Lauf für dieses Projekt wurde nicht abgeschlossen. Details unten:"
+  },
+  "pitr": {
+    "heading": "Zeitpunkt-Wiederherstellung",
+    "pick": "Auf Zeitpunkt wiederherstellen",
+    "resolve": "Snapshot ermitteln",
+    "resolving": "Wird ermittelt…",
+    "result": "Nächstgelegener Snapshot",
+    "snapshot": "Snapshot",
+    "gap": "{{minutes}} Minuten vor Ihrem Ziel",
+    "overwrite": "Ursprünglichen Speicherort überschreiben",
+    "targetPath": "In Pfad wiederherstellen",
+    "restore": "Wiederherstellen",
+    "restoring": "Wird wiederhergestellt…",
+    "started": "Wiederherstellung gestartet.",
+    "none": "Noch kein Snapshot ermittelt."
+  },
+  "mirror": {
+    "heading": "Spiegel",
+    "enabled": "Aktiv",
+    "sourcePath": "Quellpfad",
+    "targetPath": "Zielpfad",
+    "save": "Spiegel speichern",
+    "saving": "Speichert…",
+    "saved": "Spiegel gespeichert.",
+    "run": "Spiegel ausführen",
+    "running": "Spiegel läuft…",
+    "completed": "Spiegelung abgeschlossen.",
+    "failed": "Spiegelung fehlgeschlagen.",
+    "output": "Spiegelausgabe",
+    "remoteUnsupported": "Spiegeljobs laufen lokal. Verschieben Sie dieses Projekt vor dem Start auf diesen Server."
+  },
+  "alerts": {
+    "heading": "Fehler-Alarme",
+    "webhook": "Webhook-URL",
+    "hint": "Wir senden einen POST an diese URL, wenn ein Backup fehlschlägt.",
+    "save": "Alarme speichern",
+    "saving": "Speichert…",
+    "saved": "Alarme gespeichert.",
+    "clear": "Leeren"
+  },
+  "history": {
+    "heading": "Auftragsverlauf",
+    "lede": "Backups, Prüfungen, Bereinigungen und Wiederherstellungen für dieses Projekt.",
+    "tableLabel": "Auftragsverlauf",
+    "never": "Nie",
+    "ok": "Erfolgreich",
+    "failed": "Fehlgeschlagen",
+    "error": "Auftragsverlauf konnte nicht geladen werden.",
+    "cards": {
+      "backup": "Letztes Backup",
+      "restore": "Letzte Wiederherstellung",
+      "drill": "Letzte Übung"
+    },
+    "kind": {
+      "backup": "Backup",
+      "check": "Prüfung",
+      "prune": "Bereinigung",
+      "restore": "Wiederherstellung"
+    },
+    "jobStatus": {
+      "pending": "Wartend",
+      "leased": "Läuft",
+      "succeeded": "Erfolgreich",
+      "failed": "Fehlgeschlagen"
+    },
+    "columns": {
+      "kind": "Art",
+      "status": "Status",
+      "started": "Gestartet",
+      "finished": "Beendet",
+      "snapshot": "Snapshot",
+      "logs": "Protokolle"
+    },
+    "showLogs": "Protokolle",
+    "hideLogs": "Ausblenden",
+    "empty": {
+      "title": "Keine Aufträge aufgezeichnet",
+      "hint": "Läufe erscheinen hier, sobald der Fleet-Agent dieses Projekts einen Auftrag ausführt. Direkt auf diesem Server ausgeführte Aufträge streamen ihre Protokolle live, werden aber nicht gespeichert."
+    }
+  }
+}

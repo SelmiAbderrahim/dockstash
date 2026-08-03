@@ -1,0 +1,163 @@
+{
+  "launcher": {
+    "ariaLabel": "Ouvrir le guide",
+    "tooltip": "Guides (Shift+?)"
+  },
+  "nudge": {
+    "text": "Nouveau ici ? Je peux vous accompagner dans la configuration.",
+    "cta": "Montrez-moi",
+    "dismiss": "Fermer"
+  },
+  "panel": {
+    "title": "Guidez-moi",
+    "progress": "{{done}} sur {{total}} terminés",
+    "youAreHere": "Vous êtes ici",
+    "completed": "Terminé",
+    "start": "Commencer",
+    "resume": "Reprendre à l'étape {{step}}",
+    "replay": "Rejouer"
+  },
+  "toggle": {
+    "label": "Afficher l'assistant de guidage",
+    "description": "Bouton d'aide flottant avec des visites guidées pas à pas."
+  },
+  "overlay": {
+    "counter": "Étape {{current}} sur {{total}}",
+    "close": "Fermer la visite",
+    "searching": "Recherche du bon endroit…",
+    "missing": "Cet élément n'est pas visible pour le moment.",
+    "takeMeThere": "Emmenez-moi",
+    "skipStep": "Passer l'étape",
+    "endTour": "Terminer la visite",
+    "skipTour": "Ignorer la visite",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé"
+  },
+  "tours": {
+    "encryptionPassword": {
+      "title": "Configurer votre mot de passe de chiffrement",
+      "description": "Protégez vos sauvegardes avec un mot de passe que vous seul connaissez.",
+      "steps": {
+        "new": {
+          "title": "Choisissez un mot de passe",
+          "body": "Saisissez ici un mot de passe de chiffrement robuste. Il protège chaque sauvegarde que vous créez."
+        },
+        "confirm": {
+          "title": "Confirmez-le",
+          "body": "Saisissez le même mot de passe à nouveau pour qu'une faute de frappe ne vous bloque pas."
+        },
+        "escrow": {
+          "title": "Séquestre de récupération optionnel",
+          "body": "Activez cette option pour que des codes de récupération puissent restaurer l'accès si vous oubliez le mot de passe."
+        },
+        "save": {
+          "title": "Enregistrer",
+          "body": "Enregistrez pour appliquer votre nouveau mot de passe de chiffrement."
+        }
+      }
+    },
+    "configureStorage": {
+      "title": "Connecter votre hôte de stockage",
+      "description": "Pointez Dockstash vers l'hôte SSH où sont stockées les sauvegardes.",
+      "steps": {
+        "host": {
+          "title": "Adresse de l'hôte",
+          "body": "Saisissez le nom d'hôte ou l'adresse IP de votre serveur de stockage."
+        },
+        "key": {
+          "title": "Clé privée SSH",
+          "body": "Collez la clé privée utilisée pour la connexion. Elle est chiffrée au repos."
+        },
+        "save": {
+          "title": "Enregistrer et tester",
+          "body": "Enregistrez la connexion, puis testez-la pour vérifier l'accès."
+        }
+      }
+    },
+    "retentionPolicy": {
+      "title": "Ajuster votre politique de rétention",
+      "description": "Décidez combien d'instantanés quotidiens, hebdomadaires et mensuels conserver.",
+      "steps": {
+        "daily": {
+          "title": "Instantanés quotidiens",
+          "body": "Définissez combien d'instantanés quotidiens sont conservés avant rotation."
+        },
+        "save": {
+          "title": "Enregistrer",
+          "body": "Appliquez la politique de rétention aux prochaines sauvegardes."
+        }
+      }
+    },
+    "exploreFleet": {
+      "title": "Explorer votre flotte",
+      "description": "Visualisez chaque agent enregistré et son état de connexion en un seul endroit.",
+      "steps": {
+        "overview": {
+          "title": "Vue d'ensemble de la flotte",
+          "body": "Cette page liste chaque agent que vous avez enregistré — les serveurs VPS sauvegardés par Dockstash — ainsi que leur état de connexion."
+        },
+        "register": {
+          "title": "Enregistrer un agent",
+          "body": "Cliquez ici pour ajouter un nouvel agent. Un agent est un VPS que vous souhaitez faire sauvegarder par Dockstash."
+        },
+        "name": {
+          "title": "Nommez-le",
+          "body": "Donnez à l'agent un nom que vous reconnaîtrez plus tard, comme « web-1 » ou « db-prod »."
+        },
+        "host": {
+          "title": "Adresse de l'hôte",
+          "body": "Saisissez le nom d'hôte ou l'adresse IP de ce VPS."
+        },
+        "port": {
+          "title": "Port",
+          "body": "Laissez ce champ vide pour utiliser le port SSH par défaut, 22, ou saisissez un port personnalisé."
+        },
+        "submit": {
+          "title": "Terminer l'enregistrement",
+          "body": "Enregistrez l'agent pour générer sa clé API. La clé n'est affichée qu'une seule fois : copiez-la avant de fermer la boîte de dialogue."
+        },
+        "install": {
+          "title": "Installer l'agent",
+          "body": "Copiez cette commande et exécutez-la sur le VPS. Elle démarre l'agent Dockstash avec le jeton intégré."
+        },
+        "online": {
+          "title": "Voyez-le se connecter",
+          "body": "Une fois lancé, l'agent se signale toutes les quelques secondes. Son statut passe à « En ligne » en moins d'une minute."
+        },
+        "addProject": {
+          "title": "Sauvegardez cet agent",
+          "body": "Allez maintenant dans Projets → Ajouter un projet et choisissez cet agent comme cible de sauvegarde — ses dossiers et conteneurs apparaissent automatiquement."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Ajoutez votre premier projet",
+      "description": "Ajoutez un projet depuis un dossier local, un conteneur en cours ou un agent de flotte.",
+      "steps": {
+        "add": {
+          "title": "Ajouter un projet",
+          "body": "Commencez ici — ouvrez l’assistant d’ajout de projet."
+        },
+        "target": {
+          "title": "Choisissez la cible",
+          "body": "Sauvegardez ce serveur, ou choisissez un agent de flotte pour sauvegarder ce VPS. Les projets d’un agent proviennent de son dernier instantané transmis."
+        },
+        "source": {
+          "title": "Choisissez une source",
+          "body": "Parcourez les dossiers sous /var/www, choisissez un projet Docker Compose en cours, ou saisissez un chemin. Vérifiez le plan détecté, définissez un nom et un mot de passe de dépôt, puis créez."
+        }
+      }
+    },
+    "exploreSnapshots": {
+      "title": "Parcourir les instantanés",
+      "description": "Trouvez et restaurez les instantanés de sauvegarde par projet.",
+      "steps": {
+        "overview": {
+          "title": "Instantanés",
+          "body": "Choisissez un projet pour parcourir ses instantanés et points de restauration."
+        }
+      }
+    }
+  }
+}

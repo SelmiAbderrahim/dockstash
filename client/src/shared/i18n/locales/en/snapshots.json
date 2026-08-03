@@ -1,0 +1,40 @@
+{
+  "heading": "Snapshots",
+  "lede": "Every restore point on the storage VPS. Pick one and restore.",
+  "loading": "Loading snapshots…",
+  "selectProject": "Project",
+  "tableLabel": "Snapshots",
+  "columns": {
+    "date": "Date",
+    "type": "Type",
+    "size": "Size",
+    "actions": "Actions"
+  },
+  "types": {
+    "files": "Files",
+    "mirror": "Mirror"
+  },
+  "actions": {
+    "restore": "Restore"
+  },
+  "empty": {
+    "title": "No snapshots yet.",
+    "hint": "Run a backup first."
+  },
+  "errors": {
+    "load": "Could not load snapshots."
+  },
+  "restore": {
+    "title": "Restore snapshot",
+    "description": "About to restore project \"{{projectName}}\". This action is irreversible.",
+    "mode": "Restore mode",
+    "newLocation": "Restore to a new location (safe)",
+    "targetPath": "Target path",
+    "overwrite": "Overwrite existing files (dangerous)",
+    "typeToConfirm": "Type \"{{projectName}}\" to confirm",
+    "confirm": "Restore",
+    "cancel": "Cancel",
+    "stream": "Restore output"
+  },
+  "viewHistory": "View restore history"
+}

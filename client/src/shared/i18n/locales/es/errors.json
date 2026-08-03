@@ -1,0 +1,18 @@
+{
+  "badRequest": "Solicitud no válida.",
+  "unauthorized": "Debes iniciar sesión para hacer eso.",
+  "forbidden": "No tienes permiso para hacer eso.",
+  "notFound": "No se encontró el recurso solicitado.",
+  "conflict": "Conflicto: el recurso ya existe.",
+  "internal": "Algo salió mal por nuestra parte. Inténtalo de nuevo.",
+  "validationFailed": "Validación fallida.",
+  "projectNotFound": "Proyecto no encontrado.",
+  "userNotFound": "Usuario no encontrado.",
+  "invalidCredentials": "Correo o contraseña no válidos.",
+  "emailAlreadyRegistered": "Ese correo ya está registrado.",
+  "passwordTooShort": "La contraseña debe tener al menos 8 caracteres.",
+  "emailRequired": "Introduce un correo",
+  "passwordRequired": "Introduce una contraseña",
+  "firstNameRequired": "Introduce un nombre",
+  "lastNameRequired": "Introduce un apellido"
+}

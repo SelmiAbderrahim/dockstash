@@ -1,0 +1,40 @@
+{
+  "heading": "Instantáneas",
+  "lede": "Cada punto de restauración en el VPS de almacenamiento.",
+  "loading": "Cargando…",
+  "selectProject": "Proyecto",
+  "tableLabel": "Instantáneas",
+  "columns": {
+    "date": "Fecha",
+    "type": "Tipo",
+    "size": "Tamaño",
+    "actions": "Acciones"
+  },
+  "types": {
+    "files": "Archivos",
+    "mirror": "Espejo"
+  },
+  "actions": {
+    "restore": "Restaurar"
+  },
+  "empty": {
+    "title": "Aún no hay instantáneas.",
+    "hint": "Ejecuta una copia primero."
+  },
+  "errors": {
+    "load": "No se pudieron cargar las instantáneas."
+  },
+  "restore": {
+    "title": "Restaurar instantánea",
+    "description": "Vas a restaurar el proyecto \"{{projectName}}\". Esta acción es irreversible.",
+    "mode": "Modo",
+    "newLocation": "Restaurar a nueva ubicación (seguro)",
+    "targetPath": "Ruta destino",
+    "overwrite": "Sobrescribir archivos (peligroso)",
+    "typeToConfirm": "Escribe \"{{projectName}}\" para confirmar",
+    "confirm": "Restaurar",
+    "cancel": "Cancelar",
+    "stream": "Salida de restauración"
+  },
+  "viewHistory": "Ver historial de restauraciones"
+}

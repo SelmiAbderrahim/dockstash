@@ -1,0 +1,103 @@
+{
+  "heading": "Projekte",
+  "lede": "Fügen Sie ein Projekt aus einem Ordner, einem laufenden Container oder einem Flotten-Agent hinzu — und sichern Sie es.",
+  "loading": "Projekte werden geladen…",
+  "never": "Nie",
+  "meta": {
+    "path": "Pfad",
+    "lastRun": "Letzte Sicherung"
+  },
+  "status": {
+    "idle": "Bereit",
+    "running": "Läuft",
+    "success": "OK",
+    "failed": "Fehlgeschlagen"
+  },
+  "actions": {
+    "backupNow": "Jetzt sichern",
+    "running": "Läuft…",
+    "open": "Details",
+    "retry": "Erneut versuchen",
+    "addProject": "Projekt hinzufügen",
+    "addFirst": "Erstes Projekt hinzufügen"
+  },
+  "empty": {
+    "title": "Keine Projekte gefunden.",
+    "hint": "Fügen Sie Ihr erstes Projekt hinzu, um es zu sichern."
+  },
+  "errors": {
+    "load": "Projekte konnten nicht geladen werden."
+  },
+  "add": {
+    "title": "Projekt hinzufügen",
+    "lede": "Wählen Sie einen Ordner oder ein laufendes Docker-Compose-Projekt von einem Flotten-Agenten.",
+    "scanning": "Wird gescannt…",
+    "cancel": "Zurück zu Projekten",
+    "select": "Auswählen",
+    "services": "Dienste",
+    "target": {
+      "label": "Sicherungsziel",
+      "local": "Lokaler Server",
+      "snapshotAt": "Zuletzt gemeldet {{at}}",
+      "noSnapshot": "Dieser Agent hat noch nichts gemeldet — bitte später erneut prüfen.",
+      "noAgentsTitle": "Keine Flotten-Agenten registriert.",
+      "noAgentsHint": "Registrieren Sie zuerst einen Flotten-Agenten und wählen Sie ihn dann hier aus, um ein Projekt zu erstellen.",
+      "noAgentsCta": "Flotte öffnen"
+    },
+    "agent": {
+      "offlineBadge": "Offline",
+      "loading": "Agent-Snapshot wird geladen…",
+      "refresh": "Jetzt aktualisieren",
+      "refreshing": "Wird aktualisiert…",
+      "notReportedTitle": "Agent hat noch nichts gemeldet",
+      "notReportedHint": "Noch kein Snapshot erhalten — prüfen Sie auf der Flotten-Seite, ob der Agent online ist.",
+      "errorsTitle": "Bei der Erkennung sind Probleme aufgetreten",
+      "fleetLink": "In der Flotte ansehen",
+      "notReportedTabHint": "Noch kein Snapshot von diesem Agenten. Wenn der Agent online ist und dies bestehen bleibt, läuft er wahrscheinlich mit einem veralteten Image — führen Sie auf dem Host aus: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, und klicken Sie dann auf „Jetzt aktualisieren“."
+    },
+    "tabs": {
+      "aria": "Quelle wählen",
+      "folders": "Ordner",
+      "docker": "Laufendes Docker",
+      "manual": "Manueller Pfad"
+    },
+    "folders": {
+      "emptyTitle": "Keine Ordner gefunden.",
+      "emptyHint": "Keine Unterordner unter /var/www.",
+      "emptyHintAgent": "Dieser Agent hat keine Projekte unter /var/www gemeldet — stellen Sie sicher, dass Ihr Projekt dort liegt und der Agent es lesen kann."
+    },
+    "docker": {
+      "unavailableTitle": "Docker ist nicht verfügbar.",
+      "unavailableHint": "Auf diesem Server ist kein Docker-Socket konfiguriert.",
+      "unavailableHintAgent": "Dieser Agent erreicht Docker nicht. Prüfen Sie, ob der Socket-Proxy auf dem Agent-Host läuft.",
+      "emptyTitle": "Keine laufenden Container.",
+      "emptyHint": "Starten Sie ein Compose-Projekt und aktualisieren Sie."
+    },
+    "manual": {
+      "label": "Projektpfad",
+      "scan": "Scannen"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Nur Dateien",
+      "added": "Bereits hinzugefügt",
+      "notAddable": "Kein Ordnerpfad gemeldet",
+      "standalone": "Eigenständig",
+      "outsideRoots": "Außerhalb der Agent-Verzeichnisse",
+      "outsideRootsHint": "Der Ordner dieses Projekts liegt nicht in den Projektverzeichnissen des Agenten ({{roots}}). Führen Sie das Agent-Setup erneut aus und fügen Sie dieses Verzeichnis hinzu."
+    },
+    "review": {
+      "title": "Prüfen und erstellen",
+      "nameLabel": "Projektname",
+      "passwordLabel": "Repository-Passwort",
+      "passwordHint": "Mindestens 8 Zeichen. Verschlüsselt Ihr Backup-Repository.",
+      "files": "Dateien",
+      "databases": "Datenbanken",
+      "configs": "Konfigurationen",
+      "none": "Nichts erkannt.",
+      "create": "Projekt erstellen",
+      "creating": "Wird erstellt…",
+      "back": "Zurück"
+    }
+  }
+}

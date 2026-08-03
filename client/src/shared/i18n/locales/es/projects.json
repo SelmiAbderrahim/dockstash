@@ -1,0 +1,103 @@
+{
+  "heading": "Proyectos",
+  "lede": "Añade un proyecto desde una carpeta, un contenedor en ejecución o un agente de flota — y hazle copia.",
+  "loading": "Cargando proyectos…",
+  "never": "Nunca",
+  "meta": {
+    "path": "Ruta",
+    "lastRun": "Última copia"
+  },
+  "status": {
+    "idle": "Inactivo",
+    "running": "En ejecución",
+    "success": "OK",
+    "failed": "Falló"
+  },
+  "actions": {
+    "backupNow": "Copiar ahora",
+    "running": "En ejecución…",
+    "open": "Detalles",
+    "retry": "Reintentar",
+    "addProject": "Añadir proyecto",
+    "addFirst": "Añade tu primer proyecto"
+  },
+  "empty": {
+    "title": "No hay proyectos.",
+    "hint": "Añade tu primer proyecto para empezar a respaldarlo."
+  },
+  "errors": {
+    "load": "No se pudieron cargar los proyectos."
+  },
+  "add": {
+    "title": "Añadir un proyecto",
+    "lede": "Elige una carpeta o un proyecto de Docker Compose en ejecución desde un agente de la flota.",
+    "scanning": "Escaneando…",
+    "cancel": "Volver a proyectos",
+    "select": "Seleccionar",
+    "services": "Servicios",
+    "target": {
+      "label": "Destino de copia",
+      "local": "Servidor local",
+      "snapshotAt": "Último reporte {{at}}",
+      "noSnapshot": "Este agente aún no ha reportado — vuelve a comprobar en breve.",
+      "noAgentsTitle": "No hay agentes de flota registrados.",
+      "noAgentsHint": "Registra primero un agente de flota y luego selecciónalo aquí para crear un proyecto.",
+      "noAgentsCta": "Abrir Flota"
+    },
+    "agent": {
+      "offlineBadge": "Sin conexión",
+      "loading": "Cargando snapshot del agente…",
+      "refresh": "Actualizar ahora",
+      "refreshing": "Actualizando…",
+      "notReportedTitle": "El agente aún no ha reportado",
+      "notReportedHint": "Todavía no se ha recibido ningún reporte — comprueba en la página Flota que el agente esté en línea.",
+      "errorsTitle": "El descubrimiento reportó problemas",
+      "fleetLink": "Ver en Flota",
+      "notReportedTabHint": "Aún no hay instantánea de este agente. Si el agente está en línea pero esto persiste, probablemente ejecuta una imagen desactualizada — en el host, ejecute: docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate, y luego haga clic en Actualizar ahora."
+    },
+    "tabs": {
+      "aria": "Elegir una fuente",
+      "folders": "Carpetas",
+      "docker": "Docker en ejecución",
+      "manual": "Ruta manual"
+    },
+    "folders": {
+      "emptyTitle": "No se encontraron carpetas.",
+      "emptyHint": "No hay subcarpetas en /var/www.",
+      "emptyHintAgent": "Este agente no informó proyectos en /var/www — comprueba que tu proyecto esté ahí y que el agente pueda leerlo."
+    },
+    "docker": {
+      "unavailableTitle": "Docker no está disponible.",
+      "unavailableHint": "No hay ningún socket de Docker configurado en este servidor.",
+      "unavailableHintAgent": "Este agente no puede acceder a Docker. Comprueba que el proxy del socket esté en marcha en el host del agente.",
+      "emptyTitle": "No hay contenedores en ejecución.",
+      "emptyHint": "Inicia un proyecto Compose y actualiza."
+    },
+    "manual": {
+      "label": "Ruta del proyecto",
+      "scan": "Escanear"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "Solo archivos",
+      "added": "Ya añadido",
+      "notAddable": "No se informó ninguna ruta de carpeta",
+      "standalone": "Independiente",
+      "outsideRoots": "Fuera de los directorios del agente",
+      "outsideRootsHint": "La carpeta de este proyecto no está cubierta por los directorios de proyectos del agente ({{roots}}). Vuelva a ejecutar la configuración del agente añadiendo este directorio."
+    },
+    "review": {
+      "title": "Revisar y crear",
+      "nameLabel": "Nombre del proyecto",
+      "passwordLabel": "Contraseña del repositorio",
+      "passwordHint": "Al menos 8 caracteres. Cifra tu repositorio de copias.",
+      "files": "Archivos",
+      "databases": "Bases de datos",
+      "configs": "Configuraciones",
+      "none": "No se detectó ninguno.",
+      "create": "Crear proyecto",
+      "creating": "Creando…",
+      "back": "Atrás"
+    }
+  }
+}

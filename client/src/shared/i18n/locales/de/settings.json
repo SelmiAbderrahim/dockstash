@@ -1,0 +1,78 @@
+{
+  "heading": "Einstellungen",
+  "loading": "Wird geladen…",
+  "tabs": {
+    "aria": "Einstellungsbereiche",
+    "storage": "Speicher",
+    "retention": "Aufbewahrung",
+    "password": "Verschlüsselungspasswort",
+    "recovery": "Wiederherstellung"
+  },
+  "actions": {
+    "save": "Speichern",
+    "saving": "Speichert…",
+    "connect": "Speicher verbinden",
+    "test": "Verbindung testen",
+    "testing": "Testet…"
+  },
+  "errors": {
+    "load": "Einstellungen konnten nicht geladen werden.",
+    "save": "Einstellungen konnten nicht gespeichert werden."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Benutzer",
+    "port": "Port",
+    "privateKey": "SSH-Privatschlüssel",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Verschlüsselt gespeichert. Nie wieder angezeigt.",
+    "saved": "Speicher gespeichert.",
+    "testOk": "Verbindung erfolgreich.",
+    "testFailed": "Verbindung fehlgeschlagen."
+  },
+  "retention": {
+    "daily": "Tägliche behalten",
+    "dailyHint": "Ein Backup pro Tag wird für die letzten N Tage aufbewahrt.",
+    "weekly": "Wöchentliche behalten",
+    "weeklyHint": "Ein Backup pro Woche wird nach dem täglichen Zeitraum aufbewahrt.",
+    "monthly": "Monatliche behalten",
+    "monthlyHint": "Ein Backup pro Monat wird nach dem wöchentlichen Zeitraum aufbewahrt.",
+    "saved": "Aufbewahrung gespeichert."
+  },
+  "password": {
+    "warning": "Verschlüsselungspasswort. Verlust = keine Wiederherstellung.",
+    "new": "Neues Passwort",
+    "confirm": "Bestätigen",
+    "mismatch": "Passwörter stimmen nicht überein.",
+    "escrow": "Ich habe das Passwort sicher gespeichert.",
+    "saved": "Passwort gespeichert.",
+    "isSet": "Ein Verschlüsselungspasswort ist festgelegt."
+  },
+  "recovery": {
+    "export": {
+      "title": "Konfiguration exportieren",
+      "description": "Laden Sie einen JSON-Export Ihrer Projekte, Ihres Speichers und Ihrer Einstellungen herunter.",
+      "action": "Export herunterladen",
+      "working": "Exportiert…",
+      "done": "Export heruntergeladen."
+    },
+    "codes": {
+      "title": "Wiederherstellungscodes",
+      "description": "Erzeugen Sie Einmal-Codes, um den Zugriff auf Ihre verschlüsselten Repositories zurückzuerlangen.",
+      "action": "Wiederherstellungscodes erzeugen",
+      "working": "Erzeugt…",
+      "warning": "Speichern Sie diese Codes jetzt. Sie werden nie wieder angezeigt.",
+      "copy": "Alle kopieren",
+      "copied": "Kopiert."
+    },
+    "selfBackup": {
+      "title": "Selbst-Backup",
+      "description": "Sichern Sie die Dockstash-Konfiguration selbst auf Ihren Speicher.",
+      "action": "Selbst-Backup starten",
+      "working": "Startet…",
+      "triggered": "Selbst-Backup gestartet.",
+      "runs": "Letzte Läufe",
+      "empty": "Noch keine Selbst-Backups."
+    }
+  }
+}

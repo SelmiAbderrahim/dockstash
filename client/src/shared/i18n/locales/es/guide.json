@@ -1,0 +1,163 @@
+{
+  "launcher": {
+    "ariaLabel": "Abrir la guía",
+    "tooltip": "Guías (Shift+?)"
+  },
+  "nudge": {
+    "text": "¿Nuevo por aquí? Puedo acompañarte en la configuración.",
+    "cta": "Muéstrame",
+    "dismiss": "Cerrar"
+  },
+  "panel": {
+    "title": "Guíame",
+    "progress": "{{done}} de {{total}} completadas",
+    "youAreHere": "Estás aquí",
+    "completed": "Completada",
+    "start": "Empezar",
+    "resume": "Reanudar desde el paso {{step}}",
+    "replay": "Repetir"
+  },
+  "toggle": {
+    "label": "Mostrar el asistente de guía",
+    "description": "Botón de ayuda flotante con recorridos paso a paso."
+  },
+  "overlay": {
+    "counter": "Paso {{current}} de {{total}}",
+    "close": "Cerrar el recorrido",
+    "searching": "Buscando el lugar adecuado…",
+    "missing": "Este elemento no está visible ahora mismo.",
+    "takeMeThere": "Llévame allí",
+    "skipStep": "Omitir paso",
+    "endTour": "Terminar recorrido",
+    "skipTour": "Omitir recorrido",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "done": "Hecho"
+  },
+  "tours": {
+    "encryptionPassword": {
+      "title": "Configura tu contraseña de cifrado",
+      "description": "Protege tus copias de seguridad con una contraseña que solo tú conoces.",
+      "steps": {
+        "new": {
+          "title": "Elige una contraseña",
+          "body": "Escribe aquí una contraseña de cifrado fuerte. Protege cada copia de seguridad que crees."
+        },
+        "confirm": {
+          "title": "Confírmala",
+          "body": "Escribe la misma contraseña otra vez para que un error tipográfico no te deje fuera."
+        },
+        "escrow": {
+          "title": "Custodia de recuperación opcional",
+          "body": "Actívala para que los códigos de recuperación puedan restaurar el acceso si olvidas la contraseña."
+        },
+        "save": {
+          "title": "Guardar",
+          "body": "Guarda para aplicar tu nueva contraseña de cifrado."
+        }
+      }
+    },
+    "configureStorage": {
+      "title": "Conecta tu host de almacenamiento",
+      "description": "Apunta Dockstash al host SSH donde se guardan las copias de seguridad.",
+      "steps": {
+        "host": {
+          "title": "Dirección del host",
+          "body": "Introduce el nombre de host o la dirección IP de tu servidor de almacenamiento."
+        },
+        "key": {
+          "title": "Clave privada SSH",
+          "body": "Pega la clave privada usada para conectar. Se cifra en reposo."
+        },
+        "save": {
+          "title": "Guardar y probar",
+          "body": "Guarda la conexión y luego pruébala para verificar el acceso."
+        }
+      }
+    },
+    "retentionPolicy": {
+      "title": "Ajusta tu política de retención",
+      "description": "Decide cuántas instantáneas diarias, semanales y mensuales conservar.",
+      "steps": {
+        "daily": {
+          "title": "Instantáneas diarias",
+          "body": "Define cuántas instantáneas diarias se conservan antes de la rotación."
+        },
+        "save": {
+          "title": "Guardar",
+          "body": "Aplica la política de retención a las próximas copias de seguridad."
+        }
+      }
+    },
+    "exploreFleet": {
+      "title": "Explora tu flota",
+      "description": "Ve todos los agentes registrados y su estado de conexión en un solo lugar.",
+      "steps": {
+        "overview": {
+          "title": "Vista general de la flota",
+          "body": "Esta página muestra todos los agentes que has registrado — los servidores VPS que Dockstash respalda — junto con su estado de conexión."
+        },
+        "register": {
+          "title": "Registra un agente",
+          "body": "Haz clic aquí para añadir un nuevo agente. Un agente es un VPS que quieres que Dockstash respalde."
+        },
+        "name": {
+          "title": "Ponle un nombre",
+          "body": "Dale al agente un nombre que reconozcas después, como \"web-1\" o \"db-prod\"."
+        },
+        "host": {
+          "title": "Dirección del host",
+          "body": "Introduce el nombre de host o la dirección IP de ese VPS."
+        },
+        "port": {
+          "title": "Puerto",
+          "body": "Déjalo en blanco para usar el puerto SSH predeterminado, 22, o introduce uno personalizado."
+        },
+        "submit": {
+          "title": "Termina el registro",
+          "body": "Registra el agente para generar su clave API. La clave se muestra una sola vez, así que cópiala antes de cerrar el diálogo."
+        },
+        "install": {
+          "title": "Instalar el agente",
+          "body": "Copia este comando y ejecútalo en el VPS. Inicia el agente Dockstash con el token incluido."
+        },
+        "online": {
+          "title": "Míralo conectarse",
+          "body": "Una vez en marcha, el agente se comunica cada pocos segundos. Su estado aquí cambia a En línea en menos de un minuto."
+        },
+        "addProject": {
+          "title": "Respalda este agente",
+          "body": "Ahora ve a Proyectos → Añadir proyecto y elige este agente como destino de copia — sus carpetas y contenedores aparecen automáticamente."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Añade tu primer proyecto",
+      "description": "Añade un proyecto desde una carpeta local, un contenedor en ejecución o un agente de flota.",
+      "steps": {
+        "add": {
+          "title": "Añadir un proyecto",
+          "body": "Empieza aquí — abre el asistente para añadir un proyecto."
+        },
+        "target": {
+          "title": "Elige el destino",
+          "body": "Respalda este servidor, o elige un agente de flota para respaldar ese VPS. Los proyectos de un agente provienen de su último informe."
+        },
+        "source": {
+          "title": "Elige una fuente",
+          "body": "Explora carpetas en /var/www, elige un proyecto de Docker Compose en ejecución o escribe una ruta. Revisa el plan detectado, define un nombre y una contraseña de repositorio, y crea."
+        }
+      }
+    },
+    "exploreSnapshots": {
+      "title": "Explora las instantáneas",
+      "description": "Encuentra y restaura instantáneas de copia de seguridad por proyecto.",
+      "steps": {
+        "overview": {
+          "title": "Instantáneas",
+          "body": "Elige un proyecto para explorar sus instantáneas y puntos de restauración."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "heading": "Paramètres",
+  "loading": "Chargement…",
+  "tabs": {
+    "aria": "Sections des paramètres",
+    "storage": "Stockage",
+    "retention": "Rétention",
+    "password": "Mot de passe de chiffrement",
+    "recovery": "Récupération"
+  },
+  "actions": {
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "connect": "Connecter le stockage",
+    "test": "Tester la connexion",
+    "testing": "Test en cours…"
+  },
+  "errors": {
+    "load": "Impossible de charger les paramètres.",
+    "save": "Impossible d'enregistrer les paramètres."
+  },
+  "storage": {
+    "host": "Hôte",
+    "user": "Utilisateur",
+    "port": "Port",
+    "privateKey": "Clé SSH privée",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Stockée chiffrée. Jamais affichée à nouveau.",
+    "saved": "Stockage enregistré.",
+    "testOk": "Connexion réussie.",
+    "testFailed": "Échec de la connexion."
+  },
+  "retention": {
+    "daily": "Conserver N quotidiennes",
+    "dailyHint": "Une sauvegarde conservée par jour, pendant N jours.",
+    "weekly": "Conserver N hebdomadaires",
+    "weeklyHint": "Une sauvegarde conservée par semaine, après la période quotidienne.",
+    "monthly": "Conserver N mensuelles",
+    "monthlyHint": "Une sauvegarde conservée par mois, après la période hebdomadaire.",
+    "saved": "Rétention enregistrée."
+  },
+  "password": {
+    "warning": "Mot de passe de chiffrement. Perdez-le et vos dépôts sont irrécupérables.",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer",
+    "mismatch": "Les mots de passe ne correspondent pas.",
+    "escrow": "J'ai sauvegardé ce mot de passe.",
+    "saved": "Mot de passe enregistré.",
+    "isSet": "Un mot de passe de chiffrement est défini."
+  },
+  "recovery": {
+    "export": {
+      "title": "Exporter la configuration",
+      "description": "Téléchargez un export JSON de vos projets, de votre stockage et de vos paramètres.",
+      "action": "Télécharger l'export",
+      "working": "Export en cours…",
+      "done": "Export téléchargé."
+    },
+    "codes": {
+      "title": "Codes de récupération",
+      "description": "Générez des codes de récupération à usage unique pour retrouver l'accès à vos dépôts chiffrés.",
+      "action": "Générer les codes de récupération",
+      "working": "Génération…",
+      "warning": "Enregistrez ces codes maintenant. Ils ne seront plus jamais affichés.",
+      "copy": "Tout copier",
+      "copied": "Copié."
+    },
+    "selfBackup": {
+      "title": "Auto-sauvegarde",
+      "description": "Sauvegardez la configuration de Dockstash elle-même vers votre stockage.",
+      "action": "Lancer l'auto-sauvegarde",
+      "working": "Déclenchement…",
+      "triggered": "Auto-sauvegarde déclenchée.",
+      "runs": "Exécutions récentes",
+      "empty": "Aucune auto-sauvegarde pour l'instant."
+    }
+  }
+}

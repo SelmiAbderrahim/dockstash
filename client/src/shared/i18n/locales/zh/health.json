@@ -1,0 +1,59 @@
+{
+  "title": "健康状态",
+  "subtitle": "所有项目的备份健康状况以及未读警报。",
+  "loading": "正在加载健康数据…",
+  "error": "无法加载健康数据。",
+  "tabs": {
+    "aria": "健康状态板块",
+    "overview": "概览",
+    "alerts": "警报"
+  },
+  "banner": {
+    "healthy": "所有项目状态良好。",
+    "degraded": "部分项目需要关注。",
+    "critical": "至少有一个项目存在严重问题。"
+  },
+  "project": {
+    "lastSuccess": "上次成功备份：",
+    "never": "从未",
+    "agent": "代理：",
+    "agentOnline": "在线",
+    "agentOffline": "离线",
+    "noSchedule": "未启用计划",
+    "paused": "已暂停"
+  },
+  "reasons": {
+    "backupFailed": "上次备份失败",
+    "drillFailed": "上次恢复演练失败",
+    "restoreFailed": "上次恢复失败",
+    "agentOffline": "代理离线",
+    "backupStale": "上次成功备份已过期",
+    "neverBackedUp": "从未备份",
+    "checkFailed": "上次完整性检查失败",
+    "noSchedule": "未启用备份计划",
+    "paused": "备份已暂停"
+  },
+  "status": {
+    "healthy": "健康",
+    "degraded": "降级",
+    "critical": "严重"
+  },
+  "alerts": {
+    "empty": "暂无警报。一切正常。",
+    "markAllRead": "全部标记为已读",
+    "marking": "正在标记…",
+    "marked": "警报已标记为已读。",
+    "unread": "未读",
+    "kind": {
+      "backup": "备份",
+      "restore": "恢复",
+      "drill": "演练",
+      "mirror": "镜像",
+      "heartbeat": "心跳"
+    },
+    "severity": {
+      "warning": "警告",
+      "critical": "严重"
+    }
+  }
+}

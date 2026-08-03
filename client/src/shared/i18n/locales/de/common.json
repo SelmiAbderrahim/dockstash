@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "menu": "Menü öffnen",
+    "dashboard": "Dashboard",
+    "health": "Zustand",
+    "projects": "Projekte",
+    "snapshots": "Snapshots",
+    "fleet": "Flotte",
+    "settings": "Einstellungen",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "admin": "Admin",
+    "login": "Anmelden",
+    "register": "Registrieren"
+  },
+  "dashboard": {
+    "projects": "Projekte und Deployments verwalten.",
+    "snapshots": "Projekt-Snapshots durchsuchen und wiederherstellen.",
+    "settings": "Arbeitsbereich und Integrationen konfigurieren.",
+    "profile": "Kontodaten ansehen und aktualisieren.",
+    "admin": "Zugriff auf Verwaltungsfunktionen."
+  },
+  "sidebar": {
+    "brandLink": "Dockstash Startseite",
+    "toggle": "Seitenleiste umschalten",
+    "accountMenu": "Kontomenü",
+    "account": "Konto",
+    "groups": {
+      "overview": "Übersicht",
+      "backups": "Sicherungen",
+      "fleet": "Flotte",
+      "account": "Konto",
+      "admin": "Admin"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. Alle Rechte vorbehalten.",
+    "source": "Quellcode (AGPL-3.0)"
+  },
+  "ok": "OK",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "yes": "Ja",
+  "no": "Nein",
+  "logPanel": {
+    "title": "Sicherungsausgabe",
+    "running": "Läuft…",
+    "done": "Fertig",
+    "failed": "Fehlgeschlagen"
+  },
+  "fleet": {
+    "heading": "Flotte",
+    "lede": "Alle verbundenen VPS-Agenten und ihr Backup-Volumen.",
+    "loading": "Flotte wird geladen…",
+    "register": "Agent registrieren",
+    "empty": {
+      "title": "Noch keine Agenten",
+      "hint": "Registrieren Sie einen Agenten auf einem weiteren VPS, um ihn hier zu sehen."
+    },
+    "errors": {
+      "load": "Flotte konnte nicht geladen werden.",
+      "register": "Agent konnte nicht registriert werden.",
+      "rotate": "Agent-Schlüssel konnte nicht erneuert werden.",
+      "remove": "Agent konnte nicht entfernt werden."
+    },
+    "table": {
+      "aria": "Flotte",
+      "name": "Name",
+      "host": "Host",
+      "status": "Status",
+      "lastSeen": "Zuletzt gesehen",
+      "projects": "Projekte",
+      "size": "Größe",
+      "snapshots": "Snapshots",
+      "actions": "Aktionen"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "never": "Nie",
+    "dialog": {
+      "title": "Agent registrieren",
+      "description": "Fügen Sie Ihrer Flotte einen VPS hinzu. Der Agent authentifiziert sich mit dem unten erzeugten API-Schlüssel.",
+      "name": "Name",
+      "host": "Host",
+      "hostHint": "Der Hostname oder die IP-Adresse der Maschine, die Sie als Agent hinzufügen.",
+      "port": "Port",
+      "portHint": "Optional — standardmäßig 22 (der Standard-SSH-Port), wenn leer gelassen.",
+      "submit": "Registrieren",
+      "submitting": "Registrierung…",
+      "cancel": "Abbrechen",
+      "keyWarning": "Dieser API-Schlüssel wird nur einmal angezeigt und kann nie wieder abgerufen werden. Kopieren Sie ihn jetzt.",
+      "copy": "Kopieren",
+      "copied": "Kopiert",
+      "done": "Fertig",
+      "installTitle": "Agent installieren",
+      "installIntro": "Führen Sie dies auf dem hinzuzufügenden Rechner aus. Es startet den Dockstash-Agent-Container mit eingebettetem Token.",
+      "roots": "Projektverzeichnisse",
+      "rootsHint": "Kommagetrennte absolute Pfade, die der Agent erkennen und sichern darf (z. B. /var/www, /opt/apps). Jeder wird in den Agent-Container eingebunden.",
+      "rootsInvalid": "Ungültige Verzeichnisse: {{entries}}. Verwenden Sie absolute Pfade außerhalb von /, /proc, /sys, /dev, /etc, /boot und /run.",
+      "rootsEmpty": "Geben Sie mindestens ein Projektverzeichnis an."
+    },
+    "install": {
+      "copy": "Befehl kopieren",
+      "copied": "Kopiert"
+    },
+    "setup": {
+      "title": "Agent-Einrichtung",
+      "description": "Installationsbefehl und Schlüsselverwaltung für diesen Agenten.",
+      "keyPlaceholderNote": "Ersetzen Sie <AGENT_TOKEN> durch das bei der Registrierung erhaltene Token. Das Token kann nicht erneut angezeigt werden — bei Verlust erneuern Sie den Schlüssel unten.",
+      "close": "Schließen"
+    },
+    "actions": {
+      "aria": "Agent-Aktionen",
+      "setup": "Installationsanleitung",
+      "rotate": "Schlüssel erneuern",
+      "remove": "Agent entfernen",
+      "update": "Agent aktualisieren"
+    },
+    "rotate": {
+      "title": "Agent-Schlüssel erneuern",
+      "description": "Ein neues Token wird generiert und das alte funktioniert sofort nicht mehr. Sie müssen den Agenten mit dem neuen Token aktualisieren.",
+      "confirm": "Schlüssel erneuern",
+      "cancel": "Abbrechen",
+      "rotating": "Wird erneuert…"
+    },
+    "remove": {
+      "title": "Agent entfernen",
+      "description": "„{{name}}\" aus Ihrer Flotte entfernen? Seine Projekte fallen auf lokale Backups zurück und anstehende Aufträge werden abgebrochen.",
+      "confirm": "Entfernen",
+      "cancel": "Abbrechen"
+    },
+    "outdated": {
+      "badge": "Update verfügbar",
+      "hint": "Dieser Agent läuft mit Version {{version}}. Führen Sie den Setup-Befehl auf dem Host erneut aus, um ihn zu aktualisieren."
+    },
+    "update": {
+      "title": "Agent aktualisieren",
+      "description": "Das neueste Agent-Image ziehen und den Container auf dem Host neu erstellen.",
+      "intro": "Führen Sie dies auf dem Agent-Host aus und klicken Sie dann in „Projekt hinzufügen“ auf Aktualisieren.",
+      "close": "Schließen"
+    }
+  }
+}

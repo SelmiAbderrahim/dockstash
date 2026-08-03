@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "menu": "Abrir menú",
+    "dashboard": "Panel",
+    "health": "Salud",
+    "projects": "Proyectos",
+    "snapshots": "Instantáneas",
+    "fleet": "Flota",
+    "settings": "Ajustes",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "admin": "Admin",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "dashboard": {
+    "projects": "Gestiona tus proyectos y despliegues.",
+    "snapshots": "Explora y restaura instantáneas de proyectos.",
+    "settings": "Configura tu espacio de trabajo e integraciones.",
+    "profile": "Consulta y actualiza los datos de tu cuenta.",
+    "admin": "Accede a los controles de administración."
+  },
+  "sidebar": {
+    "brandLink": "Inicio de Dockstash",
+    "toggle": "Alternar barra lateral",
+    "accountMenu": "Menú de la cuenta",
+    "account": "Cuenta",
+    "groups": {
+      "overview": "Resumen",
+      "backups": "Copias de seguridad",
+      "fleet": "Flota",
+      "account": "Cuenta",
+      "admin": "Admin"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. Todos los derechos reservados.",
+    "source": "Código fuente (AGPL-3.0)"
+  },
+  "ok": "OK",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "yes": "Sí",
+  "no": "No",
+  "logPanel": {
+    "title": "Salida de la copia",
+    "running": "En ejecución…",
+    "done": "Completado",
+    "failed": "Fallido"
+  },
+  "fleet": {
+    "heading": "Flota",
+    "lede": "Todos los agentes VPS conectados y su huella de copias de seguridad.",
+    "loading": "Cargando la flota…",
+    "register": "Registrar agente",
+    "empty": {
+      "title": "Aún no hay agentes",
+      "hint": "Registra un agente en otro VPS para verlo aquí."
+    },
+    "errors": {
+      "load": "No se pudo cargar la flota.",
+      "register": "No se pudo registrar el agente.",
+      "rotate": "No se pudo rotar la clave del agente.",
+      "remove": "No se pudo eliminar el agente."
+    },
+    "table": {
+      "aria": "Flota",
+      "name": "Nombre",
+      "host": "Host",
+      "status": "Estado",
+      "lastSeen": "Última conexión",
+      "projects": "Proyectos",
+      "size": "Tamaño",
+      "snapshots": "Instantáneas",
+      "actions": "Acciones"
+    },
+    "status": {
+      "online": "En línea",
+      "offline": "Desconectado"
+    },
+    "never": "Nunca",
+    "dialog": {
+      "title": "Registrar agente",
+      "description": "Añade un VPS a tu flota. El agente se autentica con la clave API generada abajo.",
+      "name": "Nombre",
+      "host": "Host",
+      "hostHint": "El nombre de host o la dirección IP de la máquina que estás añadiendo como agente.",
+      "port": "Puerto",
+      "portHint": "Opcional: usa 22 (el puerto SSH estándar) de forma predeterminada si se deja en blanco.",
+      "submit": "Registrar",
+      "submitting": "Registrando…",
+      "cancel": "Cancelar",
+      "keyWarning": "Esta clave API se muestra una sola vez y no podrá recuperarse nunca. Cópiala ahora.",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "done": "Hecho",
+      "installTitle": "Instalar el agente",
+      "installIntro": "Ejecuta esto en la máquina que vas a añadir. Inicia el contenedor del agente Dockstash con el token incluido.",
+      "roots": "Directorios de proyectos",
+      "rootsHint": "Rutas absolutas separadas por comas que el agente puede descubrir y respaldar (p. ej. /var/www, /opt/apps). Cada una se monta en el contenedor del agente.",
+      "rootsInvalid": "Directorios no válidos: {{entries}}. Use rutas absolutas fuera de /, /proc, /sys, /dev, /etc, /boot y /run.",
+      "rootsEmpty": "Introduzca al menos un directorio de proyectos."
+    },
+    "install": {
+      "copy": "Copiar comando",
+      "copied": "Copiado"
+    },
+    "setup": {
+      "title": "Configuración del agente",
+      "description": "Comando de instalación y gestión de claves para este agente.",
+      "keyPlaceholderNote": "Reemplaza <AGENT_TOKEN> con el token del registro. El token no se puede volver a mostrar — si lo perdiste, rota la clave abajo.",
+      "close": "Cerrar"
+    },
+    "actions": {
+      "aria": "Acciones del agente",
+      "setup": "Instrucciones de instalación",
+      "rotate": "Rotar clave",
+      "remove": "Eliminar agente",
+      "update": "Actualizar agente"
+    },
+    "rotate": {
+      "title": "Rotar la clave del agente",
+      "description": "Se genera un nuevo token y el anterior deja de funcionar de inmediato. Debes actualizar el agente con el nuevo token.",
+      "confirm": "Rotar clave",
+      "cancel": "Cancelar",
+      "rotating": "Rotando…"
+    },
+    "remove": {
+      "title": "Eliminar agente",
+      "description": "¿Eliminar «{{name}}» de tu flota? Sus proyectos vuelven a copias locales y las tareas en cola se cancelan.",
+      "confirm": "Eliminar",
+      "cancel": "Cancelar"
+    },
+    "outdated": {
+      "badge": "Actualización disponible",
+      "hint": "Este agente ejecuta la versión {{version}}. Vuelva a ejecutar el comando de instalación en el host para actualizarlo."
+    },
+    "update": {
+      "title": "Actualizar agente",
+      "description": "Descargue la última imagen del agente y vuelva a crear el contenedor en el host.",
+      "intro": "Ejecute esto en el host del agente y luego haga clic en Actualizar en Agregar proyecto.",
+      "close": "Cerrar"
+    }
+  }
+}

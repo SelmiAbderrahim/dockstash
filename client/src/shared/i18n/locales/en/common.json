@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "menu": "Open menu",
+    "dashboard": "Dashboard",
+    "health": "Health",
+    "projects": "Projects",
+    "snapshots": "Snapshots",
+    "fleet": "Fleet",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "admin": "Admin",
+    "login": "Login",
+    "register": "Register"
+  },
+  "dashboard": {
+    "projects": "Manage your projects and deployments.",
+    "snapshots": "Browse and restore project snapshots.",
+    "settings": "Configure your workspace and integrations.",
+    "profile": "View and update your account details.",
+    "admin": "Access administrative controls."
+  },
+  "sidebar": {
+    "brandLink": "Dockstash home",
+    "toggle": "Toggle sidebar",
+    "accountMenu": "Account menu",
+    "account": "Account",
+    "groups": {
+      "overview": "Overview",
+      "backups": "Backups",
+      "fleet": "Fleet",
+      "account": "Account",
+      "admin": "Admin"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}}, {{brand}}. All Rights Reserved.",
+    "source": "Source code (AGPL-3.0)"
+  },
+  "ok": "OK",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "yes": "Yes",
+  "no": "No",
+  "logPanel": {
+    "title": "Backup output",
+    "running": "Running…",
+    "done": "Completed",
+    "failed": "Failed"
+  },
+  "fleet": {
+    "heading": "Fleet",
+    "lede": "All connected VPS agents and their backup footprint.",
+    "loading": "Loading fleet…",
+    "register": "Register agent",
+    "empty": {
+      "title": "No agents yet",
+      "hint": "Register an agent on another VPS to see it here."
+    },
+    "errors": {
+      "load": "Could not load the fleet.",
+      "register": "Could not register the agent.",
+      "rotate": "Could not rotate the agent key.",
+      "remove": "Could not remove the agent."
+    },
+    "table": {
+      "aria": "Fleet",
+      "name": "Name",
+      "host": "Host",
+      "status": "Status",
+      "lastSeen": "Last seen",
+      "projects": "Projects",
+      "size": "Size",
+      "snapshots": "Snapshots",
+      "actions": "Actions"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "never": "Never",
+    "dialog": {
+      "title": "Register agent",
+      "description": "Add a VPS to your fleet. The agent authenticates with the API key generated below.",
+      "name": "Name",
+      "host": "Host",
+      "hostHint": "The hostname or IP address of the machine you're adding as an agent.",
+      "port": "Port",
+      "portHint": "Optional — defaults to 22 (the standard SSH port) if left blank.",
+      "submit": "Register",
+      "submitting": "Registering…",
+      "cancel": "Cancel",
+      "keyWarning": "This API key is shown once and can never be retrieved again. Copy it now.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "done": "Done",
+      "installTitle": "Install the agent",
+      "installIntro": "Run this on the machine you're adding. It starts the Dockstash agent container with the token baked in.",
+      "roots": "Project directories",
+      "rootsHint": "Comma-separated absolute paths the agent may discover and back up (e.g. /var/www, /opt/apps). Each is mounted into the agent container.",
+      "rootsInvalid": "Invalid directories: {{entries}}. Use absolute paths outside /, /proc, /sys, /dev, /etc, /boot and /run.",
+      "rootsEmpty": "Enter at least one project directory."
+    },
+    "install": {
+      "copy": "Copy command",
+      "copied": "Copied"
+    },
+    "setup": {
+      "title": "Agent setup",
+      "description": "Install command and key management for this agent.",
+      "keyPlaceholderNote": "Replace <AGENT_TOKEN> with the token from registration. The token can't be shown again — if you lost it, rotate the key below.",
+      "close": "Close"
+    },
+    "actions": {
+      "aria": "Agent actions",
+      "setup": "Setup instructions",
+      "rotate": "Rotate key",
+      "remove": "Remove agent",
+      "update": "Update agent"
+    },
+    "rotate": {
+      "title": "Rotate agent key",
+      "description": "A new token is generated and the old one stops working immediately. You must update the agent with the new token.",
+      "confirm": "Rotate key",
+      "cancel": "Cancel",
+      "rotating": "Rotating…"
+    },
+    "remove": {
+      "title": "Remove agent",
+      "description": "Remove \"{{name}}\" from your fleet? Its projects fall back to local backups and any queued jobs are cancelled.",
+      "confirm": "Remove",
+      "cancel": "Cancel"
+    },
+    "outdated": {
+      "badge": "Update available",
+      "hint": "This agent runs version {{version}}. Re-run the setup command on the host to update it."
+    },
+    "update": {
+      "title": "Update agent",
+      "description": "Pull the latest agent image and recreate the container on the host.",
+      "intro": "Run this on the agent host, then click Refresh in Add Project.",
+      "close": "Close"
+    }
+  }
+}

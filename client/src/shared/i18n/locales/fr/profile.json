@@ -1,0 +1,21 @@
+{
+  "heading": "Profil",
+  "loading": "Chargement…",
+  "errors": {
+    "load": "Impossible de charger votre profil.",
+    "save": "Impossible d'enregistrer votre profil.",
+    "noSession": "Connectez-vous pour afficher votre profil."
+  },
+  "identity": {
+    "roleLabel": "Rôle"
+  },
+  "form": {
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "emailHint": "L'e-mail ne peut pas être modifié ici.",
+    "saved": "Profil enregistré.",
+    "save": "Enregistrer les modifications",
+    "saving": "Enregistrement…"
+  }
+}

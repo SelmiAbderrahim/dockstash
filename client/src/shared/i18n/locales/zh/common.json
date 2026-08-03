@@ -1,0 +1,146 @@
+{
+  "nav": {
+    "menu": "打开菜单",
+    "dashboard": "仪表盘",
+    "health": "健康状态",
+    "projects": "项目",
+    "snapshots": "快照",
+    "fleet": "集群",
+    "settings": "设置",
+    "profile": "个人资料",
+    "logout": "退出登录",
+    "admin": "管理",
+    "login": "登录",
+    "register": "注册"
+  },
+  "dashboard": {
+    "projects": "管理你的项目和部署。",
+    "snapshots": "浏览并恢复项目快照。",
+    "settings": "配置工作区和集成。",
+    "profile": "查看并更新账户信息。",
+    "admin": "访问管理控制台。"
+  },
+  "sidebar": {
+    "brandLink": "Dockstash 首页",
+    "toggle": "切换侧边栏",
+    "accountMenu": "账户菜单",
+    "account": "账户",
+    "groups": {
+      "overview": "概览",
+      "backups": "备份",
+      "fleet": "集群",
+      "account": "账户",
+      "admin": "管理"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}}，{{brand}}。保留所有权利。",
+    "source": "源代码（AGPL-3.0）"
+  },
+  "ok": "确定",
+  "cancel": "取消",
+  "save": "保存",
+  "delete": "删除",
+  "yes": "是",
+  "no": "否",
+  "logPanel": {
+    "title": "备份输出",
+    "running": "运行中…",
+    "done": "已完成",
+    "failed": "失败"
+  },
+  "fleet": {
+    "heading": "集群",
+    "lede": "所有已连接的 VPS 代理及其备份占用情况。",
+    "loading": "正在加载集群…",
+    "register": "注册代理",
+    "empty": {
+      "title": "还没有代理",
+      "hint": "在另一台 VPS 上注册代理后即可在此看到。"
+    },
+    "errors": {
+      "load": "无法加载集群。",
+      "register": "无法注册代理。",
+      "rotate": "无法轮换代理密钥。",
+      "remove": "无法移除代理。"
+    },
+    "table": {
+      "aria": "集群",
+      "name": "名称",
+      "host": "主机",
+      "status": "状态",
+      "lastSeen": "最近在线",
+      "projects": "项目",
+      "size": "大小",
+      "snapshots": "快照",
+      "actions": "操作"
+    },
+    "status": {
+      "online": "在线",
+      "offline": "离线"
+    },
+    "never": "从未",
+    "dialog": {
+      "title": "注册代理",
+      "description": "将一台 VPS 加入你的集群。代理使用下方生成的 API 密钥进行认证。",
+      "name": "名称",
+      "host": "主机",
+      "hostHint": "您要添加为代理的机器的主机名或 IP 地址。",
+      "port": "端口",
+      "portHint": "可选 — 留空则默认使用 22（标准 SSH 端口）。",
+      "submit": "注册",
+      "submitting": "注册中…",
+      "cancel": "取消",
+      "keyWarning": "此 API 密钥仅显示一次，之后无法再次获取。请立即复制。",
+      "copy": "复制",
+      "copied": "已复制",
+      "done": "完成",
+      "installTitle": "安装代理",
+      "installIntro": "在要添加的机器上运行此命令。它会启动内置令牌的 Dockstash 代理容器。",
+      "roots": "项目目录",
+      "rootsHint": "代理可发现和备份的绝对路径，用逗号分隔（例如 /var/www、/opt/apps）。每个目录都会挂载到代理容器中。",
+      "rootsInvalid": "无效目录：{{entries}}。请使用 /、/proc、/sys、/dev、/etc、/boot 和 /run 之外的绝对路径。",
+      "rootsEmpty": "请至少输入一个项目目录。"
+    },
+    "install": {
+      "copy": "复制命令",
+      "copied": "已复制"
+    },
+    "setup": {
+      "title": "代理设置",
+      "description": "此代理的安装命令与密钥管理。",
+      "keyPlaceholderNote": "将 <AGENT_TOKEN> 替换为注册时的令牌。令牌无法再次显示 — 若已丢失，请在下方轮换密钥。",
+      "close": "关闭"
+    },
+    "actions": {
+      "aria": "代理操作",
+      "setup": "安装说明",
+      "rotate": "轮换密钥",
+      "remove": "移除代理",
+      "update": "更新代理"
+    },
+    "rotate": {
+      "title": "轮换代理密钥",
+      "description": "将生成新令牌，旧令牌立即失效。你必须用新令牌更新代理。",
+      "confirm": "轮换密钥",
+      "cancel": "取消",
+      "rotating": "轮换中…"
+    },
+    "remove": {
+      "title": "移除代理",
+      "description": "从你的机群中移除“{{name}}”？其项目将回退到本地备份，排队中的任务将被取消。",
+      "confirm": "移除",
+      "cancel": "取消"
+    },
+    "outdated": {
+      "badge": "有可用更新",
+      "hint": "此代理运行版本 {{version}}。请在主机上重新运行安装命令以更新。"
+    },
+    "update": {
+      "title": "更新代理",
+      "description": "拉取最新的代理镜像并在主机上重新创建容器。",
+      "intro": "在代理主机上运行此命令，然后在“添加项目”中点击刷新。",
+      "close": "关闭"
+    }
+  }
+}

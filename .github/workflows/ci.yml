@@ -1,0 +1,192 @@
+# Dockstash CI.
+#
+# All jobs run inside Docker containers for prod parity. The pipeline gates
+# every merge on:
+#   1. typecheck (tsc --noEmit) — client + server + agent
+#   2. lint (eslint) — client + server + agent
+#   3. unit + integration tests (vitest, mongodb-memory-server)
+#   4. coverage gate — v8 100% on lines/branches/functions/statements
+#   5. npm audit --audit-level=high — ZERO high/critical advisories
+#
+# Fork note: `publish-agent` needs registry credentials that forks do not have.
+# Its `if:` guard restricts it to pushes on master in this repository, so it
+# never runs on a fork or a pull request. Every other job runs normally.
+#
+# The build fails on any gate. See docs/ci-gates.en.md for the runbook.
+
+name: ci
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  server:
+    name: server (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install (npm ci)
+        working-directory: server
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: server
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: server
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: server
+        env:
+          # All values QUOTED. An unquoted all-digit scalar is parsed by YAML as
+          # a number — `0000...0` becomes octal 0, exported as "0", and fails
+          # the 32-byte MASTER_ENCRYPTION_KEY check with a confusing
+          # process.exit(1) inside every test file. Keep the quotes.
+          NODE_ENV: 'test'
+          MONGODB_URI: 'mongodb://127.0.0.1:0/ci'
+          JWT_SECRET: 'ci-jwt-secret-ci-jwt-secret-ci-jwt-secret-ci-jwt-secret'
+          MASTER_ENCRYPTION_KEY: '5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e5ca1ab1e'
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: server
+        run: npm audit --audit-level=high
+
+  client:
+    name: client (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install (npm ci)
+        working-directory: client
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: client
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: client
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: client
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: client
+        run: npm audit --audit-level=high
+
+  agent:
+    name: agent (typecheck / lint / test / coverage / audit)
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-bookworm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install (npm ci)
+        working-directory: agent
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: agent
+        run: npm run typecheck
+
+      - name: Lint
+        working-directory: agent
+        run: npm run lint
+
+      - name: Test + coverage (100% gate)
+        working-directory: agent
+        run: npx vitest run --coverage
+
+      - name: npm audit (fail on high/critical)
+        working-directory: agent
+        run: npm audit --audit-level=high
+
+  # Docker parity: build + boot the compose stack in the CI container to catch
+  # image drift before merge. Failure here means a Dockerfile change broke the
+  # image build.
+  docker-build:
+    name: docker (compose build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Build compose images
+        run: docker compose -f docker-compose.yml build api web
+
+  # Publish the fleet-agent image. Remote VPS operators PULL this image, and
+  # the install snippet never runs `docker login`, so whatever repository it
+  # targets must be public.
+  #
+  # NOTHING IS HARDCODED TO A PARTICULAR ACCOUNT. The namespace comes from the
+  # repository variable DOCKERHUB_NAMESPACE, and the job SKIPS cleanly when it
+  # is unset — a fork, or an install that publishes elsewhere, gets a skipped
+  # job rather than a red X. Configure it with:
+  #
+  #   gh variable set DOCKERHUB_NAMESPACE --body 'your-dockerhub-user'
+  #   gh secret   set DOCKERHUB_USERNAME  --body 'your-dockerhub-user'
+  #   gh secret   set DOCKERHUB_TOKEN            # write-scoped access token
+  #
+  # Then point the dashboard at the same image so generated install snippets
+  # match, by setting VITE_AGENT_IMAGE in the root .env before building `web`.
+  # Full walkthrough: docs/fleet-agents.en.md § "Build and publish the agent
+  # image".
+  #
+  # Master-push only, so it never runs on a pull request or a fork. Kept
+  # separate from docker-build so a missing or expired credential cannot block
+  # PR CI.
+  #
+  # MANUAL PUBLISH RUNBOOK (feature branches / incident recovery). This job only
+  # runs on master; while agent/ code lives on a feature branch, a stale
+  # `:latest` makes every remote agent silently skip new features (e.g. the
+  # 2026-07 incident: deployed agents never sent discovery snapshots, so the
+  # Add-Project picker looked empty). From a logged-in machine:
+  #   NS=your-dockerhub-user
+  #   docker build -t $NS/agent:latest \
+  #     -t $NS/agent:$(node -p "require('./agent/package.json').version") \
+  #     -t $NS/agent:$(git rev-parse HEAD) agent/
+  #   docker push --all-tags $NS/agent
+  # Then bump EXPECTED_AGENT_VERSION (server) + AGENT_VERSION (agent) together.
+  publish-agent:
+    name: publish agent image
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'push'
+      && github.ref == 'refs/heads/master'
+      && vars.DOCKERHUB_NAMESPACE != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: ./agent
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_NAMESPACE }}/agent:latest
+            ${{ vars.DOCKERHUB_NAMESPACE }}/agent:${{ github.sha }}

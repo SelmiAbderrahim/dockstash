@@ -1,0 +1,145 @@
+{
+  "loading": "Loading…",
+  "tabs": {
+    "aria": "Project sections",
+    "plan": "Plan",
+    "schedule": "Schedule",
+    "drill": "Restore drill",
+    "pitr": "Point-in-time",
+    "mirror": "Mirror",
+    "alerts": "Alerts",
+    "history": "History"
+  },
+  "plan": {
+    "files": "Files",
+    "databases": "Databases",
+    "configs": "Config files",
+    "noFiles": "No file paths detected.",
+    "noDatabases": "No databases detected.",
+    "noConfigs": "No config files detected.",
+    "save": "Save plan",
+    "saving": "Saving…",
+    "saved": "Plan saved."
+  },
+  "schedule": {
+    "presetLegend": "Frequency",
+    "preset": {
+      "daily": "Daily at 03:00",
+      "weekly": "Weekly (Sunday 03:00)",
+      "continuous": "Continuous (every 5 minutes)",
+      "cron": "Custom cron"
+    },
+    "cronLabel": "Cron expression",
+    "enabled": "Enabled",
+    "save": "Save schedule",
+    "saving": "Saving…",
+    "saved": "Schedule saved.",
+    "errors": {
+      "cronFormat": "Cron must have 5 or 6 whitespace-separated fields."
+    }
+  },
+  "drill": {
+    "heading": "Restore drill",
+    "none": "No drill has ever run for this project.",
+    "run": "Run restore drill",
+    "running": "Running drill…",
+    "output": "Restore drill output",
+    "check": "Check repository",
+    "remoteUnsupported": "Restore drills run locally. Move this project to this server before starting a drill.",
+    "pass": "Verified",
+    "fail": "Failed"
+  },
+  "agent": {
+    "title": "Runs on",
+    "description": "Choose where this project's backups execute.",
+    "local": "This server (local)",
+    "offline": "offline",
+    "selectAria": "Backup agent",
+    "saving": "Saving…",
+    "saved": "Assignment saved.",
+    "error": "Could not assign the agent."
+  },
+  "lastFailure": {
+    "title": "Last backup failed",
+    "hint": "The most recent backup run for this project did not complete. Details below:"
+  },
+  "pitr": {
+    "heading": "Point-in-time restore",
+    "pick": "Restore to moment",
+    "resolve": "Resolve snapshot",
+    "resolving": "Resolving…",
+    "result": "Closest snapshot",
+    "snapshot": "Snapshot",
+    "gap": "{{minutes}} minutes before your target",
+    "overwrite": "Overwrite the original location",
+    "targetPath": "Restore to path",
+    "restore": "Restore",
+    "restoring": "Restoring…",
+    "started": "Restore started.",
+    "none": "No snapshot resolved yet."
+  },
+  "mirror": {
+    "heading": "Mirror",
+    "enabled": "Enabled",
+    "sourcePath": "Source path",
+    "targetPath": "Target path",
+    "save": "Save mirror",
+    "saving": "Saving…",
+    "saved": "Mirror saved.",
+    "run": "Run mirror",
+    "running": "Running mirror…",
+    "completed": "Mirror completed.",
+    "failed": "Mirror failed.",
+    "output": "Mirror output",
+    "remoteUnsupported": "Mirror jobs run locally. Move this project to this server before running the mirror."
+  },
+  "alerts": {
+    "heading": "Failure alerts",
+    "webhook": "Webhook URL",
+    "hint": "We send a POST to this URL whenever a backup fails.",
+    "save": "Save alerts",
+    "saving": "Saving…",
+    "saved": "Alerts saved.",
+    "clear": "Clear"
+  },
+  "history": {
+    "heading": "Job history",
+    "lede": "Backups, checks, prunes and restores executed for this project.",
+    "tableLabel": "Job history",
+    "never": "Never",
+    "ok": "Success",
+    "failed": "Failed",
+    "error": "Could not load job history.",
+    "cards": {
+      "backup": "Last backup",
+      "restore": "Last restore",
+      "drill": "Last drill"
+    },
+    "kind": {
+      "backup": "Backup",
+      "check": "Check",
+      "prune": "Prune",
+      "restore": "Restore"
+    },
+    "jobStatus": {
+      "pending": "Queued",
+      "leased": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
+    "columns": {
+      "kind": "Kind",
+      "status": "Status",
+      "started": "Started",
+      "finished": "Finished",
+      "snapshot": "Snapshot",
+      "logs": "Logs"
+    },
+    "showLogs": "Logs",
+    "hideLogs": "Hide",
+    "empty": {
+      "title": "No jobs recorded",
+      "hint": "Runs appear here once this project's fleet agent executes a job. Jobs run directly on this server stream live logs but are not stored."
+    }
+  }
+}

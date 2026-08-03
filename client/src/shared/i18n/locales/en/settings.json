@@ -1,0 +1,78 @@
+{
+  "heading": "Settings",
+  "loading": "Loading…",
+  "tabs": {
+    "aria": "Settings sections",
+    "storage": "Storage",
+    "retention": "Retention",
+    "password": "Encryption password",
+    "recovery": "Recovery"
+  },
+  "actions": {
+    "save": "Save",
+    "saving": "Saving…",
+    "connect": "Connect storage",
+    "test": "Test connection",
+    "testing": "Testing…"
+  },
+  "errors": {
+    "load": "Could not load settings.",
+    "save": "Could not save settings."
+  },
+  "storage": {
+    "host": "Host",
+    "user": "User",
+    "port": "Port",
+    "privateKey": "SSH private key",
+    "privateKeyPlaceholder": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "privateKeyHint": "Stored encrypted at rest. Never displayed again.",
+    "saved": "Storage saved.",
+    "testOk": "Connection succeeded.",
+    "testFailed": "Connection failed."
+  },
+  "retention": {
+    "daily": "Keep last N daily",
+    "dailyHint": "One backup kept per day, for the last N days.",
+    "weekly": "Keep last N weekly",
+    "weeklyHint": "One backup kept per week, after the daily range.",
+    "monthly": "Keep last N monthly",
+    "monthlyHint": "One backup kept per month, after the weekly range.",
+    "saved": "Retention saved."
+  },
+  "password": {
+    "warning": "Encryption password. If you lose this, the repositories are unrecoverable.",
+    "new": "New password",
+    "confirm": "Confirm password",
+    "mismatch": "Passwords do not match.",
+    "escrow": "I have saved this password somewhere safe.",
+    "saved": "Password saved.",
+    "isSet": "An encryption password is set."
+  },
+  "recovery": {
+    "export": {
+      "title": "Export configuration",
+      "description": "Download a JSON export of your projects, storage, and settings.",
+      "action": "Download export",
+      "working": "Exporting…",
+      "done": "Export downloaded."
+    },
+    "codes": {
+      "title": "Recovery codes",
+      "description": "Generate one-time recovery codes to regain access to your encrypted repositories.",
+      "action": "Generate recovery codes",
+      "working": "Generating…",
+      "warning": "Save these codes now. They will never be shown again.",
+      "copy": "Copy all",
+      "copied": "Copied."
+    },
+    "selfBackup": {
+      "title": "Self-backup",
+      "description": "Back up the Dockstash configuration itself to your storage.",
+      "action": "Run self-backup",
+      "working": "Triggering…",
+      "triggered": "Self-backup triggered.",
+      "runs": "Recent runs",
+      "empty": "No self-backup runs yet."
+    }
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "launcher": {
+    "ariaLabel": "Open the guide",
+    "tooltip": "Guides (Shift+?)"
+  },
+  "nudge": {
+    "text": "New here? I can walk you through setup.",
+    "cta": "Show me",
+    "dismiss": "Dismiss"
+  },
+  "panel": {
+    "title": "Guide me",
+    "progress": "{{done}} of {{total}} completed",
+    "youAreHere": "You're here",
+    "completed": "Completed",
+    "start": "Start",
+    "resume": "Resume from step {{step}}",
+    "replay": "Replay"
+  },
+  "toggle": {
+    "label": "Show the guide assistant",
+    "description": "Floating help button with step-by-step product tours."
+  },
+  "overlay": {
+    "counter": "Step {{current}} of {{total}}",
+    "close": "Close the tour",
+    "searching": "Finding the right spot…",
+    "missing": "This element isn't visible right now.",
+    "takeMeThere": "Take me there",
+    "skipStep": "Skip step",
+    "endTour": "End tour",
+    "skipTour": "Skip tour",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done"
+  },
+  "tours": {
+    "encryptionPassword": {
+      "title": "Set up your encryption password",
+      "description": "Protect your backups with a password only you know.",
+      "steps": {
+        "new": {
+          "title": "Choose a password",
+          "body": "Type a strong encryption password here. It protects every backup you create."
+        },
+        "confirm": {
+          "title": "Confirm it",
+          "body": "Type the same password again so a typo can't lock you out."
+        },
+        "escrow": {
+          "title": "Optional recovery escrow",
+          "body": "Enable this so recovery codes can restore access if you ever forget the password."
+        },
+        "save": {
+          "title": "Save",
+          "body": "Save to apply your new encryption password."
+        }
+      }
+    },
+    "configureStorage": {
+      "title": "Connect your storage host",
+      "description": "Point Dockstash at the SSH host where backups are stored.",
+      "steps": {
+        "host": {
+          "title": "Host address",
+          "body": "Enter the hostname or IP address of your storage server."
+        },
+        "key": {
+          "title": "SSH private key",
+          "body": "Paste the private key used to connect. It is encrypted at rest."
+        },
+        "save": {
+          "title": "Save and test",
+          "body": "Save the connection, then test it to verify access."
+        }
+      }
+    },
+    "retentionPolicy": {
+      "title": "Tune your retention policy",
+      "description": "Decide how many daily, weekly and monthly snapshots to keep.",
+      "steps": {
+        "daily": {
+          "title": "Daily snapshots",
+          "body": "Set how many daily snapshots are kept before rotation."
+        },
+        "save": {
+          "title": "Save",
+          "body": "Apply the retention policy to future backup runs."
+        }
+      }
+    },
+    "exploreFleet": {
+      "title": "Explore your fleet",
+      "description": "See every registered agent and its connection status in one place.",
+      "steps": {
+        "overview": {
+          "title": "Fleet overview",
+          "body": "This page lists every agent you've registered — the VPS machines Dockstash backs up — along with their connection status."
+        },
+        "register": {
+          "title": "Register an agent",
+          "body": "Click here to add a new agent. An agent is a VPS you want Dockstash to back up."
+        },
+        "name": {
+          "title": "Name it",
+          "body": "Give the agent a name you'll recognize later, like \"web-1\" or \"db-prod\"."
+        },
+        "host": {
+          "title": "Host address",
+          "body": "Enter the hostname or IP address of that VPS."
+        },
+        "port": {
+          "title": "Port",
+          "body": "Leave this blank to use the default SSH port, 22, or enter a custom one."
+        },
+        "submit": {
+          "title": "Finish registering",
+          "body": "Register the agent to generate its API key. The key is shown once, so copy it before closing the dialog."
+        },
+        "install": {
+          "title": "Install the agent",
+          "body": "Copy this command and run it on the VPS. It starts the Dockstash agent with the token baked in."
+        },
+        "online": {
+          "title": "Watch it come online",
+          "body": "Once the agent is running it phones home every few seconds. Its status here flips to Online within a minute."
+        },
+        "addProject": {
+          "title": "Back this agent up",
+          "body": "Now head to Projects → Add project and choose this agent as the backup target — its folders and containers appear automatically."
+        }
+      }
+    },
+    "addProject": {
+      "title": "Add your first project",
+      "description": "Add a project from a local folder, a running container, or a fleet agent.",
+      "steps": {
+        "add": {
+          "title": "Add a project",
+          "body": "Start here — open the Add-project wizard."
+        },
+        "target": {
+          "title": "Pick the backup target",
+          "body": "Back up this server, or choose a fleet agent to back up that VPS. An agent's projects come from its latest reported snapshot."
+        },
+        "source": {
+          "title": "Choose a source",
+          "body": "Browse folders under /var/www, pick a running Docker Compose project, or type a path. Review the detected plan, set a name and repository password, then create."
+        }
+      }
+    },
+    "exploreSnapshots": {
+      "title": "Browse snapshots",
+      "description": "Find and restore backup snapshots per project.",
+      "steps": {
+        "overview": {
+          "title": "Snapshots",
+          "body": "Pick a project to browse its snapshots and restore points."
+        }
+      }
+    }
+  }
+}

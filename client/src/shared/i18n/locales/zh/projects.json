@@ -1,0 +1,103 @@
+{
+  "heading": "项目",
+  "lede": "从目录、运行中的容器或车队代理添加一个项目——然后备份它。",
+  "loading": "正在加载项目…",
+  "never": "从未",
+  "meta": {
+    "path": "路径",
+    "lastRun": "最近备份"
+  },
+  "status": {
+    "idle": "空闲",
+    "running": "运行中",
+    "success": "正常",
+    "failed": "失败"
+  },
+  "actions": {
+    "backupNow": "立即备份",
+    "running": "运行中…",
+    "open": "详情",
+    "retry": "重试",
+    "addProject": "添加项目",
+    "addFirst": "添加第一个项目"
+  },
+  "empty": {
+    "title": "未找到项目。",
+    "hint": "添加第一个项目即可开始备份。"
+  },
+  "errors": {
+    "load": "无法加载项目。"
+  },
+  "add": {
+    "title": "添加项目",
+    "lede": "从车队代理中选择一个目录或运行中的 Docker Compose 项目。",
+    "scanning": "扫描中…",
+    "cancel": "返回项目",
+    "select": "选择",
+    "services": "服务",
+    "target": {
+      "label": "备份目标",
+      "local": "本地服务器",
+      "snapshotAt": "最近上报 {{at}}",
+      "noSnapshot": "该代理尚未上报——请稍后再查看。",
+      "noAgentsTitle": "尚未注册车队代理。",
+      "noAgentsHint": "请先注册一个车队代理，然后在此选择它来创建项目。",
+      "noAgentsCta": "打开车队"
+    },
+    "agent": {
+      "offlineBadge": "离线",
+      "loading": "正在加载代理快照…",
+      "refresh": "立即刷新",
+      "refreshing": "正在刷新…",
+      "notReportedTitle": "代理尚未上报",
+      "notReportedHint": "尚未收到任何快照——请在车队页面确认该代理在线。",
+      "errorsTitle": "发现过程报告了问题",
+      "fleetLink": "在车队中查看",
+      "notReportedTabHint": "尚未收到此代理的快照。如果代理在线但此情况持续，它可能运行的是过时镜像 — 请在主机上运行：docker compose -f docker-compose.agent.yml pull && docker compose -f docker-compose.agent.yml up -d --force-recreate，然后点击「立即刷新」。"
+    },
+    "tabs": {
+      "aria": "选择来源",
+      "folders": "目录",
+      "docker": "运行中的 Docker",
+      "manual": "手动路径"
+    },
+    "folders": {
+      "emptyTitle": "未找到目录。",
+      "emptyHint": "/var/www 下没有子目录。",
+      "emptyHintAgent": "该代理未在 /var/www 下报告任何项目——请确认项目位于此处且代理可读取。"
+    },
+    "docker": {
+      "unavailableTitle": "Docker 不可用。",
+      "unavailableHint": "此服务器未配置 Docker 套接字。",
+      "unavailableHintAgent": "该代理无法访问 Docker。请确认代理主机上的 socket 代理正在运行。",
+      "emptyTitle": "没有运行中的容器。",
+      "emptyHint": "启动一个 Compose 项目后刷新。"
+    },
+    "manual": {
+      "label": "项目路径",
+      "scan": "扫描"
+    },
+    "badges": {
+      "compose": "Compose",
+      "plain": "仅文件",
+      "added": "已添加",
+      "notAddable": "未报告文件夹路径",
+      "standalone": "独立",
+      "outsideRoots": "不在代理目录内",
+      "outsideRootsHint": "此项目的文件夹不在代理的项目目录（{{roots}}）范围内。请重新运行代理安装命令并添加该目录。"
+    },
+    "review": {
+      "title": "确认并创建",
+      "nameLabel": "项目名称",
+      "passwordLabel": "仓库密码",
+      "passwordHint": "至少 8 个字符。用于加密您的备份仓库。",
+      "files": "文件",
+      "databases": "数据库",
+      "configs": "配置",
+      "none": "未检测到。",
+      "create": "创建项目",
+      "creating": "创建中…",
+      "back": "返回"
+    }
+  }
+}

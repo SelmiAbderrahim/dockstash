@@ -1,0 +1,145 @@
+{
+  "loading": "加载中…",
+  "tabs": {
+    "aria": "项目分区",
+    "plan": "计划",
+    "schedule": "计划任务",
+    "drill": "恢复演练",
+    "pitr": "时间点",
+    "mirror": "镜像",
+    "alerts": "告警",
+    "history": "历史"
+  },
+  "plan": {
+    "files": "文件",
+    "databases": "数据库",
+    "configs": "配置文件",
+    "noFiles": "未检测到路径。",
+    "noDatabases": "未检测到数据库。",
+    "noConfigs": "未检测到配置文件。",
+    "save": "保存计划",
+    "saving": "保存中…",
+    "saved": "计划已保存。"
+  },
+  "schedule": {
+    "presetLegend": "频率",
+    "preset": {
+      "daily": "每日 03:00",
+      "weekly": "每周（周日 03:00）",
+      "continuous": "持续（每 5 分钟）",
+      "cron": "自定义 cron"
+    },
+    "cronLabel": "cron 表达式",
+    "enabled": "已启用",
+    "save": "保存计划任务",
+    "saving": "保存中…",
+    "saved": "计划任务已保存。",
+    "errors": {
+      "cronFormat": "cron 必须包含 5 或 6 个字段。"
+    }
+  },
+  "drill": {
+    "heading": "恢复演练",
+    "none": "尚未运行演练。",
+    "run": "运行恢复演练",
+    "running": "演练运行中…",
+    "output": "恢复演练输出",
+    "check": "检查仓库",
+    "remoteUnsupported": "恢复演练在本机运行。开始演练前，请将此项目移到此服务器。",
+    "pass": "已验证",
+    "fail": "失败"
+  },
+  "agent": {
+    "title": "运行于",
+    "description": "选择此项目的备份在哪里执行。",
+    "local": "此服务器（本地）",
+    "offline": "离线",
+    "selectAria": "备份代理",
+    "saving": "保存中…",
+    "saved": "已保存分配。",
+    "error": "无法分配代理。"
+  },
+  "lastFailure": {
+    "title": "上次备份失败",
+    "hint": "此项目最近一次备份运行未完成。详情如下："
+  },
+  "pitr": {
+    "heading": "时间点恢复",
+    "pick": "恢复到时刻",
+    "resolve": "查找快照",
+    "resolving": "查找中…",
+    "result": "最近的快照",
+    "snapshot": "快照",
+    "gap": "早于目标 {{minutes}} 分钟",
+    "overwrite": "覆盖原始位置",
+    "targetPath": "恢复到路径",
+    "restore": "恢复",
+    "restoring": "恢复中…",
+    "started": "恢复已启动。",
+    "none": "尚未解析到快照。"
+  },
+  "mirror": {
+    "heading": "镜像",
+    "enabled": "已启用",
+    "sourcePath": "源路径",
+    "targetPath": "目标路径",
+    "save": "保存镜像",
+    "saving": "保存中…",
+    "saved": "镜像已保存。",
+    "run": "运行镜像",
+    "running": "镜像运行中…",
+    "completed": "镜像已完成。",
+    "failed": "镜像失败。",
+    "output": "镜像输出",
+    "remoteUnsupported": "镜像任务在本机运行。运行前，请将此项目移到此服务器。"
+  },
+  "alerts": {
+    "heading": "失败告警",
+    "webhook": "Webhook 地址",
+    "hint": "备份失败时我们会向此地址发送 POST 请求。",
+    "save": "保存告警",
+    "saving": "保存中…",
+    "saved": "告警已保存。",
+    "clear": "清除"
+  },
+  "history": {
+    "heading": "任务历史",
+    "lede": "此项目已执行的备份、校验、清理和恢复任务。",
+    "tableLabel": "任务历史",
+    "never": "从未",
+    "ok": "成功",
+    "failed": "失败",
+    "error": "无法加载任务历史。",
+    "cards": {
+      "backup": "上次备份",
+      "restore": "上次恢复",
+      "drill": "上次演练"
+    },
+    "kind": {
+      "backup": "备份",
+      "check": "校验",
+      "prune": "清理",
+      "restore": "恢复"
+    },
+    "jobStatus": {
+      "pending": "排队中",
+      "leased": "运行中",
+      "succeeded": "成功",
+      "failed": "失败"
+    },
+    "columns": {
+      "kind": "类型",
+      "status": "状态",
+      "started": "开始",
+      "finished": "结束",
+      "snapshot": "快照",
+      "logs": "日志"
+    },
+    "showLogs": "日志",
+    "hideLogs": "收起",
+    "empty": {
+      "title": "暂无任务记录",
+      "hint": "当此项目的舰队代理执行任务后，运行记录会显示在这里。直接在本服务器上运行的任务会实时流式输出日志，但不会被保存。"
+    }
+  }
+}

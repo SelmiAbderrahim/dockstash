@@ -1,0 +1,33 @@
+{
+  "heading": "Configura tu almacenamiento",
+  "lede": "Configuración única: conecta un VPS de almacenamiento y elige una contraseña.",
+  "loading": "Cargando…",
+  "stepsAria": "Pasos de configuración",
+  "step": {
+    "storage": "VPS de almacenamiento",
+    "password": "Contraseña",
+    "confirm": "Confirmar"
+  },
+  "storage": {
+    "host": "Host",
+    "user": "Usuario",
+    "port": "Puerto",
+    "privateKey": "Clave SSH privada"
+  },
+  "password": {
+    "warning": "Se muestra una sola vez. Si la pierdes, las copias no se descifran.",
+    "hidden": "Contraseña oculta. Continúa para confirmar."
+  },
+  "confirm": {
+    "body": "Confirma que guardaste la contraseña.",
+    "escrow": "La guardé — perderla = repositorios irrecuperables."
+  },
+  "actions": {
+    "connect": "Conectar almacenamiento",
+    "connecting": "Conectando…",
+    "copy": "Copiar",
+    "saving": "Guardando…",
+    "continueToConfirm": "Continuar",
+    "done": "Hecho"
+  }
+}

@@ -1,0 +1,267 @@
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { I18nextProvider } from 'react-i18next';
+import { configureStore } from '@reduxjs/toolkit';
+import { RegisterAgentDialog } from './RegisterAgentDialog';
+import { fleetReducer, type FleetState } from '../store/slice';
+import * as api from '../api';
+import { ApiError } from '@shared/api/client';
+import { i18n, initI18n } from '@shared/i18n';
+
+vi.mock('../api', () => ({
+  listAgentsRequest: vi.fn(),
+  registerAgentRequest: vi.fn(),
+  fetchFleetRequest: vi.fn(async () => []),
+}));
+
+const mocked = vi.mocked(api);
+
+const registered = {
+  agent: {
+    id: 'a1',
+    name: 'web-1',
+    host: 'vps1.example',
+    port: 7443,
+    status: 'offline' as const,
+    lastSeenAt: null,
+    agentVersion: '',
+    outdated: false,
+  },
+  token: 'dsa_test.test',
+};
+
+beforeEach(() => {
+  initI18n({ initialLocale: 'en' });
+  vi.clearAllMocks();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+const renderDialog = (
+  props: Partial<React.ComponentProps<typeof RegisterAgentDialog>> = {},
+  fleet: Partial<FleetState> = {},
+) => {
+  const store = configureStore({
+    reducer: { fleet: fleetReducer },
+    preloadedState: {
+      fleet: {
+        items: [],
+        status: 'idle',
+        error: null,
+        registerStatus: 'idle',
+        registerError: null,
+        rotateStatus: 'idle',
+        rotateError: null,
+        deleteStatus: 'idle',
+        deleteError: null,
+        ...fleet,
+      } satisfies FleetState,
+    },
+  });
+  render(
+    <Provider store={store}>
+      <I18nextProvider i18n={i18n}>
+        <RegisterAgentDialog open onClose={() => {}} {...props} />
+      </I18nextProvider>
+    </Provider>,
+  );
+  return store;
+};
+
+const fillForm = (port?: string) => {
+  fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'web-1' } });
+  fireEvent.change(screen.getByLabelText('Host'), { target: { value: 'vps1.example' } });
+  if (port) fireEvent.change(screen.getByLabelText('Port'), { target: { value: port } });
+};
+
+describe('RegisterAgentDialog form', () => {
+  it('renders nothing when closed', () => {
+    renderDialog({ open: false });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('keeps submit disabled until name and host are filled', () => {
+    renderDialog();
+    const submit = screen.getByRole('button', { name: 'Register' }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'web-1' } });
+    expect(submit.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Host'), { target: { value: 'vps1.example' } });
+    expect(submit.disabled).toBe(false);
+  });
+
+  it('flags invalid project directories and disables submit', () => {
+    renderDialog();
+    fillForm();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '/var/www,/etc/nginx' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/\/etc\/nginx/);
+    expect(roots).toHaveAttribute('aria-describedby', 'agent-roots-error');
+    expect((screen.getByRole('button', { name: 'Register' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('requires at least one project directory', () => {
+    renderDialog();
+    fillForm();
+    const roots = screen.getByLabelText('Project directories');
+    fireEvent.change(roots, { target: { value: '  ,  ' } });
+    expect(screen.getByRole('alert')).toHaveTextContent(/at least one project directory/i);
+    expect((screen.getByRole('button', { name: 'Register' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it('bakes the chosen directories into the install command after registration', async () => {
+    mocked.registerAgentRequest.mockResolvedValue(registered);
+    renderDialog();
+    fillForm();
+    fireEvent.change(screen.getByLabelText('Project directories'), {
+      target: { value: '/var/www, /opt/apps' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(await screen.findByTestId('agent-api-key')).toBeInTheDocument();
+    const command = screen.getByText(/DOCKSTASH_PROJECT_ROOTS/).textContent ?? '';
+    expect(command).toContain('DOCKSTASH_PROJECT_ROOTS: /var/www,/opt/apps');
+    expect(command).toContain('- /opt/apps:/opt/apps:rw');
+  });
+
+  it('does not dispatch when the form is submitted while invalid', () => {
+    renderDialog();
+    const form = screen.getByLabelText('Name').closest('form') as HTMLFormElement;
+    fireEvent.submit(form);
+    expect(mocked.registerAgentRequest).not.toHaveBeenCalled();
+  });
+
+  it('does not dispatch again while a registration is in flight', () => {
+    renderDialog({}, { registerStatus: 'loading' });
+    // In-button loading (interaction-hygiene rule) keeps the label stable
+    // and flips aria-busy — no separate "Registering…" label swap.
+    const submit = screen.getByRole('button', { name: 'Register' });
+    expect(submit).toBeDisabled();
+    expect(submit.getAttribute('aria-busy')).toBe('true');
+    fillForm();
+    const form = screen.getByLabelText('Name').closest('form') as HTMLFormElement;
+    fireEvent.submit(form);
+    expect(mocked.registerAgentRequest).not.toHaveBeenCalled();
+  });
+
+  it('registers with a port and swaps the form for the one-time key', async () => {
+    mocked.registerAgentRequest.mockResolvedValue(registered);
+    renderDialog();
+    fillForm('7443');
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(await screen.findByTestId('agent-api-key')).toBeInTheDocument();
+    expect(mocked.registerAgentRequest).toHaveBeenCalledWith({
+      name: 'web-1',
+      host: 'vps1.example',
+      port: 7443,
+    });
+    expect(screen.getByText('dsa_test.test')).toBeInTheDocument();
+    expect(screen.getByText(/shown once and can never be retrieved again/)).toBeInTheDocument();
+    // Registration refreshes the fleet list behind the key dialog.
+    expect(mocked.fetchFleetRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('omits the port from the payload when the field is left empty', async () => {
+    mocked.registerAgentRequest.mockResolvedValue(registered);
+    renderDialog();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    await screen.findByTestId('agent-api-key');
+    expect(mocked.registerAgentRequest).toHaveBeenCalledWith({
+      name: 'web-1',
+      host: 'vps1.example',
+    });
+  });
+
+  it('surfaces the register error inline on failure', async () => {
+    mocked.registerAgentRequest.mockRejectedValue(new Error('name taken'));
+    const store = renderDialog();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('name taken');
+    expect(store.getState().fleet.registerStatus).toBe('failed');
+    expect(screen.queryByTestId('agent-api-key')).not.toBeInTheDocument();
+  });
+
+  it('shows a duplicate-host 409 as an inline error on the host field', async () => {
+    mocked.registerAgentRequest.mockRejectedValue(
+      new ApiError('m', 409, { error: { message: 'An agent for this host already exists.' } }),
+    );
+    renderDialog();
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+
+    const host = screen.getByLabelText('Host');
+    await waitFor(() => expect(host).toHaveAttribute('aria-invalid', 'true'));
+    // The error is wired to the host input for assistive tech.
+    expect(host).toHaveAttribute('aria-describedby', 'agent-host-error');
+    const err = document.getElementById('agent-host-error');
+    expect(err).toHaveAttribute('role', 'alert');
+    expect(err).toHaveTextContent('An agent for this host already exists.');
+    // Editing the host clears the field error.
+    fireEvent.change(host, { target: { value: 'vps2.example' } });
+    expect(host).not.toHaveAttribute('aria-invalid');
+    expect(document.getElementById('agent-host-error')).toBeNull();
+  });
+
+  it('falls back to a generic register error without a message', () => {
+    renderDialog({}, { registerStatus: 'failed', registerError: null });
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not register the agent.');
+  });
+
+  it('cancel resets the register state and closes', () => {
+    const onClose = vi.fn();
+    const store = renderDialog({ onClose }, { registerStatus: 'failed', registerError: 'x' });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(store.getState().fleet.registerStatus).toBe('idle');
+    expect(store.getState().fleet.registerError).toBeNull();
+  });
+
+  it('Escape closes the dialog', () => {
+    // Radix's DismissableLayer listens for Escape on the document.
+    const onClose = vi.fn();
+    renderDialog({ onClose });
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('RegisterAgentDialog one-time key', () => {
+  const registerToKey = async (
+    props: Partial<React.ComponentProps<typeof RegisterAgentDialog>> = {},
+  ) => {
+    mocked.registerAgentRequest.mockResolvedValue(registered);
+    renderDialog(props);
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+    await screen.findByTestId('agent-api-key');
+  };
+
+  it('copies the key to the clipboard', async () => {
+    const writeText = vi.fn();
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    await registerToKey();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(writeText).toHaveBeenCalledWith('dsa_test.test');
+  });
+
+  it('tolerates a missing clipboard API', async () => {
+    vi.stubGlobal('navigator', { ...navigator, clipboard: undefined });
+    await registerToKey();
+    expect(() => fireEvent.click(screen.getByRole('button', { name: 'Copy' }))).not.toThrow();
+  });
+
+  it('Done closes the dialog', async () => {
+    const onClose = vi.fn();
+    await registerToKey({ onClose });
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
